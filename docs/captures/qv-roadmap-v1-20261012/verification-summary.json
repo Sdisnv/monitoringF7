@@ -1,0 +1,23 @@
+{
+  "sourceBaseline": "6f0eb8b2f6aaad6d7a6ab7946304e3b9d3c76ba3",
+  "targetedTests": {"passed": 35, "failed": 0},
+  "browser": {"name": "Chromium", "passed": 8, "failed": 0, "pageErrors": [], "viewports": [1440, 390]},
+  "postgresClone": {
+    "database": "scope_qv_2027_recipe_20261006",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "recipes": ["referentials", "statistics", "cycles"],
+    "originalOccurrencesCompared": 867,
+    "originalStatComAndCodesIdentical": 867,
+    "tablesIdenticalAfterRollback": 113,
+    "operationalEventsCreated": 0,
+    "lateClosingFixture": {"date": "2028-03-04", "cycle": 2027, "civilYear": 2028, "dpsInstructions": 16, "conduites": 16, "followingCycleNoDuplicates": true}
+  },
+  "netlifyPreflight": "PASS",
+  "netlifyBuild": {"context": "production", "status": "PASS", "functions": 25},
+  "diffCheck": "PASS",
+  "productionWrites": false,
+  "historicalMoaRecipesRepeated": false,
+  "realClosingDateDefined": false,
+  "verdict": "MOA_REQUIRED"
+}

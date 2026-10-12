@@ -12,4 +12,10 @@ function effectiveRule(metadata){
   return { ...APPROVED_RULE,...stored };
 }
 
-module.exports = { DEFINITION_CODE,STAT_COM,APPROVED_RULE,effectiveRule };
+function closesCycleYear(row,programmeYear){
+  const explicit = row?.annualReportClosesCycleYear ?? row?.metadata?.annualReport?.closesCycleYear;
+  if(Number.isInteger(Number(explicit)) && explicit != null) return Number(explicit);
+  return row?.id === 'qv-source-923' && Number(programmeYear) === 2027 ? 2026 : null;
+}
+
+module.exports = { DEFINITION_CODE,STAT_COM,APPROVED_RULE,effectiveRule,closesCycleYear };

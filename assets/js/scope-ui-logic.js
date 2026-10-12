@@ -3247,7 +3247,7 @@
   function qvResponsableCanonique(value, context) {
     const raw = String(value || '').trim();
     if (!raw) return '';
-    const key = qvResponsableKey(raw);
+    const key = qvResponsableKey(raw === 'C scrt' ? 'C sct' : raw);
     const direct = {
       'c foba': 'Chef FOBA',
       'c dap': 'Chef DAP',
@@ -3266,14 +3266,27 @@
     if ((key === 'c site' || key === 'chef site') && domain === 'DPS') return 'Chef site DPS';
     if (key === 'c sct' && domain === 'DAP') return 'Chef section DAP';
     if (key === 'c sct' && domain === 'DPS') return 'Chef section DPS';
+    if (key === 'c sct') return 'C sct';
     const canonical = qvResponsableGroups().flat().find((label) => qvResponsableKey(label) === key);
     return canonical || raw;
   }
 
+  function qvProgrammeDescriptivePublics() {
+    return {
+      'CMDT:CODIR': 'Membres du Codir',
+      'CMDT:CDT': 'CDT', 'CMDT:C-OP': 'C op', 'CMDT:C-LOG': 'C log',
+      'CMDT:C-FOR': 'C for', 'CMDT:QM': 'QM',
+      'PR:C-PR': 'C PR', 'PR:FORMATEUR-PR': 'Formateur PR',
+      'AUTO:OF-AUTO': 'Of auto', 'AUTO:FORMATEUR-C1-118': 'Formateur C1/118',
+      'AUTO:MONITEUR-CONDUITE': 'Moniteur conduite'
+    };
+  }
+
   function qvProgrammePublicCatalogue() {
+    const descriptive = Object.entries(qvProgrammeDescriptivePublics());
     return [
       { group: 'Général', items: [['GEN:RECRUE', 'Recrue'], ['GEN:SAPEUR', 'Sapeur'], ['GEN:SAPEUR-DPS', 'Sapeur DPS'], ['GEN:SAPEUR-DAP', 'Sapeur DAP']] },
-      { group: 'Commandement', items: [['CMDT:CODIR', 'Membres du Codir']] },
+      { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:')) },
       { group: 'Échelons', items: [['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
       { group: 'Sections DPS', items: ['N01', 'N01a', 'N01b', 'N02', 'N02a', 'N02b', 'N03', 'N03a', 'N03b', 'N04', 'N04a', 'N04b', 'N05', 'N05a', 'N05b', 'N06'].map(code => [code, code]) },
       { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidats C groupe'], ['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidats CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidats CI DAP']] },
@@ -3282,7 +3295,101 @@
       { group: 'AUTO', items: [['AUTO:1', 'cond PL'], ['AUTO:CAND-PL', 'Candidats cond PL'], ['AUTO:3', 'cond VL'], ['AUTO:5', 'Machiniste EA'], ['AUTO:CAND-EA', 'Candidats machiniste EA'], ['AUTO:6', 'Pilote BAT'], ['AUTO:2', 'cond TP9'], ['AUTO:CAND-TP9', 'Candidats cond TP9'], ['AUTO:4', 'Grutier'], ['AUTO:MONITEURS', 'Moniteurs conduite'], ['AUTO:FORM-C1', 'Formateurs C1/118'], ['AUTO:FORM-EA', 'Formateurs EA'], ['AUTO:FORM-GRUTIER', 'Formateurs Grutier']] },
       { group: 'FOSPEC', items: [['FOSPEC:1', 'Antichute'], ['FOSPEC:2', 'NAC'], ['FOSPEC:3', 'OFSI'], ['FOSPEC:4', 'OP VPC']] },
       { group: 'JSP', items: [['JSP:1', 'JSP']] }
-    ].map(group => ({...group, items:group.items.slice().sort((a,b) => a[1].localeCompare(b[1], 'fr'))}));
+    ].map(group => ({...group, items:group.items.concat(
+      ['PR', 'AUTO'].includes(group.group) ? descriptive.filter(([code]) => code.startsWith(`${group.group}:`)) : []
+    ).sort((a,b) => a[1].localeCompare(b[1], 'fr'))}));
+  }
+
+  function qvProgrammeExportActivity(row, format) {
+    const item = row || {};
+    const label = String(item.activite ?? item.eventDisplayLabel ?? item.activityLabel ?? item.eventLabel ?? item.label ?? item.title ?? '').trim();
+    const themes = qvProgrammeVisibleThemes(item).filter(value => value.trim());
+    return [label, themes.join(' · ')].filter(Boolean).join(String(format || '').toLowerCase() === 'pdf' ? '\n' : ' - ');
+  }
+
+  // Defaults are consensual observations of a canonical type, never a new scheduling rule.
+  function qvProgrammeActivityTypes(qv) {
+    const data = qv || {};
+    const copy = value => JSON.parse(JSON.stringify(value));
+    const clean = value => String(value == null ? '' : value).trim();
+    const refs = data.responsableFonctions || data.referentials?.responsableFonctions || [];
+    const types = Array.isArray(data.types) ? data.types : Array.isArray(data.catalogue) ? data.catalogue : data.catalogue?.definitions || [];
+    const typeId = item => clean(item.definitionId || item.typeId || item.id);
+    const definitions = new Map(types.map(item => [typeId(item), item]));
+    const groups = new Map();
+    for (const row of data.canonicalProgramme?.rows || []) {
+      if (!row || row.manualCreation || /^MANUAL/i.test(clean(row.provenance))
+        || row.external || row.externalActivity || row.excluded || row.horsProgramme
+        || row.periodicExcluded || row.dapExerciseExcluded || row.active === false) continue;
+      const definitionId = clean(row.definitionId || row.typeId);
+      const definition = definitions.get(definitionId) || {};
+      if (definition.active === false || definition.actif === false) continue;
+      const label = clean(definition.label || definition.libelle || row.label || row.activityLabel);
+      if (!label) continue;
+      const formationDomain = clean(row.domain);
+      const ruleDomain = clean(definition.metadata?.canonicalRule?.businessDomain);
+      const historicalReference = row.historicalReference || (data.historicalAgenda2026?.references || []).find(item =>
+        row.historicalProposal?.sourceLine && item.sourceLine === row.historicalProposal.sourceLine);
+      const domain = qvProgrammeFunctionalDomain(row, historicalReference) || (/^F[0-8]$/.test(ruleDomain) ? ruleDomain : '');
+      const oi = qvNormalizeOiSelections(row, row.oiCodes || row.oiSelections || row.ois || []);
+      const sites = oi.codes.filter(code => /^DPS:(G1|C1|B1|B2)$/.test(code));
+      const site = (formationDomain === 'DPS' || /\bDPS\b/i.test(label)) && sites.length === 1 && oi.codes.length === 1 ? sites[0].slice(4) : '';
+      const baseId = definitionId || `${formationDomain}:${label}`;
+      const id = site ? `${baseId}@DPS:${site}` : baseId;
+      if (!groups.has(id)) groups.set(id, { id, definitionId, baseId, label, site, formationDomain, observations: [] });
+      let responsibleSelections = row.responsibleSelections;
+      if (!Array.isArray(responsibleSelections)) {
+        const raw = clean(row.responsible || row.responsable);
+        const code = clean(row.responsableFonctionCode);
+        const matches = refs.filter(ref => ref.active !== false && ref.actif !== false && (code
+          ? ref.code === code
+          : raw && [ref.code, ref.libelle || ref.label].some(value => qvResponsableCanonique(value, { domain: formationDomain }) === qvResponsableCanonique(raw, { domain: formationDomain }))));
+        responsibleSelections = matches.length === 1
+          ? [{ kind: 'REFERENCE', code: matches[0].code, label: matches[0].libelle || matches[0].label || matches[0].code }]
+          : raw && !/^(?:a affecter|a definir)$/i.test(qvResponsableKey(raw)) && !matches.length ? [{ kind: 'FREE', label: raw }] : [];
+      }
+      const ecawinMatches = (data.ecawinReferential?.associations || []).filter(item => item.statCom === row.statCom);
+      const ecawinCode = Object.prototype.hasOwnProperty.call(row, 'ecawinActivityCode') ? row.ecawinActivityCode
+        : ecawinMatches.length === 1 ? ecawinMatches[0].activityCode : '';
+      const values = {
+        activityLabel: label, domain, statCom: clean(row.statCom), ecawinActivityCode: clean(ecawinCode),
+        responsibleSelections: copy(responsibleSelections),
+        publicCodes: row.publicCodes || row.publics || [], oiCodes: oi.ambiguous.length ? [] : oi.codes
+      };
+      groups.get(id).observations.push({ row, values });
+    }
+    const result = [...groups.values()].map(group => {
+      const defaults = {};
+      const provenance = {};
+      const ambiguity = [];
+      const missing = [];
+      const sourceIds = [...new Set(group.observations.map(({row}) => clean(row.id)).filter(Boolean))].sort();
+      for (const field of ['activityLabel', 'domain', 'statCom', 'ecawinActivityCode', 'responsibleSelections', 'publicCodes', 'oiCodes']) {
+        const values = group.observations.map(item => item.values[field]);
+        const normalized = value => Array.isArray(value)
+          ? JSON.stringify(value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).sort()) : JSON.stringify(value);
+        if (values.some(value => !value || Array.isArray(value) && !value.length)) missing.push(field);
+        else if (new Set(values.map(normalized)).size !== 1) ambiguity.push(field);
+        else {
+          defaults[field] = copy(values[0]);
+          provenance[field] = { source: 'CANONICAL_PROGRAMME_CONSENSUS', definitionId: group.definitionId, sourceIds };
+        }
+      }
+      return {
+        id: group.id, definitionId: group.definitionId, label: group.site ? `${group.label} (${group.site})` : group.label,
+        site: group.site || null, siteCode: group.site || null, formationDomain: group.formationDomain,
+        group: ['F0', 'F3', 'CMDT'].includes(group.formationDomain) ? 'Commandement' : group.formationDomain,
+        defaults, prefill: copy(defaults), provenance, demonstrationProvenance: copy(provenance),
+        ambiguity, missing, sourceIds, baseId: group.baseId
+      };
+    });
+    const variants = new Map(result.map(item => [item.baseId, result.filter(other => other.baseId === item.baseId && other.site)
+      .map(other => ({ id: other.id, site: other.site, label: other.label })).sort((a,b) => a.site.localeCompare(b.site))]));
+    for (const item of result) {
+      item.siteVariants = copy(variants.get(item.baseId));
+      delete item.baseId;
+    }
+    return result.sort((a,b) => a.label.localeCompare(b.label, 'fr') || a.id.localeCompare(b.id));
   }
 
   function qvProgrammePublicLabel(code) {
@@ -5600,6 +5707,9 @@
     qvResponsableGroups,
     qvResponsableCanonique,
     qvProgrammePublicCatalogue,
+    qvProgrammeDescriptivePublics,
+    qvProgrammeActivityTypes,
+    qvProgrammeExportActivity,
     qvProgrammeFilterFamily,
     qvProgrammeFilterType,
     qvProgrammeFunctionalDomain,

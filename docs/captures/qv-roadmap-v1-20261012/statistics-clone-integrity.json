@@ -1,0 +1,20 @@
+{
+  "database": "scope_qv_2027_recipe_20261006",
+  "host": "127.0.0.1",
+  "port": 5432,
+  "businessYear": 2027,
+  "civilYear": 2028,
+  "count2027": 0,
+  "count2028": 1,
+  "testedCivilDates": [
+    "2028-01-01",
+    "2028-01-28"
+  ],
+  "unevaluatedContribution": 0,
+  "historicalPresencePreserved": true,
+  "personAndNipCreated": false,
+  "assignmentsChanged": false,
+  "productionWrites": false,
+  "rollbackAllTablesUnchanged": 113,
+  "verdict": "PASS"
+}

@@ -10220,6 +10220,11 @@
     const year = qvProgrammeYear();
     const base = qvMonthChoices().filter((row) => row.value.startsWith(`${year}-`));
     const choices = base.length ? base : qvMonthChoices().filter((row) => row.value.startsWith('2027-')).map((row) => ({ value: `${year}-${row.value.slice(5)}`, label: row.label.replace('2027', String(year)) }));
+    const actualMonths=new Set((quoVadisProgrammeData()?.canonicalProgramme?.rows || []).flatMap(row=>[row.startsAt,row.endsAt])
+      .filter(Boolean).map(date=>String(date).slice(0,7)));
+    for(const value of actualMonths) if(/^\d{4}-\d{2}$/.test(value) && !choices.some(row=>row.value===value))
+      choices.push({value,label:qvMonthTitle(Number(value.slice(5,7)),Number(value.slice(0,4)))});
+    choices.sort((a,b)=>a.value.localeCompare(b.value));
     return choices.map((row) => ({ ...row, label:row.label.replace(new RegExp(`\\s*${year}\\b`), '') }));
   }
 
@@ -10972,6 +10977,7 @@
     const data = qv || quoVadisData();
     return rows.map((row) => {
       const monthKey = row.startsAt ? String(row.startsAt).slice(0, 7) : '';
+      const occurrence=(data.canonicalProgramme?.rows || []).find(item=>String(item.id)===String(row.sourceRef));
       return {
         code: row.codeCours || '',
         date: row.startsAt ? qvFormatDate(row.startsAt) : 'À proposer',
@@ -10981,7 +10987,8 @@
         domaine: row.domainLabel || row.domain || '',
         oi: qvOiCode(data, row) || '—',
         publicCible: qvCibleLabel(row) || '—',
-        activite: row.title || '',
+        activite: occurrence ? qvProgrammeActivityLabel(occurrence) : row.title || '',
+        themes:occurrence?.themes || row.themes || [],
         specCursus: row.specCursus || [row.specialisation, row.cursus].filter(Boolean).join(' · '),
         statcom: row.statcomCode || '',
         lieu: qvLieuLabel(row),
@@ -11008,7 +11015,8 @@
         domaine: qvProgrammeDomainDisplay(qvProgrammeDomain(row)),
         oi: L.qvProgrammeOiLabel(row) || '—',
         publicCible: qvProgrammePublicLabel(row),
-        activite: [qvProgrammeActivityLabel(row), L.qvProgrammeVisibleThemes(row).join(' · ')].filter(Boolean).join(' · '),
+        activite:qvProgrammeActivityLabel(row),
+        themes:L.qvProgrammeVisibleThemes(row),
         specCursus: [row.specialisation, row.cursus].filter(Boolean).join(' · '),
         statcom: row.statCom || '',
         lieu: qvProgrammeLocationLabel(row),
@@ -11024,7 +11032,7 @@
   function qvProgrammeCsvText(rows) {
     const headers = ['Code cours', 'Date', 'Horaire', 'Domaine', 'OI', 'Public cible', 'Activité', 'Spécialisation · cursus', 'Stat.Com', 'Lieu', 'Salle théorie', 'Responsable', 'État'];
     const cell = (value) => `"${String(value == null ? '' : value).replace(/^([=+\-@])/, "'$1").replace(/"/g, '""')}"`;
-    const lines = [headers.map(cell).join(';')].concat(rows.map((row) => [row.code, row.date, row.horaire, row.domaine, row.oi, row.publicCible, row.activite, row.specCursus, row.statcom, row.lieu, row.salleTheorie, row.responsable, row.etat].map(cell).join(';')));
+    const lines = [headers.map(cell).join(';')].concat(rows.map((row) => [row.code, row.date, row.horaire, row.domaine, row.oi, row.publicCible, L.qvProgrammeExportActivity(row,'excel'), row.specCursus, row.statcom, row.lieu, row.salleTheorie, row.responsable, row.etat].map(cell).join(';')));
     return '\uFEFF' + lines.join('\r\n');
   }
 
@@ -12629,6 +12637,30 @@
       : `<section class="scope-card qv-programme-view"><p class="scope-empty">Chargement du programme ${escapeHtml(String(year))}…</p></section>`;
   }
 
+  function qvProgrammeCycleControl(qv){
+    const cycle=qv.programmeCycle;
+    if(!cycle) return '';
+    const draft=state.quoVadisCycleDraft?.year === cycle.year ? state.quoVadisCycleDraft : cycle;
+    const reports=cycle.reportOptions || [cycle.openingReport,cycle.closingReport].filter(Boolean);
+    const reportKey=report=>report ? `${report.sourceType}:${report.itemId}` : '';
+    const reportOptions=(closingYear,chosen)=>`<option value="">À définir</option>${reports.filter(report=>report.closesCycleYear===closingYear).map(report=>`<option value="${escapeHtml(reportKey(report))}" ${reportKey(report)===reportKey(chosen)?'selected':''}>${report.sourceType==='FUTURE_DATE'?'Annonce':'Rapport'} du ${escapeHtml(qvFormatDate(report.actualDate))}</option>`).join('')}`;
+    const period=[cycle.startDate ? qvFormatDate(cycle.startDate) : 'Début à définir',
+      cycle.endDate ? qvFormatDate(cycle.endDate) : 'Rapport de clôture à définir'].join(' - ');
+    const disabled=!hasScopePermission('references:manage') || state.loading;
+    return `<details class="qv-programme-cycle" ${draft!==cycle?'open':''}><summary>Cycle métier ${escapeHtml(String(cycle.year))} : ${escapeHtml(period)}</summary>
+      <form id="qv-programme-cycle-form"><fieldset class="qv-programme-cycle-fields" ${disabled?'disabled':''}>
+        <label><span>Rapport précédent</span><select id="qv-cycle-opening-report">${reportOptions(cycle.year-1,draft.openingReport)}</select></label>
+        <label><span>Début du cycle</span><input id="qv-cycle-start" type="date" value="${escapeHtml(draft.startDate || '')}" required></label>
+        ${reports.some(report=>report.closesCycleYear===cycle.year)?`<label><span>Rapport de clôture lié</span><select id="qv-cycle-closing-report">${reportOptions(cycle.year,draft.closingReport)}</select></label>`:''}
+        <label><span>Rapport annuel de clôture</span><input id="qv-cycle-end" type="date" value="${escapeHtml(draft.endDate || '')}"></label>
+        <label class="qv-programme-cycle-parameters"><input id="qv-cycle-parameters" type="checkbox" ${draft.parametersDefined===true?'checked':''}><span>Paramètres annuels définis</span></label>
+        ${hasScopePermission('references:manage')?'<button class="scope-btn" type="submit">Enregistrer le cycle</button>':''}
+      </fieldset></form>
+      ${cycle.openingReport ? `<p>Rapport précédent : ${escapeHtml(qvFormatDate(cycle.openingReport.actualDate))}</p>` : '<p class="scope-state-error">Rapport précédent non défini.</p>'}
+      ${cycle.automaticExtension?.status==='PARTIAL_MOA_REQUIRED'?'<p class="scope-state-error">Extension A+1 partielle : cadences à confirmer.</p>':''}
+    </details>`;
+  }
+
   function renderQuoVadisProgramme(qv) {
     const programme = qv.canonicalProgramme || {};
     const target = programme.target || {};
@@ -12646,8 +12678,9 @@
     const pagination = qvProgrammePagination(rows);
     return `<section class="scope-card qv-programme-view">
       <div class="scope-section-head"><div><h2>Programme ${escapeHtml(String(qvProgrammeYear()))}</h2><p class="scope-muted">${escapeHtml(String((programme.rows || []).filter((row) => !row.external && !row.jspDirectionReconciliation
-        && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')).length))} séances au programme · ${escapeHtml(String(target.historicalNotRenewed || 0))} activités historiques non reconduites.</p></div><div class="scope-actions qv-export-actions">${qvProgrammeYear() === 2027 && hasScopePermission('references:manage') ? `<a class="scope-btn scope-btn-primary" href="${qvProgrammeFicheHref('nouveau')}">Créer une activité</a>` : ''}${qvProgrammeModeControl()}${qvProgrammePdfControl()}<button type="button" class="scope-btn" id="qv-export-programme-pdf">Exporter PDF</button><button type="button" class="scope-btn" id="qv-export-programme-excel">Exporter pour Excel</button></div></div>
+        && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')).length))} séances au programme · ${escapeHtml(String(target.historicalNotRenewed || 0))} activités historiques non reconduites.</p></div><div class="scope-actions qv-export-actions">${qvProgrammeYear() >= 2027 && hasScopePermission('references:manage') ? `<a class="scope-btn scope-btn-primary" href="${qvProgrammeFicheHref('nouveau')}">Créer une activité</a>` : ''}${qvProgrammeModeControl()}${qvProgrammePdfControl()}<button type="button" class="scope-btn" id="qv-export-programme-pdf">Exporter PDF</button><button type="button" class="scope-btn" id="qv-export-programme-excel">Exporter pour Excel</button></div></div>
       <div class="qv-programme-kpis" aria-label="Niveaux du programme">${metrics.map(([label, value, detail]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value == null ? '—' : value))}</strong><small>${escapeHtml(detail)}</small></div>`).join('')}</div>
+      ${qvProgrammeCycleControl(qv)}
       ${qvProgrammeYear() !== 2027 ? `<p class="qv-programme-workflow-note">Programme ${escapeHtml(String(qvProgrammeYear()))} en préparation : seules les lignées validées et les permanences CTA calculées sont consultables. Le référentiel 2026 → 2027 reste la source de la reconduction.</p>` : ''}
       <details class="qv-programme-lineage"${qvProgrammeYear() !== 2027 ? ' hidden' : ''}><summary>Comprendre 2026 → 2027</summary><p>2026 : ${escapeHtml(String(source.sourceRows || 0))} lignes source, ${escapeHtml(String(source.models || 0))} modèles, ${escapeHtml(String(source.occurrences || 0))} occurrences, ${escapeHtml(String(source.sessions || 0))} sessions. 2027 : ${escapeHtml(String(target.models || 0))} modèles actifs, ${escapeHtml(String(target.occurrences || 0))} occurrences et ${escapeHtml(String(target.sessions || 0))} sessions. Le chiffre historique 302 désigne la matrice de définitions source réconciliées, pas un nombre d’événements.</p></details>
       ${qvProgrammeFilterBar(qv)}
@@ -12670,7 +12703,8 @@
 
   function renderQuoVadisProgrammeFiche(qv) {
     const id = route().qvProgrammeItemId;
-    const creating = id === 'nouveau' && qvProgrammeYear() === 2027 && hasScopePermission('references:manage');
+    const creating = id === 'nouveau' && qvProgrammeYear() >= 2027 && hasScopePermission('references:manage');
+    const activityTypes=creating ? L.qvProgrammeActivityTypes?.(qv) || [] : [];
     const row = creating ? {id:'nouveau',label:'',activityLabel:'',domain:'',statCom:'',ois:[],publics:[],themes:[],
       startsAt:null,endsAt:null,status:'PROPOSE',manualCreation:true,externalActivity:false,provenance:'MANUAL_2027'}
       : (((qv.canonicalProgramme || {}).rows) || []).find((item) => String(item.id) === String(id));
@@ -12706,12 +12740,13 @@
       ${row.annualReportConstraint && row.annualReportConstraint.status === 'PUBLICATION_UPDATE_REQUIRED' ? `<p class="qv-programme-workflow-note">Rapport annuel prioritaire le ${escapeHtml(qvFormatDate(row.annualReportConstraint.date, '—'))}, après-midi et soir. L’événement lié reste au ${escapeHtml(qvFormatDate(row.publishedEventDate, '—'))} ; sa mise à jour doit être coordonnée sur le même événement.</p>` : ''}
       ${row.annualReportConstraint && row.annualReportConstraint.status === 'BLOCKED_BY_ANNUAL_REPORT' ? `<p class="qv-programme-workflow-note is-conflict">Le ${escapeHtml(qvFormatDate(row.annualReportConstraint.date, '—'))} après-midi et soir est réservé au Rapport annuel. Cette activité doit être repositionnée ou arbitrée selon sa décision existante.</p>` : ''}
       <fieldset class="qv-programme-edit-grid" ${canPrepare && !state.loading ? '' : 'disabled'}>
+        ${creating ? `<label class="qv-programme-edit-full"><span>Activité type</span><select id="qv-programme-type"><option value="">Saisie manuelle</option>${[...new Set(activityTypes.map(type=>type.group || 'Activités'))].map(group=>`<optgroup label="${escapeHtml(group)}">${activityTypes.filter(type=>(type.group || 'Activités')===group).map(type=>`<option value="${escapeHtml(type.id)}">${escapeHtml(type.label)}</option>`).join('')}</optgroup>`).join('')}</select></label>` : ''}
         <label class="qv-programme-edit-half"><span>Activité</span><input id="qv-programme-activity" type="text" maxlength="240" value="${escapeHtml(creating ? '' : qvProgrammeActivityLabel(row))}"></label>
         <label class="qv-programme-edit-half"><span>Thème</span><input id="qv-programme-themes" type="text" maxlength="1320" value="${escapeHtml((row.themes || []).join(' ; '))}"></label>
         ${qvProgrammeQualificationControl(qv,row)}
         <label><span>Cursus</span><select id="qv-programme-cursus" ${row.cursusStepId ? 'disabled' : ''}>${qvProgrammeCursusOptions(qv,row)}</select></label>
         <div class="qv-programme-choice-field"><label for="qv-programme-ecawin">Code activité ECAwin</label><input id="qv-programme-ecawin-search" type="search" aria-label="Rechercher une activité ECAwin" placeholder="Rechercher"><select id="qv-programme-ecawin"><option value="">Non qualifié</option>${(window.ScopeEcawin?.activityCodes || []).map(code=>`<option value="${code}" ${row.ecawinActivityCode === code ? 'selected' : ''}>${escapeHtml(code+' — '+(window.ScopeEcawin.activityLabels[code] || ''))}</option>`).join('')}${row.ecawinActivityCode && !window.ScopeEcawin?.activityCodes.includes(row.ecawinActivityCode) ? `<option value="${escapeHtml(row.ecawinActivityCode)}" selected>${escapeHtml(row.ecawinActivityCode)} — Valeur conservée</option>` : ''}</select></div>
-        <label><span>Année du programme</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
+        <label><span>Cycle métier</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
         <label class="qv-programme-edit-full"><span>Suivi SCOPE</span><span class="qv-programme-keep-lieu"><input id="qv-programme-external" type="checkbox" ${row.externalActivity ? 'checked' : ''} ${creating ? '' : 'disabled'}>Activité externe hors suivi SCOPE</span></label>
         <label class="qv-programme-edit-full qv-programme-keep-lieu"><input id="qv-programme-participation-evaluation" type="checkbox" ${row.participationEvaluation !== false ? 'checked' : ''}><span>Évaluer le taux de participation</span></label>
         <p id="qv-programme-ecawin-status" class="qv-programme-edit-full qv-programme-workflow-note" role="status" ${qvProgrammeEcawinStatus(row.ecawinActivityCode,row.statCom) ? '' : 'hidden'}>${escapeHtml(qvProgrammeEcawinStatus(row.ecawinActivityCode,row.statCom))}</p>
@@ -12735,7 +12770,7 @@
     </section>`;
     return `<div class="qv-programme-detail${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}">
       <section class="scope-card qv-programme-summary">
-        <div class="qv-programme-fiche-head"><div><h2>${escapeHtml(creating ? 'Nouvelle activité 2027' : qvProgrammeActivityLabel(row))}</h2><p>${escapeHtml([row.publishedEventCode, qvProgrammeFicheOccurrenceLabel(row), row.sessionLabel].filter(Boolean).join(' · '))}</p></div><div class="qv-programme-head-actions"><a class="scope-btn" href="${qvHref('programme', { annee: qvProgrammeYear() })}"><span aria-hidden="true">←</span> Retour au programme</a>${canPrepare ? `<button type="button" class="scope-btn" id="qv-programme-save"${commandsDisabled}>Enregistrer</button><button type="button" class="scope-btn" id="qv-programme-validate"${commandsDisabled}>Enregistrer et valider</button><button type="button" class="scope-btn scope-btn-primary" id="qv-programme-plan"${commandsDisabled}>Enregistrer et planifier</button>` : ''}</div></div>
+        <div class="qv-programme-fiche-head"><div><h2>${escapeHtml(creating ? 'Nouvelle activité '+qvProgrammeYear() : qvProgrammeActivityLabel(row))}</h2><p>${escapeHtml([row.publishedEventCode, qvProgrammeFicheOccurrenceLabel(row), row.sessionLabel].filter(Boolean).join(' · '))}</p></div><div class="qv-programme-head-actions"><a class="scope-btn" href="${qvHref('programme', { annee: qvProgrammeYear() })}"><span aria-hidden="true">←</span> Retour au programme</a>${canPrepare ? `<button type="button" class="scope-btn" id="qv-programme-save"${commandsDisabled}>Enregistrer</button><button type="button" class="scope-btn" id="qv-programme-validate"${commandsDisabled}>Enregistrer et valider</button><button type="button" class="scope-btn scope-btn-primary" id="qv-programme-plan"${commandsDisabled}>Enregistrer et planifier</button>` : ''}</div></div>
         <div class="qv-programme-info-grid"><section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('file')}</span>Informations de l’événement</h3><dl class="qv-definition-list"><dt>Code SCOPE</dt><dd>${escapeHtml(qvProgrammeEventCodeLabel(row))}</dd><dt>Stat.Com</dt><dd>${escapeHtml(qvProgrammeStatComDisplay(row))}</dd><dt>Domaine</dt><dd>${escapeHtml(qvProgrammeDomainDisplay(currentDomain))}</dd><dt>Famille</dt><dd>${escapeHtml(qvProgrammeFamily(row))}</dd><dt>OI</dt><dd>${qvProgrammeOiHtml(row)}</dd><dt>Public cible</dt><dd>${qvProgrammePublicHtml(row)}</dd><dt>Thème / cycle</dt><dd>${escapeHtml(L.qvProgrammeVisibleThemes(row).join(' · ') || '—')}</dd><dt>Provenance</dt><dd>${escapeHtml(qvProgrammeProvenance(row))}</dd></dl></section>
           <section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('calendar')}</span>Planification</h3><dl class="qv-definition-list"><dt>Date</dt><dd>${escapeHtml(qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner')}</dd><dt>Horaire</dt><dd>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</dd><dt>Lieu</dt><dd>${escapeHtml(qvProgrammeLocationLabel(row))}</dd><dt>Salle</dt><dd>${escapeHtml(qvProgrammeRoomLabel(row))}</dd><dt>Responsable</dt><dd>${escapeHtml(qvProgrammeResponsableLabel(row))}</dd><dt>État</dt><dd>${scopeStateHtml(visual.tone, visual.label)}</dd></dl></section></div>
         <details class="qv-programme-reference" open><summary><span class="qv-programme-reference-icon">${qvCockpitIcon('info')}</span><strong>Règle appliquée · ${escapeHtml(qvProgrammeProvenance(row))}</strong><span class="qv-programme-reference-chevron" aria-hidden="true">⌄</span></summary><div class="qv-programme-reference-body"><p>${escapeHtml(qvProgrammeAppliedRule(row))}</p><button type="button" class="scope-btn" id="qv-programme-full-rule" aria-expanded="false" aria-controls="qv-programme-full-rule-content">Voir la règle complète</button><div id="qv-programme-full-rule-content" class="qv-programme-full-rule" hidden>${qvProgrammeFullRuleHtml(qv,row)}</div></div></details>
@@ -14489,6 +14524,71 @@
         }
       });
     });
+    document.getElementById('qv-programme-cycle-form')?.addEventListener('submit',async event=>{
+      event.preventDefault();
+      if(state.loading || !hasScopePermission('references:manage') || typeof client.setQuoVadisProgrammeCycle!=='function') return;
+      const qv=quoVadisProgrammeData();
+      const year=qv.programme.annee;
+      const body={startDate:document.getElementById('qv-cycle-start')?.value || null,
+        endDate:document.getElementById('qv-cycle-end')?.value || null,
+        parametersDefined:document.getElementById('qv-cycle-parameters')?.checked === true};
+      const reports=qv.programmeCycle?.reportOptions || [qv.programmeCycle?.openingReport,qv.programmeCycle?.closingReport].filter(Boolean);
+      for(const [field,key] of [['opening','openingReport'],['closing','closingReport']]){
+        const value=document.getElementById(`qv-cycle-${field}-report`)?.value;
+        const report=reports.find(item=>`${item.sourceType}:${item.itemId}`===value);
+        if(report) body[key]=report;
+      }
+      state.quoVadisCycleDraft={...body,year};
+      await withLoading(async()=>{
+        const saved=await client.setQuoVadisProgrammeCycle(year,body);
+        if(!saved.updated) throw new Error('Le cycle n’a pas pu être enregistré.');
+        invalidateCache(['quoVadis']);
+        const data=await client.quoVadisProgramme(year);
+        if(year===2027) state.quoVadis=data.quoVadis;
+        else state.quoVadisYears={...state.quoVadisYears,[year]:data.quoVadis};
+        state.quoVadisCycleDraft=null;
+        toast('success','Programme','Cycle enregistré.',{preserveForm:true});
+      });
+    });
+    document.getElementById('qv-programme-type')?.addEventListener('change',event=>{
+      const type=L.qvProgrammeActivityTypes?.(quoVadisProgrammeData())?.find(item=>item.id===event.currentTarget.value);
+      if(!type) return;
+      const defaults=type.defaults || {};
+      for(const [field,key] of [['activity','activityLabel'],['domain','domain'],['start','startTime'],['end','endTime']]){
+        const input=document.getElementById('qv-programme-'+field);
+        if(input && (Object.prototype.hasOwnProperty.call(defaults,key) || ['activity','domain'].includes(field))) input.value=defaults[key] || '';
+      }
+      const activity=document.getElementById('qv-programme-ecawin');
+      const statCom=document.getElementById('qv-programme-statcom');
+      if(activity){activity.value=defaults.ecawinActivityCode || '';activity.dataset.dirty='true';}
+      if(statCom){
+        statCom.innerHTML=qvProgrammeStatComOptions(quoVadisProgrammeData(),{statCom:defaults.statCom || ''},activity?.value || '');
+        statCom.value=document.getElementById('qv-programme-external')?.checked ? '' : defaults.statCom || '';
+      }
+      for(const [id,values] of [['qv-programme-oi',defaults.oiCodes],['qv-programme-public',defaults.publicCodes]]){
+        const field=document.getElementById(id);
+        field?.querySelectorAll('input[type="checkbox"]').forEach(input=>{
+          if(input.dataset.choiceKind !== 'FREE' && !input.dataset.qvOiGroup) input.checked=(values || []).includes(input.value);
+        });
+        field?.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+      {
+        const selections=defaults.responsibleSelections || [];
+        const field=document.getElementById('qv-programme-responsable');
+        field?.querySelectorAll('input[data-choice-kind="REFERENCE"]').forEach(input=>{
+          input.checked=selections.some(item=>item.kind==='REFERENCE' && item.code===input.value);
+        });
+        for(const value of selections.filter(item=>item.kind==='FREE')){
+          if(!field?.querySelectorAll('input[data-choice-kind="FREE"]') || qvResponsableIsDefault(value.label)) continue;
+          const existing=[...field.querySelectorAll('input[data-choice-kind="FREE"]')].find(input=>input.value===value.label);
+          if(existing) existing.checked=true;
+          else field.querySelector('[data-free-choices]')?.insertAdjacentHTML('beforeend',qvProgrammeFreeChoices([value.label]));
+        }
+        field?.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+      const status=document.getElementById('qv-programme-ecawin-status');
+      if(status){status.textContent=qvProgrammeEcawinStatus(activity?.value,statCom?.value);status.hidden=!status.textContent;}
+    });
     ['qv-programme-public','qv-programme-responsable'].forEach(id=>{
       const list=document.getElementById(id);
       const refresh=()=>{
@@ -14722,6 +14822,8 @@
         keepLieuInReferential: autreRaw === '__free' && document.getElementById('qv-programme-lieu-keep')?.checked === true,
         salleTheorieId: document.getElementById('qv-programme-salle')?.value || null
       };
+      if(creating && document.getElementById('qv-programme-type')?.value)
+        payload.programmeTypeId=document.getElementById('qv-programme-type').value;
       if(creating || document.getElementById('qv-programme-responsable')?.dataset.dirty === 'true')
         payload.responsibleSelections=[...(document.getElementById('qv-programme-responsable')?.querySelectorAll('input:checked') || [])]
           .map(input=>input.dataset.choiceKind === 'FREE' ? {kind:'FREE',label:input.value} : {kind:'REFERENCE',code:input.value});
@@ -14740,12 +14842,21 @@
       try {
         const data = creating ? await client.createQuoVadisProgrammeItem(payload)
           : await client.updateQuoVadisProgrammeItem(id, payload);
+        if(creating && data.reason === 'PROGRAMME_OCCURRENCE_EXISTS' && data.existingItemId){
+          toast('info','Programme','Une occurrence correspondante existe déjà.',{preserveForm:true});
+          const host=document.getElementById('qv-programme-activity')?.closest('.qv-programme-preparation');
+          host?.querySelector('[data-qv-existing-occurrence]')?.remove();
+          const year=data.existingCycleYear || payload.year;
+          host?.insertAdjacentHTML('afterbegin',`<p data-qv-existing-occurrence><a class="scope-text-action" href="#/quo-vadis/programme/${encodeURIComponent(data.existingItemId)}${year===2027?'':`?annee=${year}`}">Ouvrir l’occurrence existante</a></p>`);
+          return;
+        }
         if (!(creating ? data.created || data.updated : data.updated)) throw new Error('Cette occurrence ne peut pas être enregistrée.');
         invalidateCache(['quoVadis']);
-        state.quoVadis = data.quoVadis || state.quoVadis;
+        if(payload.year === 2027) state.quoVadis = data.quoVadis || state.quoVadis;
+        else if(data.quoVadis) state.quoVadisYears={...state.quoVadisYears,[payload.year]:data.quoVadis};
         saved = true;
         state.quoVadisProgrammeContextActive = true;
-        window.location.hash = qvHref('programme', {annee:quoVadisData().programme.annee});
+        window.location.hash = qvHref('programme', {annee:payload.year});
         toast('success', 'Programme', saveAction === 'PLAN' ? 'Activité validée et planifiée.'
           : saveAction === 'VALIDATE' ? 'Activité validée.' : creating ? 'Activité créée dans le programme.' : 'Préparation enregistrée.', {preserveForm:true,preserveRoute:true});
       } catch (error) {

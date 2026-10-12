@@ -18,7 +18,7 @@ const ACTION_ORDER = Object.freeze([
   ACTIONS.BLOCKED,
   ACTIONS.NOT_PUBLISHED
 ]);
-const DESCRIPTIVE_PUBLICS = Object.freeze({ 'CMDT:CODIR':'Membres du Codir' });
+const DESCRIPTIVE_PUBLICS = Object.freeze(require('../../assets/js/scope-ui-logic').qvProgrammeDescriptivePublics());
 
 function stableValue(value){
   if(Array.isArray(value)) return value.map(stableValue);
@@ -151,6 +151,7 @@ function businessValidation(item, referentials){
 }
 
 function readiness(item, referentials){
+  if(item.externalActivity === true) return {action:ACTIONS.NOT_PUBLISHED,reason:'EXTERNAL_ACTIVITY_OUTSIDE_SCOPE'};
   if(item.externalHistorical){
     const business = businessValidation(item, referentials);
     return business.valid

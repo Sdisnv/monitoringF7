@@ -37,7 +37,7 @@ const user = {sub:'local-qv-create',nip:'local-qv-create',displayName:'Recette l
   role:'GESTIONNAIRE',roles:['GESTIONNAIRE'],permissions:permissionsForRoles(['GESTIONNAIRE']),active:true};
 const types = {'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml',
   '.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2'};
-const protectedTables = ['scope_quo_vadis_obligations','scope_evenements','scope_participations',
+let protectedTables = ['scope_quo_vadis_obligations','scope_evenements','scope_participations',
   'scope_affectations','scope_attendus','scope_qv_publication_links','scope_event_code_sequences','scope_event_code_allocations','scope_quo_vadis_calendar_days',
   'scope_personnes','scope_person_qualifications','scope_competence_definitions',
   'scope_quo_vadis_cursus_definitions','scope_quo_vadis_cursus_steps',
@@ -111,12 +111,17 @@ const server = http.createServer((request,response) => {
       recipeFailureAfterWrite=body.__recipeFailureAfterWrite === true;
       recipeWritten=false;
       const programme = url.pathname.match(/^\/api\/scope\/quo-vadis\/programmes\/(\d{4})$/);
+      const cycle = url.pathname.match(/^\/api\/scope\/quo-vadis\/programmes\/(\d{4})\/cycle$/);
       const item = url.pathname.match(/^\/api\/scope\/quo-vadis\/programme-items\/([^/]+)$/);
       await query('savepoint browser_request');
       try {
         if(programme && request.method === 'GET') return json(response,200,{ok:true,quoVadis:await service.listProgramme(Number(programme[1]))});
+        if(cycle && request.method === 'PUT') return json(response,200,{ok:true,...await service.setProgrammeCycle(Number(cycle[1]),body)});
         if(url.pathname === '/api/scope/quo-vadis/programme-items' && request.method === 'POST')
-          return json(response,201,{ok:true,...await service.createProgrammePreparation(body)});
+          {
+            const result=await service.createProgrammePreparation(body);
+            return json(response,result.reason==='PROGRAMME_OCCURRENCE_EXISTS'?200:201,{ok:true,...result});
+          }
         if(item && request.method === 'PATCH') {
           const result = await service.updateProgrammePreparation(decodeURIComponent(item[1]),body);
           return json(response,result.updated ? 200 : 404,{ok:result.updated,...result});
@@ -142,6 +147,7 @@ async function stop() {
   server.close();
   await requests;
   const allowed=new Set(['scope_quo_vadis_obligations','scope_statcom_referentiel','scope_quo_vadis_calendar_days','scope_event_code_sequences']);
+  if(process.env.SCOPE_RECIPE_ROADMAP==='1') for(const table of ['scope_quo_vadis_programmes','scope_quo_vadis_future_dates']) allowed.add(table);
   const unchanged={};
   for(const table of protectedTables.filter(table=>!allowed.has(table))) unchanged[table]=JSON.stringify(await fingerprint(table)) === JSON.stringify(baseline[table]);
   const preparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
@@ -167,6 +173,8 @@ async function start() {
   const identity = (await client.query('select current_database() as name,inet_server_addr()::text as host,inet_server_port() as port')).rows[0];
   if(identity.name !== database || identity.host !== '127.0.0.1/32' || identity.port !== 5432)
     throw new Error('Unexpected database target');
+  if(process.env.SCOPE_RECIPE_ROADMAP==='1') protectedTables=(await client.query(`select tablename from pg_tables
+    where schemaname='public' and (tablename like 'scope_%' or tablename='monitoring_f7_schema_migrations') order by tablename`)).rows.map(row=>row.tablename);
   baseline = {};
   for(const table of protectedTables) baseline[table] = await fingerprint(table);
   originalPreparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;

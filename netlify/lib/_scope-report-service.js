@@ -183,6 +183,13 @@ async function generateStatComReferentialReport(repo, body, claims, options){
 
 function sanitizeQuoVadisRows(rows){
   const source = Array.isArray(rows) ? rows : [];
+  const activity = (row) => {
+    const title = String(row && row.activite || '');
+    const themes = Array.isArray(row && row.themes)
+      ? row.themes.filter((value) => typeof value === 'string').map((value) => value.trim()).filter(Boolean)
+      : [];
+    return themes.length ? `${title}\n${themes.join(' · ')}` : title;
+  };
   return source.map((row) => ({
     date: String(row && row.date || ''),
     dateIso: String(row && row.dateIso || ''),
@@ -193,7 +200,7 @@ function sanitizeQuoVadisRows(rows){
     domaine: String(row && row.domaine || ''),
     oi: String(row && row.oi || ''),
     publicCible: String(row && (row.publicCible || row.cible) || ''),
-    activite: String(row && row.activite || ''),
+    activite: activity(row),
     specCursus: String(row && (row.specCursus || row.specialisation) || ''),
     statcom: String(row && row.statcom || ''),
     lieu: String(row && row.lieu || ''),

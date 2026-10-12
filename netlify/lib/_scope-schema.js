@@ -447,6 +447,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisAgendaUx2();
   await migrateQuoVadisToutesActivitesUx1();
   await migrateQuoVadisMoaResponsible20261012();
+  await migrateQuoVadisRoadmapResponsible20261012();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -2721,6 +2722,19 @@ async function migrateQuoVadisMoaResponsible20261012(){
   });
 }
 
+async function migrateQuoVadisRoadmapResponsible20261012(){
+  if(await hasMigration('scope-qv-roadmap-responsible-20261012')) return;
+  await db.transaction(async (client) => {
+    await client.query(`select pg_advisory_xact_lock(hashtext('scope-qv-roadmap-responsible-20261012'))`);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version='scope-qv-roadmap-responsible-20261012'`);
+    if(done.rows[0]) return;
+    await client.query(`update scope_responsable_fonctions set libelle=$2,updated_at=now()
+      where code=$1 and libelle is distinct from $2`, ['C scrt',qvReferentials.responsibleFunctionLabel('C scrt')]);
+    await client.query(`insert into monitoring_f7_schema_migrations(version)
+      values ('scope-qv-roadmap-responsible-20261012') on conflict(version) do nothing`);
+  });
+}
+
 async function migrateQuoVadisToutesActivitesUx1(){
   if(await hasMigration('scope-quo-vadis-toutes-activites-ux-1')) return;
   for(const lieu of qvReferentials.OFFICIAL_LIEUX){
@@ -2766,7 +2780,7 @@ async function migrateQuoVadisToutesActivitesUx1(){
     )
   `);
   for(const [index, code] of qvReferentials.RESPONSIBLE_FUNCTIONS.entries()){
-    const libelle = code.replace(/^Présidente (CI|Codir)$/,'PrésidentE $1');
+    const libelle = qvReferentials.responsibleFunctionLabel(code);
     await db.query(
       `insert into scope_responsable_fonctions(code, libelle, sort_order, metadata)
        values ($1,$2,$3,$4::jsonb)

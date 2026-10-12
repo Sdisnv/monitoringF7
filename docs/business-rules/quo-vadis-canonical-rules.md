@@ -283,3 +283,35 @@ Les groupes DPS (G1, C1, B1, B2), DAP (Y1–Y4) et JSP (G1, C1, B1) se sélectio
 
 ### QV-PART-001 — Évaluation individuelle et reconduction
 `participationEvaluation` est un booléen individuel, activé par défaut pour toutes les occurrences jusqu'en 2027. Une décision individuelle prévaut et est reconduite. Le défaut des types futurs se configure dans le catalogue annuel existant, séparément du suivi nominatif et de ses règles de population. Désactiver l'évaluation filtre le suivi et les taux, sans supprimer le Programme, l'Agenda, les présences ni les obligations historiques. Aucun événement opérationnel n'est créé par la préparation ; la validation annuelle globale reste nécessaire.
+
+## ROADMAP V1 — décisions confirmées du 12.10.2026
+
+### QV-PUBLIC-003 — Fonctions descriptives permanentes
+Commandement : `CDT`, `C op`, `C log`, `C for`, `QM`. PR : `C PR`, `Formateur PR`. AUTO : `Of auto`, `Formateur C1/118`, `Moniteur conduite`.
+Les libellés visibles restent ces codes ou descriptions exacts, triés dans leur domaine. Ces déclarations ne désignent aucune personne et ne créent aucun NIP, affectation ou obligation individuelle. Les anciens publics et saisies libres restent conservés.
+
+### QV-RESP-003 — Correction du libellé C sct
+Le code stable `C scrt` conserve son identité ; son libellé proposé devient `C sct`. Les occurrences et décisions enregistrées ne sont pas réécrites. La migration est transactionnelle et idempotente.
+
+### QV-EXPORT-001 — Intitulé et thème dans les exports
+Programme et Agenda : le PDF présente l'intitulé complet puis le thème à la ligne suivante. L'export Excel existant, CSV compatible, les présente dans la même cellule, avec le séparateur exact ` - `. Sans thème renseigné, aucun séparateur ni ligne vide supplémentaire. Les générateurs existants sont conservés et aucun titre, Stat.Com ou code source n'est modifié.
+
+### QV-TYPE-001 / QV-TYPE-002 — Bibliothèque complémentaire
+La fiche manuelle propose les types canoniques existants et leurs valeurs démontrées, avec des variantes DPS qualifiées par site. Les valeurs restent modifiables. Une divergence de sources laisse le champ à compléter ; aucune correspondance, date, personne ou obligation n'est inventée. Une création manuelle ne devient pas automatiquement une nouvelle référence ou un nouveau type. La bibliothèque ne remplace jamais la génération récurrente.
+
+### QV-CYCLE-001 — Cycle délimité par les Rapports annuels
+Le Rapport annuel clôture le cycle précédent. Le cycle suivant commence après ce jalon, selon ses paramètres confirmés. La date réelle du Rapport enregistré prime sur la date canonique ; aucune clôture inconnue n'est déduite du 31 décembre. Les références de Rapport, bornes et confirmation des paramètres utilisent les métadonnées du Programme et les dates annoncées existantes.
+Une clôture explicitement renseignée par la MOA peut se situer en A+1. Le Programme acquis reste conservé, y compris les décisions historiques hors nouvelles bornes ; aucune occurrence validée n'est déplacée automatiquement. Les rotations CTA restent continues.
+
+### QV-CYCLE-002 — A+1 et absence de doublons
+Une occurrence manuelle peut appartenir au cycle A avec une date civile en A+1, sans génération préalable du Programme A+1, si les Rapports connus démontrent ce rattachement. Une occurrence correspondant au type, à la date, aux horaires, au Stat.Com et aux OI qualifiés est proposée sans écrasement ni nouvelle création. La génération suivante conserve les lignées humaines et ne recrée pas les occurrences déjà rattachées au cycle précédent.
+Les prolongations automatiques réutilisent les moteurs existants et les sources démontrées ; les champs et cadences non démontrés restent signalés, sans date inventée. Aucun événement opérationnel n'est créé avant validation complète du Programme.
+
+### QV-STAT-001 — Statistiques civiles indépendantes
+Les statistiques utilisent exclusivement la date réelle de l'événement, du 01.01 au 31.12 inclus, indépendamment de son cycle métier. Une occurrence du cycle 2027 datée en janvier 2028 contribue uniquement à 2028. Les moteurs existants conservent NIP, OI, domaines, spécialisations, affectations datées, dispenses et rattrapages ; une occurrence non évaluée ne contribue pas au taux et ses présences restent conservées.
+
+### QV-SCOPE-001 — Externe et non évalué sont distincts
+Une activité externe hors suivi SCOPE reste au Programme et à l'Agenda mais n'est pas publiée comme événement opérationnel SCOPE et ne crée aucune obligation individuelle. Une activité SCOPE non évaluée reste publiable après validation annuelle, avec ses mécanismes de présence conservés ; seule sa contribution au taux est désactivée.
+
+### QV-ECA-COURSES-001 — Suivi cantonal préservé
+Le suivi individuel par NIP, les cours suivis, les agrégats et leurs exports doivent réutiliser les mécanismes de participation SCOPE. Les codes ECAwin `COURS` et Stat.Com cantonaux restent distincts des obligations internes SDIS. Aucun module parallèle n'est créé. Le rapport du jalon documente les éventuels contrats spécialisés restant à terminer.
