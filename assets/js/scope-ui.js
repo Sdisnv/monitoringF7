@@ -11832,7 +11832,9 @@
       return { tone:'attention', label:'Publication à coordonner' };
     if (row.annualReportConstraint && row.annualReportConstraint.status === 'BLOCKED_BY_ANNUAL_REPORT')
       return { tone:'block', label:'Conflit Rapport annuel' };
-    if (row.publishedEventId) return { tone: 'positive', label: 'Publié' };
+    if (row.publishedEventId) return row.publicationRevision?.status === 'PENDING'
+      ? {tone:'attention',label:'Publié · À réviser'} : row.publicationRevision?.status === 'WITHDRAWN'
+        ? {tone:'attention',label:'Publié · Validation retirée'} : { tone: 'positive', label: 'Publié' };
     if (row.preparation && row.status === 'ANNULE') return { tone: 'inactive', label: 'Annulé' };
     if (row.preparation && row.status === 'NON_RETENU') return { tone: 'inactive', label: 'Écarté' };
     if ((row.review || row.publicReviewRequired) && !row.businessValidation) return { tone: 'attention', label: 'À contrôler' };
@@ -12657,6 +12659,7 @@
         ${hasScopePermission('references:manage')?'<button class="scope-btn" type="submit">Enregistrer le cycle</button>':''}
       </fieldset></form>
       ${cycle.openingReport ? `<p>Rapport précédent : ${escapeHtml(qvFormatDate(cycle.openingReport.actualDate))}</p>` : '<p class="scope-state-error">Rapport précédent non défini.</p>'}
+      ${cycle.closingProposal ? '<p>Rapport annuel de clôture 2027 proposé en février 2028. Date à confirmer selon les relâches scolaires.</p>' : ''}
       ${cycle.automaticExtension?.status==='PARTIAL_MOA_REQUIRED'?'<p class="scope-state-error">Extension A+1 partielle : cadences à confirmer.</p>':''}
     </details>`;
   }
@@ -12681,6 +12684,7 @@
         && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')).length))} séances au programme · ${escapeHtml(String(target.historicalNotRenewed || 0))} activités historiques non reconduites.</p></div><div class="scope-actions qv-export-actions">${qvProgrammeYear() >= 2027 && hasScopePermission('references:manage') ? `<a class="scope-btn scope-btn-primary" href="${qvProgrammeFicheHref('nouveau')}">Créer une activité</a>` : ''}${qvProgrammeModeControl()}${qvProgrammePdfControl()}<button type="button" class="scope-btn" id="qv-export-programme-pdf">Exporter PDF</button><button type="button" class="scope-btn" id="qv-export-programme-excel">Exporter pour Excel</button></div></div>
       <div class="qv-programme-kpis" aria-label="Niveaux du programme">${metrics.map(([label, value, detail]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value == null ? '—' : value))}</strong><small>${escapeHtml(detail)}</small></div>`).join('')}</div>
       ${qvProgrammeCycleControl(qv)}
+      ${hasScopePermission('references:manage') ? `<details class="qv-programme-cycle"><summary>Validation annuelle : ${escapeHtml(qvStatusLabel(qv.programme.statut))}</summary><label><span>État du Programme annuel</span><select id="qv-programme-status">${['PREPARATION','VALIDATION','VALIDE'].map(status=>`<option value="${status}" ${status===qv.programme.statut?'selected':''}>${escapeHtml(qvStatusLabel(status))}</option>`).join('')}</select></label><label><span>Motif de retrait de validation annuelle</span><textarea id="qv-programme-status-motif" maxlength="2000"></textarea></label>${qv.annualValidationControl?.blocking ? `<ul>${qv.annualValidationControl.issues.map(issue=>`<li>${escapeHtml(issue)}</li>`).join('')}</ul>` : ''}</details>` : ''}
       ${qvProgrammeYear() !== 2027 ? `<p class="qv-programme-workflow-note">Programme ${escapeHtml(String(qvProgrammeYear()))} en préparation : seules les lignées validées et les permanences CTA calculées sont consultables. Le référentiel 2026 → 2027 reste la source de la reconduction.</p>` : ''}
       <details class="qv-programme-lineage"${qvProgrammeYear() !== 2027 ? ' hidden' : ''}><summary>Comprendre 2026 → 2027</summary><p>2026 : ${escapeHtml(String(source.sourceRows || 0))} lignes source, ${escapeHtml(String(source.models || 0))} modèles, ${escapeHtml(String(source.occurrences || 0))} occurrences, ${escapeHtml(String(source.sessions || 0))} sessions. 2027 : ${escapeHtml(String(target.models || 0))} modèles actifs, ${escapeHtml(String(target.occurrences || 0))} occurrences et ${escapeHtml(String(target.sessions || 0))} sessions. Le chiffre historique 302 désigne la matrice de définitions source réconciliées, pas un nombre d’événements.</p></details>
       ${qvProgrammeFilterBar(qv)}
@@ -12736,10 +12740,13 @@
     const commandsDisabled=state.loading ? ' disabled' : '';
     const preparationForm = `<section class="scope-card qv-programme-preparation">
       <h3 class="qv-programme-panel-title"><span class="qv-programme-panel-icon">${pencilIcon()}</span>Préparation QUO VADIS</h3>
-      ${row.publishedEventId ? '<p class="qv-programme-workflow-note">Cette édition reste dans QUO VADIS et ne modifie pas l’événement publié.</p>' : ''}
+      ${row.publicationRevision?.status === 'PENDING' ? '<p class="qv-programme-workflow-note">Révision ciblée en attente de validation. L’événement publié reste conservé.</p>' : ''}
+      ${row.validationWithdrawal ? `<p class="qv-programme-workflow-note">Validation retirée : ${escapeHtml(row.validationWithdrawal.motif)}.</p>` : ''}
       ${row.annualReportConstraint && row.annualReportConstraint.status === 'PUBLICATION_UPDATE_REQUIRED' ? `<p class="qv-programme-workflow-note">Rapport annuel prioritaire le ${escapeHtml(qvFormatDate(row.annualReportConstraint.date, '—'))}, après-midi et soir. L’événement lié reste au ${escapeHtml(qvFormatDate(row.publishedEventDate, '—'))} ; sa mise à jour doit être coordonnée sur le même événement.</p>` : ''}
       ${row.annualReportConstraint && row.annualReportConstraint.status === 'BLOCKED_BY_ANNUAL_REPORT' ? `<p class="qv-programme-workflow-note is-conflict">Le ${escapeHtml(qvFormatDate(row.annualReportConstraint.date, '—'))} après-midi et soir est réservé au Rapport annuel. Cette activité doit être repositionnée ou arbitrée selon sa décision existante.</p>` : ''}
       <fieldset class="qv-programme-edit-grid" ${canPrepare && !state.loading ? '' : 'disabled'}>
+        ${(row.publishedEventId || row.businessValidation || row.status === 'VALIDATED') ? `<label class="qv-programme-edit-full"><span>Motif de retrait / révision</span><textarea id="qv-programme-revision-motif" maxlength="2000">${escapeHtml(row.publicationRevision?.status === 'PENDING' ? row.publicationRevision.motif || '' : '')}</textarea></label>` : ''}
+        ${row.publicationRevision?.status === 'PENDING' ? '<label class="qv-programme-edit-full qv-programme-keep-lieu"><input type="checkbox" id="qv-programme-confirm-impact"><span>Confirmer la révision et conserver les présences historiques hors nouvelle population</span></label>' : ''}
         ${creating ? `<label class="qv-programme-edit-full"><span>Activité type</span><select id="qv-programme-type"><option value="">Saisie manuelle</option>${[...new Set(activityTypes.map(type=>type.group || 'Activités'))].map(group=>`<optgroup label="${escapeHtml(group)}">${activityTypes.filter(type=>(type.group || 'Activités')===group).map(type=>`<option value="${escapeHtml(type.id)}">${escapeHtml(type.label)}</option>`).join('')}</optgroup>`).join('')}</select></label>` : ''}
         <label class="qv-programme-edit-half"><span>Activité</span><input id="qv-programme-activity" type="text" maxlength="240" value="${escapeHtml(creating ? '' : qvProgrammeActivityLabel(row))}"></label>
         <label class="qv-programme-edit-half"><span>Thème</span><input id="qv-programme-themes" type="text" maxlength="1320" value="${escapeHtml((row.themes || []).join(' ; '))}"></label>
@@ -12770,7 +12777,7 @@
     </section>`;
     return `<div class="qv-programme-detail${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}">
       <section class="scope-card qv-programme-summary">
-        <div class="qv-programme-fiche-head"><div><h2>${escapeHtml(creating ? 'Nouvelle activité '+qvProgrammeYear() : qvProgrammeActivityLabel(row))}</h2><p>${escapeHtml([row.publishedEventCode, qvProgrammeFicheOccurrenceLabel(row), row.sessionLabel].filter(Boolean).join(' · '))}</p></div><div class="qv-programme-head-actions"><a class="scope-btn" href="${qvHref('programme', { annee: qvProgrammeYear() })}"><span aria-hidden="true">←</span> Retour au programme</a>${canPrepare ? `<button type="button" class="scope-btn" id="qv-programme-save"${commandsDisabled}>Enregistrer</button><button type="button" class="scope-btn" id="qv-programme-validate"${commandsDisabled}>Enregistrer et valider</button><button type="button" class="scope-btn scope-btn-primary" id="qv-programme-plan"${commandsDisabled}>Enregistrer et planifier</button>` : ''}</div></div>
+        <div class="qv-programme-fiche-head"><div><h2>${escapeHtml(creating ? 'Nouvelle activité '+qvProgrammeYear() : qvProgrammeActivityLabel(row))}</h2><p>${escapeHtml([row.publishedEventCode, qvProgrammeFicheOccurrenceLabel(row), row.sessionLabel].filter(Boolean).join(' · '))}</p></div><div class="qv-programme-head-actions"><a class="scope-btn" href="${qvHref('programme', { annee: qvProgrammeYear() })}"><span aria-hidden="true">←</span> Retour au programme</a>${canPrepare ? `<button type="button" class="scope-btn" id="qv-programme-save"${commandsDisabled}>Enregistrer</button><button type="button" class="scope-btn" id="qv-programme-validate"${commandsDisabled}>${row.publicationRevision?.status === 'PENDING' ? 'Valider la révision ciblée' : 'Enregistrer et valider'}</button><button type="button" class="scope-btn scope-btn-primary" id="qv-programme-plan"${commandsDisabled}>Enregistrer et planifier</button>${!creating && (row.businessValidation || row.status === 'VALIDATED' || row.publishedEventId) ? `<button type="button" class="scope-btn" id="qv-programme-withdraw"${commandsDisabled}>Retirer la validation</button>` : ''}` : ''}</div></div>
         <div class="qv-programme-info-grid"><section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('file')}</span>Informations de l’événement</h3><dl class="qv-definition-list"><dt>Code SCOPE</dt><dd>${escapeHtml(qvProgrammeEventCodeLabel(row))}</dd><dt>Stat.Com</dt><dd>${escapeHtml(qvProgrammeStatComDisplay(row))}</dd><dt>Domaine</dt><dd>${escapeHtml(qvProgrammeDomainDisplay(currentDomain))}</dd><dt>Famille</dt><dd>${escapeHtml(qvProgrammeFamily(row))}</dd><dt>OI</dt><dd>${qvProgrammeOiHtml(row)}</dd><dt>Public cible</dt><dd>${qvProgrammePublicHtml(row)}</dd><dt>Thème / cycle</dt><dd>${escapeHtml(L.qvProgrammeVisibleThemes(row).join(' · ') || '—')}</dd><dt>Provenance</dt><dd>${escapeHtml(qvProgrammeProvenance(row))}</dd></dl></section>
           <section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('calendar')}</span>Planification</h3><dl class="qv-definition-list"><dt>Date</dt><dd>${escapeHtml(qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner')}</dd><dt>Horaire</dt><dd>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</dd><dt>Lieu</dt><dd>${escapeHtml(qvProgrammeLocationLabel(row))}</dd><dt>Salle</dt><dd>${escapeHtml(qvProgrammeRoomLabel(row))}</dd><dt>Responsable</dt><dd>${escapeHtml(qvProgrammeResponsableLabel(row))}</dd><dt>État</dt><dd>${scopeStateHtml(visual.tone, visual.label)}</dd></dl></section></div>
         <details class="qv-programme-reference" open><summary><span class="qv-programme-reference-icon">${qvCockpitIcon('info')}</span><strong>Règle appliquée · ${escapeHtml(qvProgrammeProvenance(row))}</strong><span class="qv-programme-reference-chevron" aria-hidden="true">⌄</span></summary><div class="qv-programme-reference-body"><p>${escapeHtml(qvProgrammeAppliedRule(row))}</p><button type="button" class="scope-btn" id="qv-programme-full-rule" aria-expanded="false" aria-controls="qv-programme-full-rule-content">Voir la règle complète</button><div id="qv-programme-full-rule-content" class="qv-programme-full-rule" hidden>${qvProgrammeFullRuleHtml(qv,row)}</div></div></details>
@@ -14809,6 +14816,9 @@
         statCom:document.getElementById('qv-programme-statcom')?.value || '',
         domain:document.getElementById('qv-programme-domain')?.value || '',
         saveAction,year:quoVadisData().programme.annee,
+        motif:document.getElementById('qv-programme-revision-motif')?.value || '',
+        publishedEventVersion:(((quoVadisData().canonicalProgramme || {}).rows || []).find(row=>String(row.id) === String(id)))?.publishedEventVersion,
+        confirmPopulationImpact:document.getElementById('qv-programme-confirm-impact')?.checked === true,
         date: qvProgrammeDatePayload(document.getElementById('qv-programme-date')?.value || ''),
         startTime: document.getElementById('qv-programme-start')?.value || null,
         endTime: document.getElementById('qv-programme-end')?.value || null,
@@ -14835,7 +14845,7 @@
         payload.ecawinActivityCode = document.getElementById('qv-programme-ecawin')?.value || '';
       if(creating) payload.externalActivity = document.getElementById('qv-programme-external')?.checked === true;
       state.quoVadisBusy = true;
-      const saveButtons = ['qv-programme-save','qv-programme-validate','qv-programme-plan']
+      const saveButtons = ['qv-programme-save','qv-programme-validate','qv-programme-plan','qv-programme-withdraw']
         .map((buttonId) => document.getElementById(buttonId)).filter(Boolean);
       saveButtons.forEach((button) => { button.disabled = true; });
       let saved = false;
@@ -14857,7 +14867,8 @@
         saved = true;
         state.quoVadisProgrammeContextActive = true;
         window.location.hash = qvHref('programme', {annee:payload.year});
-        toast('success', 'Programme', saveAction === 'PLAN' ? 'Activité validée et planifiée.'
+        const savedRow=data.quoVadis?.canonicalProgramme?.rows.find(row=>String(row.id) === String(id));
+        toast('success', 'Programme', savedRow?.publicationRevision?.status === 'PENDING' ? 'Révision ciblée enregistrée, publication conservée.' : saveAction === 'WITHDRAW' ? 'Validation retirée et motif enregistré.' : saveAction === 'PLAN' ? 'Activité validée et planifiée.'
           : saveAction === 'VALIDATE' ? 'Activité validée.' : creating ? 'Activité créée dans le programme.' : 'Préparation enregistrée.', {preserveForm:true,preserveRoute:true});
       } catch (error) {
         toast('error', 'Programme', L.friendlyError(error).message || 'L’enregistrement a échoué.', {preserveForm:true});
@@ -14870,6 +14881,7 @@
     document.getElementById('qv-programme-save')?.addEventListener('click', () => saveProgrammePreparation('SAVE'));
     document.getElementById('qv-programme-validate')?.addEventListener('click', () => saveProgrammePreparation('VALIDATE'));
     document.getElementById('qv-programme-plan')?.addEventListener('click', () => saveProgrammePreparation('PLAN'));
+    document.getElementById('qv-programme-withdraw')?.addEventListener('click', () => saveProgrammePreparation('WITHDRAW'));
     document.getElementById('qv-programme-cancel-year')?.addEventListener('click', async () => {
       const id = route().qvProgrammeItemId;
       if (!id || typeof client.updateQuoVadisProgrammeItem !== 'function' || state.quoVadisBusy) return;
@@ -15021,7 +15033,15 @@
     document.getElementById('qv-programme-status')?.addEventListener('change', async (event) => {
       if (typeof client.setQuoVadisProgrammeStatus !== 'function') return;
       try {
-        const data = await client.setQuoVadisProgrammeStatus(2027, { statut: event.target.value });
+        const previous=quoVadisData()?.programme?.statut;
+        const withdrawing=['VALIDE','VALIDATION'].includes(previous) && event.target.value !== previous && event.target.value !== 'VALIDE';
+        const motif=document.getElementById('qv-programme-status-motif')?.value || '';
+        if(withdrawing && !motif.trim()){
+          event.target.value=previous;
+          toast('error','Programme','Le retrait de validation annuelle exige un motif.',{preserveForm:true});
+          return;
+        }
+        const data = await client.setQuoVadisProgrammeStatus(quoVadisData()?.programme?.annee || 2027, { statut: event.target.value,motif });
         invalidateCache(['quoVadis']);
         state.quoVadis = data.quoVadis || state.quoVadis;
         toast('success', 'Planning', `Statut: ${qvStatusLabel(event.target.value)}.`);

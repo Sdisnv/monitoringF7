@@ -64,6 +64,7 @@ const INITIAL_STATCOM_CODES = [
   ['0173F7', 'Solde instruction FOCA RECO DPS', 'FOCA', 'EXERCI', 'F7', 'RECO_DPS'],
   ['0174F7', 'Solde instruction FOCA RECO DAP', 'FOCA', 'EXERCI', 'F7', 'RECO_DAP'],
   ['0175F7', 'Solde instruction FOCA DIVERS', 'FOCA', 'EXERCI', 'F7', 'DIVERS'],
+  ['0180F7', 'Formations EXTRAS', 'EXERCICE', 'EXERCI', null, null, '2026-01-01', 'Captures ECAwin officielles 09.10.2026'],
   ['0120F7', 'Solde instruction FOCO DPS (4 DPS)', 'DPS', 'EXERCI', 'F7', 'FOCO_DPS_4'],
   ['0130F7', 'Solde instruction FOCO DAP (4 DAP)', 'DAP', 'EXERCI', 'F7', 'FOCO_DAP_4'],
   ['050F23', 'Heure administrative renseignements F2/3', 'ADMIN', 'ADMIN', 'F23', null],

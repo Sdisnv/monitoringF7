@@ -112,18 +112,21 @@ const server = http.createServer((request,response) => {
       recipeWritten=false;
       const programme = url.pathname.match(/^\/api\/scope\/quo-vadis\/programmes\/(\d{4})$/);
       const cycle = url.pathname.match(/^\/api\/scope\/quo-vadis\/programmes\/(\d{4})\/cycle$/);
+      const status = url.pathname.match(/^\/api\/scope\/quo-vadis\/programmes\/(\d{4})\/statut$/);
       const item = url.pathname.match(/^\/api\/scope\/quo-vadis\/programme-items\/([^/]+)$/);
       await query('savepoint browser_request');
       try {
         if(programme && request.method === 'GET') return json(response,200,{ok:true,quoVadis:await service.listProgramme(Number(programme[1]))});
         if(cycle && request.method === 'PUT') return json(response,200,{ok:true,...await service.setProgrammeCycle(Number(cycle[1]),body)});
+        if(process.env.SCOPE_RECIPE_COMPLEMENT==='1' && status && request.method === 'POST')
+          return json(response,200,{ok:true,...await service.setProgrammeStatus(Number(status[1]),{...body,actor:user.sub})});
         if(url.pathname === '/api/scope/quo-vadis/programme-items' && request.method === 'POST')
           {
             const result=await service.createProgrammePreparation(body);
             return json(response,result.reason==='PROGRAMME_OCCURRENCE_EXISTS'?200:201,{ok:true,...result});
           }
         if(item && request.method === 'PATCH') {
-          const result = await service.updateProgrammePreparation(decodeURIComponent(item[1]),body);
+          const result = await service.updateProgrammePreparation(decodeURIComponent(item[1]),body,{actor:user.sub});
           return json(response,result.updated ? 200 : 404,{ok:result.updated,...result});
         }
       } catch(error) {
@@ -148,6 +151,7 @@ async function stop() {
   await requests;
   const allowed=new Set(['scope_quo_vadis_obligations','scope_statcom_referentiel','scope_quo_vadis_calendar_days','scope_event_code_sequences']);
   if(process.env.SCOPE_RECIPE_ROADMAP==='1') for(const table of ['scope_quo_vadis_programmes','scope_quo_vadis_future_dates']) allowed.add(table);
+  if(process.env.SCOPE_RECIPE_COMPLEMENT==='1') allowed.add('scope_journal_metier');
   const unchanged={};
   for(const table of protectedTables.filter(table=>!allowed.has(table))) unchanged[table]=JSON.stringify(await fingerprint(table)) === JSON.stringify(baseline[table]);
   const preparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;

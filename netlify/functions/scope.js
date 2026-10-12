@@ -340,7 +340,7 @@ async function scopeHandler(event){
     params = match(path, '/quo-vadis/programmes/:annee/statut');
     if(method === 'POST' && params){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
-      return response(200, { ok:true, ...(await quoVadis.setProgrammeStatus(params.annee, body)) });
+      return response(200, { ok:true, ...(await quoVadis.setProgrammeStatus(params.annee, {...body,actor:claims.sub || null})) });
     }
     params = match(path, '/quo-vadis/proposals/:id/retain');
     if(method === 'POST' && params){
@@ -362,7 +362,7 @@ async function scopeHandler(event){
     params = match(path, '/quo-vadis/programme-items/:id');
     if(method === 'PATCH' && params){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
-      const result = await quoVadis.updateProgrammePreparation(params.id, body);
+      const result = await quoVadis.updateProgrammePreparation(params.id, body,{actor:claims.sub || null});
       return response(result.updated ? 200 : 404, { ok:result.updated, ...result });
     }
     params = match(path, '/quo-vadis/activities/:id/references');

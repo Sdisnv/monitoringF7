@@ -440,6 +440,7 @@ async function ensureScopeSchema(){
   await migrateStatComReferentialConfig1();
   await migrateStatComSpecialisationPersistenceRepair2();
   await migrateStatComEcawinMoa20261009();
+  await migrateStatComExtrasMoa20261012();
   await migrateQuoVadisCore1();
   await migrateQuoVadisPilotage2();
   await migrateQuoVadisCoverage1();
@@ -935,6 +936,20 @@ async function migrateStatComEcawinMoa20261009(){
     if(done.rows[0]) return;
     await synchronizeEcawinReferential(client);
     await client.query("insert into monitoring_f7_schema_migrations(version) values('scope-statcom-ecawin-moa-20261010-2') on conflict(version) do nothing");
+  });
+}
+
+async function migrateStatComExtrasMoa20261012(){
+  return db.transaction(async client=>{
+    await client.query('select pg_advisory_xact_lock($1)',[671902287]);
+    const version='scope-statcom-extras-moa-20261012';
+    if((await client.query('select 1 from monitoring_f7_schema_migrations where version=$1',[version])).rows[0]) return;
+    await client.query(`insert into scope_statcom_referentiel(code,label,domain,category,active,metadata)
+      values ('0180F7','Formations EXTRAS','EXERCICE','EXERCI',true,$1::jsonb)
+      on conflict(code) do update set label=excluded.label,
+        metadata=scope_statcom_referentiel.metadata || excluded.metadata,updated_at=now()`,
+      [JSON.stringify({ecawin:{activityCode:'EXERCI',source:'Captures ECAwin officielles 09.10.2026',historicalOnly:false}})]);
+    await client.query('insert into monitoring_f7_schema_migrations(version) values($1) on conflict(version) do nothing',[version]);
   });
 }
 

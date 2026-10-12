@@ -11654,7 +11654,7 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-course-code{font-weight:400;white-space:nowrap}
 .qv-programme-domain-family{display:grid;gap:2px}
 .qv-programme-domain-family span:last-child{color:#59616b}
-.qv-programme-table td:nth-child(11){vertical-align:middle}.qv-programme-table td:nth-child(11) .scope-state{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.qv-programme-table td:nth-child(11) .scope-state-label{white-space:nowrap}
+.qv-programme-table td:nth-child(11){vertical-align:top}.qv-programme-table td:nth-child(11) .scope-state{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.qv-programme-table td:nth-child(11) .scope-state-label{white-space:nowrap}
 .qv-programme-time,.qv-programme-action,.qv-programme-public-list{display:grid;gap:2px}.qv-programme-time>span,.qv-programme-action>span,.qv-programme-public-list>span{display:block;white-space:nowrap}
 .qv-programme-activity.is-cta{display:grid;gap:2px}.qv-programme-activity.is-cta>span{display:block;white-space:nowrap}
 .qv-programme-theme{display:block;color:var(--muted,#52606d);font-weight:400;line-height:1.35;white-space:normal}

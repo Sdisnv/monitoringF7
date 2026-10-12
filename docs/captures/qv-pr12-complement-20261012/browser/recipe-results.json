@@ -1,0 +1,30 @@
+{
+  "base": "http://127.0.0.1:4410",
+  "results": [
+    {
+      "name": "seven PAPR titles and themes are visible, restored dates remain blank",
+      "status": "PASS"
+    },
+    {
+      "name": "EXERCI offers 0180F7 without changing stored Stat.Com",
+      "status": "PASS"
+    },
+    {
+      "name": "PAPR planning persists, withdrawal needs a reason and cannot save unsaved title changes",
+      "status": "PASS"
+    },
+    {
+      "name": "annual validation blocked by incomplete PAPR, report closing window has no date",
+      "status": "PASS"
+    },
+    {
+      "name": "state cell top aligned with actual 8x8 square, desktop and mobile layout",
+      "status": "PASS"
+    }
+  ],
+  "javascriptErrors": [],
+  "statComCompared": 873,
+  "statComIdentical": 873,
+  "productionWrites": false,
+  "verdict": "PASS"
+}

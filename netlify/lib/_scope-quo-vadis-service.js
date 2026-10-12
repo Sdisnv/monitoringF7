@@ -7,6 +7,8 @@ const { createQvReferentialManagement } = require('./_scope-qv-referential-manag
 const functionalCatalog = require('./_scope-functional-catalog');
 const annualReportCatalog = require('./_scope-annual-report-rule');
 const programmeCycles = require('./_scope-programme-cycle');
+const paprRules = require('./_scope-qv-papr-rules');
+const programmeRevisions = require('./_scope-qv-programme-revisions');
 const eventCodes = require('./_scope-event-code');
 const { randomUUID } = require('crypto');
 const { HttpError } = require('./_scope-rules');
@@ -300,11 +302,11 @@ function canonicalBusinessProgramme2027(){
   const programmedInstructions = overlayRows.filter((row) => row.provenance === 'MOA_RULE_ANNUAL_PROGRAMMING').length;
   const conduitesAdded = overlayRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_ANNUAL').length;
   const previousDomainRows = applyProvenInstitutionalDomains(reconcileValidatedCursusModules(arbitratedRows));
-  const canonicalDomainRows = applyMoaInstitutionalDomains(previousDomainRows);
+  const canonicalDomainRows = paprRules.restorePaprModules(applyMoaInstitutionalDomains(previousDomainRows),historicalReference2026.rows || []);
   canonicalBusinessCache = {
     rows: applyMonthlyJspDirectionAndAnnualReport(canonicalDomainRows),
     summary: {
-      institutionalDomains: canonicalDomainRows.flatMap((row, index) => row.domain !== previousDomainRows[index].domain
+      institutionalDomains: canonicalDomainRows.flatMap((row, index) => previousDomainRows[index] && row.domain !== previousDomainRows[index].domain
         ? [{ id:row.id,label:row.label,before:previousDomainRows[index].domain,after:row.domain }] : []),
       rotation: rotation.report,
       instructionCoverage: {
@@ -1816,6 +1818,9 @@ function createScopeQuoVadisService({ database = db } = {}){
             status:preparation.statut,provenance:'MANUAL_2027',
             lineage:preparation.metadata.lineage || null,
             businessValidation:preparation.metadata.businessValidation || null,
+            publicationRevision:preparation.metadata.publicationRevision || null,
+            validationWithdrawal:preparation.metadata.validationWithdrawal || null,
+            validationHistory:preparation.metadata.validationHistory || [],
             humanDecision:preparation.metadata.humanDecision === true,
             externalActivity:source.externalActivity === true,external:false
           };
@@ -1825,7 +1830,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         target: canonicalProgramme2027.target,
         equation: canonicalProgramme2027.equation,
         businessRules: canonicalBusinessProgramme2027().summary,
-        rows: applyAnnualReportConstraint(functionalCatalog.programmeActivityPresentation(canonicalBusinessRows).map((row) => {
+        rows: applyAnnualReportConstraint(functionalCatalog.programmeActivityPresentation(canonicalBusinessRows
+          .filter(row=>!row.restoredModule || !manualRows.some(manual=>paprRules.moduleNumber(manual) === paprRules.moduleNumber(row)))).map((row) => {
           const canonicalSource = uiLogic.qvEnrichSectionPublic(canonicalSourceById.get(String(row.id)) || {}, historicalReference2026.rows, canonicalBusinessRows, ctaRules.instructionPublicForDate);
           const event = publishedByUnit.get(String(row.id));
           const preparation = preparationByUnit.get(String(row.id));
@@ -1858,6 +1864,10 @@ function createScopeQuoVadisService({ database = db } = {}){
             participationEvaluation:participationEvaluation(fields,canonicalSource),
             lineage:preparation.metadata.lineage || null,
             businessValidation:preparation.metadata.businessValidation || null,
+            publicationRevision:preparation.metadata.publicationRevision || null,
+            validationWithdrawal:preparation.metadata.validationWithdrawal || null,
+            validationHistory:preparation.metadata.validationHistory || [],
+            ...(preparation.metadata.businessCode ? {businessCode:preparation.metadata.businessCode} : {}),
             startsAt:Object.prototype.hasOwnProperty.call(fields,'date')
               ? (fields.date && fields.startTime ? isoLocalDateTime(fields.date,fields.startTime) : null)
               : row.startsAt,
@@ -1881,7 +1891,7 @@ function createScopeQuoVadisService({ database = db } = {}){
           const protectedDecision = Boolean(event || (preparation && preparation.metadata && (
             preparation.metadata.humanDecision === true || preparation.metadata.decisionHumaine === true
             || preparation.metadata.validatedBy || preparation.metadata.planningFields)));
-          const publishedPrAbcOi = event && row.label === 'Exercice PR-ABC' && !Array.isArray(fields.oiCodes)
+          const publishedPrAbcOi = event && (paprRules.moduleNumber(row) || /^Exercice PR(?:\s|$|-ABC)/.test(row.label || '')) && !Array.isArray(fields.oiCodes)
             ? { ois: event.oi_codes || [] } : {};
           const presented = Object.assign({}, row, sourceFields, prepared, publishedPrAbcOi,
             cursusStep ? { cursus: cursusStep.libelle, cursusId: cursusStep.cursusId,
@@ -2123,6 +2133,10 @@ function createScopeQuoVadisService({ database = db } = {}){
       }
       const programmeRows = result.canonicalProgramme.rows.filter((row) => !row.external && !row.jspDirectionReconciliation
         && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'));
+      result.annualValidationControl = paprRules.annualPaprControl(programmeRows);
+      if(ctaYear === 2027 && !cycle.closingReport)
+        result.programmeCycle.closingProposal = {activityLabel:'Rapport annuel',closesCycleYear:2027,
+          proposedMonth:'2028-02',date:null,status:'MOA_REQUIRED',schoolCalendarReviewRequired:true};
       if(ctaYear === 2027){
         const displayAnnualReportDate = (value) => String(value || '').replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3.$2.$1');
         const annualReport = programmeRows.find((row) => row.annualReportConstraint?.status === 'PUBLICATION_UPDATE_REQUIRED');
@@ -3323,18 +3337,34 @@ function createScopeQuoVadisService({ database = db } = {}){
   }
 
   async function setProgrammeStatus(annee, body = {}){
+    if(typeof db.transaction === 'function') return db.transaction(client=>
+      createScopeQuoVadisService({database:{query:(...args)=>client.query(...args)}}).setProgrammeStatus(annee,body));
     const programme = await ensureProgramme(annee);
     const statut = String(body.statut || body.status || '').toUpperCase();
     const allowed = ['PREPARATION', 'VALIDATION', 'VALIDE'];
     if(!allowed.includes(statut)) return { updated: false, error: 'Statut de programme invalide.' };
+    await db.query('select pg_advisory_xact_lock(hashtext($1))',[`QUO-VADIS:${programme.annee}`]);
+    const current = (await db.query('select statut,metadata from scope_quo_vadis_programmes where programme_id=$1 for update',[programme.programmeId])).rows[0];
+    const motif = String(body.motif || '').trim();
+    const withdrawal = ['VALIDE','VALIDATION'].includes(current.statut) && statut !== current.statut && statut !== 'VALIDE';
+    if(withdrawal && !motif) throw new HttpError(422,'programme_motif_obligatoire','Le retrait de validation exige un motif.');
+    if(statut === 'VALIDE'){
+      const control = (await listProgramme(programme.annee)).annualValidationControl;
+      if(control?.blocking) throw new HttpError(422,'programme_papr_prerequis_bloquant',control.issues.join(' '),{control});
+    }
+    const decision = {statut,previousStatus:current.statut,updatedAt:new Date().toISOString(),motif:motif || null,actor:body.actor || null};
     await db.query(
       `update scope_quo_vadis_programmes
           set statut = $2,
               metadata = coalesce(metadata, '{}'::jsonb) || $3::jsonb,
               updated_at = now()
         where programme_id = $1`,
-      [programme.programmeId, statut, JSON.stringify({ programmeStatus: { statut, updatedAt: new Date().toISOString() } })]
+      [programme.programmeId, statut, JSON.stringify({programmeStatus:decision,
+        programmeStatusHistory:[...(current.metadata?.programmeStatusHistory || []),decision]})]
     );
+    if(withdrawal) await db.query(`insert into scope_journal_metier(journal_id,auteur_id,entite,entite_id,action,avant,apres,commentaire)
+      values($1,$2,'quo_vadis_programme',$3,'RETIRER_VALIDATION',$4::jsonb,$5::jsonb,$6)`,
+      [randomUUID(),body.actor || null,programme.programmeId,JSON.stringify({statut:current.statut}),JSON.stringify(decision),motif]);
     return { updated: true, statut, quoVadis: await listProgramme(programme.annee) };
   }
 
@@ -3469,9 +3499,12 @@ function createScopeQuoVadisService({ database = db } = {}){
     if(Object.prototype.hasOwnProperty.call(body,'participationEvaluation') && typeof body.participationEvaluation !== 'boolean')
       throw new HttpError(422,'programme_participation_evaluation_invalide','L’évaluation de participation doit être un booléen.');
     const saveAction = String(body.saveAction || '').toUpperCase();
-    if(saveAction && !['SAVE','VALIDATE','PLAN'].includes(saveAction))
+    if(saveAction && !['SAVE','VALIDATE','PLAN','WITHDRAW'].includes(saveAction))
       throw new HttpError(422,'programme_action_invalide','Action d’enregistrement invalide.');
-    if(saveAction) body = {...body,validateBusiness:saveAction !== 'SAVE'};
+    if(saveAction) body = {...body,validateBusiness:['VALIDATE','PLAN'].includes(saveAction)};
+    const revisionMotif = String(body.motif || '').trim();
+    if(saveAction === 'WITHDRAW' && !revisionMotif)
+      throw new HttpError(422,'programme_motif_obligatoire','Le retrait de validation exige un motif.');
     const canonicalRows = functionalCatalog.programmeActivityPresentation(canonicalBusinessProgramme2027().rows);
     const year = Number(body.year || 2027);
     if(!Number.isInteger(year) || year < 2026 || year > 2100) throw new HttpError(422,'programme_annee_invalide','Année invalide.');
@@ -3530,6 +3563,17 @@ function createScopeQuoVadisService({ database = db } = {}){
         publicCodes: inherited.publicCodes || source.publics || [] };
       if (!/^F[0-8]$/.test(body.domain || '')) delete body.domain;
       if(Array.isArray(inherited.responsibleSelections)) delete body.responsableFonctionCode;
+    }
+    if(saveAction === 'WITHDRAW'){
+      const row=(await listProgramme(year)).canonicalProgramme.rows.find(row=>String(row.id) === String(itemId));
+      body={year,saveAction,motif:revisionMotif,validateBusiness:false,
+        date:inherited.date ?? dateOnly(row.startsAt),startTime:inherited.startTime ?? String(row.startsAt || '').slice(11,16),
+        endTime:inherited.endTime ?? String(row.endsAt || '').slice(11,16),
+        activityLabel:inherited.activityLabel ?? row.eventDisplayLabel ?? row.label,themes:inherited.themes ?? row.themes ?? [],
+        statCom:inherited.statCom ?? row.statCom,oiCodes:inherited.oiCodes ?? row.oiSelections ?? [],
+        publicCodes:inherited.publicCodes ?? row.publics ?? [],publicFreeLabels:inherited.publicFreeLabels ?? row.publicFreeLabels ?? [],
+        lieuId:existing?.lieu_id || row.lieuId || row.business?.lieuId || null,lieuLibre:existing?.lieu_libre || '',
+        salleTheorieId:existing?.salle_theorie_id || row.salleTheorieId || row.business?.salleTheorieId || null};
     }
     const lifecycleAction = String(body.lifecycleAction || '').toUpperCase();
     if(lifecycleAction){
@@ -3840,7 +3884,81 @@ function createScopeQuoVadisService({ database = db } = {}){
       let selectedLieu = lieu;
       let selectedLieuLibre = lieuLibre;
       let writeMetadata = metadata;
-      if(source.manualCreation || source.cycleExtension){
+      const lockedPreparation = (await client.query(`select * from scope_quo_vadis_obligations
+        where programme_id=$1 and source_ref=$2 order by created_at limit 1 for update`,[programme.programme_id,String(itemId)])).rows[0];
+      if(existing && (!lockedPreparation || new Date(lockedPreparation.updated_at).getTime() !== new Date(existing.updated_at).getTime()))
+        throw new HttpError(409,'programme_preparation_conflit','Cette occurrence a changé. Rouvrez sa fiche avant de poursuivre.');
+      const previousMetadata = lockedPreparation?.metadata || {};
+      const link = (await client.query(`select evenement_id from scope_qv_publication_links
+        where source_year=$1 and publication_unit_id=$2 for share`,[year,String(itemId)])).rows[0];
+      const currentView = link ? (await createScopeQuoVadisService({database:{query:(...args)=>client.query(...args)}})
+        .listProgramme(year)).canonicalProgramme.rows.find(row=>String(row.id) === String(itemId)) : null;
+      const baseline = previousMetadata.publicationRevision?.status === 'PENDING'
+        ? previousMetadata.publicationRevision.baselineFields : previousMetadata.planningFields || {
+          activityLabel:source.eventDisplayLabel || source.activityLabel || source.label,themes:source.themes || [],
+          publicFreeLabels:source.publicFreeLabels || [],date:dateOnly(source.startsAt) || null,
+          startTime:String(source.startsAt || '').slice(11,16) || null,endTime:String(source.endsAt || '').slice(11,16) || null,
+          oiCodes:uiLogic.qvNormalizeOiSelections(source,source.ois || []).codes,publicCodes:source.publics || [],
+          statCom:source.statCom || '',domain:source.domain,responsibleLabel:source.responsible || '',
+          lieuId:currentView?.lieuId || currentView?.business?.lieuId || null,
+          lieuLibre:currentView?.lieuLibre || '',salleTheorieId:currentView?.salleTheorieId || currentView?.business?.salleTheorieId || null,
+          qualificationCodes:currentView?.qualificationCodes || [],cursusId:currentView?.cursusId || null,
+          participationEvaluation:participationEvaluation(source),ecawinActivityCode:programmeEcawinActivityCode(source,year)};
+      const changes = programmeRevisions.revisionChanges(baseline,planningFields);
+      if(link && statCom !== String(source.statCom || existing?.statcom_code || ''))
+        throw new HttpError(422,'programme_statcom_publie_immutable','Le Stat.Com de l’événement publié doit être conservé.');
+      const pending = previousMetadata.publicationRevision?.status === 'PENDING';
+      const major = Boolean(link && (changes.kind === 'MAJOR' || pending || previousMetadata.publicationRevision?.status === 'WITHDRAWN'));
+      const motif = revisionMotif || (pending ? previousMetadata.publicationRevision.motif : '');
+      if(major && !motif) throw new HttpError(422,'programme_motif_obligatoire','Une modification majeure publiée exige un motif de révision.');
+      const oldValidation = previousMetadata.businessValidation || (source.status === 'VALIDATED' && !previousMetadata.validationWithdrawal
+        ? {year,source:'SOURCE_2027_EXPLICIT',fields:consolidation.businessSnapshot(baseline)} : null);
+      let action = null;
+      if(saveAction === 'WITHDRAW'){
+        if(!oldValidation && !pending) throw new HttpError(422,'programme_non_valide','Cette occurrence ne possède pas de validation à retirer.');
+        writeMetadata={...writeMetadata,businessValidation:null,validationWithdrawal:{motif,actor:options.actor || null,at:new Date().toISOString()}};
+        action='RETIRER_VALIDATION';
+        if(link) writeMetadata.publicationRevision={status:'WITHDRAWN',eventId:link.evenement_id,motif};
+      } else if(major){
+        const stagedChanges=programmeRevisions.revisionChanges(previousMetadata.planningFields || {},planningFields);
+        const approve = pending && body.validateBusiness === true && stagedChanges.kind !== 'MAJOR';
+        const eventVersion = approve ? previousMetadata.publicationRevision.eventVersion : body.publishedEventVersion;
+        if(!Number.isInteger(Number(eventVersion)) || Number(eventVersion)<1)
+          throw new HttpError(422,'programme_version_publication_requise','La version de l’événement publié est requise.');
+        if(approve && Number(body.publishedEventVersion) !== Number(eventVersion))
+          throw new HttpError(409,'programme_publication_conflit','L’événement publié a changé. Contrôlez-le puis réenregistrez la révision avant de la valider.');
+        writeMetadata.publicationRevision={kind:'MAJOR',status:approve ? 'APPROVED' : 'PENDING',eventId:link.evenement_id,
+          eventVersion:Number(eventVersion),motif,actor:options.actor || null,at:new Date().toISOString(),
+          changedFields:changes.changedFields,baselineFields:baseline};
+        if(approve){
+          writeMetadata.validationWithdrawal=null;
+          await programmeRevisions.applyPublishedRevision(client,link,planningFields,changes.changedFields,
+            {actor:options.actor,motif,expectedVersion:eventVersion,confirmPopulationImpact:body.confirmPopulationImpact});
+          action='VALIDER_REVISION_CIBLEE';
+        }else{
+          writeMetadata.businessValidation=null;
+          action='OUVRIR_REVISION_CIBLEE';
+        }
+      }else if(link && changes.changedFields.length){
+        if(previousMetadata.publicationRevision?.status === 'WITHDRAWN')
+          throw new HttpError(422,'programme_validation_retiree','Validez cette occurrence avant de modifier sa publication.');
+        await programmeRevisions.applyPublishedRevision(client,link,planningFields,changes.changedFields,
+          {actor:options.actor,motif,expectedVersion:body.publishedEventVersion});
+        writeMetadata.publicationRevision={kind:'MINOR',status:'APPLIED',eventId:link.evenement_id,
+          changedFields:changes.changedFields,at:new Date().toISOString(),actor:options.actor || null};
+        if(oldValidation) writeMetadata.businessValidation={...oldValidation,fields:consolidation.businessSnapshot(planningFields)};
+        action='MODIFIER_PUBLICATION_MINEURE';
+      }
+      if(!major && saveAction !== 'WITHDRAW' && body.validateBusiness === true) writeMetadata.validationWithdrawal=null;
+      if(action){
+        const trace={action,motif:motif || null,actor:options.actor || null,at:new Date().toISOString(),
+          validation:oldValidation,revision:writeMetadata.publicationRevision || null};
+        writeMetadata.validationHistory=[...(previousMetadata.validationHistory || []),trace];
+        await programmeRevisions.journal(client,{actor:options.actor,itemId,action,
+          before:{validation:oldValidation,fields:baseline},after:{validation:writeMetadata.businessValidation || null,
+            fields:planningFields,revision:writeMetadata.publicationRevision || null},motif});
+      }
+      if(source.manualCreation || source.cycleExtension || source.restoredModule){
         let businessCode = String(existing && existing.metadata.businessCode || '');
         if(statCom && !source.externalActivity && !businessCode){
           const issued = await client.query(`select code from (
@@ -3872,9 +3990,9 @@ function createScopeQuoVadisService({ database = db } = {}){
         selectedLieuLibre = '';
         const fields = { ...planningFields,lieuId:selectedLieu.lieu_id,lieuLibre:'',locationLabel:selectedLieu.nom_court };
         writeMetadata = { ...writeMetadata,planningFields:fields };
-        if(metadata.businessValidation){
-          const baseline = metadata.businessValidation.baselineFields;
-          writeMetadata.businessValidation = { ...metadata.businessValidation,fields:consolidation.businessSnapshot(fields),
+        if(writeMetadata.businessValidation){
+          const baseline = writeMetadata.businessValidation.baselineFields;
+          writeMetadata.businessValidation = { ...writeMetadata.businessValidation,fields:consolidation.businessSnapshot(fields),
             changedFields:consolidation.RECONDUCTIBLE_FIELDS.filter(field => JSON.stringify(fields[field]) !== JSON.stringify(baseline[field])) };
         }
       }

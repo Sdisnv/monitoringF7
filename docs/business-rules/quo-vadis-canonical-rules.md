@@ -169,8 +169,9 @@ Conservée comme caractéristique de la 2ᵉ séance, démontrée par 2026 (10.0
 Preuve 2026 : 21.04 mardi 18:30–21:30 (T2), 10.06 mercredi 08:00–11:00 (T2), 06.10 mardi 18:30–21:30 (T4).
 Projection 2027 : 20.04, 09.06, 05.10. Une séance = une ligne, jamais deux.
 Public **PABC** (`PR:3`) uniquement : JSP n’est jamais public d’une activité PR-ABC.
-Les trois lignes 2026 (241, 391, 711) ne désignent aucun OI : la projection non protégée
-ne doit pas hériter de `G1` par défaut. Un OI fixé par décision humaine ou publication reste préservé.
+Les trois lignes 2026 (241, 391, 711) ne désignent aucun OI. Cette absence historique reste conservée dans la source.
+Le complément MOA PR #12 du 12.10.2026 impose désormais **DPS G1 uniquement** pour les propositions PR-ABC / PABC.
+Une décision humaine ou publication divergente n'est pas écrasée : elle est signalée par le contrôle annuel pour révision ciblée.
 Responsable **Chef PR** (`C PR`), conformément à 2026 et au reste du domaine PR.
 Implémentation : `qvApplyPrAbcStructure`, `qvPrAbcSessionPlan`.
 
@@ -192,6 +193,7 @@ G1, Caserne G1. Implémentation : `qvApplyPionnierRules`.
 
 ### QV-UI-001 — État = carré 8×8 + texte, sans badge ni capsule
 Couleurs : `#2f9e5a`, `#DE000A`, `#c98412`, `#4f84d6`, `#8b949e`.
+La cellule État du tableau du Programme annuel est alignée verticalement en haut ; le carré et le libellé sont conservés.
 
 ### QV-UI-002 — Actions textuelles non soulignées
 `.qv-programme-action { text-decoration: none !important }`.
@@ -283,6 +285,44 @@ Les groupes DPS (G1, C1, B1, B2), DAP (Y1–Y4) et JSP (G1, C1, B1) se sélectio
 
 ### QV-PART-001 — Évaluation individuelle et reconduction
 `participationEvaluation` est un booléen individuel, activé par défaut pour toutes les occurrences jusqu'en 2027. Une décision individuelle prévaut et est reconduite. Le défaut des types futurs se configure dans le catalogue annuel existant, séparément du suivi nominatif et de ses règles de population. Désactiver l'évaluation filtre le suivi et les taux, sans supprimer le Programme, l'Agenda, les présences ni les obligations historiques. Aucun événement opérationnel n'est créé par la préparation ; la validation annuelle globale reste nécessaire.
+
+## Complément MOA PR #12 — 12.10.2026
+
+### QV-PAPR-001 — Sept modules distincts et prérequis annuel bloquant
+Le cursus PAPR est obligatoire dans le Programme 2027. Le classeur QUO VADIS 2026 fournit sept modules distincts :
+
+| Intitulé | Thème | Ligne source |
+| --- | --- | --- |
+| Cursus PAPR - module 1 | Petzi découvre l'APR | 899, annexe 2027 du classeur |
+| Cursus PAPR - module 2 | Matériel PR | 10 |
+| Cursus PAPR - module 3 | AO Simulateur | 373 |
+| Cursus PAPR - module 4 | Surveillance PR | 687 |
+| Cursus PAPR - module 5 | R&S grand volume | 803 |
+| Cursus PAPR - module 6 | Cobra | 826 |
+| Cursus PAPR - module 7 | Engagement pratique | 845 |
+
+OI obligatoires : `DPS:G1`, `DPS:C1`, `DPS:B1`, `DPS:B2`. Responsable `C PR`. Publics `PR:CAND-PAPR / Candidats PAPR` et `PR:FORMATEUR-PR / Formateur PR`, sans personne ni NIP synthétique.
+Le module 1 conserve sa date explicite source du 02.02.2027. Les dates 2026 des modules 2 à 7 sont des preuves historiques, pas des dates 2027 confirmées : les modules rétablis restent à positionner.
+La validation annuelle `VALIDE` est bloquée si un module manque, est dupliqué, n'a pas son thème, ses références obligatoires ou ses horaires confirmés. Les modules 1 et 2 doivent se terminer strictement avant le début du premier Exercice PR 1.1. Une publication ou décision divergente est signalée, jamais réalignée silencieusement.
+Les modules rétablis utilisent le Programme et le cursus existants, pas un module applicatif parallèle. Une seconde lecture ne les duplique pas. Les thèmes décidés sont enregistrés dans le même instantané de reconduction que les autres champs métier.
+
+### QV-PR-OI-002 — Exercices PR et exception PR-ABC
+Les propositions d'exercices PR classiques portent les quatre OI DPS qualifiés. PR-ABC conserve uniquement le public PABC (`PR:3`) et `DPS:G1`. Les identifiants, suffixes, dates, Stat.Com et codes d'occurrence existants restent inchangés. Les décisions humaines divergentes restent accessibles et bloquent la validation annuelle tant qu'elles ne sont pas arbitrées.
+
+### QV-ECA-003 — Référence SQL Formations EXTRAS
+`EXERCI / 0180F7 / Formations EXTRAS` est confirmé par les captures ECAwin officielles. Le registre officiel contenait déjà l'association ; le référentiel initial SQL ne la contenait pas. Le code est ajouté au référentiel initial et une migration ciblée, transactionnelle et idempotente, rétablit la référence manquante.
+Les éventuelles suspensions et périodes d'une référence déjà présente restent conservées. La liste EXERCI utilise le référentiel SQL, sans réécriture d'occurrence, de Stat.Com ou de code SCOPE.
+
+### QV-WORKFLOW-002 — Retrait et révision ciblée d'une publication
+Retirer une validation annuelle ou individuelle exige un motif non vide. L'auteur, le motif, les états et champs antérieurs sont tracés dans les métadonnées et le journal métier existant. Le retrait individuel ne sauvegarde pas les autres saisies non enregistrées de la fiche.
+Le sous-ensemble éditorial sans effet sur la population est constitué de l'intitulé, du thème et des descriptions libres de public. Une telle correction publiée conserve la date de validation précédente et modifie le même événement, sous contrôle de version.
+Les autres différences sont traitées conservativement comme majeures : motif obligatoire, révision `PENDING` de l'occurrence, événement publié inchangé. Une validation ciblée ultérieure applique la révision au même identifiant, par l'éditeur opérationnel et les moteurs de population existants. Les impacts sur les présences exigent leur confirmation ; les présences et exceptions historiques sont conservées. Une concurrence de version bloque l'écriture entière.
+Un Stat.Com publié et son code SCOPE sont immuables dans ce parcours. Un changement de qualification ou de cursus ne réassocie pas implicitement une configuration de formation : la révision reste en attente et renvoie vers la configuration existante de l'événement. Les protections des événements réalisés ou annulés restent celles de l'éditeur opérationnel.
+Ni retrait, ni préparation, ni ouverture de révision ne crée un événement opérationnel ou un doublon.
+
+### QV-CYCLE-004 — Rapport de clôture 2027 proposé en février 2028
+La fenêtre métier confirmée est **février 2028**, avant ou après les relâches selon le calendrier scolaire. La date reste inconnue ; la proposition ne crée aucune date annoncée ni événement opérationnel. Les décisions de date explicites restent prioritaires.
+Les statistiques de participation restent strictement civiles : date réelle entre le 01.01 et le 31.12 inclus. Aucune extension du cycle métier n'étend cette fenêtre statistique. Le suivi Cours ECA reste dans la roadmap et les capacités existantes, sans module parallèle.
 
 ## ROADMAP V1 — décisions confirmées du 12.10.2026
 
