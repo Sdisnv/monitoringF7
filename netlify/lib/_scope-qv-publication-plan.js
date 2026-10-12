@@ -2,6 +2,7 @@
 
 const { createHash } = require('crypto');
 const { participationEvaluation } = require('./_scope-participation-catalogue');
+const {INTERNAL_CODE_PATTERN}=require('./_scope-event-code');
 
 const ENGINE_VERSION = 'C20-1';
 const ACTIONS = Object.freeze({
@@ -18,7 +19,7 @@ const ACTION_ORDER = Object.freeze([
   ACTIONS.BLOCKED,
   ACTIONS.NOT_PUBLISHED
 ]);
-const DESCRIPTIVE_PUBLICS = Object.freeze({ 'CMDT:CODIR':'Membres du Codir' });
+const DESCRIPTIVE_PUBLICS = Object.freeze(require('../../assets/js/scope-ui-logic').qvProgrammeDescriptivePublics());
 
 function stableValue(value){
   if(Array.isArray(value)) return value.map(stableValue);
@@ -41,6 +42,8 @@ function targetFingerprint(target){
   if(value && typeof value === 'object') delete value.fingerprint;
   // Missing evaluation meant true before this field existed; retain legacy fingerprints.
   if(value.event?.participationEvaluation === true) delete value.event.participationEvaluation;
+  if(value.event?.sold === true) delete value.event.sold;
+  if(value.event?.ecawinExport === false){delete value.event.ecawinExport;delete value.event.ecawinActivityCode;}
   return sha256(stableStringify(value));
 }
 
@@ -137,6 +140,9 @@ function businessValidation(item, referentials){
       : { valid: true, statComCode: null, businessCode: null };
   }
   if(!statComCode){
+    if(item.sold === false && INTERNAL_CODE_PATTERN.test(businessCode))
+      return {valid:true,statComCode:null,businessCode};
+    if(item.sold === false) return {valid:false,reason:'INTERNAL_SCOPE_CODE_REQUIRED'};
     return businessCode
       ? { valid: false, reason: 'BUSINESS_CODE_WITHOUT_STATCOM' }
       : { valid: true, statComCode: null, businessCode: null };
@@ -151,6 +157,7 @@ function businessValidation(item, referentials){
 }
 
 function readiness(item, referentials){
+  if(item.externalActivity === true) return {action:ACTIONS.NOT_PUBLISHED,reason:'EXTERNAL_ACTIVITY_OUTSIDE_SCOPE'};
   if(item.externalHistorical){
     const business = businessValidation(item, referentials);
     return business.valid
@@ -218,6 +225,9 @@ function desiredTarget(item, gate){
       family: text(item.family) || null,
       eventType: text(item.eventType) || null,
       participationEvaluation: participationEvaluation(item, item.definition || {}),
+      ...(typeof item.sold==='boolean' ? {sold:item.sold} : {}),
+      ...(typeof item.ecawinExport==='boolean' ? {ecawinExport:item.ecawinExport,
+        ecawinActivityCode:item.ecawinExport ? text(item.ecawinActivityCode) : ''} : {}),
       ...(descriptivePublics.length ? { descriptivePublics } : {}),
       startsAt: gate.temporal.startsAt,
       endsAt: gate.temporal.endsAt,

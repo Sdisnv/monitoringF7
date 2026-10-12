@@ -1,0 +1,56 @@
+[
+  {
+    "path": "docs/captures/qv-roadmap-v1-20261012/pdf/qv-export-001-annual-avec-theme.pdf",
+    "mode": "annual",
+    "themed": true,
+    "pages": 1,
+    "rows": 1,
+    "sha256": "44e614adc8d10a69ce0e70e79930a0e875947c6aab6f5e274e1683e29d04401d",
+    "downloadFilename": "SCOPE_QUO_VADIS_2027_Planning_annuel.pdf"
+  },
+  {
+    "path": "docs/captures/qv-roadmap-v1-20261012/pdf/qv-export-001-annual-sans-theme.pdf",
+    "mode": "annual",
+    "themed": false,
+    "pages": 1,
+    "rows": 1,
+    "sha256": "36f75a26b07613e11d884a8907865154dda859de5fd07410821ee357ad8d8745",
+    "downloadFilename": "SCOPE_QUO_VADIS_2027_Planning_annuel.pdf"
+  },
+  {
+    "path": "docs/captures/qv-roadmap-v1-20261012/pdf/qv-export-001-compact-avec-theme.pdf",
+    "mode": "compact",
+    "themed": true,
+    "pages": 1,
+    "rows": 1,
+    "sha256": "ce91f1a14dae6120ea522796af24d66b76c6af358fdc5a736b7422b59a21a3e7",
+    "downloadFilename": "SCOPE_QUO_VADIS_2027_Liste_compacte.pdf"
+  },
+  {
+    "path": "docs/captures/qv-roadmap-v1-20261012/pdf/qv-export-001-compact-sans-theme.pdf",
+    "mode": "compact",
+    "themed": false,
+    "pages": 1,
+    "rows": 1,
+    "sha256": "639f222e38f564a5881a48cf9097675336e99e81c07ae11a36042280fda43e36",
+    "downloadFilename": "SCOPE_QUO_VADIS_2027_Liste_compacte.pdf"
+  },
+  {
+    "path": "docs/captures/qv-roadmap-v1-20261012/pdf/qv-export-001-monthly-avec-theme.pdf",
+    "mode": "monthly",
+    "themed": true,
+    "pages": 1,
+    "rows": 1,
+    "sha256": "4927988e932d414802343380570d394810c2a48d6cd662e177d6c2dfb324cad0",
+    "downloadFilename": "SCOPE_QUO_VADIS_2027-04_Planning_mensuel.pdf"
+  },
+  {
+    "path": "docs/captures/qv-roadmap-v1-20261012/pdf/qv-export-001-monthly-sans-theme.pdf",
+    "mode": "monthly",
+    "themed": false,
+    "pages": 1,
+    "rows": 1,
+    "sha256": "c44e0e406448c4a0d08f38f64fb55f3fb60abda35cdfe545792e4d21f4cfabf6",
+    "downloadFilename": "SCOPE_QUO_VADIS_2027-04_Planning_mensuel.pdf"
+  }
+]

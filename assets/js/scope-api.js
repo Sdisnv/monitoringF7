@@ -459,6 +459,7 @@
       setQuoVadisCursusStep(annee, body) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/cursus-steps`, body || {}); },
       setQuoVadisCursusStepSchedule(annee, body) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/cursus-step-schedule`, body || {}); },
       setQuoVadisProgrammeStatus(annee, body) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/statut`, body || {}); },
+      setQuoVadisProgrammeCycle(annee, body) { return request('PUT', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/cycle`, body || {}); },
       retainQuoVadisProposal(id, body) { return request('POST', `/quo-vadis/proposals/${encodeURIComponent(id)}/retain`, body || {}); },
       updateQuoVadisActivity(id, body) { return request('POST', `/quo-vadis/activities/${encodeURIComponent(id)}`, body || {}); },
       createQuoVadisProgrammeItem(body) { return request('POST', '/quo-vadis/programme-items', body || {}); },

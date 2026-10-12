@@ -1,0 +1,10 @@
+{
+  "url": "https://scope-sdisnv.netlify.app/.netlify/functions/auth-config",
+  "method": "GET",
+  "observedDate": "2026-10-12",
+  "ok": true,
+  "methods": ["local"],
+  "localEnabled": true,
+  "oktaEnabled": false,
+  "productionWrites": false
+}

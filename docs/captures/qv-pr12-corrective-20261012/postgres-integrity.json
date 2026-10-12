@@ -1,0 +1,1069 @@
+{
+  "baseline": "cf868e7e73390c9548162ac8e9520ba439c53368",
+  "database": "scope_qv_2027_recipe_20261006",
+  "host": "127.0.0.1",
+  "transaction": "BEGIN/ROLLBACK",
+  "productionWrites": false,
+  "results": [
+    {
+      "name": "cf868e7 reproduces SAVE ignoring the explicit planning state",
+      "status": "PASS"
+    },
+    {
+      "name": "incremental migrations are idempotent and preserve occurrence Stat.Com",
+      "status": "PASS"
+    },
+    {
+      "name": "SAVE persists both planning transitions and keeps business validation independently",
+      "status": "PASS"
+    },
+    {
+      "name": "PAPR modules 1/2 remain preparatory members of 2027, dates unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "published module 1 OI change and planning change require a motivated targeted revision",
+      "status": "PASS"
+    },
+    {
+      "name": "internal manifestation keeps no Stat.Com and a stable unique SCOPE identity",
+      "status": "PASS"
+    },
+    {
+      "name": "same manifestation occurrence is detected rather than duplicated",
+      "status": "PASS"
+    },
+    {
+      "name": "existing publication store publishes unpaid data once and keeps qualified OI staff relations",
+      "status": "PASS"
+    },
+    {
+      "name": "100 percent of occurrence Stat.Com and all existing codes/identities remain unchanged",
+      "status": "PASS"
+    }
+  ],
+  "statComComparison": {
+    "compared": 929,
+    "identical": 929,
+    "differences": []
+  },
+  "existingCodesAndIdsPreserved": true,
+  "newlyAssignedCodes": [
+    {
+      "id": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB:O1:S1",
+      "code": "SCOPE-000001"
+    },
+    {
+      "id": "QV27:PAPR:M02",
+      "code": "011PR.040"
+    }
+  ],
+  "planningOccurrence": {
+    "id": "QV26-EXERCICE-DAP-4-46753B3A:O3:S1",
+    "statCom": "013Y4",
+    "cloneProjection": "2027-11-05T19:00",
+    "moaDateReproducedInRollback": "2027-10-26"
+  },
+  "papr": {
+    "dates": [
+      "2027-02-02",
+      "2027-02-16",
+      "2027-06-03",
+      "2027-09-29",
+      "2027-11-16",
+      "2027-11-30",
+      "2027-12-11"
+    ],
+    "preparatoryMembers": 2,
+    "businessCycleYear": 2027,
+    "boundaryUnchanged": "2027-03-05"
+  },
+  "module1": {
+    "revision": "PENDING",
+    "eventUnchanged": true
+  },
+  "historicalPresencesUnchanged": true,
+  "unsoldPublication": {
+    "temporaryCloneOnly": true,
+    "replay": "UNCHANGED",
+    "importContract": "NOT_DEMONSTRATED"
+  },
+  "migrations": {
+    "before": [
+      "20260821_scope_db_convergence_1",
+      "scope-alerts-1",
+      "scope-analytics-1",
+      "scope-annual-catalog-c4-b",
+      "scope-annual-catalog-import-c15",
+      "scope-annual-catalog-themes-c8-b",
+      "scope-attendus-retrait-schema-contract-repair-10-3-2",
+      "scope-cancelled-event-single-source-of-truth-11",
+      "scope-canonical-foundations-c1",
+      "scope-catalog-convergence-c5-b",
+      "scope-configuration-formation-ux-referentials-finish-5",
+      "scope-configuration-referentials-lifecycle-repair-5-1",
+      "scope-data-5",
+      "scope-data-5-r1",
+      "scope-event-assigned-population-policy-staffing-close-10-2",
+      "scope-event-assigned-population-reactivation-delete-final-10-3",
+      "scope-event-identity-phase2",
+      "scope-event-import-1",
+      "scope-event-population-time-staffing-workflow-close-10",
+      "scope-event-q1",
+      "scope-event-std-1",
+      "scope-event-temporal-configuration-foundation-9",
+      "scope-event-workflow-assignment-staffing-semantic-repair-10-1",
+      "scope-functional-catalog-c18",
+      "scope-generic-event-session-policy-architecture-1",
+      "scope-generic-exercise-sessions-1",
+      "scope-impl-1a",
+      "scope-jsp-grade-model-fix-1",
+      "scope-model-2",
+      "scope-model-2-r1",
+      "scope-multisession-v2-foundation-1",
+      "scope-objectives-1",
+      "scope-participant-selection-runtime-root-repair-10-3-1",
+      "scope-participation-policy-engine-1",
+      "scope-person-qualifications-c3-b",
+      "scope-personnel-1b",
+      "scope-personnel-import-populations-1",
+      "scope-public-engine-mirror-c2-b",
+      "scope-quo-vadis-agenda-ux-2",
+      "scope-quo-vadis-core-1",
+      "scope-quo-vadis-coverage-1",
+      "scope-quo-vadis-moa-recovery-1",
+      "scope-quo-vadis-pilotage-2",
+      "scope-quo-vadis-referential-management-4",
+      "scope-quo-vadis-toutes-activites-ux-1",
+      "scope-qv-cursus-structural-1",
+      "scope-qv-publication-c23-repair-1",
+      "scope-referentiel-cursus-taxonomie-2",
+      "scope-specialisation-cycles-arch-1",
+      "scope-statcom-jsp-repair-2",
+      "scope-statcom-referential-config-1",
+      "scope-statcom-specialisation-persistence-repair-2",
+      "scope-taxonomy-pr-auto-fospec-g1-final",
+      "v67.0-auto-core-schema"
+    ],
+    "temporarilyApplied": [
+      "scope-internal-event-identity-20261012",
+      "scope-qv-final-moa-report-20261012",
+      "scope-qv-moa-responsible-20261012",
+      "scope-qv-roadmap-responsible-20261012",
+      "scope-statcom-extras-moa-20261012"
+    ],
+    "idempotent": true
+  },
+  "rollbackAllTablesUnchanged": 113,
+  "sequenceRolledBack": true,
+  "constraintsRolledBack": true,
+  "before": {
+    "monitoring_f7_schema_migrations": {
+      "count": 54,
+      "hash": "d79acefa388b5152abeb130fa67a0f9c"
+    },
+    "scope_activity_domain_bindings": {
+      "count": 350,
+      "hash": "ac0dc00ddeeb22bea5b7ca0ed016ef0c"
+    },
+    "scope_activity_functional_profiles": {
+      "count": 2,
+      "hash": "3f5305e3273730b8fe0a702e4cb130ca"
+    },
+    "scope_activity_legacy_aliases": {
+      "count": 311,
+      "hash": "2c2f63615b129cac368fbf094476fe05"
+    },
+    "scope_activity_location_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_periodicities": {
+      "count": 302,
+      "hash": "51dea9cf2b0e80b802b56ad2f2707a9a"
+    },
+    "scope_activity_planning_constraints": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_public_bindings": {
+      "count": 886,
+      "hash": "1e3428d7068b6c3aedecb3193ad9c176"
+    },
+    "scope_activity_qualification_bindings": {
+      "count": 148,
+      "hash": "e45b3d7212f0d9b27035523107ab71ff"
+    },
+    "scope_activity_responsible_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_role_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_session_templates": {
+      "count": 307,
+      "hash": "6c36cddfc4a80f13fc5ee359f8854242"
+    },
+    "scope_activity_statistical_contributions": {
+      "count": 393,
+      "hash": "f63c4dff291ec8e5cf273aebb5ff846c"
+    },
+    "scope_activity_theme_bindings": {
+      "count": 104,
+      "hash": "99daffb78b78ef1c2f7916a6e07173bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_alertes_acquittements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_program_entries": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_requirement_theme_assignments": {
+      "count": 2,
+      "hash": "b5ad51c32d21269bf5cc5c1336886d27"
+    },
+    "scope_annual_requirements": {
+      "count": 5,
+      "hash": "c32e530c0d3852d6d06605a245b48934"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_catalog_convergence_links": {
+      "count": 14,
+      "hash": "0073a5e0f6974f41998385609dfb761d"
+    },
+    "scope_catalog_import_decisions": {
+      "count": 345,
+      "hash": "7fc510364b122c3fe05460b3f5a30f30"
+    },
+    "scope_catalog_import_runs": {
+      "count": 1,
+      "hash": "0a873f03e496508127b16e16a8b42878"
+    },
+    "scope_cibles": {
+      "count": 36,
+      "hash": "09acc9482993dcfb10308e63bea64436"
+    },
+    "scope_competence_aliases": {
+      "count": 25,
+      "hash": "4e7dc5d8f6df970efc98d32135be058b"
+    },
+    "scope_competence_definitions": {
+      "count": 17,
+      "hash": "57d380595374647031ab01f476992011"
+    },
+    "scope_competence_implications": {
+      "count": 1,
+      "hash": "aa842786d98f8a8c326d0aafc636c0bb"
+    },
+    "scope_cycle_personnes": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_cycles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_domaine_ois": {
+      "count": 11,
+      "hash": "0997e5c227226479d31f52d324db575c"
+    },
+    "scope_domaines": {
+      "count": 10,
+      "hash": "01b279aeff93a944a086d90c57a727bf"
+    },
+    "scope_evenement_cibles": {
+      "count": 340,
+      "hash": "4629b7521cdf9148510ce14fd339b50b"
+    },
+    "scope_evenement_cibles_qv": {
+      "count": 205,
+      "hash": "39ea08d7b1e938c0cd6da5c73e801958"
+    },
+    "scope_evenement_domaines": {
+      "count": 125,
+      "hash": "c83dc6af46d3288271652fa1b9683494"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_public_rule_versions": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_evenement_ressources_qv": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_roles_qv": {
+      "count": 1,
+      "hash": "aff2eb614e65c4e53a9e2ef93d87d1c2"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_event_code_sequences": {
+      "count": 28,
+      "hash": "8c0519c684d745b2ad167339c5887b9b"
+    },
+    "scope_event_definition_versions": {
+      "count": 305,
+      "hash": "e110db664e9fe1a7a5fe671771fc3d32"
+    },
+    "scope_event_definitions": {
+      "count": 305,
+      "hash": "2a872f932f5ed8a50a658dce8b3d8e96"
+    },
+    "scope_event_person_roles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_event_role_aliases": {
+      "count": 1,
+      "hash": "6ac5141919a332b688d525ed1b5072a4"
+    },
+    "scope_event_role_definitions": {
+      "count": 8,
+      "hash": "bf5caa86e0efd1ceef898e2b34f542d2"
+    },
+    "scope_exercices": {
+      "count": 2,
+      "hash": "649ff3fd6bb91906603bbcc89f3b9f45"
+    },
+    "scope_foba_niveaux": {
+      "count": 3,
+      "hash": "2201f54b1c9a9e80a2aabcc4bb416d84"
+    },
+    "scope_import_lignes": {
+      "count": 139,
+      "hash": "453eb341e1825053b58f05c65472cb0b"
+    },
+    "scope_imports": {
+      "count": 1,
+      "hash": "b8c9a9f9b0875cb65822d08686641f49"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_legacy_aggregates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_legacy_cible_competence_mappings": {
+      "count": 6,
+      "hash": "abf087209f8e40e4f855549117622ac8"
+    },
+    "scope_legacy_cible_foba_niveau_mappings": {
+      "count": 3,
+      "hash": "9e0d9efcb89528f39b59a58e0b7e8842"
+    },
+    "scope_legacy_cible_oi_mappings": {
+      "count": 15,
+      "hash": "8e01e627ae67394f4f727fec1e083a88"
+    },
+    "scope_legacy_cible_pr_parcours_mappings": {
+      "count": 6,
+      "hash": "b1b8cbf8f79e298d2946c3b04ec2e778"
+    },
+    "scope_legacy_cible_reviews": {
+      "count": 10,
+      "hash": "64d4f37d2fb3300e31cca5292905171f"
+    },
+    "scope_lieux": {
+      "count": 8,
+      "hash": "a00ca61f72768c069e89e12c3f215c98"
+    },
+    "scope_location_categories": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_multisession_v2_participations": {
+      "count": 69,
+      "hash": "d37be33f42e66567f1868bf014b37ae0"
+    },
+    "scope_multisession_v2_population": {
+      "count": 71,
+      "hash": "b7e6ddcd27cbbc314521c720993fe5d9"
+    },
+    "scope_multisession_v2_sessions": {
+      "count": 2,
+      "hash": "e8ece1be96cc34e479be220994881bcf"
+    },
+    "scope_multisessions_v2": {
+      "count": 1,
+      "hash": "ccf9f30187a7e30a689558b847c2770a"
+    },
+    "scope_objectifs": {
+      "count": 6,
+      "hash": "f5295ff222872620bf7fce0e4e3b449f"
+    },
+    "scope_ois": {
+      "count": 8,
+      "hash": "27d082edc900c4e093334967527c7eb5"
+    },
+    "scope_participation_motifs": {
+      "count": 19,
+      "hash": "b38df2c0b41910f11f18951b6717ec26"
+    },
+    "scope_participation_policies": {
+      "count": 8,
+      "hash": "4d4dad74ff2e614db50b37c9a82896eb"
+    },
+    "scope_participation_policy_versions": {
+      "count": 12,
+      "hash": "691bcfc8c06bee853a4322db815f20d8"
+    },
+    "scope_participation_statuses": {
+      "count": 5,
+      "hash": "48da7ed480a7bb00204d30a6822da819"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_permutations": {
+      "count": 9,
+      "hash": "6560f1a92012a503bd641b3017f1cc5b"
+    },
+    "scope_person_qualification_evidence": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_person_qualifications": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_personne_periodes": {
+      "count": 315,
+      "hash": "6a663666c7327a48cc9eb43c94afd3c7"
+    },
+    "scope_personnel_import_batches": {
+      "count": 14,
+      "hash": "4ed8d263f0ba57a09778b66fff841411"
+    },
+    "scope_personnel_import_lines": {
+      "count": 772,
+      "hash": "1b928388a2b82b7b27387506329005c9"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    },
+    "scope_planned_occurrence_sessions": {
+      "count": 10,
+      "hash": "6145b2d6e29abd3fefca87554e37bb0d"
+    },
+    "scope_planned_occurrences": {
+      "count": 10,
+      "hash": "ff6daf4a00b85a75aec58a324c2bf711"
+    },
+    "scope_planned_site_slots": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_pr_parcours": {
+      "count": 3,
+      "hash": "6b6ff0fb90e36065eb126a5dfd67cc06"
+    },
+    "scope_pr_parcours_aliases": {
+      "count": 6,
+      "hash": "bf760c4acb335a446bb6f9b5954f9f81"
+    },
+    "scope_public_definitions": {
+      "count": 34,
+      "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+    },
+    "scope_public_rule_versions": {
+      "count": 27,
+      "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+    },
+    "scope_quo_vadis_calendar_days": {
+      "count": 18,
+      "hash": "31449a187fd3a01780001acb6f70f9a2"
+    },
+    "scope_quo_vadis_cohortes": {
+      "count": 2,
+      "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+    },
+    "scope_quo_vadis_cursus_definitions": {
+      "count": 11,
+      "hash": "598a451891d35b8b9bbe976fdc306fb1"
+    },
+    "scope_quo_vadis_cursus_programmes": {
+      "count": 11,
+      "hash": "70856ff041a262be4d959cb4e584e972"
+    },
+    "scope_quo_vadis_cursus_step_programmes": {
+      "count": 59,
+      "hash": "768f2870adbc07ed57c6e2e4837e4204"
+    },
+    "scope_quo_vadis_cursus_steps": {
+      "count": 59,
+      "hash": "73a216591405ea28f145f52b63516076"
+    },
+    "scope_quo_vadis_cursus_versions": {
+      "count": 11,
+      "hash": "a209803843cd767593099392dad8410c"
+    },
+    "scope_quo_vadis_dps_organisation_versions": {
+      "count": 4,
+      "hash": "14ebb8fb0f13c3ed58b77e04fb9f3064"
+    },
+    "scope_quo_vadis_future_dates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_quo_vadis_planning_rules": {
+      "count": 12,
+      "hash": "18cb99c52a70580cf2c0f4bd4bb82e84"
+    },
+    "scope_quo_vadis_programme_history": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_programmes": {
+      "count": 1,
+      "hash": "180bcb3daaa42a2c62c9868a3851b548"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "8311de7912a41a8250dc802490327d65"
+    },
+    "scope_qv_publication_activities": {
+      "count": 52,
+      "hash": "8ef159fcfdffa4e3107063b3e268e79c"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_qv_publication_runs": {
+      "count": 7,
+      "hash": "825c4db1f70bb59bc0fdb8da87514436"
+    },
+    "scope_qv_session_events": {
+      "count": 125,
+      "hash": "1ac193fd08c98f83c06ffd4c94da270b"
+    },
+    "scope_qv_session_groups": {
+      "count": 125,
+      "hash": "ea4de3c8f096a796d8ec713ca930798f"
+    },
+    "scope_regles_bascule": {
+      "count": 1,
+      "hash": "1814609c6ad125d820c30dcf6ea74e16"
+    },
+    "scope_responsable_fonctions": {
+      "count": 28,
+      "hash": "00c69bec9f05d275a1013b39f87f08cf"
+    },
+    "scope_saisies_quantitatives": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_salles_theorie": {
+      "count": 11,
+      "hash": "7a1679704187bd0804dbde3e61d080e3"
+    },
+    "scope_sous_domaines": {
+      "count": 2,
+      "hash": "05462606a17fda7e495490fbc898be0b"
+    },
+    "scope_statcom_referentiel": {
+      "count": 91,
+      "hash": "3240a49db480bb4dcf635221eb1dd09f"
+    },
+    "scope_suivi_nominatif": {
+      "count": 1,
+      "hash": "ad814676b9fc711505ae64c61812ca82"
+    },
+    "scope_theme_definitions": {
+      "count": 68,
+      "hash": "9e2c1567ee5007166b0a6f12e7956e6e"
+    },
+    "scope_theme_versions": {
+      "count": 68,
+      "hash": "16199537773c5e7d47130e50b0ba08a1"
+    }
+  },
+  "after": {
+    "monitoring_f7_schema_migrations": {
+      "count": 54,
+      "hash": "d79acefa388b5152abeb130fa67a0f9c"
+    },
+    "scope_activity_domain_bindings": {
+      "count": 350,
+      "hash": "ac0dc00ddeeb22bea5b7ca0ed016ef0c"
+    },
+    "scope_activity_functional_profiles": {
+      "count": 2,
+      "hash": "3f5305e3273730b8fe0a702e4cb130ca"
+    },
+    "scope_activity_legacy_aliases": {
+      "count": 311,
+      "hash": "2c2f63615b129cac368fbf094476fe05"
+    },
+    "scope_activity_location_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_periodicities": {
+      "count": 302,
+      "hash": "51dea9cf2b0e80b802b56ad2f2707a9a"
+    },
+    "scope_activity_planning_constraints": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_public_bindings": {
+      "count": 886,
+      "hash": "1e3428d7068b6c3aedecb3193ad9c176"
+    },
+    "scope_activity_qualification_bindings": {
+      "count": 148,
+      "hash": "e45b3d7212f0d9b27035523107ab71ff"
+    },
+    "scope_activity_responsible_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_role_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_session_templates": {
+      "count": 307,
+      "hash": "6c36cddfc4a80f13fc5ee359f8854242"
+    },
+    "scope_activity_statistical_contributions": {
+      "count": 393,
+      "hash": "f63c4dff291ec8e5cf273aebb5ff846c"
+    },
+    "scope_activity_theme_bindings": {
+      "count": 104,
+      "hash": "99daffb78b78ef1c2f7916a6e07173bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_alertes_acquittements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_program_entries": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_requirement_theme_assignments": {
+      "count": 2,
+      "hash": "b5ad51c32d21269bf5cc5c1336886d27"
+    },
+    "scope_annual_requirements": {
+      "count": 5,
+      "hash": "c32e530c0d3852d6d06605a245b48934"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_catalog_convergence_links": {
+      "count": 14,
+      "hash": "0073a5e0f6974f41998385609dfb761d"
+    },
+    "scope_catalog_import_decisions": {
+      "count": 345,
+      "hash": "7fc510364b122c3fe05460b3f5a30f30"
+    },
+    "scope_catalog_import_runs": {
+      "count": 1,
+      "hash": "0a873f03e496508127b16e16a8b42878"
+    },
+    "scope_cibles": {
+      "count": 36,
+      "hash": "09acc9482993dcfb10308e63bea64436"
+    },
+    "scope_competence_aliases": {
+      "count": 25,
+      "hash": "4e7dc5d8f6df970efc98d32135be058b"
+    },
+    "scope_competence_definitions": {
+      "count": 17,
+      "hash": "57d380595374647031ab01f476992011"
+    },
+    "scope_competence_implications": {
+      "count": 1,
+      "hash": "aa842786d98f8a8c326d0aafc636c0bb"
+    },
+    "scope_cycle_personnes": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_cycles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_domaine_ois": {
+      "count": 11,
+      "hash": "0997e5c227226479d31f52d324db575c"
+    },
+    "scope_domaines": {
+      "count": 10,
+      "hash": "01b279aeff93a944a086d90c57a727bf"
+    },
+    "scope_evenement_cibles": {
+      "count": 340,
+      "hash": "4629b7521cdf9148510ce14fd339b50b"
+    },
+    "scope_evenement_cibles_qv": {
+      "count": 205,
+      "hash": "39ea08d7b1e938c0cd6da5c73e801958"
+    },
+    "scope_evenement_domaines": {
+      "count": 125,
+      "hash": "c83dc6af46d3288271652fa1b9683494"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_public_rule_versions": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_evenement_ressources_qv": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_roles_qv": {
+      "count": 1,
+      "hash": "aff2eb614e65c4e53a9e2ef93d87d1c2"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_event_code_sequences": {
+      "count": 28,
+      "hash": "8c0519c684d745b2ad167339c5887b9b"
+    },
+    "scope_event_definition_versions": {
+      "count": 305,
+      "hash": "e110db664e9fe1a7a5fe671771fc3d32"
+    },
+    "scope_event_definitions": {
+      "count": 305,
+      "hash": "2a872f932f5ed8a50a658dce8b3d8e96"
+    },
+    "scope_event_person_roles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_event_role_aliases": {
+      "count": 1,
+      "hash": "6ac5141919a332b688d525ed1b5072a4"
+    },
+    "scope_event_role_definitions": {
+      "count": 8,
+      "hash": "bf5caa86e0efd1ceef898e2b34f542d2"
+    },
+    "scope_exercices": {
+      "count": 2,
+      "hash": "649ff3fd6bb91906603bbcc89f3b9f45"
+    },
+    "scope_foba_niveaux": {
+      "count": 3,
+      "hash": "2201f54b1c9a9e80a2aabcc4bb416d84"
+    },
+    "scope_import_lignes": {
+      "count": 139,
+      "hash": "453eb341e1825053b58f05c65472cb0b"
+    },
+    "scope_imports": {
+      "count": 1,
+      "hash": "b8c9a9f9b0875cb65822d08686641f49"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_legacy_aggregates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_legacy_cible_competence_mappings": {
+      "count": 6,
+      "hash": "abf087209f8e40e4f855549117622ac8"
+    },
+    "scope_legacy_cible_foba_niveau_mappings": {
+      "count": 3,
+      "hash": "9e0d9efcb89528f39b59a58e0b7e8842"
+    },
+    "scope_legacy_cible_oi_mappings": {
+      "count": 15,
+      "hash": "8e01e627ae67394f4f727fec1e083a88"
+    },
+    "scope_legacy_cible_pr_parcours_mappings": {
+      "count": 6,
+      "hash": "b1b8cbf8f79e298d2946c3b04ec2e778"
+    },
+    "scope_legacy_cible_reviews": {
+      "count": 10,
+      "hash": "64d4f37d2fb3300e31cca5292905171f"
+    },
+    "scope_lieux": {
+      "count": 8,
+      "hash": "a00ca61f72768c069e89e12c3f215c98"
+    },
+    "scope_location_categories": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_multisession_v2_participations": {
+      "count": 69,
+      "hash": "d37be33f42e66567f1868bf014b37ae0"
+    },
+    "scope_multisession_v2_population": {
+      "count": 71,
+      "hash": "b7e6ddcd27cbbc314521c720993fe5d9"
+    },
+    "scope_multisession_v2_sessions": {
+      "count": 2,
+      "hash": "e8ece1be96cc34e479be220994881bcf"
+    },
+    "scope_multisessions_v2": {
+      "count": 1,
+      "hash": "ccf9f30187a7e30a689558b847c2770a"
+    },
+    "scope_objectifs": {
+      "count": 6,
+      "hash": "f5295ff222872620bf7fce0e4e3b449f"
+    },
+    "scope_ois": {
+      "count": 8,
+      "hash": "27d082edc900c4e093334967527c7eb5"
+    },
+    "scope_participation_motifs": {
+      "count": 19,
+      "hash": "b38df2c0b41910f11f18951b6717ec26"
+    },
+    "scope_participation_policies": {
+      "count": 8,
+      "hash": "4d4dad74ff2e614db50b37c9a82896eb"
+    },
+    "scope_participation_policy_versions": {
+      "count": 12,
+      "hash": "691bcfc8c06bee853a4322db815f20d8"
+    },
+    "scope_participation_statuses": {
+      "count": 5,
+      "hash": "48da7ed480a7bb00204d30a6822da819"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_permutations": {
+      "count": 9,
+      "hash": "6560f1a92012a503bd641b3017f1cc5b"
+    },
+    "scope_person_qualification_evidence": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_person_qualifications": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_personne_periodes": {
+      "count": 315,
+      "hash": "6a663666c7327a48cc9eb43c94afd3c7"
+    },
+    "scope_personnel_import_batches": {
+      "count": 14,
+      "hash": "4ed8d263f0ba57a09778b66fff841411"
+    },
+    "scope_personnel_import_lines": {
+      "count": 772,
+      "hash": "1b928388a2b82b7b27387506329005c9"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    },
+    "scope_planned_occurrence_sessions": {
+      "count": 10,
+      "hash": "6145b2d6e29abd3fefca87554e37bb0d"
+    },
+    "scope_planned_occurrences": {
+      "count": 10,
+      "hash": "ff6daf4a00b85a75aec58a324c2bf711"
+    },
+    "scope_planned_site_slots": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_pr_parcours": {
+      "count": 3,
+      "hash": "6b6ff0fb90e36065eb126a5dfd67cc06"
+    },
+    "scope_pr_parcours_aliases": {
+      "count": 6,
+      "hash": "bf760c4acb335a446bb6f9b5954f9f81"
+    },
+    "scope_public_definitions": {
+      "count": 34,
+      "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+    },
+    "scope_public_rule_versions": {
+      "count": 27,
+      "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+    },
+    "scope_quo_vadis_calendar_days": {
+      "count": 18,
+      "hash": "31449a187fd3a01780001acb6f70f9a2"
+    },
+    "scope_quo_vadis_cohortes": {
+      "count": 2,
+      "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+    },
+    "scope_quo_vadis_cursus_definitions": {
+      "count": 11,
+      "hash": "598a451891d35b8b9bbe976fdc306fb1"
+    },
+    "scope_quo_vadis_cursus_programmes": {
+      "count": 11,
+      "hash": "70856ff041a262be4d959cb4e584e972"
+    },
+    "scope_quo_vadis_cursus_step_programmes": {
+      "count": 59,
+      "hash": "768f2870adbc07ed57c6e2e4837e4204"
+    },
+    "scope_quo_vadis_cursus_steps": {
+      "count": 59,
+      "hash": "73a216591405ea28f145f52b63516076"
+    },
+    "scope_quo_vadis_cursus_versions": {
+      "count": 11,
+      "hash": "a209803843cd767593099392dad8410c"
+    },
+    "scope_quo_vadis_dps_organisation_versions": {
+      "count": 4,
+      "hash": "14ebb8fb0f13c3ed58b77e04fb9f3064"
+    },
+    "scope_quo_vadis_future_dates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_quo_vadis_planning_rules": {
+      "count": 12,
+      "hash": "18cb99c52a70580cf2c0f4bd4bb82e84"
+    },
+    "scope_quo_vadis_programme_history": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_programmes": {
+      "count": 1,
+      "hash": "180bcb3daaa42a2c62c9868a3851b548"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "8311de7912a41a8250dc802490327d65"
+    },
+    "scope_qv_publication_activities": {
+      "count": 52,
+      "hash": "8ef159fcfdffa4e3107063b3e268e79c"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_qv_publication_runs": {
+      "count": 7,
+      "hash": "825c4db1f70bb59bc0fdb8da87514436"
+    },
+    "scope_qv_session_events": {
+      "count": 125,
+      "hash": "1ac193fd08c98f83c06ffd4c94da270b"
+    },
+    "scope_qv_session_groups": {
+      "count": 125,
+      "hash": "ea4de3c8f096a796d8ec713ca930798f"
+    },
+    "scope_regles_bascule": {
+      "count": 1,
+      "hash": "1814609c6ad125d820c30dcf6ea74e16"
+    },
+    "scope_responsable_fonctions": {
+      "count": 28,
+      "hash": "00c69bec9f05d275a1013b39f87f08cf"
+    },
+    "scope_saisies_quantitatives": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_salles_theorie": {
+      "count": 11,
+      "hash": "7a1679704187bd0804dbde3e61d080e3"
+    },
+    "scope_sous_domaines": {
+      "count": 2,
+      "hash": "05462606a17fda7e495490fbc898be0b"
+    },
+    "scope_statcom_referentiel": {
+      "count": 91,
+      "hash": "3240a49db480bb4dcf635221eb1dd09f"
+    },
+    "scope_suivi_nominatif": {
+      "count": 1,
+      "hash": "ad814676b9fc711505ae64c61812ca82"
+    },
+    "scope_theme_definitions": {
+      "count": 68,
+      "hash": "9e2c1567ee5007166b0a6f12e7956e6e"
+    },
+    "scope_theme_versions": {
+      "count": 68,
+      "hash": "16199537773c5e7d47130e50b0ba08a1"
+    }
+  },
+  "verdict": "PASS"
+}

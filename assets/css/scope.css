@@ -11654,7 +11654,10 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-course-code{font-weight:400;white-space:nowrap}
 .qv-programme-domain-family{display:grid;gap:2px}
 .qv-programme-domain-family span:last-child{color:#59616b}
-.qv-programme-table td:nth-child(11){vertical-align:middle}.qv-programme-table td:nth-child(11) .scope-state{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.qv-programme-table td:nth-child(11) .scope-state-label{white-space:nowrap}
+.qv-programme-table td:nth-child(11){vertical-align:top}.qv-programme-table td:nth-child(11) .scope-state{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.qv-programme-table td:nth-child(11) .scope-state-label{white-space:nowrap}
+.qv-papr-control{min-width:0;max-width:100%}.qv-papr-proposals{min-width:1100px}.qv-papr-proposals td{vertical-align:top}
+#qv-papr-propose-ois{white-space:normal;max-width:100%;text-align:left}
+@media(max-width:800px){.qv-papr-proposals{display:table;width:100%}.qv-papr-proposals thead{display:table-header-group}.qv-papr-proposals tbody{display:table-row-group}.qv-papr-proposals tr{display:table-row}.qv-papr-proposals th,.qv-papr-proposals td{display:table-cell}.qv-papr-proposals td::before{display:none}}
 .qv-programme-time,.qv-programme-action,.qv-programme-public-list{display:grid;gap:2px}.qv-programme-time>span,.qv-programme-action>span,.qv-programme-public-list>span{display:block;white-space:nowrap}
 .qv-programme-activity.is-cta{display:grid;gap:2px}.qv-programme-activity.is-cta>span{display:block;white-space:nowrap}
 .qv-programme-theme{display:block;color:var(--muted,#52606d);font-weight:400;line-height:1.35;white-space:normal}
@@ -11686,6 +11689,11 @@ body.scope-pdf-open { overflow: hidden; }
 #qv-programme-lieu-keep-field{grid-column:1/-1}
 .qv-programme-keep-lieu{display:flex;align-items:center;gap:8px;min-height:36px;font-size:.82rem;font-weight:400}
 .qv-programme-edit-grid>label.qv-programme-keep-lieu{display:flex;flex-wrap:wrap;font-weight:400}
+.qv-programme-cycle{margin:12px 0;padding:10px 0;border-top:1px solid #cbd4dc;border-bottom:1px solid #cbd4dc;font-size:13px}
+.qv-programme-cycle-fields{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:12px 0 0;padding:0;border:0;min-width:0}
+.qv-programme-cycle-fields label{display:grid;gap:4px;min-width:0}
+.qv-programme-cycle-fields input[type=date],.qv-programme-cycle-fields select{height:36px;max-width:100%;border:1px solid #aeb8c2;border-radius:3px;padding:4px 8px}
+.qv-programme-cycle-fields .qv-programme-cycle-parameters{display:flex;align-items:center;gap:8px;min-height:36px}
 .annual-definition-form .annual-evaluation-default{display:flex;align-items:center;gap:8px;grid-column:1/-1;min-width:0}
 .annual-definition-form .annual-evaluation-default input{width:16px;min-height:16px;height:16px;padding:0;margin:0;flex:0 0 16px}
 .qv-programme-edit-grid .qv-programme-keep-lieu input[type=checkbox]{width:16px;height:16px;min-height:16px;padding:0;margin:0;flex:0 0 16px}

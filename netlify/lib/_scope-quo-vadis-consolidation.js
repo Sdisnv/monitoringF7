@@ -68,10 +68,10 @@ function activePopulation(obligations, proposals){
   return { obligations: active.map((row) => ({ ...row, proposalCount: currentProposals.filter((proposal) => proposal.obligationId === row.obligationId).length })), proposals: currentProposals };
 }
 
-const RECONDUCTIBLE_FIELDS = ['activityLabel','statCom','domain','family','oiCodes','publicCodes','responsibleLabel',
+const RECONDUCTIBLE_FIELDS = ['activityLabel','themes','statCom','domain','family','oiCodes','publicCodes','responsibleLabel',
   'responsableFonctionCode','locationLabel','lieuId','lieuLibre','roomLabel','salleTheorieId','sessionStructure',
   'qualificationCodes','specialisation','cursusId','cursus','ecawinActivityCode','responsibleSelections','publicFreeLabels',
-  'participationEvaluation'];
+  'participationEvaluation','sold','ecawinExport'];
 
 function businessSnapshot(fields){
   return Object.fromEntries(RECONDUCTIBLE_FIELDS.filter(key => Object.prototype.hasOwnProperty.call(fields,key))

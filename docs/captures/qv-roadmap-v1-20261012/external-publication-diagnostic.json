@@ -1,0 +1,18 @@
+{
+  "source": "PURE_PLANNER_FIXTURES",
+  "externalActivityOnly": {
+    "action": "NOT_PUBLISHED",
+    "reason": "EXTERNAL_ACTIVITY_OUTSIDE_SCOPE"
+  },
+  "recognizedExternalHistorical": {
+    "action": "NOT_PUBLISHED",
+    "reason": "EXTERNAL_HISTORICAL_NOT_RECONDUCTED"
+  },
+  "internalUnevaluated": {
+    "action": "CREATE",
+    "participationEvaluation": false
+  },
+  "requiresCallerExclusion": false,
+  "interpretation": "External activities are excluded from operational publication. Internal statistical opt-out does not prevent publication.",
+  "productionWrites": false
+}

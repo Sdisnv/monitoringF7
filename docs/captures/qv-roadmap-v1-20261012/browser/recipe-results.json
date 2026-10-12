@@ -1,0 +1,43 @@
+{
+  "verdict": "PASS",
+  "browser": "Chromium",
+  "fixtureClosingDate": "2028-02-02",
+  "fixtureOnly": true,
+  "productionWrites": false,
+  "preservedOriginalOccurrences": 867,
+  "results": [
+    {
+      "name": "referentiels permanents, domaines et code historique C scrt affiche C sct",
+      "status": "PASS"
+    },
+    {
+      "name": "types Codir, PR et DPS par site proposent uniquement les valeurs connues et editables",
+      "status": "PASS"
+    },
+    {
+      "name": "A+1 reste bloque sans rapport de cloture, avec saisie conservee",
+      "status": "PASS"
+    },
+    {
+      "name": "cycle 2027 cloture en 2028: parametres explicites persistes, sans date par defaut inventee",
+      "status": "PASS"
+    },
+    {
+      "name": "une occurrence automatique correspondante est proposee sans ecraser les decisions",
+      "status": "PASS"
+    },
+    {
+      "name": "nouvelle occurrence A+1 rattachee au cycle 2027, publics permanents persistants sans evenement operationnel",
+      "status": "PASS"
+    },
+    {
+      "name": "CSV Excel et PDF reels: titre complet et theme au format MOA",
+      "status": "PASS"
+    },
+    {
+      "name": "nouveaux controles utilisables desktop et mobile; Stat.Com et codes existants inchanges",
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": []
+}

@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-12",
+  "initialMain": "6f0eb8b2f6aaad6d7a6ab7946304e3b9d3c76ba3",
+  "initialPrHead": "cf868e7e73390c9548162ac8e9520ba439c53368",
+  "branch": "codex/scope-qv-roadmap-v1-20261012",
+  "pullRequest": "https://github.com/Sdisnv/monitoringF7/pull/12",
+  "unitTests": { "passed": 7, "failed": 0 },
+  "postgresScenarios": { "passed": 9, "failed": 0, "rollback": true },
+  "browserScenarios": { "passed": 5, "failed": 0, "javascriptErrors": 0 },
+  "netlifyBuild": { "context": "production", "status": "COMPLETE", "functions": 25, "deployExecuted": false },
+  "netlifyPreflight": { "explicitSiteId": "6def8d4d-78c6-4112-bb76-6891df0e0a52", "status": "PASS" },
+  "productionReadOnly": {
+    "site": "scope-sdisnv",
+    "gitRepository": "https://github.com/Sdisnv/monitoringF7",
+    "gitBranch": "main",
+    "publishedDeploy": "6acc6f74104cd900084d9ef2",
+    "publishedCommit": "6f0eb8b2f6aaad6d7a6ab7946304e3b9d3c76ba3",
+    "publishedAt": "2026-10-12T05:26:41.612Z",
+    "state": "ready",
+    "authConfig": { "ok": true, "methods": ["local"], "localEnabled": true, "oktaEnabled": false }
+  },
+  "ecawinRegistryUnchanged": true,
+  "canonical2027JsonUnchanged": true,
+  "preExistingLocalChangesPreserved": true,
+  "recipeProductionWrites": false,
+  "mergeExecuted": false,
+  "deploymentSuspensionMarkersPreserved": true,
+  "businessVerdict": "READY_FOR_MOA"
+}

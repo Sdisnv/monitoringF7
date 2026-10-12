@@ -111,6 +111,8 @@ function buildCanonicalDataset(){
       label: definition.label || row.label,
       eventLabel: row.label,
       participationEvaluation: row.participationEvaluation,
+      sold:row.sold,ecawinExport:row.ecawinExport,ecawinActivityCode:row.ecawinActivityCode,
+      externalActivity:row.externalActivity === true,
       metadata: row.metadata,
       definition,
       status: row.status,
@@ -216,6 +218,8 @@ async function buildCurrentCandidateDataset(){
       label: row.activityLabel || row.label,
       eventLabel: row.eventLabel || row.label,
       participationEvaluation: row.participationEvaluation,
+      sold:row.sold,ecawinExport:row.ecawinExport,ecawinActivityCode:row.ecawinActivityCode,
+      externalActivity:row.externalActivity === true,
       metadata: row.metadata,
       status: row.status,
       externalHistorical: false,
@@ -225,8 +229,8 @@ async function buildCurrentCandidateDataset(){
           && !(row.statCom === 'EMSEA' && reason === 'Stat.Com absent du référentiel'))
         && (!row.location || Boolean(location)),
       humanReviewRequired: false,
-      business: { statComCode: row.statCom === 'EMSEA' ? null : row.statCom || null, businessCode: row.code || null },
-      schedule: { startsAt: row.startsAt, endsAt: row.endsAt },
+      business: { statComCode: row.statCom === 'EMSEA' ? null : row.statCom || null, businessCode: row.businessCode || row.code || null },
+      schedule: { startsAt: row.startsAt?.slice(0,16), endsAt: row.endsAt?.slice(0,16) },
       classification: {
         primaryDomain: _qvPersistenceDomain(row.persistenceDomain || row.domain),
         domainCodes: [_qvPersistenceDomain(row.persistenceDomain || row.domain)],

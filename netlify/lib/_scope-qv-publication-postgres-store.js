@@ -219,6 +219,11 @@ class ScopeQvPostgresStore {
   }
 
   async eventCodeFor(eventId,target){
+    if(!target.activity.statComCode && target.event.sold === false){
+      if(!eventCodes.INTERNAL_CODE_PATTERN.test(target.activity.businessCode || ''))
+        throw storeError('QV_INTERNAL_CODE_REQUIRED','An unpaid internal event needs its stable SCOPE code.');
+      return target.activity.businessCode;
+    }
     return eventCodes.appendPersistedEventCode(this.query.bind(this),{
       eventId,statCom:target.activity.statComCode,timestamp:isoTimestamp(this.clock),
       metadata:{ allocation:'APPEND_AFTER_VALIDATION',source:'QUO_VADIS',publicationKey:target.publicationKey }
@@ -337,6 +342,7 @@ class ScopeQvPostgresStore {
       target.event.entryService, target.event.durationMinutes, target.event.priority, target.event.fixedDate,
       target.event.dayExclusive, target.event.permutationAllowed, target.event.businessException, timestamp,
       JSON.stringify({ participationEvaluation: participationEvaluation(target.event),
+        sold:target.event.sold,ecawinExport:target.event.ecawinExport,ecawinActivityCode:target.event.ecawinActivityCode,
         descriptivePublics:target.event.descriptivePublics || [] })
     ]);
     checkpoint('AFTER_EVENT');
@@ -381,6 +387,7 @@ class ScopeQvPostgresStore {
       target.event.priority, target.event.fixedDate, target.event.dayExclusive, target.event.permutationAllowed,
       target.event.businessException, timestamp, existing.eventId,
       JSON.stringify({ participationEvaluation: participationEvaluation(target.event),
+        sold:target.event.sold,ecawinExport:target.event.ecawinExport,ecawinActivityCode:target.event.ecawinActivityCode,
         descriptivePublics:target.event.descriptivePublics || [] })
     ]);
     checkpoint('AFTER_EVENT');
@@ -455,6 +462,9 @@ class ScopeQvPostgresStore {
           status: row.statut, label: row.libelle, primaryDomain: row.domaine_code, family: row.famille,
           eventType: row.type_evenement, startsAt: `${startDate}T${startTime}`, endsAt: `${endDate}T${endTime}`,
           participationEvaluation: participationEvaluation(row),
+          ...(['sold','ecawinExport','ecawinActivityCode'].reduce((fields,key)=>{
+            if(Object.hasOwn(row.engine_snapshot || {},key)) fields[key]=row.engine_snapshot[key];return fields;
+          },{})),
           ...(row.engine_snapshot?.descriptivePublics?.length
             ? { descriptivePublics:row.engine_snapshot.descriptivePublics } : {}),
           startDate, endDate, startTime, endTime, durationMinutes: Number(row.duree_planifiee_minutes),

@@ -1,0 +1,1300 @@
+{
+  "baseline": "6f0eb8b2f6aaad6d7a6ab7946304e3b9d3c76ba3",
+  "database": "scope_qv_2027_recipe_20261006",
+  "host": "127.0.0.1",
+  "port": 5432,
+  "fixtureClosingDate": "2028-02-02",
+  "fixtureOnly": true,
+  "productionWrites": false,
+  "baselineRows": 867,
+  "stableStatComAndProtectedFields": 867,
+  "closingReportPriorityPreserved": true,
+  "automaticExtension2027": {
+    "status": "DEMONSTRATED",
+    "cta": true,
+    "historicalExplicitNextYear": [
+      {
+        "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E:852",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+        "label": "Intégration personnel DPS, phase I",
+        "date": "2028-01-04",
+        "sourceLine": 852,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:853",
+        "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+        "label": "Échange tenue",
+        "date": "2028-01-05",
+        "sourceLine": 853,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:858",
+        "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+        "label": "Échange tenue",
+        "date": "2028-01-06",
+        "sourceLine": 858,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:857",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "2028-01-05",
+        "sourceLine": 857,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:854",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "2028-01-05",
+        "sourceLine": 854,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:855",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "2028-01-05",
+        "sourceLine": 855,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:856",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "2028-01-05",
+        "sourceLine": 856,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF:859",
+        "definitionId": "QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF",
+        "label": "Répétition garde drapeau RA'25",
+        "date": "2028-01-06",
+        "sourceLine": 859,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:860",
+        "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+        "label": "Exercice JSP 1",
+        "date": "2028-01-10",
+        "sourceLine": 860,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:882",
+        "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+        "label": "Exercice JSP 1",
+        "date": "2028-01-25",
+        "sourceLine": 882,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD:861",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD",
+        "label": "Intégration personnel DAP",
+        "date": "2028-01-10",
+        "sourceLine": 861,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-EM-ED042EBD:862",
+        "definitionId": "QV26-SEANCE-EM-ED042EBD",
+        "label": "Séance État-major",
+        "date": "2028-01-11",
+        "sourceLine": 862,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-CADRES-F5-6-A6B9A14F:863",
+        "definitionId": "QV26-SEANCE-CADRES-F5-6-A6B9A14F",
+        "label": "Séance cadres F5/6",
+        "date": "2028-01-12",
+        "sourceLine": 863,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:864",
+        "definitionId": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+        "label": "Séance Direction JSP",
+        "date": "2028-01-12",
+        "sourceLine": 864,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB:865",
+        "definitionId": "QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB",
+        "label": "Séance échelons II, III et IV",
+        "date": "2028-01-13",
+        "sourceLine": 865,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4:866",
+        "definitionId": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+        "label": "Séance de préparation concours de la FVSP",
+        "date": "2028-01-17",
+        "sourceLine": 866,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0:869",
+        "definitionId": "QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0",
+        "label": "Séance audiovisuel et communication F5/6",
+        "date": "2028-01-18",
+        "sourceLine": 869,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "label": "Séance instruction DAP",
+        "date": "2028-01-27",
+        "sourceLine": 892,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "label": "Séance instruction DAP",
+        "date": "2028-01-18",
+        "sourceLine": 870,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "label": "Séance instruction DAP",
+        "date": "2028-01-19",
+        "sourceLine": 875,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "label": "Séance instruction DAP",
+        "date": "2028-01-27",
+        "sourceLine": 891,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:874",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+        "label": "Séance personnel DPS",
+        "date": "2028-01-19",
+        "sourceLine": 874,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:871",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+        "label": "Séance personnel DPS",
+        "date": "2028-01-19",
+        "sourceLine": 871,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:872",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+        "label": "Séance personnel DPS",
+        "date": "2028-01-19",
+        "sourceLine": 872,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:873",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+        "label": "Séance personnel DPS",
+        "date": "2028-01-19",
+        "sourceLine": 873,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-CADRES-JSP-1591AA8A:876",
+        "definitionId": "QV26-SEANCE-CADRES-JSP-1591AA8A",
+        "label": "Séance cadres JSP",
+        "date": "2028-01-20",
+        "sourceLine": 876,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361:877",
+        "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361",
+        "label": "Cours de cadres Formateurs cursus MEA",
+        "date": "2028-01-24",
+        "sourceLine": 877,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-FOURRIERS-DPS-A39F1CE0:878",
+        "definitionId": "QV26-SEANCE-FOURRIERS-DPS-A39F1CE0",
+        "label": "Séance Fourriers DPS",
+        "date": "2028-01-24",
+        "sourceLine": 878,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6:879",
+        "definitionId": "QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6",
+        "label": "Séance responsables MAT SDIS",
+        "date": "2028-01-24",
+        "sourceLine": 879,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-FOURRIERS-DAP-997F4819:880",
+        "definitionId": "QV26-SEANCE-FOURRIERS-DAP-997F4819",
+        "label": "Séance Fourriers DAP",
+        "date": "2028-01-24",
+        "sourceLine": 880,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:884",
+        "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+        "label": "Séance chefs de section DPS",
+        "date": "2028-01-25",
+        "sourceLine": 884,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:881",
+        "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+        "label": "Séance chefs de section DPS",
+        "date": "2028-01-25",
+        "sourceLine": 881,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:885",
+        "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+        "label": "Séance chefs de section DPS C1",
+        "date": "2028-01-25",
+        "sourceLine": 885,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:883",
+        "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+        "label": "Séance chefs de section DPS C1",
+        "date": "2028-01-25",
+        "sourceLine": 883,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:901",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+        "label": "Séance instruction DPS",
+        "date": "2028-02-01",
+        "sourceLine": 901,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:887",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+        "label": "Séance instruction DPS",
+        "date": "2028-01-26",
+        "sourceLine": 887,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:889",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+        "label": "Séance instruction DPS",
+        "date": "2028-01-26",
+        "sourceLine": 889,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:900",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+        "label": "Séance instruction DPS",
+        "date": "2028-02-01",
+        "sourceLine": 900,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+        "label": "Séance personnel DAP",
+        "date": "2028-01-26",
+        "sourceLine": 888,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-CODIR-92921E7C:893",
+        "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+        "label": "Séance Codir",
+        "date": "2028-01-28",
+        "sourceLine": 893,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0:894",
+        "definitionId": "QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0",
+        "label": "Équipement des recrues FOBA 1",
+        "date": "2028-01-29",
+        "sourceLine": 894,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FOBA-FD15AA5A:895",
+        "definitionId": "QV26-COURS-DE-CADRES-FOBA-FD15AA5A",
+        "label": "Cours de cadres FOBA",
+        "date": "2028-01-29",
+        "sourceLine": 895,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684:896",
+        "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684",
+        "label": "Cours de cadres Formateurs MEA 1",
+        "date": "2028-01-31",
+        "sourceLine": 896,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-2-0DDB59DA:897",
+        "definitionId": "QV26-EXERCICE-JSP-2-0DDB59DA",
+        "label": "Exercice JSP 2",
+        "date": "2028-01-31",
+        "sourceLine": 897,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE:898",
+        "definitionId": "QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE",
+        "label": "Séance des chefs de section DAP",
+        "date": "2028-01-31",
+        "sourceLine": 898,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:904",
+        "definitionId": "QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC",
+        "label": "Séance communication F5/6",
+        "date": "2028-02-02",
+        "sourceLine": 904,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-PR-3817D3C2:905",
+        "definitionId": "QV26-COURS-DE-CADRES-PR-3817D3C2",
+        "label": "Cours de cadres PR",
+        "date": "2028-02-02",
+        "sourceLine": 905,
+        "status": "PROPOSED"
+      }
+    ],
+    "missingCadence": []
+  },
+  "explicitFalseParametersSuppressNewAutomaticExtension": true,
+  "existingAutomaticJanuaryCodirProposed": true,
+  "automaticProposalEditableAndThemeExported": true,
+  "customHumanTitleRetainsTypeAcrossReconduction": true,
+  "automaticExtension2028": {
+    "status": "DEMONSTRATED",
+    "cta": true,
+    "historicalExplicitNextYear": [
+      {
+        "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E:852",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+        "label": "Intégration personnel DPS, phase I",
+        "date": "2029-01-02",
+        "sourceLine": 852,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:853",
+        "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+        "label": "Échange tenue",
+        "date": "2029-01-03",
+        "sourceLine": 853,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:858",
+        "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+        "label": "Échange tenue",
+        "date": "2029-01-04",
+        "sourceLine": 858,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:857",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "2029-01-03",
+        "sourceLine": 857,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:854",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "2029-01-03",
+        "sourceLine": 854,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:855",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "2029-01-03",
+        "sourceLine": 855,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:856",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "2029-01-03",
+        "sourceLine": 856,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF:859",
+        "definitionId": "QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF",
+        "label": "Répétition garde drapeau RA'25",
+        "date": "2029-01-04",
+        "sourceLine": 859,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:860",
+        "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+        "label": "Exercice JSP 1",
+        "date": "2029-01-08",
+        "sourceLine": 860,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:882",
+        "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+        "label": "Exercice JSP 1",
+        "date": "2029-01-23",
+        "sourceLine": 882,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD:861",
+        "definitionId": "QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD",
+        "label": "Intégration personnel DAP",
+        "date": "2029-01-08",
+        "sourceLine": 861,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-EM-ED042EBD:862",
+        "definitionId": "QV26-SEANCE-EM-ED042EBD",
+        "label": "Séance État-major",
+        "date": "2029-01-09",
+        "sourceLine": 862,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-CADRES-F5-6-A6B9A14F:863",
+        "definitionId": "QV26-SEANCE-CADRES-F5-6-A6B9A14F",
+        "label": "Séance cadres F5/6",
+        "date": "2029-01-10",
+        "sourceLine": 863,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:864",
+        "definitionId": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+        "label": "Séance Direction JSP",
+        "date": "2029-01-10",
+        "sourceLine": 864,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB:865",
+        "definitionId": "QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB",
+        "label": "Séance échelons II, III et IV",
+        "date": "2029-01-11",
+        "sourceLine": 865,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4:866",
+        "definitionId": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+        "label": "Séance de préparation concours de la FVSP",
+        "date": "2029-01-15",
+        "sourceLine": 866,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0:869",
+        "definitionId": "QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0",
+        "label": "Séance audiovisuel et communication F5/6",
+        "date": "2029-01-16",
+        "sourceLine": 869,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "label": "Séance instruction DAP",
+        "date": "2029-01-25",
+        "sourceLine": 892,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "label": "Séance instruction DAP",
+        "date": "2029-01-16",
+        "sourceLine": 870,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "label": "Séance instruction DAP",
+        "date": "2029-01-17",
+        "sourceLine": 875,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "label": "Séance instruction DAP",
+        "date": "2029-01-25",
+        "sourceLine": 891,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:874",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+        "label": "Séance personnel DPS",
+        "date": "2029-01-17",
+        "sourceLine": 874,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:871",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+        "label": "Séance personnel DPS",
+        "date": "2029-01-17",
+        "sourceLine": 871,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:872",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+        "label": "Séance personnel DPS",
+        "date": "2029-01-17",
+        "sourceLine": 872,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:873",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+        "label": "Séance personnel DPS",
+        "date": "2029-01-17",
+        "sourceLine": 873,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-CADRES-JSP-1591AA8A:876",
+        "definitionId": "QV26-SEANCE-CADRES-JSP-1591AA8A",
+        "label": "Séance cadres JSP",
+        "date": "2029-01-18",
+        "sourceLine": 876,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361:877",
+        "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361",
+        "label": "Cours de cadres Formateurs cursus MEA",
+        "date": "2029-01-22",
+        "sourceLine": 877,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-FOURRIERS-DPS-A39F1CE0:878",
+        "definitionId": "QV26-SEANCE-FOURRIERS-DPS-A39F1CE0",
+        "label": "Séance Fourriers DPS",
+        "date": "2029-01-22",
+        "sourceLine": 878,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6:879",
+        "definitionId": "QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6",
+        "label": "Séance responsables MAT SDIS",
+        "date": "2029-01-22",
+        "sourceLine": 879,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-FOURRIERS-DAP-997F4819:880",
+        "definitionId": "QV26-SEANCE-FOURRIERS-DAP-997F4819",
+        "label": "Séance Fourriers DAP",
+        "date": "2029-01-22",
+        "sourceLine": 880,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:884",
+        "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+        "label": "Séance chefs de section DPS",
+        "date": "2029-01-23",
+        "sourceLine": 884,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:881",
+        "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+        "label": "Séance chefs de section DPS",
+        "date": "2029-01-23",
+        "sourceLine": 881,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:885",
+        "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+        "label": "Séance chefs de section DPS C1",
+        "date": "2029-01-23",
+        "sourceLine": 885,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:883",
+        "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+        "label": "Séance chefs de section DPS C1",
+        "date": "2029-01-23",
+        "sourceLine": 883,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:901",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+        "label": "Séance instruction DPS",
+        "date": "2029-01-30",
+        "sourceLine": 901,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:887",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+        "label": "Séance instruction DPS",
+        "date": "2029-01-24",
+        "sourceLine": 887,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:889",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+        "label": "Séance instruction DPS",
+        "date": "2029-01-24",
+        "sourceLine": 889,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:900",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+        "label": "Séance instruction DPS",
+        "date": "2029-01-30",
+        "sourceLine": 900,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+        "label": "Séance personnel DAP",
+        "date": "2029-01-24",
+        "sourceLine": 888,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-CODIR-92921E7C:893",
+        "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+        "label": "Séance Codir",
+        "date": "2029-01-26",
+        "sourceLine": 893,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0:894",
+        "definitionId": "QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0",
+        "label": "Équipement des recrues FOBA 1",
+        "date": "2029-01-27",
+        "sourceLine": 894,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-COURS-DE-CADRES-FOBA-FD15AA5A:895",
+        "definitionId": "QV26-COURS-DE-CADRES-FOBA-FD15AA5A",
+        "label": "Cours de cadres FOBA",
+        "date": "2029-01-27",
+        "sourceLine": 895,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684:896",
+        "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684",
+        "label": "Cours de cadres Formateurs MEA 1",
+        "date": "2029-01-29",
+        "sourceLine": 896,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-EXERCICE-JSP-2-0DDB59DA:897",
+        "definitionId": "QV26-EXERCICE-JSP-2-0DDB59DA",
+        "label": "Exercice JSP 2",
+        "date": "2029-01-29",
+        "sourceLine": 897,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE:898",
+        "definitionId": "QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE",
+        "label": "Séance des chefs de section DAP",
+        "date": "2029-01-29",
+        "sourceLine": 898,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:904",
+        "definitionId": "QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC",
+        "label": "Séance communication F5/6",
+        "date": "2029-01-31",
+        "sourceLine": 904,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-COURS-DE-CADRES-PR-3817D3C2:905",
+        "definitionId": "QV26-COURS-DE-CADRES-PR-3817D3C2",
+        "label": "Cours de cadres PR",
+        "date": "2029-01-31",
+        "sourceLine": 905,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:909",
+        "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+        "label": "Séance Préposés mat DPS",
+        "date": "2029-02-01",
+        "sourceLine": 909,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:906",
+        "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+        "label": "Séance Préposés mat DPS",
+        "date": "2029-02-01",
+        "sourceLine": 906,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:907",
+        "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+        "label": "Séance Préposés mat DPS",
+        "date": "2029-02-01",
+        "sourceLine": 907,
+        "status": "PROPOSED"
+      },
+      {
+        "itemId": "QV28:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:908",
+        "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+        "label": "Séance Préposés mat DPS",
+        "date": "2029-02-01",
+        "sourceLine": 908,
+        "status": "PROPOSED"
+      }
+    ],
+    "missingCadence": []
+  },
+  "final867ProtectedRowsUnchanged": true,
+  "manualAPlusOnePreserved": true,
+  "exactDuplicateReturnsExisting": true,
+  "continuousCtaExtension": 4,
+  "futureGenerationBounds": {
+    "year": 2028,
+    "startDate": "2028-02-03",
+    "endDate": "2029-02-02",
+    "status": "DEFINED",
+    "parametersDefined": true,
+    "generationAllowed": true,
+    "openingReport": {
+      "sourceType": "FUTURE_DATE",
+      "itemId": "3c1fdc61-eb2c-4f29-8cd2-7777f8a1f95c",
+      "programmeYear": 2027,
+      "closesCycleYear": 2027,
+      "actualDate": "2028-02-02"
+    },
+    "closingReport": {
+      "sourceType": "FUTURE_DATE",
+      "itemId": "c1088aaa-d0d3-4fb2-9ff7-793cbd9258c9",
+      "programmeYear": 2028,
+      "closesCycleYear": 2028,
+      "actualDate": "2029-02-02"
+    },
+    "missing": [],
+    "reportOptions": [
+      {
+        "sourceType": "PROGRAMME_ITEM",
+        "itemId": "qv-source-923",
+        "programmeYear": 2027,
+        "closesCycleYear": 2026,
+        "actualDate": "2027-03-04",
+        "label": "Rapport annuel"
+      },
+      {
+        "sourceType": "FUTURE_DATE",
+        "itemId": "3c1fdc61-eb2c-4f29-8cd2-7777f8a1f95c",
+        "programmeYear": 2027,
+        "closesCycleYear": 2027,
+        "actualDate": "2028-02-02",
+        "label": "Rapport annuel"
+      },
+      {
+        "sourceType": "FUTURE_DATE",
+        "itemId": "c1088aaa-d0d3-4fb2-9ff7-793cbd9258c9",
+        "programmeYear": 2028,
+        "closesCycleYear": 2028,
+        "actualDate": "2029-02-02",
+        "label": "Rapport annuel"
+      }
+    ],
+    "statisticsBasis": "CIVIL_EVENT_DATE",
+    "automaticExtension": {
+      "status": "DEMONSTRATED",
+      "cta": true,
+      "historicalExplicitNextYear": [
+        {
+          "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E:852",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+          "label": "Intégration personnel DPS, phase I",
+          "date": "2029-01-02",
+          "sourceLine": 852,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:853",
+          "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+          "label": "Échange tenue",
+          "date": "2029-01-03",
+          "sourceLine": 853,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:858",
+          "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+          "label": "Échange tenue",
+          "date": "2029-01-04",
+          "sourceLine": 858,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:857",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+          "label": "Intégration personnel DPS, phase II",
+          "date": "2029-01-03",
+          "sourceLine": 857,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:854",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+          "label": "Intégration personnel DPS, phase II",
+          "date": "2029-01-03",
+          "sourceLine": 854,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:855",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+          "label": "Intégration personnel DPS, phase II",
+          "date": "2029-01-03",
+          "sourceLine": 855,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:856",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+          "label": "Intégration personnel DPS, phase II",
+          "date": "2029-01-03",
+          "sourceLine": 856,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF:859",
+          "definitionId": "QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF",
+          "label": "Répétition garde drapeau RA'25",
+          "date": "2029-01-04",
+          "sourceLine": 859,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:860",
+          "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+          "label": "Exercice JSP 1",
+          "date": "2029-01-08",
+          "sourceLine": 860,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:882",
+          "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+          "label": "Exercice JSP 1",
+          "date": "2029-01-23",
+          "sourceLine": 882,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD:861",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD",
+          "label": "Intégration personnel DAP",
+          "date": "2029-01-08",
+          "sourceLine": 861,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-EM-ED042EBD:862",
+          "definitionId": "QV26-SEANCE-EM-ED042EBD",
+          "label": "Séance État-major",
+          "date": "2029-01-09",
+          "sourceLine": 862,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-CADRES-F5-6-A6B9A14F:863",
+          "definitionId": "QV26-SEANCE-CADRES-F5-6-A6B9A14F",
+          "label": "Séance cadres F5/6",
+          "date": "2029-01-10",
+          "sourceLine": 863,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:864",
+          "definitionId": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+          "label": "Séance Direction JSP",
+          "date": "2029-01-10",
+          "sourceLine": 864,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB:865",
+          "definitionId": "QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB",
+          "label": "Séance échelons II, III et IV",
+          "date": "2029-01-11",
+          "sourceLine": 865,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4:866",
+          "definitionId": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+          "label": "Séance de préparation concours de la FVSP",
+          "date": "2029-01-15",
+          "sourceLine": 866,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0:869",
+          "definitionId": "QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0",
+          "label": "Séance audiovisuel et communication F5/6",
+          "date": "2029-01-16",
+          "sourceLine": 869,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+          "label": "Séance instruction DAP",
+          "date": "2029-01-25",
+          "sourceLine": 892,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+          "label": "Séance instruction DAP",
+          "date": "2029-01-16",
+          "sourceLine": 870,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+          "label": "Séance instruction DAP",
+          "date": "2029-01-17",
+          "sourceLine": 875,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+          "label": "Séance instruction DAP",
+          "date": "2029-01-25",
+          "sourceLine": 891,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:874",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+          "label": "Séance personnel DPS",
+          "date": "2029-01-17",
+          "sourceLine": 874,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:871",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+          "label": "Séance personnel DPS",
+          "date": "2029-01-17",
+          "sourceLine": 871,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:872",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+          "label": "Séance personnel DPS",
+          "date": "2029-01-17",
+          "sourceLine": 872,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:873",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+          "label": "Séance personnel DPS",
+          "date": "2029-01-17",
+          "sourceLine": 873,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-CADRES-JSP-1591AA8A:876",
+          "definitionId": "QV26-SEANCE-CADRES-JSP-1591AA8A",
+          "label": "Séance cadres JSP",
+          "date": "2029-01-18",
+          "sourceLine": 876,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361:877",
+          "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361",
+          "label": "Cours de cadres Formateurs cursus MEA",
+          "date": "2029-01-22",
+          "sourceLine": 877,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-FOURRIERS-DPS-A39F1CE0:878",
+          "definitionId": "QV26-SEANCE-FOURRIERS-DPS-A39F1CE0",
+          "label": "Séance Fourriers DPS",
+          "date": "2029-01-22",
+          "sourceLine": 878,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6:879",
+          "definitionId": "QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6",
+          "label": "Séance responsables MAT SDIS",
+          "date": "2029-01-22",
+          "sourceLine": 879,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-FOURRIERS-DAP-997F4819:880",
+          "definitionId": "QV26-SEANCE-FOURRIERS-DAP-997F4819",
+          "label": "Séance Fourriers DAP",
+          "date": "2029-01-22",
+          "sourceLine": 880,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:884",
+          "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+          "label": "Séance chefs de section DPS",
+          "date": "2029-01-23",
+          "sourceLine": 884,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:881",
+          "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+          "label": "Séance chefs de section DPS",
+          "date": "2029-01-23",
+          "sourceLine": 881,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:885",
+          "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+          "label": "Séance chefs de section DPS C1",
+          "date": "2029-01-23",
+          "sourceLine": 885,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:883",
+          "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+          "label": "Séance chefs de section DPS C1",
+          "date": "2029-01-23",
+          "sourceLine": 883,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:901",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+          "label": "Séance instruction DPS",
+          "date": "2029-01-30",
+          "sourceLine": 901,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:887",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+          "label": "Séance instruction DPS",
+          "date": "2029-01-24",
+          "sourceLine": 887,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:889",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+          "label": "Séance instruction DPS",
+          "date": "2029-01-24",
+          "sourceLine": 889,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:900",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+          "label": "Séance instruction DPS",
+          "date": "2029-01-30",
+          "sourceLine": 900,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+          "label": "Séance personnel DAP",
+          "date": "2029-01-24",
+          "sourceLine": 888,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-CODIR-92921E7C:893",
+          "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+          "label": "Séance Codir",
+          "date": "2029-01-26",
+          "sourceLine": 893,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0:894",
+          "definitionId": "QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0",
+          "label": "Équipement des recrues FOBA 1",
+          "date": "2029-01-27",
+          "sourceLine": 894,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-COURS-DE-CADRES-FOBA-FD15AA5A:895",
+          "definitionId": "QV26-COURS-DE-CADRES-FOBA-FD15AA5A",
+          "label": "Cours de cadres FOBA",
+          "date": "2029-01-27",
+          "sourceLine": 895,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684:896",
+          "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684",
+          "label": "Cours de cadres Formateurs MEA 1",
+          "date": "2029-01-29",
+          "sourceLine": 896,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-EXERCICE-JSP-2-0DDB59DA:897",
+          "definitionId": "QV26-EXERCICE-JSP-2-0DDB59DA",
+          "label": "Exercice JSP 2",
+          "date": "2029-01-29",
+          "sourceLine": 897,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE:898",
+          "definitionId": "QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE",
+          "label": "Séance des chefs de section DAP",
+          "date": "2029-01-29",
+          "sourceLine": 898,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:904",
+          "definitionId": "QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC",
+          "label": "Séance communication F5/6",
+          "date": "2029-01-31",
+          "sourceLine": 904,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-COURS-DE-CADRES-PR-3817D3C2:905",
+          "definitionId": "QV26-COURS-DE-CADRES-PR-3817D3C2",
+          "label": "Cours de cadres PR",
+          "date": "2029-01-31",
+          "sourceLine": 905,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:909",
+          "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+          "label": "Séance Préposés mat DPS",
+          "date": "2029-02-01",
+          "sourceLine": 909,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:906",
+          "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+          "label": "Séance Préposés mat DPS",
+          "date": "2029-02-01",
+          "sourceLine": 906,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:907",
+          "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+          "label": "Séance Préposés mat DPS",
+          "date": "2029-02-01",
+          "sourceLine": 907,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV28:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:908",
+          "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+          "label": "Séance Préposés mat DPS",
+          "date": "2029-02-01",
+          "sourceLine": 908,
+          "status": "PROPOSED"
+        }
+      ],
+      "missingCadence": []
+    }
+  },
+  "operationalEventsCreated": 0,
+  "lateClosingDps": {
+    "fixtureClosingDate": "2028-03-04",
+    "fixtureOnly": true,
+    "civilYear": 2028,
+    "cycleYear": 2027,
+    "instructions": 16,
+    "conduites": 16,
+    "humanDecisionPreserved": true,
+    "followingCycleStart": "2028-03-05",
+    "followingCycleDoesNotRecreatePrecedingInstructions": true,
+    "original867Unchanged": true
+  },
+  "protectedTablesUnchangedDuring": 105,
+  "allTablesUnchangedAfterRollback": 113,
+  "transaction": "BEGIN/ROLLBACK",
+  "status": "PASS"
+}

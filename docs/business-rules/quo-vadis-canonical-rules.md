@@ -169,8 +169,9 @@ Conservée comme caractéristique de la 2ᵉ séance, démontrée par 2026 (10.0
 Preuve 2026 : 21.04 mardi 18:30–21:30 (T2), 10.06 mercredi 08:00–11:00 (T2), 06.10 mardi 18:30–21:30 (T4).
 Projection 2027 : 20.04, 09.06, 05.10. Une séance = une ligne, jamais deux.
 Public **PABC** (`PR:3`) uniquement : JSP n’est jamais public d’une activité PR-ABC.
-Les trois lignes 2026 (241, 391, 711) ne désignent aucun OI : la projection non protégée
-ne doit pas hériter de `G1` par défaut. Un OI fixé par décision humaine ou publication reste préservé.
+Les trois lignes 2026 (241, 391, 711) ne désignent aucun OI. Cette absence historique reste conservée dans la source.
+Le complément MOA PR #12 du 12.10.2026 impose désormais **DPS G1 uniquement** pour les propositions PR-ABC / PABC.
+Une décision humaine ou publication divergente n'est pas écrasée : elle est signalée par le contrôle annuel pour révision ciblée.
 Responsable **Chef PR** (`C PR`), conformément à 2026 et au reste du domaine PR.
 Implémentation : `qvApplyPrAbcStructure`, `qvPrAbcSessionPlan`.
 
@@ -192,6 +193,7 @@ G1, Caserne G1. Implémentation : `qvApplyPionnierRules`.
 
 ### QV-UI-001 — État = carré 8×8 + texte, sans badge ni capsule
 Couleurs : `#2f9e5a`, `#DE000A`, `#c98412`, `#4f84d6`, `#8b949e`.
+La cellule État du tableau du Programme annuel est alignée verticalement en haut ; le carré et le libellé sont conservés.
 
 ### QV-UI-002 — Actions textuelles non soulignées
 `.qv-programme-action { text-decoration: none !important }`.
@@ -240,7 +242,7 @@ Le JSON 2027 source reste à 622 séances.
 ## Décisions MOA du 10.10.2026
 
 ### QV-SAVE-001 — Trois actions distinctes
-Enregistrer conserve les décisions et l'état de planification. Enregistrer et valider valide sans modifier cet état.
+Enregistrer conserve les décisions et l'état de planification lorsqu'aucun changement d'état explicite n'est demandé. Le complément MOA PR #12 du 12.10.2026 impose d'enregistrer l'état explicitement sélectionné, dans les deux sens, indépendamment de la validation métier. Enregistrer et valider valide sans planification implicite.
 Enregistrer et planifier valide et place l'occurrence dans l'état `PLANIFIE`, avec date et horaires requis.
 Ces actions ne créent pas d'événement opérationnel : cette création reste soumise à la validation complète du programme annuel.
 Une erreur doit conserver la saisie sans annoncer un succès ni laisser une écriture partielle.
@@ -283,3 +285,126 @@ Les groupes DPS (G1, C1, B1, B2), DAP (Y1–Y4) et JSP (G1, C1, B1) se sélectio
 
 ### QV-PART-001 — Évaluation individuelle et reconduction
 `participationEvaluation` est un booléen individuel, activé par défaut pour toutes les occurrences jusqu'en 2027. Une décision individuelle prévaut et est reconduite. Le défaut des types futurs se configure dans le catalogue annuel existant, séparément du suivi nominatif et de ses règles de population. Désactiver l'évaluation filtre le suivi et les taux, sans supprimer le Programme, l'Agenda, les présences ni les obligations historiques. Aucun événement opérationnel n'est créé par la préparation ; la validation annuelle globale reste nécessaire.
+
+## Complément MOA PR #12 — 12.10.2026
+
+### QV-PAPR-001 — Sept modules distincts et prérequis annuel bloquant
+Le cursus PAPR est obligatoire dans le Programme 2027. Le classeur QUO VADIS 2026 fournit sept modules distincts :
+
+| Intitulé | Thème | Ligne source |
+| --- | --- | --- |
+| Cursus PAPR - module 1 | Petzi découvre l'APR | 899, annexe 2027 du classeur |
+| Cursus PAPR - module 2 | Matériel PR | 10 |
+| Cursus PAPR - module 3 | AO Simulateur | 373 |
+| Cursus PAPR - module 4 | Surveillance PR | 687 |
+| Cursus PAPR - module 5 | R&S grand volume | 803 |
+| Cursus PAPR - module 6 | Cobra | 826 |
+| Cursus PAPR - module 7 | Engagement pratique | 845 |
+
+OI obligatoires : `DPS:G1`, `DPS:C1`, `DPS:B1`, `DPS:B2`. Responsable `C PR`. Publics `PR:CAND-PAPR / Candidats PAPR` et `PR:FORMATEUR-PR / Formateur PR`, sans personne ni NIP synthétique.
+Le module 1 conserve sa date explicite source du 02.02.2027. Les dates 2026 des modules 2 à 7 ne sont pas des décisions 2027 : la finalisation MOA autorise maintenant leur projection automatique selon QV-PAPR-002, avec identification de la proposition et conservation des décisions humaines.
+La validation annuelle `VALIDE` est bloquée si un module manque, est dupliqué, n'a pas son thème, ses références obligatoires ou ses horaires confirmés. Les modules 1 et 2 doivent se terminer strictement avant le début du premier Exercice PR 1.1. Une publication ou décision divergente est signalée, jamais réalignée silencieusement.
+Les modules rétablis utilisent le Programme et le cursus existants, pas un module applicatif parallèle. Une seconde lecture ne les duplique pas. Les thèmes décidés sont enregistrés dans le même instantané de reconduction que les autres champs métier.
+
+### QV-PR-OI-002 — Exercices PR et exception PR-ABC
+Les propositions d'exercices PR classiques portent les quatre OI DPS qualifiés. PR-ABC conserve uniquement le public PABC (`PR:3`) et `DPS:G1`. Les identifiants, suffixes, dates, Stat.Com et codes d'occurrence existants restent inchangés. Les décisions humaines divergentes restent accessibles et bloquent la validation annuelle tant qu'elles ne sont pas arbitrées.
+
+### QV-ECA-003 — Référence SQL Formations EXTRAS
+`EXERCI / 0180F7 / Formations EXTRAS` est confirmé par les captures ECAwin officielles. Le registre officiel contenait déjà l'association ; le référentiel initial SQL ne la contenait pas. Le code est ajouté au référentiel initial et une migration ciblée, transactionnelle et idempotente, rétablit la référence manquante.
+Les éventuelles suspensions et périodes d'une référence déjà présente restent conservées. La liste EXERCI utilise le référentiel SQL, sans réécriture d'occurrence, de Stat.Com ou de code SCOPE.
+
+### QV-WORKFLOW-002 — Retrait et révision ciblée d'une publication
+Retirer une validation annuelle ou individuelle exige un motif non vide. L'auteur, le motif, les états et champs antérieurs sont tracés dans les métadonnées et le journal métier existant. Le retrait individuel ne sauvegarde pas les autres saisies non enregistrées de la fiche.
+Le sous-ensemble éditorial sans effet sur la population est constitué de l'intitulé, du thème et des descriptions libres de public. Une telle correction publiée conserve la date de validation précédente et modifie le même événement, sous contrôle de version.
+Les autres différences sont traitées conservativement comme majeures : motif obligatoire, révision `PENDING` de l'occurrence, événement publié inchangé. Une validation ciblée ultérieure applique la révision au même identifiant, par l'éditeur opérationnel et les moteurs de population existants. Les impacts sur les présences exigent leur confirmation ; les présences et exceptions historiques sont conservées. Une concurrence de version bloque l'écriture entière.
+Un Stat.Com publié et son code SCOPE sont immuables dans ce parcours. Un changement de qualification ou de cursus ne réassocie pas implicitement une configuration de formation : la révision reste en attente et renvoie vers la configuration existante de l'événement. Les protections des événements réalisés ou annulés restent celles de l'éditeur opérationnel.
+Ni retrait, ni préparation, ni ouverture de révision ne crée un événement opérationnel ou un doublon.
+
+### QV-CYCLE-004 — Rapport de clôture 2027 proposé en février 2028
+La fenêtre métier initiale était **février 2028**, avant ou après les relâches selon le calendrier scolaire. La finalisation MOA fixe désormais la proposition provisoire du **10.02.2028**, selon QV-CYCLE-005. Les décisions de date explicites restent prioritaires.
+Les statistiques de participation restent strictement civiles : date réelle entre le 01.01 et le 31.12 inclus. Aucune extension du cycle métier n'étend cette fenêtre statistique. Le suivi Cours ECA reste dans la roadmap et les capacités existantes, sans module parallèle.
+
+## Finalisation MOA PR #12 — 12.10.2026
+
+### QV-PAPR-002 — Propositions automatiques 2027
+Sept modules et sept thèmes distincts. OI `DPS:G1/C1/B1/B2`, responsable `C PR`, publics `Candidat PAPR` et `Formateur PR`, Stat.Com `011PR`, spécialisation `PAPR`, cursus de formation `PAPR`.
+La proposition réutilise `qvProjectAnnualWeekday`, `pickProposalSlot`, les règles PR actives, les calendriers persistés et les horaires exacts des lignes 2026. Elle cherche un créneau admissible proche de la projection dans le mois, puis les autres créneaux admissibles si nécessaire ; elle conserve le jour historique ou le jour du cursus référencé, sans recopier arbitrairement une date.
+Les modules 1/2 doivent se terminer avant le premier PR 1.1, identifié par son identité source stable. L'ordre des modules et les chevauchements connus de la fonction C PR sont contrôlés. Une impossibilité conserve les dates protégées et signale les contraintes en conflit ; elle ne fabrique pas une décision humaine.
+La date source explicite du module 1 reste protégée. Les autres dates portent `PROPOSITION_AUTOMATIQUE`, restent modifiables dans la fiche existante et deviennent une décision conservée lorsque la MOA les enregistre. La référence PAPR est une caractéristique de formation, pas une qualification personnelle synthétisée.
+Le tableau PAPR expose module, date, horaire, thème, source, contraintes et état. Les réserves de salles et disponibilité nominative ne sont pas réputées validées par le seul calendrier ; les mécanismes existants et décisions humaines restent prioritaires. Le rattachement préparatoire des modules 1/2 est désormais explicitement confirmé par QV-PAPR-004.
+
+### QV-CYCLE-005 — Clôture provisoire 10.02.2028
+Le `10.02.2028` clôture provisoirement le cycle métier 2027, statut exact **PROVISOIRE — À VALIDER PAR LE CODIR**. La proposition MOA est versionnée et enregistrée par migration transactionnelle idempotente dans les Dates annoncées existantes. Aucun événement opérationnel n'est créé.
+Une déclaration antérieure est conservée, jamais remplacée silencieusement. Une modification de la proposition provisoire réutilise la même référence et conserve l'historique des dates. Le contrôle `Date validée par le Codir` est distinct de `Paramètres annuels définis` ; le caractère provisoire n'est pas une validation annuelle.
+La borne provisoire permet de préparer les propositions A+1 avec les moteurs et rotations continus. La validation annuelle définitive reste bloquée tant que le Codir n'a pas confirmé la clôture. Les statistiques restent exclusivement du 01.01 au 31.12 selon les dates réelles des événements.
+
+### QV-PAPR-003 — Publication antérieure du module 1
+Le diagnostic compare les OI de l'événement publié, pas uniquement les valeurs préparatoires du Programme. La fiche permet de proposer les quatre OI DPS par la révision ciblée existante. L'enregistrement ouvre `PENDING`, ne change pas l'événement publié, son identifiant, son Stat.Com, son code ni ses présences. La confirmation de révision reste nécessaire avant synchronisation opérationnelle. Les autres activités restent éditables.
+
+### QV-PUBLIC-004 — Singulier et Préposé APR
+`PR:PREPOSE-APR / Préposé APR` est un public descriptif permanent. Il ne crée pas de personne, NIP, affectation, qualification ou obligation nominative et ne contribue pas automatiquement aux statistiques.
+Les fonctions proposées sont au singulier. `PR:CAND-PAPR` devient visiblement `Candidat PAPR` sans changer de code ; les anciens codes de fonctions restent lisibles, avec une mention historique lorsqu'ils coexistent avec une référence descriptive permanente. Les descriptions libres et décisions enregistrées ne sont pas réécrites.
+
+### QV-THEME-002 — Priorité au thème explicite
+Un tableau `themes` explicite, y compris vide, est prioritaire sur le thème historique de projection. Phase I/Phase II ne réapparaissent pas après une correction ou un effacement explicite. Sans thème explicite, la source historique reste lisible ; aucun remplacement global non démontré des phases historiques n'est effectué.
+
+### QV-SPEC-001 / QV-ECA-COURSES-002 — Acquis et roadmap
+La spécialisation du Programme reste multisélection et persistante, avec les codes canoniques datés existants ; libellé `Cursus de formation`. PAPR/PABC et les autres références acquises sont conservés. Aucun backfill personnel ni qualification fictive n'est créé depuis QUO VADIS.
+L'alignement exhaustif sur IndeX doit être appuyé par un référentiel IndeX versionné et une décision de correspondance ; le catalogue C3-B existant n'est pas présenté comme un export IndeX vérifié. Cette vérification reste dans la roadmap, sans refonte dans la livraison.
+Le suivi spécialisé des Cours ECA reste requis : inscriptions/import cantonal, suivi individuel NIP, distinction cours suivis/obligations SDIS, contributions et agrégats par domaine/OI/période civile, exports. Les mécanismes SCOPE existants doivent être complétés ; aucun module parallèle n'est ouvert.
+
+## ROADMAP V1 — décisions confirmées du 12.10.2026
+
+### QV-PUBLIC-003 — Fonctions descriptives permanentes
+Commandement : `CDT`, `C op`, `C log`, `C for`, `QM`. PR : `C PR`, `Formateur PR`. AUTO : `Of auto`, `Formateur C1/118`, `Moniteur conduite`.
+Les libellés visibles restent ces codes ou descriptions exacts, triés dans leur domaine. Ces déclarations ne désignent aucune personne et ne créent aucun NIP, affectation ou obligation individuelle. Les anciens publics et saisies libres restent conservés.
+
+### QV-RESP-003 — Correction du libellé C sct
+Le code stable `C scrt` conserve son identité ; son libellé proposé devient `C sct`. Les occurrences et décisions enregistrées ne sont pas réécrites. La migration est transactionnelle et idempotente.
+
+### QV-EXPORT-001 — Intitulé et thème dans les exports
+Programme et Agenda : le PDF présente l'intitulé complet puis le thème à la ligne suivante. L'export Excel existant, CSV compatible, les présente dans la même cellule, avec le séparateur exact ` - `. Sans thème renseigné, aucun séparateur ni ligne vide supplémentaire. Les générateurs existants sont conservés et aucun titre, Stat.Com ou code source n'est modifié.
+
+### QV-TYPE-001 / QV-TYPE-002 — Bibliothèque complémentaire
+La fiche manuelle propose les types canoniques existants et leurs valeurs démontrées, avec des variantes DPS qualifiées par site. Les valeurs restent modifiables. Une divergence de sources laisse le champ à compléter ; aucune correspondance, date, personne ou obligation n'est inventée. Une création manuelle ne devient pas automatiquement une nouvelle référence ou un nouveau type. La bibliothèque ne remplace jamais la génération récurrente.
+
+### QV-CYCLE-001 — Cycle délimité par les Rapports annuels
+Le Rapport annuel clôture le cycle précédent. Le cycle suivant commence après ce jalon, selon ses paramètres confirmés. La date réelle du Rapport enregistré prime sur la date canonique ; aucune clôture inconnue n'est déduite du 31 décembre. Les références de Rapport, bornes et confirmation des paramètres utilisent les métadonnées du Programme et les dates annoncées existantes.
+Une clôture explicitement renseignée par la MOA peut se situer en A+1. Le Programme acquis reste conservé, y compris les décisions historiques hors nouvelles bornes ; aucune occurrence validée n'est déplacée automatiquement. Les rotations CTA restent continues.
+
+### QV-CYCLE-002 — A+1 et absence de doublons
+Une occurrence manuelle peut appartenir au cycle A avec une date civile en A+1, sans génération préalable du Programme A+1, si les Rapports connus démontrent ce rattachement. Une occurrence correspondant au type, à la date, aux horaires, au Stat.Com et aux OI qualifiés est proposée sans écrasement ni nouvelle création. La génération suivante conserve les lignées humaines et ne recrée pas les occurrences déjà rattachées au cycle précédent.
+Les prolongations automatiques réutilisent les moteurs existants et les sources démontrées ; les champs et cadences non démontrés restent signalés, sans date inventée. Aucun événement opérationnel n'est créé avant validation complète du Programme.
+
+### QV-STAT-001 — Statistiques civiles indépendantes
+Les statistiques utilisent exclusivement la date réelle de l'événement, du 01.01 au 31.12 inclus, indépendamment de son cycle métier. Une occurrence du cycle 2027 datée en janvier 2028 contribue uniquement à 2028. Les moteurs existants conservent NIP, OI, domaines, spécialisations, affectations datées, dispenses et rattrapages ; une occurrence non évaluée ne contribue pas au taux et ses présences restent conservées.
+
+### QV-SCOPE-001 — Externe et non évalué sont distincts
+Une activité externe hors suivi SCOPE reste au Programme et à l'Agenda mais n'est pas publiée comme événement opérationnel SCOPE et ne crée aucune obligation individuelle. Une activité SCOPE non évaluée reste publiable après validation annuelle, avec ses mécanismes de présence conservés ; seule sa contribution au taux est désactivée.
+
+### QV-ECA-COURSES-001 — Suivi cantonal préservé
+Le suivi individuel par NIP, les cours suivis, les agrégats et leurs exports doivent réutiliser les mécanismes de participation SCOPE. Les codes ECAwin `COURS` et Stat.Com cantonaux restent distincts des obligations internes SDIS. Aucun module parallèle n'est créé. Le rapport du jalon documente les éventuels contrats spécialisés restant à terminer.
+
+## Finalisation corrective PR #12 — 12.10.2026
+
+### QV-SAVE-002 — État explicite indépendant
+Le serveur conserve `body.status` explicitement demandé par Enregistrer et le persiste dans `statut`, `metadata.planningStatus` et les champs préparatoires. La fiche n'envoie un état que si son sélecteur a été modifié ; sans modification, l'état antérieur reste conservé. Le Programme affiche cet état même si la validation métier antérieure est conservée.
+Une modification de planification sur une publication est majeure : motif, révision ciblée en attente, version et journal existants. L'événement opérationnel, ses dates et ses présences ne sont pas supprimés par un retour préparatoire à « À planifier ». La validation antérieure reste traçable ; ce changement n'est pas un retrait implicite de validation d'une préparation non publiée.
+
+### QV-PAPR-004 — Modules préparatoires du cursus 2027
+Les modules 1/2 appartiennent au cursus PAPR 2027, même avant la borne du cycle enregistrée au 05.03.2027 sur le clone. Leur classification est `PREPARATORY_CURSUS`, avec année, cursus, module et règle explicites, conservés à l'enregistrement. Il ne s'agit ni d'un autre cycle ni d'un déplacement de la borne.
+Dates conservées : 02.02, 16.02, 03.06, 29.09, 16.11, 30.11 et 11.12.2027. Les modules 1/2 se terminent avant PR 1.1 du 02.03.2027. L'exception est limitée aux deux modules preparatoires PAPR 2027, pas à toutes les activités hors cycle. Les rotations CTA et les statistiques civiles restent inchangées.
+
+### QV-ECA-004 — Liste d'activités ECAwin
+La fiche présente uniquement la liste déroulante des cinq activités principales, sans recherche supplémentaire. Les références `EXEPRO`, `EXERCI`, `CONCOUR`, les valeurs historiques et toutes les associations officielles restent intactes. Une sélection d'activité n'efface jamais un Stat.Com enregistré.
+
+### QV-MANIFESTATION-001 / QV-CODE-004 — Interne non soldé sans Stat.Com
+Solde (`sold`), évaluation (`participationEvaluation`) et demande d'export ECAwin (`ecawinExport`) sont trois décisions indépendantes, persistantes et reconductibles. Une activité interne non soldée reste publiable après le workflow annuel existant ; elle n'est pas assimilée à une activité externe hors SCOPE.
+Sans Stat.Com, un nouveau code d'occurrence peut être attribué dans l'espace réservé `SCOPE-000001` par une séquence PostgreSQL indépendante. Il ne constitue jamais un Stat.Com, un NIP ou une association ECAwin. Le code est conservé à la réouverture et à la publication ; les contraintes d'unicité des événements et le mécanisme anti-doublons existant restent actifs. Un échec peut laisser un trou dans une séquence, jamais entraîner une renumérotation. Aucun code ni Stat.Com historique n'est remplacé. Le Stat.Com absent est `NON_APPLICABLE`, pas une correspondance fictive à compléter.
+Les données internes de publication et les relations OI qualifiées réutilisent le magasin et le moteur de population datée existants. Aucune affectation individuelle ni événement opérationnel n'est créé lors de la préparation. Aucun fichier d'import ECAwin n'est inventé : le contrat spécifique des manifestations sans Stat.Com reste à démontrer avant livraison d'un tel export. La présence future dans les calendriers individuels reste portée par la roadmap existante, sans nouveau module.
+
+### QV-MANIFESTATION-002 — Préremplissage dépendant des OI
+Journée des familles et Noël des familles : propositions non soldées, export ECAwin activable ; l'évaluation 2027 reste cochée par défaut et désactivable. Pour les OI DPS qualifiées : Sapeur DPS, FOBA 1, FOBA 2. Pour les OI DAP qualifiées : Sapeur DAP, FOBA 1, FOBA 2. Un OI non qualifié n'est pas assimilé à un domaine.
+Responsable proposé : `C sct`, identité historique `C scrt` conservée. Les nouvelles propositions utilisent le libellé corrigé ; aucune décision historique n'est réécrite. Le préremplissage s'arrête pour les champs modifiés manuellement, y compris après enregistrement. Les descriptions libres restent descriptives, sans NIP fictif.
+
+Preuves ciblées : `scripts/scope-qv-pr12-corrective-tests.js`, `scripts/scope-qv-pr12-corrective-clone-tests.js`, `scripts/scope-qv-pr12-corrective-browser.js` et `docs/captures/qv-pr12-corrective-20261012/`. Les recettes acquises des jalons précédents ne sont pas relancées.

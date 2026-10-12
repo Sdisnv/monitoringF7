@@ -58,6 +58,10 @@ const RESPONSIBLE_FUNCTIONS = Object.freeze([
   'Resp VPC'
 ]);
 
+function responsibleFunctionLabel(code) {
+  return code === 'C scrt' ? 'C sct' : String(code || '').replace(/^Présidente (CI|Codir)$/, 'PrésidentE $1');
+}
+
 const SCOPE_SITE_ORDER = Object.freeze(OFFICIAL_LIEUX.map((row) => String(row.oiCode)));
 
 const SCOPE_DOMAIN_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'PR', 'AUTO']);
@@ -220,6 +224,7 @@ module.exports = {
   THEORY_ROOMS,
   SITES_WITHOUT_THEORY_ROOMS,
   RESPONSIBLE_FUNCTIONS,
+  responsibleFunctionLabel,
   SCOPE_SITE_ORDER,
   SCOPE_DOMAIN_ORDER,
   SCOPE_DOMAIN_LABELS,

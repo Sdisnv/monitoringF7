@@ -312,6 +312,12 @@ async function scopeHandler(event){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
       return response(200, { ok:true, quoVadis: await quoVadis.generateProgramme(params.annee) });
     }
+    params = match(path, '/quo-vadis/programmes/:annee/cycle');
+    if(params && method === 'GET') return response(200,{ok:true,programmeCycle:await quoVadis.getProgrammeCycle(params.annee)});
+    if(params && method === 'PUT'){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ok:false,error:'forbidden'});
+      return response(200,{ok:true,...await quoVadis.setProgrammeCycle(params.annee,{...body,actor:claims.sub || null})});
+    }
     params = match(path, '/quo-vadis/programmes/:annee/preview');
     if(method === 'POST' && params){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
@@ -334,7 +340,7 @@ async function scopeHandler(event){
     params = match(path, '/quo-vadis/programmes/:annee/statut');
     if(method === 'POST' && params){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
-      return response(200, { ok:true, ...(await quoVadis.setProgrammeStatus(params.annee, body)) });
+      return response(200, { ok:true, ...(await quoVadis.setProgrammeStatus(params.annee, {...body,actor:claims.sub || null})) });
     }
     params = match(path, '/quo-vadis/proposals/:id/retain');
     if(method === 'POST' && params){
@@ -350,12 +356,13 @@ async function scopeHandler(event){
     }
     if(method === 'POST' && path === '/quo-vadis/programme-items'){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
-      return response(201, { ok:true, ...(await quoVadis.createProgrammePreparation(body)) });
+      const result=await quoVadis.createProgrammePreparation(body);
+      return response(result.reason === 'PROGRAMME_OCCURRENCE_EXISTS' ? 200 : 201, {ok:true,...result});
     }
     params = match(path, '/quo-vadis/programme-items/:id');
     if(method === 'PATCH' && params){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
-      const result = await quoVadis.updateProgrammePreparation(params.id, body);
+      const result = await quoVadis.updateProgrammePreparation(params.id, body,{actor:claims.sub || null});
       return response(result.updated ? 200 : 404, { ok:result.updated, ...result });
     }
     params = match(path, '/quo-vadis/activities/:id/references');

@@ -1,0 +1,34 @@
+{
+  "base": "http://127.0.0.1:4410",
+  "results": [
+    {
+      "name": "seven sourced automatic proposals and protected module 1 are displayed",
+      "status": "PASS"
+    },
+    {
+      "name": "PAPR specialization, cursus and automatic date are prefilled; multiple selections persist",
+      "status": "PASS"
+    },
+    {
+      "name": "Prepose APR permanent descriptive public and singular Candidat PAPR are selectable",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing published module 1 OI revision remains pending on the same event",
+      "status": "PASS"
+    },
+    {
+      "name": "Report 10.02.2028 stays provisional, editable with same reference and no duplicate",
+      "status": "PASS"
+    },
+    {
+      "name": "Mobile fields, proposal table and revision command do not overlap viewport",
+      "status": "PASS"
+    }
+  ],
+  "javascriptErrors": [],
+  "statComCompared": 929,
+  "statComIdentical": 929,
+  "productionWrites": false,
+  "verdict": "PASS"
+}
