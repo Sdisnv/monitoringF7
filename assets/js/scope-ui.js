@@ -11817,6 +11817,7 @@
     if (row.manualCreation) return 'Création manuelle 2027';
     if(row.businessValidation) return 'Version métier validée';
     if(row.lineage && row.lineage.parentYear) return `Référence ${row.lineage.parentYear} validée`;
+    if(row.paprProposal?.origin === 'AUTOMATIC') return 'Proposition automatique PAPR 2027';
     const value = String(row && row.provenance || '');
     if (value.includes('HISTORICAL_2026')) return 'Référence 2026';
     if (row && (row.review || ['MOA_ARBITRATION', 'INSUFFICIENT_INFORMATION'].includes(row.status))) return 'À contrôler';
@@ -11828,6 +11829,8 @@
   }
 
   function qvProgrammeVisualState(row) {
+    if(row.paprProposal?.status === 'CONFLIT') return {tone:'block',label:'Conflit PAPR'};
+    if(row.paprProposal?.origin === 'AUTOMATIC' && !row.preparation) return {tone:'info',label:'Proposition automatique'};
     if (row.annualReportConstraint && row.annualReportConstraint.status === 'PUBLICATION_UPDATE_REQUIRED')
       return { tone:'attention', label:'Publication à coordonner' };
     if (row.annualReportConstraint && row.annualReportConstraint.status === 'BLOCKED_BY_ANNUAL_REPORT')
@@ -12376,7 +12379,7 @@
     const options = qv.qualifications || [];
     const summary = selected.map(code=>options.find(item=>item.code === code)?.label || code).join(' ; ')
       || row.specialisation || '—';
-    return `<div class="qv-programme-choice-field"><span id="qv-qualification-label">Qualification / spécialisation</span><details class="qv-programme-choice-menu"><summary id="qv-programme-qualification-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-qualification-search" type="search" aria-label="Rechercher une qualification" placeholder="Rechercher"><div id="qv-programme-specialisation" class="qv-programme-choice-list" role="group" aria-labelledby="qv-qualification-label"><fieldset>${options.map(item=>`<label><input type="checkbox" value="${escapeHtml(item.code)}" ${selected.includes(item.code) ? 'checked' : ''}><span>${escapeHtml(item.label)}</span></label>`).join('')}</fieldset></div></div></details></div>`;
+    return `<div class="qv-programme-choice-field"><span id="qv-qualification-label">Spécialisation</span><details class="qv-programme-choice-menu"><summary id="qv-programme-qualification-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-qualification-search" type="search" aria-label="Rechercher une spécialisation" placeholder="Rechercher"><div id="qv-programme-specialisation" class="qv-programme-choice-list" role="group" aria-labelledby="qv-qualification-label"><fieldset>${options.map(item=>`<label><input type="checkbox" value="${escapeHtml(item.code)}" ${selected.includes(item.code) ? 'checked' : ''}><span>${escapeHtml(item.label)}</span></label>`).join('')}</fieldset></div></div></details></div>`;
   }
 
   function qvProgrammeCursusOptions(qv,row){
@@ -12656,12 +12659,19 @@
         ${reports.some(report=>report.closesCycleYear===cycle.year)?`<label><span>Rapport de clôture lié</span><select id="qv-cycle-closing-report">${reportOptions(cycle.year,draft.closingReport)}</select></label>`:''}
         <label><span>Rapport annuel de clôture</span><input id="qv-cycle-end" type="date" value="${escapeHtml(draft.endDate || '')}"></label>
         <label class="qv-programme-cycle-parameters"><input id="qv-cycle-parameters" type="checkbox" ${draft.parametersDefined===true?'checked':''}><span>Paramètres annuels définis</span></label>
+        ${cycle.closingReport?.provisional ? '<label class="qv-programme-cycle-parameters"><input id="qv-cycle-codir-approved" type="checkbox"><span>Date validée par le Codir</span></label>' : ''}
         ${hasScopePermission('references:manage')?'<button class="scope-btn" type="submit">Enregistrer le cycle</button>':''}
       </fieldset></form>
       ${cycle.openingReport ? `<p>Rapport précédent : ${escapeHtml(qvFormatDate(cycle.openingReport.actualDate))}</p>` : '<p class="scope-state-error">Rapport précédent non défini.</p>'}
+      ${cycle.provisional ? `<p>Rapport annuel du ${escapeHtml(qvFormatDate(cycle.endDate))} : PROVISOIRE — À VALIDER PAR LE CODIR.</p>` : ''}
       ${cycle.closingProposal ? '<p>Rapport annuel de clôture 2027 proposé en février 2028. Date à confirmer selon les relâches scolaires.</p>' : ''}
       ${cycle.automaticExtension?.status==='PARTIAL_MOA_REQUIRED'?'<p class="scope-state-error">Extension A+1 partielle : cadences à confirmer.</p>':''}
     </details>`;
+  }
+
+  function qvProgrammePaprControl(qv){
+    if(!qv.paprProposals?.length) return '';
+    return `<details class="qv-programme-cycle qv-papr-control"><summary>Cursus de formation PAPR : sept propositions 2027</summary><div class="scope-table-wrap"><table class="scope-table qv-papr-proposals"><thead><tr><th>Module</th><th>Date</th><th>Horaire</th><th>Thème</th><th>Source de la proposition</th><th>Contraintes vérifiées</th><th>État</th></tr></thead><tbody>${qv.paprProposals.map(row=>`<tr><td><a class="scope-text-action" href="${qvProgrammeFicheHref(row.itemId)}">Module ${row.module}</a></td><td>${escapeHtml(row.date ? qvFormatDate(row.date) : 'À arbitrer')}</td><td>${escapeHtml([row.start,row.end].filter(Boolean).join(' - ') || 'À définir')}</td><td>${escapeHtml(row.themes.join(' · '))}</td><td>QUO VADIS 2026, ligne ${escapeHtml(String(row.source.sourceLine || '—'))}${row.origin==='AUTOMATIC' ? ` · projection annuelle ${escapeHtml(row.source.anchor || '')}` : ' · date de référence préservée'}</td><td>${row.constraints.map(value=>`${escapeHtml(value.name)} : ${value.pass?'vérifié':'conflit'}`).join('<br>')}${row.conflicts.length ? `<br>${escapeHtml(row.conflicts.join(' · '))}` : ''}${row.cycleNote ? `<br>${escapeHtml(row.cycleNote)}` : ''}</td><td>${scopeStateHtml(row.status==='CONFLIT'?'block':row.origin==='AUTOMATIC'?'info':'positive',row.status==='CONFLIT'?'Conflit':row.origin==='AUTOMATIC'?'Proposition automatique':'Date protégée')}</td></tr>`).join('')}</tbody></table></div></details>`;
   }
 
   function renderQuoVadisProgramme(qv) {
@@ -12684,6 +12694,7 @@
         && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')).length))} séances au programme · ${escapeHtml(String(target.historicalNotRenewed || 0))} activités historiques non reconduites.</p></div><div class="scope-actions qv-export-actions">${qvProgrammeYear() >= 2027 && hasScopePermission('references:manage') ? `<a class="scope-btn scope-btn-primary" href="${qvProgrammeFicheHref('nouveau')}">Créer une activité</a>` : ''}${qvProgrammeModeControl()}${qvProgrammePdfControl()}<button type="button" class="scope-btn" id="qv-export-programme-pdf">Exporter PDF</button><button type="button" class="scope-btn" id="qv-export-programme-excel">Exporter pour Excel</button></div></div>
       <div class="qv-programme-kpis" aria-label="Niveaux du programme">${metrics.map(([label, value, detail]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value == null ? '—' : value))}</strong><small>${escapeHtml(detail)}</small></div>`).join('')}</div>
       ${qvProgrammeCycleControl(qv)}
+      ${qvProgrammePaprControl(qv)}
       ${hasScopePermission('references:manage') ? `<details class="qv-programme-cycle"><summary>Validation annuelle : ${escapeHtml(qvStatusLabel(qv.programme.statut))}</summary><label><span>État du Programme annuel</span><select id="qv-programme-status">${['PREPARATION','VALIDATION','VALIDE'].map(status=>`<option value="${status}" ${status===qv.programme.statut?'selected':''}>${escapeHtml(qvStatusLabel(status))}</option>`).join('')}</select></label><label><span>Motif de retrait de validation annuelle</span><textarea id="qv-programme-status-motif" maxlength="2000"></textarea></label>${qv.annualValidationControl?.blocking ? `<ul>${qv.annualValidationControl.issues.map(issue=>`<li>${escapeHtml(issue)}</li>`).join('')}</ul>` : ''}</details>` : ''}
       ${qvProgrammeYear() !== 2027 ? `<p class="qv-programme-workflow-note">Programme ${escapeHtml(String(qvProgrammeYear()))} en préparation : seules les lignées validées et les permanences CTA calculées sont consultables. Le référentiel 2026 → 2027 reste la source de la reconduction.</p>` : ''}
       <details class="qv-programme-lineage"${qvProgrammeYear() !== 2027 ? ' hidden' : ''}><summary>Comprendre 2026 → 2027</summary><p>2026 : ${escapeHtml(String(source.sourceRows || 0))} lignes source, ${escapeHtml(String(source.models || 0))} modèles, ${escapeHtml(String(source.occurrences || 0))} occurrences, ${escapeHtml(String(source.sessions || 0))} sessions. 2027 : ${escapeHtml(String(target.models || 0))} modèles actifs, ${escapeHtml(String(target.occurrences || 0))} occurrences et ${escapeHtml(String(target.sessions || 0))} sessions. Le chiffre historique 302 désigne la matrice de définitions source réconciliées, pas un nombre d’événements.</p></details>
@@ -12734,7 +12745,7 @@
     const domainLabels = { F0:'Gouvernance',F1:'Personnel',F2:'Renseignements',F3:'Opérationnel',F4:'Logistique',F5:'Partenaires',F6:'SIC',F7:'Formation',F8:'Finances' };
     const currentDomain = qvProgrammeDomain(row);
     const currentPlanningStatus = creating ? 'PROPOSE' : row.preparation && ['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(row.status)
-      ? row.status : row.historicalProposal ? 'PROPOSE' : qvProgrammeDate(row) ? 'PLANIFIE' : 'A_PLANIFIER';
+      ? row.status : row.historicalProposal || row.paprProposal?.origin==='AUTOMATIC' ? 'PROPOSE' : qvProgrammeDate(row) ? 'PLANIFIE' : 'A_PLANIFIER';
     const arbitrationActivity = row.preparation && qvActivityById(qv,row.preparation.id);
     const canPrepare = (!row.external || row.preparation) && row.definitionId !== 'CTA-PERMANENCE' && hasScopePermission('references:manage');
     const commandsDisabled=state.loading ? ' disabled' : '';
@@ -12751,7 +12762,7 @@
         <label class="qv-programme-edit-half"><span>Activité</span><input id="qv-programme-activity" type="text" maxlength="240" value="${escapeHtml(creating ? '' : qvProgrammeActivityLabel(row))}"></label>
         <label class="qv-programme-edit-half"><span>Thème</span><input id="qv-programme-themes" type="text" maxlength="1320" value="${escapeHtml((row.themes || []).join(' ; '))}"></label>
         ${qvProgrammeQualificationControl(qv,row)}
-        <label><span>Cursus</span><select id="qv-programme-cursus" ${row.cursusStepId ? 'disabled' : ''}>${qvProgrammeCursusOptions(qv,row)}</select></label>
+        <label><span>Cursus de formation</span><select id="qv-programme-cursus" ${row.cursusStepId ? 'disabled' : ''}>${qvProgrammeCursusOptions(qv,row)}</select></label>
         <div class="qv-programme-choice-field"><label for="qv-programme-ecawin">Code activité ECAwin</label><input id="qv-programme-ecawin-search" type="search" aria-label="Rechercher une activité ECAwin" placeholder="Rechercher"><select id="qv-programme-ecawin"><option value="">Non qualifié</option>${(window.ScopeEcawin?.activityCodes || []).map(code=>`<option value="${code}" ${row.ecawinActivityCode === code ? 'selected' : ''}>${escapeHtml(code+' — '+(window.ScopeEcawin.activityLabels[code] || ''))}</option>`).join('')}${row.ecawinActivityCode && !window.ScopeEcawin?.activityCodes.includes(row.ecawinActivityCode) ? `<option value="${escapeHtml(row.ecawinActivityCode)}" selected>${escapeHtml(row.ecawinActivityCode)} — Valeur conservée</option>` : ''}</select></div>
         <label><span>Cycle métier</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
         <label class="qv-programme-edit-full"><span>Suivi SCOPE</span><span class="qv-programme-keep-lieu"><input id="qv-programme-external" type="checkbox" ${row.externalActivity ? 'checked' : ''} ${creating ? '' : 'disabled'}>Activité externe hors suivi SCOPE</span></label>
@@ -12773,6 +12784,7 @@
         <label id="qv-programme-lieu-libre-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Nouveau lieu</span><input id="qv-programme-lieu-libre" type="text" maxlength="28" value="${escapeHtml(row.lieuLibre || '')}"></label>
         <label id="qv-programme-lieu-keep-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Référentiel</span><span class="qv-programme-keep-lieu"><input id="qv-programme-lieu-keep" type="checkbox">Conserver ce lieu dans le référentiel</span></label>
       </fieldset>
+      ${row.paprOiRevisionRequired && canPrepare ? '<p class="qv-programme-workflow-note">Publication PAPR existante : OI à compléter par révision ciblée. L’événement publié reste conservé.</p><button type="button" class="scope-btn" id="qv-papr-propose-ois">Proposer la révision des quatre OI DPS</button>' : ''}
       ${canPrepare && !creating && !row.publishedEventId ? `<div class="qv-programme-lifecycle"><span class="qv-programme-lifecycle-icon">${qvCockpitIcon('gear')}</span><div><strong>Gestion de l’événement dans le planning</strong><p>Annuler ou supprimer cet événement. Ces actions modifient le planning et doivent être utilisées avec précaution.</p></div><div class="qv-programme-lifecycle-actions"><button type="button" class="scope-btn" id="qv-programme-cancel-year">Annuler l’événement pour l’année</button><button type="button" class="scope-btn qv-programme-production-delete" id="qv-programme-delete-production">Supprimer l’événement</button></div></div>` : ''}
     </section>`;
     return `<div class="qv-programme-detail${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}">
@@ -14539,6 +14551,7 @@
       const body={startDate:document.getElementById('qv-cycle-start')?.value || null,
         endDate:document.getElementById('qv-cycle-end')?.value || null,
         parametersDefined:document.getElementById('qv-cycle-parameters')?.checked === true};
+      if(document.getElementById('qv-cycle-codir-approved')) body.codirApproved=document.getElementById('qv-cycle-codir-approved').checked;
       const reports=qv.programmeCycle?.reportOptions || [qv.programmeCycle?.openingReport,qv.programmeCycle?.closingReport].filter(Boolean);
       for(const [field,key] of [['opening','openingReport'],['closing','closingReport']]){
         const value=document.getElementById(`qv-cycle-${field}-report`)?.value;
@@ -14881,6 +14894,15 @@
     document.getElementById('qv-programme-save')?.addEventListener('click', () => saveProgrammePreparation('SAVE'));
     document.getElementById('qv-programme-validate')?.addEventListener('click', () => saveProgrammePreparation('VALIDATE'));
     document.getElementById('qv-programme-plan')?.addEventListener('click', () => saveProgrammePreparation('PLAN'));
+    document.getElementById('qv-papr-propose-ois')?.addEventListener('click',()=>{
+      const root=document.getElementById('qv-programme-oi');
+      for(const input of root.querySelectorAll('input[type="checkbox"]')) input.checked=['DPS:G1','DPS:C1','DPS:B1','DPS:B2'].includes(input.value);
+      document.getElementById('qv-programme-oi-summary').textContent=qvProgrammeOiSummary(['DPS:G1','DPS:C1','DPS:B1','DPS:B2']);
+      for(const group of root.querySelectorAll('[data-qv-oi-group]')){
+        group.checked=group.dataset.qvOiGroup==='DPS';group.indeterminate=false;group.setAttribute('aria-checked',String(group.checked));
+      }
+      document.getElementById('qv-programme-revision-motif').value='Mise en conformité des OI PAPR : décision MOA du 12.10.2026.';
+    });
     document.getElementById('qv-programme-withdraw')?.addEventListener('click', () => saveProgrammePreparation('WITHDRAW'));
     document.getElementById('qv-programme-cancel-year')?.addEventListener('click', async () => {
       const id = route().qvProgrammeItemId;

@@ -38,7 +38,9 @@ function resolveProgrammeCycle(year, metadata = {}, reports = []){
   if(!endDate) missing.push('CLOSING_REPORT');
   if(!parametersDefined) missing.push('ANNUAL_PARAMETERS');
   if(startDate && endDate && endDate < startDate) missing.push('INVALID_BOUNDARIES');
-  return {year,startDate,endDate,status:missing.length ? 'MOA_REQUIRED' : 'DEFINED',parametersDefined,
+  const provisional=closingReport?.provisional === true;
+  return {year,startDate,endDate,status:missing.length ? 'MOA_REQUIRED' : provisional ? 'PROVISIONAL' : 'DEFINED',parametersDefined,
+    provisional,approvalRequired:provisional?'CODIR':null,
     generationAllowed:missing.length === 0,openingReport,closingReport,missing,
     reportOptions:reports.filter(report => date(report.actualDate)).map(report => ({...report,label:'Rapport annuel'})),
     statisticsBasis:'CIVIL_EVENT_DATE'};

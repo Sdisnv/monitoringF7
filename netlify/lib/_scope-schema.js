@@ -449,6 +449,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisToutesActivitesUx1();
   await migrateQuoVadisMoaResponsible20261012();
   await migrateQuoVadisRoadmapResponsible20261012();
+  await migrateQuoVadisFinalMoaProposal20261012();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -949,6 +950,16 @@ async function migrateStatComExtrasMoa20261012(){
       on conflict(code) do update set label=excluded.label,
         metadata=scope_statcom_referentiel.metadata || excluded.metadata,updated_at=now()`,
       [JSON.stringify({ecawin:{activityCode:'EXERCI',source:'Captures ECAwin officielles 09.10.2026',historicalOnly:false}})]);
+    await client.query('insert into monitoring_f7_schema_migrations(version) values($1) on conflict(version) do nothing',[version]);
+  });
+}
+
+async function migrateQuoVadisFinalMoaProposal20261012(){
+  return db.transaction(async client=>{
+    await client.query('select pg_advisory_xact_lock(hashtext($1))',['QUO-VADIS:2027']);
+    const version='scope-qv-final-moa-report-20261012';
+    if((await client.query('select 1 from monitoring_f7_schema_migrations where version=$1',[version])).rows[0]) return;
+    await require('./_scope-qv-moa-proposals').installAnnualReportProposal(client);
     await client.query('insert into monitoring_f7_schema_migrations(version) values($1) on conflict(version) do nothing',[version]);
   });
 }

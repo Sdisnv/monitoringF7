@@ -3276,7 +3276,7 @@
       'CMDT:CODIR': 'Membres du Codir',
       'CMDT:CDT': 'CDT', 'CMDT:C-OP': 'C op', 'CMDT:C-LOG': 'C log',
       'CMDT:C-FOR': 'C for', 'CMDT:QM': 'QM',
-      'PR:C-PR': 'C PR', 'PR:FORMATEUR-PR': 'Formateur PR',
+      'PR:C-PR': 'C PR', 'PR:FORMATEUR-PR': 'Formateur PR', 'PR:PREPOSE-APR':'Préposé APR',
       'AUTO:OF-AUTO': 'Of auto', 'AUTO:FORMATEUR-C1-118': 'Formateur C1/118',
       'AUTO:MONITEUR-CONDUITE': 'Moniteur conduite'
     };
@@ -3289,10 +3289,10 @@
       { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:')) },
       { group: 'Échelons', items: [['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
       { group: 'Sections DPS', items: ['N01', 'N01a', 'N01b', 'N02', 'N02a', 'N02b', 'N03', 'N03a', 'N03b', 'N04', 'N04a', 'N04b', 'N05', 'N05a', 'N05b', 'N06'].map(code => [code, code]) },
-      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidats C groupe'], ['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidats CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidats CI DAP']] },
+      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe'], ['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidat CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidat CI DAP']] },
       { group: 'Formation', items: [['FOBA:1', 'FOBA 1'], ['FOBA:2', 'FOBA 2'], ['FOBA:3', 'FOBA 3']] },
-      { group: 'PR', items: [['PR:2', 'PAPR'], ['PR:CAND-PAPR', 'Candidats PAPR'], ['PR:3', 'PABC'], ['PR:FORMATEURS', 'Formateurs PR'], ['PR:FMF', 'Formateur maison Feu (FMF)'], ['PR:CHEF-PISTE', 'Chef piste']] },
-      { group: 'AUTO', items: [['AUTO:1', 'cond PL'], ['AUTO:CAND-PL', 'Candidats cond PL'], ['AUTO:3', 'cond VL'], ['AUTO:5', 'Machiniste EA'], ['AUTO:CAND-EA', 'Candidats machiniste EA'], ['AUTO:6', 'Pilote BAT'], ['AUTO:2', 'cond TP9'], ['AUTO:CAND-TP9', 'Candidats cond TP9'], ['AUTO:4', 'Grutier'], ['AUTO:MONITEURS', 'Moniteurs conduite'], ['AUTO:FORM-C1', 'Formateurs C1/118'], ['AUTO:FORM-EA', 'Formateurs EA'], ['AUTO:FORM-GRUTIER', 'Formateurs Grutier']] },
+      { group: 'PR', items: [['PR:2', 'PAPR'], ['PR:CAND-PAPR', 'Candidat PAPR'], ['PR:3', 'PABC'], ['PR:FORMATEURS', 'Formateur PR (référence historique)'], ['PR:FMF', 'Formateur maison Feu (FMF)'], ['PR:CHEF-PISTE', 'Chef piste']] },
+      { group: 'AUTO', items: [['AUTO:1', 'cond PL'], ['AUTO:CAND-PL', 'Candidat cond PL'], ['AUTO:3', 'cond VL'], ['AUTO:5', 'Machiniste EA'], ['AUTO:CAND-EA', 'Candidat machiniste EA'], ['AUTO:6', 'Pilote BAT'], ['AUTO:2', 'cond TP9'], ['AUTO:CAND-TP9', 'Candidat cond TP9'], ['AUTO:4', 'Grutier'], ['AUTO:MONITEURS', 'Moniteur conduite (référence historique)'], ['AUTO:FORM-C1', 'Formateur C1/118 (référence historique)'], ['AUTO:FORM-EA', 'Formateur EA'], ['AUTO:FORM-GRUTIER', 'Formateur grutier']] },
       { group: 'FOSPEC', items: [['FOSPEC:1', 'Antichute'], ['FOSPEC:2', 'NAC'], ['FOSPEC:3', 'OFSI'], ['FOSPEC:4', 'OP VPC']] },
       { group: 'JSP', items: [['JSP:1', 'JSP']] }
     ].map(group => ({...group, items:group.items.concat(
@@ -4177,11 +4177,11 @@
   }
 
   function qvProgrammeVisibleThemes(row) {
-    const explicit = Array.isArray(row && row.themes) ? row.themes.filter(Boolean) : [];
+    const explicit = Array.isArray(row && row.themes) ? row.themes.filter(Boolean) : null;
     const historical = String(row && row.projectionEvidence && row.projectionEvidence.theme || '').trim();
     const eventLabel = String(row && row.eventLabel || '');
     const kickoff = eventLabel.match(/[·—]\s*(KICK-OFF)\s*$/i);
-    return [...new Set([...explicit, historical, kickoff && kickoff[1]].filter(Boolean)
+    return [...new Set((explicit !== null ? explicit : [historical, kickoff && kickoff[1]]).filter(Boolean)
       .map((value) => String(value).trim()))];
   }
 

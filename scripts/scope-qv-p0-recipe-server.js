@@ -184,6 +184,7 @@ async function start() {
   originalPreparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
   await client.query('begin');
   await synchronizeEcawinReferential(client);
+  if(process.env.SCOPE_RECIPE_FINALISATION==='1') await require('../netlify/lib/_scope-qv-moa-proposals').installAnnualReportProposal(client);
   server.listen(port,'127.0.0.1',() => console.log(`SCOPE CLONE BROWSER http://127.0.0.1:${port}/scope.html#/quo-vadis/programme`));
 }
 process.on('SIGINT',() => { stop().catch((error) => {console.error(error);process.exitCode=1;}); });

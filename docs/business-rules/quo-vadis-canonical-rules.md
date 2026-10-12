@@ -302,7 +302,7 @@ Le cursus PAPR est obligatoire dans le Programme 2027. Le classeur QUO VADIS 202
 | Cursus PAPR - module 7 | Engagement pratique | 845 |
 
 OI obligatoires : `DPS:G1`, `DPS:C1`, `DPS:B1`, `DPS:B2`. Responsable `C PR`. Publics `PR:CAND-PAPR / Candidats PAPR` et `PR:FORMATEUR-PR / Formateur PR`, sans personne ni NIP synthétique.
-Le module 1 conserve sa date explicite source du 02.02.2027. Les dates 2026 des modules 2 à 7 sont des preuves historiques, pas des dates 2027 confirmées : les modules rétablis restent à positionner.
+Le module 1 conserve sa date explicite source du 02.02.2027. Les dates 2026 des modules 2 à 7 ne sont pas des décisions 2027 : la finalisation MOA autorise maintenant leur projection automatique selon QV-PAPR-002, avec identification de la proposition et conservation des décisions humaines.
 La validation annuelle `VALIDE` est bloquée si un module manque, est dupliqué, n'a pas son thème, ses références obligatoires ou ses horaires confirmés. Les modules 1 et 2 doivent se terminer strictement avant le début du premier Exercice PR 1.1. Une publication ou décision divergente est signalée, jamais réalignée silencieusement.
 Les modules rétablis utilisent le Programme et le cursus existants, pas un module applicatif parallèle. Une seconde lecture ne les duplique pas. Les thèmes décidés sont enregistrés dans le même instantané de reconduction que les autres champs métier.
 
@@ -321,8 +321,37 @@ Un Stat.Com publié et son code SCOPE sont immuables dans ce parcours. Un change
 Ni retrait, ni préparation, ni ouverture de révision ne crée un événement opérationnel ou un doublon.
 
 ### QV-CYCLE-004 — Rapport de clôture 2027 proposé en février 2028
-La fenêtre métier confirmée est **février 2028**, avant ou après les relâches selon le calendrier scolaire. La date reste inconnue ; la proposition ne crée aucune date annoncée ni événement opérationnel. Les décisions de date explicites restent prioritaires.
+La fenêtre métier initiale était **février 2028**, avant ou après les relâches selon le calendrier scolaire. La finalisation MOA fixe désormais la proposition provisoire du **10.02.2028**, selon QV-CYCLE-005. Les décisions de date explicites restent prioritaires.
 Les statistiques de participation restent strictement civiles : date réelle entre le 01.01 et le 31.12 inclus. Aucune extension du cycle métier n'étend cette fenêtre statistique. Le suivi Cours ECA reste dans la roadmap et les capacités existantes, sans module parallèle.
+
+## Finalisation MOA PR #12 — 12.10.2026
+
+### QV-PAPR-002 — Propositions automatiques 2027
+Sept modules et sept thèmes distincts. OI `DPS:G1/C1/B1/B2`, responsable `C PR`, publics `Candidat PAPR` et `Formateur PR`, Stat.Com `011PR`, spécialisation `PAPR`, cursus de formation `PAPR`.
+La proposition réutilise `qvProjectAnnualWeekday`, `pickProposalSlot`, les règles PR actives, les calendriers persistés et les horaires exacts des lignes 2026. Elle cherche un créneau admissible proche de la projection dans le mois, puis les autres créneaux admissibles si nécessaire ; elle conserve le jour historique ou le jour du cursus référencé, sans recopier arbitrairement une date.
+Les modules 1/2 doivent se terminer avant le premier PR 1.1, identifié par son identité source stable. L'ordre des modules et les chevauchements connus de la fonction C PR sont contrôlés. Une impossibilité conserve les dates protégées et signale les contraintes en conflit ; elle ne fabrique pas une décision humaine.
+La date source explicite du module 1 reste protégée. Les autres dates portent `PROPOSITION_AUTOMATIQUE`, restent modifiables dans la fiche existante et deviennent une décision conservée lorsque la MOA les enregistre. La référence PAPR est une caractéristique de formation, pas une qualification personnelle synthétisée.
+Le tableau PAPR expose module, date, horaire, thème, source, contraintes et état. Les réserves de salles, disponibilité nominative et rattachement aux bornes du cycle ne sont pas réputées validées par le seul calendrier ; les mécanismes existants et décisions humaines restent prioritaires.
+
+### QV-CYCLE-005 — Clôture provisoire 10.02.2028
+Le `10.02.2028` clôture provisoirement le cycle métier 2027, statut exact **PROVISOIRE — À VALIDER PAR LE CODIR**. La proposition MOA est versionnée et enregistrée par migration transactionnelle idempotente dans les Dates annoncées existantes. Aucun événement opérationnel n'est créé.
+Une déclaration antérieure est conservée, jamais remplacée silencieusement. Une modification de la proposition provisoire réutilise la même référence et conserve l'historique des dates. Le contrôle `Date validée par le Codir` est distinct de `Paramètres annuels définis` ; le caractère provisoire n'est pas une validation annuelle.
+La borne provisoire permet de préparer les propositions A+1 avec les moteurs et rotations continus. La validation annuelle définitive reste bloquée tant que le Codir n'a pas confirmé la clôture. Les statistiques restent exclusivement du 01.01 au 31.12 selon les dates réelles des événements.
+
+### QV-PAPR-003 — Publication antérieure du module 1
+Le diagnostic compare les OI de l'événement publié, pas uniquement les valeurs préparatoires du Programme. La fiche permet de proposer les quatre OI DPS par la révision ciblée existante. L'enregistrement ouvre `PENDING`, ne change pas l'événement publié, son identifiant, son Stat.Com, son code ni ses présences. La confirmation de révision reste nécessaire avant synchronisation opérationnelle. Les autres activités restent éditables.
+
+### QV-PUBLIC-004 — Singulier et Préposé APR
+`PR:PREPOSE-APR / Préposé APR` est un public descriptif permanent. Il ne crée pas de personne, NIP, affectation, qualification ou obligation nominative et ne contribue pas automatiquement aux statistiques.
+Les fonctions proposées sont au singulier. `PR:CAND-PAPR` devient visiblement `Candidat PAPR` sans changer de code ; les anciens codes de fonctions restent lisibles, avec une mention historique lorsqu'ils coexistent avec une référence descriptive permanente. Les descriptions libres et décisions enregistrées ne sont pas réécrites.
+
+### QV-THEME-002 — Priorité au thème explicite
+Un tableau `themes` explicite, y compris vide, est prioritaire sur le thème historique de projection. Phase I/Phase II ne réapparaissent pas après une correction ou un effacement explicite. Sans thème explicite, la source historique reste lisible ; aucun remplacement global non démontré des phases historiques n'est effectué.
+
+### QV-SPEC-001 / QV-ECA-COURSES-002 — Acquis et roadmap
+La spécialisation du Programme reste multisélection et persistante, avec les codes canoniques datés existants ; libellé `Cursus de formation`. PAPR/PABC et les autres références acquises sont conservés. Aucun backfill personnel ni qualification fictive n'est créé depuis QUO VADIS.
+L'alignement exhaustif sur IndeX doit être appuyé par un référentiel IndeX versionné et une décision de correspondance ; le catalogue C3-B existant n'est pas présenté comme un export IndeX vérifié. Cette vérification reste dans la roadmap, sans refonte dans la livraison.
+Le suivi spécialisé des Cours ECA reste requis : inscriptions/import cantonal, suivi individuel NIP, distinction cours suivis/obligations SDIS, contributions et agrégats par domaine/OI/période civile, exports. Les mécanismes SCOPE existants doivent être complétés ; aucun module parallèle n'est ouvert.
 
 ## ROADMAP V1 — décisions confirmées du 12.10.2026
 

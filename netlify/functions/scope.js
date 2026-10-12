@@ -316,7 +316,7 @@ async function scopeHandler(event){
     if(params && method === 'GET') return response(200,{ok:true,programmeCycle:await quoVadis.getProgrammeCycle(params.annee)});
     if(params && method === 'PUT'){
       if(!hasPermission(claims,'references:manage')) return response(403,{ok:false,error:'forbidden'});
-      return response(200,{ok:true,...await quoVadis.setProgrammeCycle(params.annee,body)});
+      return response(200,{ok:true,...await quoVadis.setProgrammeCycle(params.annee,{...body,actor:claims.sub || null})});
     }
     params = match(path, '/quo-vadis/programmes/:annee/preview');
     if(method === 'POST' && params){
