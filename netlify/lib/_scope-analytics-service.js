@@ -334,7 +334,7 @@ function createScopeAnalyticsService(repo){
         : await repo.listEvenements({ domaine: domaineCode || undefined, participationOnly:true });
       bundle = { events: [], attendusByEvent: {}, participationsByEvent: {}, cibleIdsByEvent: {}, legacyByEvent: {}, quantitatifByEvent: {} };
       for(const event of events){
-        if(event.source_type === 'QUO_VADIS' && event.catalogue_participation_rule?.tracking !== true) continue;
+        if(event.participationEvaluation === false) continue;
         if(isHiddenEvenement(event)) continue;
         if(!inPeriod(event.date, period)) continue;
         if(domaineCode && event.domaine_code !== domaineCode) continue;
@@ -353,6 +353,7 @@ function createScopeAnalyticsService(repo){
       }
       bundle.personneId = personneId;
     }
+    bundle.events = (bundle.events || []).filter((event) => event.participationEvaluation !== false);
     if(typeof repo.listAllPeriodes === 'function'){
       const periodes = await repo.listAllPeriodes();
       const periodesByPersonne = new Map();

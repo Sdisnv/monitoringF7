@@ -1,0 +1,1103 @@
+{
+  "sourceBaseline": "9fde68077f35bede72ef08f3b3dc65ea5f93c224",
+  "description": "Autres activités ou cas non qualifiés : conservés, aucune attribution forcée.",
+  "count": 137,
+  "occurrences": [
+    {
+      "id": "QV26-8-KM-DU-SDIS-D2C38C47:O1:S1",
+      "label": "8 km du SDIS",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5:O1:S1",
+      "label": "Cours de cadres Formation groupée DPS",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S1",
+      "label": "Formation groupée 1.1",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S2",
+      "label": "Formation groupée 1.2",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S3",
+      "label": "Formation groupée 1.3",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S4",
+      "label": "Formation groupée 1.4",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S5",
+      "label": "Formation groupée 1.5",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S6",
+      "label": "Formation groupée 1.6",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-FORMATION-PERMANENTS-4F48A9D0:O7:S1",
+      "label": "Formation permanents",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB:O1:S1",
+      "label": "Journée des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB:O2:S1",
+      "label": "Journée des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB:O3:S1",
+      "label": "Journée des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB:O4:S1",
+      "label": "Journée des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB:O5:S1",
+      "label": "Journée des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0:O1:S1",
+      "label": "Nettoyage annuel caserne",
+      "statCom": "040G1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-NOEL-DES-FAMILLES-F3E5E4E3:O1:S1",
+      "label": "Noël des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-NOEL-DES-FAMILLES-F3E5E4E3:O2:S1",
+      "label": "Noël des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-NOEL-DES-FAMILLES-F3E5E4E3:O3:S1",
+      "label": "Noël des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-PREPARATION-XMAS-39727CE7:O1:S1",
+      "label": "Préparation Xmas",
+      "statCom": "040G1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-REPAS-DU-PERMANENT-73FAEE93:O1:S1",
+      "label": "Repas du Permanent",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O1:S1",
+      "label": "Sécurité feu · Fête Médiévale",
+      "statCom": "030C1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O2:S1",
+      "label": "Sécurité feu · Fête Médiévale",
+      "statCom": "030C1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O3:S1",
+      "label": "Sécurité feu · Fête Médiévale",
+      "statCom": "030C1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O4:S1",
+      "label": "Sécurité feu · Fête Médiévale",
+      "statCom": "030C1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-SECURITE-FEU-FETE-NATIONALE-C29B7F0B:O1:S1",
+      "label": "Sécurité feu・Fête Nationale",
+      "statCom": "030C1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-SECURITE-FEU-LES-ZOTRES-BRANDONS-D97AC03D:O1:S1",
+      "label": "Sécurité feu・les Zôtres Brandons",
+      "statCom": "030C1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-TELETHON-BA07D05D:O1:S1",
+      "label": "Téléthon",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-COURS-JSP-JS12-JOURNEE-D-INSTRUCTION-DES-MONITEURS-C-86DB0273:O1:S1",
+      "label": "Cours JSP JS12 - Journée d'instruction des Moniteurs Cadets",
+      "statCom": "COURJSP",
+      "activityCode": "",
+      "suggestedActivityCode": "COURS",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-COURS-JSP-JS21-VALORISATION-MONITEURS-MODULE-I-C4F05BC3:O1:S1",
+      "label": "Cours JSP JS21 - valorisation moniteurs - module I",
+      "statCom": "COURJSP",
+      "activityCode": "",
+      "suggestedActivityCode": "COURS",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-COURS-JSP-JS22-VALORISATION-MONITEURS-MODULE-II-ACAC9F4D:O1:S1",
+      "label": "Cours JSP JS22 - valorisation moniteurs - module II",
+      "statCom": "COURJSP",
+      "activityCode": "",
+      "suggestedActivityCode": "COURS",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-COURS-JSP-JS23-FORMATION-MONITEURS-SIMULATEUR-APRES--A4FA0328:O1:S1",
+      "label": "Cours JSP JS23 - formation moniteurs - simulateur (après-midi)",
+      "statCom": "COURJSP",
+      "activityCode": "",
+      "suggestedActivityCode": "COURS",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-COURS-JSP-JS23-FORMATION-MONITEURS-SIMULATEUR-MATIN-8E3AD201:O1:S1",
+      "label": "Cours JSP JS23 - formation moniteurs - simulateur (matin)",
+      "statCom": "COURJSP",
+      "activityCode": "",
+      "suggestedActivityCode": "COURS",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-COURS-JSP-JS24-VALORISATION-MONITEURS-MODULE-III-D8DEC6A2:O1:S1",
+      "label": "Cours JSP JS24 - valorisation moniteurs - module III",
+      "statCom": "COURJSP",
+      "activityCode": "",
+      "suggestedActivityCode": "COURS",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-EXERCICE-OFSI-INFRASTRUCTURES-CFF-F0835574:O1:S1",
+      "label": "Exercice OFSI・infrastructures CFF",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-EXERCICE-OFSI-INFRASTRUCTURES-CFF-F0835574:O2:S1",
+      "label": "Exercice OFSI・infrastructures CFF",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-EXERCICE-OFSI-INFRASTRUCTURES-CFF-F0835574:O3:S1",
+      "label": "Exercice OFSI・infrastructures CFF",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-EXERCICE-OFSI-INFRASTRUCTURES-CFF-F0835574:O4:S1",
+      "label": "Exercice OFSI・infrastructures CFF",
+      "statCom": "0162F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXOFSI",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O1:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O2:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O3:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O4:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O5:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O6:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O7:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O8:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O9:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59:O10:S1",
+      "label": "Instr demi-sct - PIONNIER",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-SCT-PIONNIER-CSU-NVB-57A4BDE1:O1:S1",
+      "label": "Instr sct - PIONNIER CSU-nvb",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-SCT-PIONNIER-CSU-NVB-57A4BDE1:O2:S1",
+      "label": "Instr sct - PIONNIER CSU-nvb",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-SCT-PIONNIER-CSU-NVB-57A4BDE1:O3:S1",
+      "label": "Instr sct - PIONNIER CSU-nvb",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-SCT-PIONNIER-CSU-NVB-57A4BDE1:O4:S1",
+      "label": "Instr sct - PIONNIER CSU-nvb",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV26-INSTR-SCT-PIONNIER-CSU-NVB-57A4BDE1:O5:S1",
+      "label": "Instr sct - PIONNIER CSU-nvb",
+      "statCom": "0161F7",
+      "activityCode": "",
+      "suggestedActivityCode": "EXERSR",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "qv-source-862",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "qv-source-921",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "CTA-PERM-2027-01-01",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-01-08",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-01-15",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-01-22",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-01-29",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-02-05",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-02-12",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-02-19",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-02-26",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-03-05",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-03-12",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-03-19",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-03-26",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-04-02",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-04-09",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-04-16",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-04-23",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-04-30",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-FERIE-2027-05-06",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-05-07",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-05-14",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-05-21",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-05-28",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-06-04",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-06-11",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-06-18",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-06-25",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-07-02",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-07-09",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-07-16",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-07-23",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-07-30",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-08-06",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-08-13",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-08-20",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-08-27",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-09-03",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-09-10",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-09-17",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-09-24",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-10-01",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-10-08",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-10-15",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-10-22",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-10-29",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-11-05",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-11-12",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-11-19",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-11-26",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-12-03",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-12-10",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-12-17",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-12-24",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "CTA-PERM-2027-12-31",
+      "label": "Permanence",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:03",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:04",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:05",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:06",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:07",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:08",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:09",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:10",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:11",
+      "label": "Séance État-major",
+      "statCom": "EMSEA",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "SCOPE_ONLY"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:01",
+      "label": "Assemblée des délégués de la FVSP",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:02",
+      "label": "Assemblée générale de la SIC",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:03",
+      "label": "Cours ECA SP19 - ventilation opérationnelle",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:04",
+      "label": "Formation continue OACP CarPostal",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:05",
+      "label": "Formation personnel CFF",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:06",
+      "label": "Journée « Oser tous les métiers » (JOM)",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:07",
+      "label": "Visite du Conseil d'État",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:08",
+      "label": "Concours de la FVSP",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:09",
+      "label": "Cours JSP JS03 - flamme 3 JSP",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:10",
+      "label": "Cours ECA FB01 - formation de base recrues",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:11",
+      "label": "Cours ECA SA10 - cours de cadres - répondant de la formation antichute",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:12",
+      "label": "Cours ECA SA10 - répondant de la formation antichute",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:NON_RECONDUIT:13",
+      "label": "Cours ECA SA11 - recyclage répondant de la formation antichute",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:PROJ:QV26-JOURNEE-DES-FAMILLES-20BDA6AB:2027-09-04:0800:Y2",
+      "label": "Journée des familles",
+      "statCom": "",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:PROJ:QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0:2027-06-24:1800:C1",
+      "label": "Nettoyage annuel caserne",
+      "statCom": "040C1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:PROJ:QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0:2027-06-24:1800:B1",
+      "label": "Nettoyage annuel caserne",
+      "statCom": "040B1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:PROJ:QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0:2027-06-24:1800:B2",
+      "label": "Nettoyage annuel caserne",
+      "statCom": "040B2",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:PROJ:QV26-PREPARATION-XMAS-39727CE7:2027-11-24:1800:C1",
+      "label": "Préparation Xmas",
+      "statCom": "040C1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:PROJ:QV26-PREPARATION-XMAS-39727CE7:2027-11-24:1800:B1",
+      "label": "Préparation Xmas",
+      "statCom": "040B1",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    },
+    {
+      "id": "QV27:PROJ:QV26-PREPARATION-XMAS-39727CE7:2027-11-24:1800:B2",
+      "label": "Préparation Xmas",
+      "statCom": "040B2",
+      "activityCode": "",
+      "suggestedActivityCode": "",
+      "status": "UNQUALIFIED"
+    }
+  ]
+}

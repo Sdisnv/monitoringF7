@@ -446,6 +446,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisMoaRecovery1();
   await migrateQuoVadisAgendaUx2();
   await migrateQuoVadisToutesActivitesUx1();
+  await migrateQuoVadisMoaResponsible20261012();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -2701,6 +2702,25 @@ async function migrateQuoVadisAgendaUx2(){
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-agenda-ux-2') on conflict (version) do nothing`);
 }
 
+async function migrateQuoVadisMoaResponsible20261012(){
+  await db.transaction(async (client) => {
+    await client.query(`select pg_advisory_xact_lock(hashtext('scope-qv-moa-responsible-20261012'))`);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version='scope-qv-moa-responsible-20261012'`);
+    if(done.rows[0]) return;
+    for(const [index, code] of ['Présidente CI','Présidente Codir'].entries()){
+      await client.query(`insert into scope_responsable_fonctions(code,libelle,sort_order,metadata)
+        values ($1,$2,$3,'{"source":"MISSION12OCT_MOA","inclusive":true,"domain":"CMDT"}'::jsonb)
+        on conflict(code) do update set libelle=excluded.libelle,
+          metadata=scope_responsable_fonctions.metadata || excluded.metadata,updated_at=now()
+        where scope_responsable_fonctions.libelle is distinct from excluded.libelle
+          or scope_responsable_fonctions.metadata is distinct from (scope_responsable_fonctions.metadata || excluded.metadata)`,
+      [code,code.replace('Présidente ','PrésidentE '),16 + index]);
+    }
+    await client.query(`insert into monitoring_f7_schema_migrations(version)
+      values ('scope-qv-moa-responsible-20261012') on conflict(version) do nothing`);
+  });
+}
+
 async function migrateQuoVadisToutesActivitesUx1(){
   if(await hasMigration('scope-quo-vadis-toutes-activites-ux-1')) return;
   for(const lieu of qvReferentials.OFFICIAL_LIEUX){
@@ -2745,12 +2765,13 @@ async function migrateQuoVadisToutesActivitesUx1(){
       constraint scope_resp_fn_libelle_chk check (length(trim(libelle)) > 0)
     )
   `);
-  for(const [index, libelle] of qvReferentials.RESPONSIBLE_FUNCTIONS.entries()){
+  for(const [index, code] of qvReferentials.RESPONSIBLE_FUNCTIONS.entries()){
+    const libelle = code.replace(/^Présidente (CI|Codir)$/,'PrésidentE $1');
     await db.query(
       `insert into scope_responsable_fonctions(code, libelle, sort_order, metadata)
        values ($1,$2,$3,$4::jsonb)
        on conflict (code) do update set libelle = excluded.libelle, sort_order = excluded.sort_order, updated_at = now()`,
-      [libelle, libelle, index + 1, JSON.stringify({ source: 'QUO-VADIS-TOUTES-ACTIVITES-UX-1' })]
+      [code, libelle, index + 1, JSON.stringify({ source: 'QUO-VADIS-TOUTES-ACTIVITES-UX-1' })]
     );
   }
   await db.query(`

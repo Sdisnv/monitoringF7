@@ -4,6 +4,7 @@ const { createHash } = require('crypto');
 const { Pool } = require('pg');
 const planner = require('./_scope-qv-publication-plan');
 const eventCodes = require('./_scope-event-code');
+const { participationEvaluation } = require('./_scope-participation-catalogue');
 
 const ADAPTER_KIND = 'SCOPE_QV_POSTGRES_PRODUCTION';
 const MIGRATION_VERSION = 'scope-qv-publication-c23-repair-1';
@@ -325,16 +326,18 @@ class ScopeQvPostgresStore {
       evenement_id,date,date_fin,domaine_code,libelle,statut,origine,mode_suivi,population_figee,population_version,
       version,internal_event_id,code_cours,code_source,source_type,heure_debut,heure_fin,salle,responsable,statcom_code,
       publication_key,publication_fingerprint,famille,type_evenement,lieu_id,salle_theorie_id,entree_service,
-      duree_planifiee_minutes,priorite,date_fixe,journee_reservee,permutation_autorisee,exception_metier,created_at,updated_at
+      duree_planifiee_minutes,priorite,date_fixe,journee_reservee,permutation_autorisee,exception_metier,created_at,updated_at,engine_snapshot
     ) values ($1,$2,$3,$4,$5,$6,'NOMINATIF','NOMINATIF',false,1,1,$7,$8,$9,'QUO_VADIS',$10,$11,$12,$13,$14,
-      $15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$28)`, [
+      $15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$28,$29::jsonb)`, [
       eventId, target.event.startDate, target.event.endDate, target.event.primaryDomain, target.event.label,
       target.event.status, `QV:${target.publicationKey}`, eventCode, target.source.definitionId,
       target.event.startTime, target.event.endTime, target.event.roomCode, target.event.responsibleId,
       target.activity.statComCode, target.publicationKey, target.fingerprint, target.event.family, target.event.eventType,
       references.location && references.location.lieu_id, references.room && references.room.salle_id,
       target.event.entryService, target.event.durationMinutes, target.event.priority, target.event.fixedDate,
-      target.event.dayExclusive, target.event.permutationAllowed, target.event.businessException, timestamp
+      target.event.dayExclusive, target.event.permutationAllowed, target.event.businessException, timestamp,
+      JSON.stringify({ participationEvaluation: participationEvaluation(target.event),
+        descriptivePublics:target.event.descriptivePublics || [] })
     ]);
     checkpoint('AFTER_EVENT');
     await this.query(`insert into scope_qv_publication_links(
@@ -368,14 +371,17 @@ class ScopeQvPostgresStore {
       code_cours=$6,code_source=$7,heure_debut=$8,heure_fin=$9,salle=$10,responsable=$11,statcom_code=$12,
       publication_fingerprint=$13,famille=$14,type_evenement=$15,lieu_id=$16,salle_theorie_id=$17,
       entree_service=$18,duree_planifiee_minutes=$19,priorite=$20,date_fixe=$21,journee_reservee=$22,
-      permutation_autorisee=$23,exception_metier=$24,version=version+1,updated_at=$25 where evenement_id=$26`, [
+      permutation_autorisee=$23,exception_metier=$24,version=version+1,updated_at=$25,
+      engine_snapshot=coalesce(nullif(engine_snapshot,'null'::jsonb),'{}'::jsonb) || $27::jsonb where evenement_id=$26`, [
       target.event.startDate, target.event.endDate, target.event.primaryDomain, target.event.label, target.event.status,
       eventCode, target.source.definitionId, target.event.startTime, target.event.endTime,
       target.event.roomCode, target.event.responsibleId, target.activity.statComCode, target.fingerprint,
       target.event.family, target.event.eventType, references.location && references.location.lieu_id,
       references.room && references.room.salle_id, target.event.entryService, target.event.durationMinutes,
       target.event.priority, target.event.fixedDate, target.event.dayExclusive, target.event.permutationAllowed,
-      target.event.businessException, timestamp, existing.eventId
+      target.event.businessException, timestamp, existing.eventId,
+      JSON.stringify({ participationEvaluation: participationEvaluation(target.event),
+        descriptivePublics:target.event.descriptivePublics || [] })
     ]);
     checkpoint('AFTER_EVENT');
     await this.query(`update scope_qv_publication_links set source_record_ids=$1::jsonb,last_synced_fingerprint=$2,
@@ -448,6 +454,9 @@ class ScopeQvPostgresStore {
         event: {
           status: row.statut, label: row.libelle, primaryDomain: row.domaine_code, family: row.famille,
           eventType: row.type_evenement, startsAt: `${startDate}T${startTime}`, endsAt: `${endDate}T${endTime}`,
+          participationEvaluation: participationEvaluation(row),
+          ...(row.engine_snapshot?.descriptivePublics?.length
+            ? { descriptivePublics:row.engine_snapshot.descriptivePublics } : {}),
           startDate, endDate, startTime, endTime, durationMinutes: Number(row.duree_planifiee_minutes),
           crossesMidnight: startDate !== endDate, locationCode: canonicalLocationCode(row), roomCode: canonicalRoomCode(row),
           responsibleId: row.responsable, entryService: row.entree_service,

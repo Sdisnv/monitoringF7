@@ -1,6 +1,7 @@
 'use strict';
 
 const { createHash } = require('crypto');
+const { participationEvaluation } = require('./_scope-participation-catalogue');
 
 const ENGINE_VERSION = 'C20-1';
 const ACTIONS = Object.freeze({
@@ -17,6 +18,7 @@ const ACTION_ORDER = Object.freeze([
   ACTIONS.BLOCKED,
   ACTIONS.NOT_PUBLISHED
 ]);
+const DESCRIPTIVE_PUBLICS = Object.freeze({ 'CMDT:CODIR':'Membres du Codir' });
 
 function stableValue(value){
   if(Array.isArray(value)) return value.map(stableValue);
@@ -37,6 +39,8 @@ function sha256(value){
 function targetFingerprint(target){
   const value = stableValue(target || {});
   if(value && typeof value === 'object') delete value.fingerprint;
+  // Missing evaluation meant true before this field existed; retain legacy fingerprints.
+  if(value.event?.participationEvaluation === true) delete value.event.participationEvaluation;
   return sha256(stableStringify(value));
 }
 
@@ -110,7 +114,7 @@ function missingReferences(item, referentials){
   const checks = [
     ['domains', [classification.primaryDomain].concat(classification.domainCodes || [])],
     ['targets', classification.targetCodes],
-    ['publics', classification.publicCodes],
+    ['publics', (classification.publicCodes || []).filter((code) => !Object.prototype.hasOwnProperty.call(DESCRIPTIVE_PUBLICS, upper(code)))],
     ['ois', classification.oiCodes],
     ['locations', classification.locationCode ? [classification.locationCode] : []],
     ['rooms', classification.roomCode ? [classification.roomCode] : []]
@@ -180,6 +184,9 @@ function readiness(item, referentials){
 
 function desiredTarget(item, gate){
   const classification = item.classification || {};
+  const publics = sortedUnique(classification.publicCodes);
+  const descriptivePublics = publics.filter((code) => Object.prototype.hasOwnProperty.call(DESCRIPTIVE_PUBLICS, code))
+    .map((code) => ({ code,label:DESCRIPTIVE_PUBLICS[code] }));
   const session = item.session || {};
   const identity = sourceIdentity(item);
   const desired = {
@@ -210,6 +217,8 @@ function desiredTarget(item, gate){
       primaryDomain: upper(classification.primaryDomain),
       family: text(item.family) || null,
       eventType: text(item.eventType) || null,
+      participationEvaluation: participationEvaluation(item, item.definition || {}),
+      ...(descriptivePublics.length ? { descriptivePublics } : {}),
       startsAt: gate.temporal.startsAt,
       endsAt: gate.temporal.endsAt,
       startDate: gate.temporal.startDate,
@@ -231,7 +240,7 @@ function desiredTarget(item, gate){
     relations: {
       domainCodes: sortedUnique([classification.primaryDomain].concat(classification.domainCodes || [])),
       targetCodes: sortedUnique(classification.targetCodes),
-      publicCodes: sortedUnique(classification.publicCodes),
+      publicCodes: publics.filter((code) => !Object.prototype.hasOwnProperty.call(DESCRIPTIVE_PUBLICS, code)),
       oiCodes: sortedUnique(classification.oiCodes),
       roleCodes: sortedUnique(item.roles),
       resourceCodes: sortedUnique(item.resources)

@@ -263,3 +263,23 @@ Association confirmée par la MOA le 10.10.2026 : `EXERCI / CONCOUR / Concours`.
 `CONCOUR` compte sept caractères, sans S final ; `CONCOU` dans la capture était tronqué.
 Les 60 associations précédentes restent identiques ; le registre fourni compte 61 associations, dont JSP Y3 historique uniquement.
 Cette décision ne renumérote aucune occurrence et ne modifie aucun événement historique.
+
+## Décisions MOA du 12.10.2026
+
+### QV-TITLE-001 — Intitulé exact de l'occurrence
+La fiche reprend le même intitulé que le Programme, suffixe de séance compris. Une décision humaine de libellé ou de thème prime sur la présentation générique du type. Aucune occurrence n'est renumérotée.
+
+### QV-RESP-002 — Références inclusives et état par défaut
+Les nouveaux choix officiels sont exactement `PrésidentE Codir` et `PrésidentE CI`, avec leurs codes historiques stables. Les libellés enregistrés restent conservés. Les fonctions sont regroupées par domaine puis triées alphabétiquement ; `À affecter` n'est jamais un acteur sélectionné ou exporté.
+
+### QV-PUBLIC-002 — Public permanent descriptif
+`CMDT:CODIR / Membres du Codir` est sélectionnable dans le référentiel permanent du Programme, groupe Commandement. Cette déclaration ne crée aucune population nominative : aucune personne, aucun NIP, aucune affectation ni obligation individuelle. Elle reste séparée des publics calculés à la publication, dans `descriptivePublics`. Les valeurs libres ne sont pas promues automatiquement.
+
+### QV-OI-001 — Sélection globale qualifiée
+Les groupes DPS (G1, C1, B1, B2), DAP (Y1–Y4) et JSP (G1, C1, B1) se sélectionnent ou se retirent indépendamment. L'état partiel est visible. Les codes qualifiés par domaine restent distincts et persistants.
+
+### QV-ECA-002 — EXEPRO et défaut EXERCI non destructif
+`EXEPRO` remplace `EXERPO` dans les choix actifs ; l'ancien code reste lisible et compatible historiquement. Aucune association Stat.Com n'est inventée. Le défaut 2027 `EXERCI` concerne uniquement le champ activité ECAwin des occurrences dont la correspondance officielle est démontrée. Une qualification explicite reste préservée, même vide ; les autres activités et cas incertains restent non forcés et signalés. Tous les Stat.Com, codes SCOPE, identifiants et décisions protégées restent identiques. Un Stat.Com enregistré hors liste reste conservé et l'incompatibilité est signalée, jamais corrigée automatiquement.
+
+### QV-PART-001 — Évaluation individuelle et reconduction
+`participationEvaluation` est un booléen individuel, activé par défaut pour toutes les occurrences jusqu'en 2027. Une décision individuelle prévaut et est reconduite. Le défaut des types futurs se configure dans le catalogue annuel existant, séparément du suivi nominatif et de ses règles de population. Désactiver l'évaluation filtre le suivi et les taux, sans supprimer le Programme, l'Agenda, les présences ni les obligations historiques. Aucun événement opérationnel n'est créé par la préparation ; la validation annuelle globale reste nécessaire.

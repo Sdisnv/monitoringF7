@@ -1,6 +1,7 @@
 const db = require('./_postgres');
 const coverage = require('./_scope-quo-vadis-coverage');
 const consolidation = require('./_scope-quo-vadis-consolidation');
+const {participationEvaluation:resolveParticipationEvaluation} = require('./_scope-participation-catalogue');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
 const { createQvReferentialManagement } = require('./_scope-qv-referential-management');
 const functionalCatalog = require('./_scope-functional-catalog');
@@ -440,19 +441,52 @@ function programmeFreeLabels(values,error='programme_public_libre_invalide'){
   return [...new Set(values)];
 }
 
+const isUnassignedResponsible = value => String(value || '').trim() === 'À affecter';
+const isOfficialResponsible = row => !isUnassignedResponsible(row.code) && !isUnassignedResponsible(row.libelle);
+const officialResponsibleLabel = row => /^Présidente (CI|Codir)$/.test(row.code)
+  ? row.code.replace('Présidente ','PrésidentE ') : row.libelle;
+
+function programmeEcawinActivityCode(row,year){
+  if(Object.prototype.hasOwnProperty.call(row,'ecawinActivityCode')) return row.ecawinActivityCode;
+  return Number(year) === 2027 && ecawin.activityForStatCom(row.statCom) === 'EXERCI' ? 'EXERCI' : '';
+}
+
+function participationEvaluation(...sources){
+  const value = sources.find(source => typeof source?.participationEvaluation === 'boolean');
+  return value ? value.participationEvaluation : true;
+}
+
+function programmeDefinition(row,catalogue){
+  const metadata = row.metadata || {};
+  const fields = metadata.planningFields || metadata.reconductedBusiness || {};
+  const ids = [row.definitionId,row.definitionVersionId,metadata.definitionId,metadata.definitionVersionId,
+    row.sourceRef,row.source_ref,fields.sessionStructure?.definitionId].filter(Boolean);
+  return catalogue.find(item => ids.includes(item.id) || ids.includes(item.versionId)) || {};
+}
+
+function programmeParticipationEvaluation(row,year,type){
+  const sources = [row,row.metadata?.planningFields,row.metadata?.reconductedBusiness,row.metadata];
+  const individual = sources.find(source => typeof source?.participationEvaluation === 'boolean');
+  return resolveParticipationEvaluation({...row,year,...individual ? {participationEvaluation:individual.participationEvaluation} : {}},type);
+}
+
 function programmeResponsibleSelections(values,references,retained=[]){
   if(!Array.isArray(values) || values.length > 20)
     throw new HttpError(422,'programme_responsables_invalides','Sélection de responsables invalide.');
   const selected=values.map(value=>{
-    if(value?.kind === 'FREE') return {kind:'FREE',label:programmeFreeLabels([value.label],'programme_responsables_invalides')[0]};
+    if(value?.kind === 'FREE'){
+      const label = programmeFreeLabels([value.label],'programme_responsables_invalides')[0];
+      return isUnassignedResponsible(label) ? null : {kind:'FREE',label};
+    }
     if(value?.kind === 'REFERENCE' && typeof value.code === 'string'){
-      const reference=references.find(row=>row.code === value.code);
+      if(isUnassignedResponsible(value.code)) return null;
+      const reference=references.find(row=>row.code === value.code && isOfficialResponsible(row));
       const historical=retained.find(row=>row.kind === 'REFERENCE' && row.code === value.code);
-      if(reference || historical) return {kind:'REFERENCE',code:value.code,label:reference?.libelle || historical.label};
+      if(reference || historical) return {kind:'REFERENCE',code:value.code,label:historical?.label ?? officialResponsibleLabel(reference)};
     }
     throw new HttpError(422,'programme_responsables_invalides','Le responsable référencé doit provenir du référentiel actif.');
   });
-  return selected.filter((value,index)=>selected.findIndex(item=>item.kind === value.kind
+  return selected.filter(Boolean).filter((value,index,items)=>items.findIndex(item=>item.kind === value.kind
     && (item.kind === 'REFERENCE' ? item.code === value.code : item.label === value.label)) === index);
 }
 
@@ -732,11 +766,12 @@ function mapObligation(row){
     lieuId: row.lieu_id || null,
     lieuLibre: row.lieu_libre || null,
     salleTheorieId: row.salle_theorie_id || null,
-    responsableFonctionCode: row.responsable_fonction_code || null,
+    responsableFonctionCode: isUnassignedResponsible(row.responsable_fonction_code) ? null : row.responsable_fonction_code || null,
     numberingPattern: row.numbering_pattern || null,
     activityKind: row.activity_kind || (row.metadata && row.metadata.activityKind) || '',
     periodicityYears: row.periodicity_years == null ? null : Number(row.periodicity_years),
     includeInProgramme: row.include_in_programme !== false,
+    participationEvaluation: participationEvaluation(row.metadata?.planningFields,row.metadata?.reconductedBusiness,row.metadata,row),
     lastOccurrence: dateOnly(row.last_occurrence),
     classification: row.classification || {},
     metadata: row.metadata || {},
@@ -813,7 +848,8 @@ function mapResponsableFonction(row){
   return {
     code: row.code,
     libelle: row.libelle,
-    actif: row.actif !== false
+    actif: row.actif !== false,
+    metadata:row.metadata || {}
   };
 }
 
@@ -1319,6 +1355,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         responsable: metadata.planningFields?.responsibleLabel ?? (((qv.responsableFonctions || []).find((row) => row.code === (obligation.responsableFonctionCode || metadata.responsableFonctionCode)) || {}).libelle || obligation.responsableFonctionCode || metadata.responsableFonctionCode || ''),
         responsibleSelections:metadata.planningFields?.responsibleSelections,
         publicFreeLabels:metadata.planningFields?.publicFreeLabels || [],
+        participationEvaluation:obligation.participationEvaluation,
         dayClass: retained.dayClass || '',
         dayClassLabel: retained.dayClass ? (DAY_CLASS_LABELS[retained.dayClass] || retained.dayClass) : '',
         reasons: (retained.reasons || []).concat(knownSameDay ? ['Une date annoncée est déjà enregistrée ce jour.'] : []),
@@ -1460,7 +1497,9 @@ function createScopeQuoVadisService({ database = db } = {}){
       db.query(`select * from scope_responsable_fonctions where actif is true order by sort_order, libelle`).catch(() => ({ rows: [] })),
       db.query(`select cible_id, domaine_code, niveau_code, libelle, actif from scope_cibles where actif is true order by domaine_code, niveau_code`)
     ]);
-    const population = consolidation.activePopulation(obligations.rows.map(mapObligation), proposals.rows.map(mapProposal));
+    const population = consolidation.activePopulation(obligations.rows.map(row => mapObligation({...row,
+      participationEvaluation:programmeParticipationEvaluation(row,programme.annee,programmeDefinition(row,catalogue))
+    })), proposals.rows.map(mapProposal));
     const statcoms = await db.query(`select * from scope_statcom_referentiel order by code`);
     const domainOis = await db.query(`select d.domaine_code,o.code from scope_domaine_ois d join scope_ois o using(oi_id) where o.actif is true`);
     const qualifications = await db.query(`select competence_id,code,libelle,domaine_code,type
@@ -1472,12 +1511,14 @@ function createScopeQuoVadisService({ database = db } = {}){
       calendarDays: enrichCalendarRows(calendar.rows).map(mapCalendarDay),
       lieux: lieux.rows.map(mapLieu),
       sallesTheorie: (sallesTheorie.rows || []).map(mapSalleTheorie),
-      responsableFonctions: (responsableFonctions.rows || []).map(mapResponsableFonction),
+      responsableFonctions: (responsableFonctions.rows || []).filter(isOfficialResponsible)
+        .map(row => mapResponsableFonction({...row,libelle:officialResponsibleLabel(row)})),
       cibles: (cibles.rows || []).map((row) => ({ cibleId: row.cible_id, domaineCode: row.domaine_code, niveauCode: row.niveau_code, libelle: row.libelle })),
       statComCodes: statcoms.rows.map(row => ({ ...row, label:row.libelle || row.label,validFrom:dateOnly(row.valid_from),validTo:dateOnly(row.valid_to) })),
       domainOis: domainOis.rows,
       qualifications: qualifications.rows.map(row=>({id:row.competence_id,code:row.code,label:row.libelle,domainCode:row.domaine_code,type:row.type})),
       ecawinReferential: {activityCodes:ecawin.activityCodes,activityLabels:ecawin.activityLabels,
+        historicalActivityAliases:ecawin.historicalActivityAliases,
         associations:ecawin.associations,complete:ecawin.complete,source:ecawin.source,
         sourceImage:ecawin.sourceImage,unresolvedAssociations:ecawin.unresolvedAssociations},
       statComSuccessions:STATCOM_SUCCESSIONS,
@@ -1673,7 +1714,8 @@ function createScopeQuoVadisService({ database = db } = {}){
             themes:Array.isArray(fields.themes) ? fields.themes : [],
             specialisation:fields.specialisation || '',cursus:fields.cursus || '',
             qualificationCodes:fields.qualificationCodes || [],cursusId:fields.cursusId || null,
-            ecawinActivityCode:fields.ecawinActivityCode || '',
+            ...(Object.prototype.hasOwnProperty.call(fields,'ecawinActivityCode') ? {ecawinActivityCode:fields.ecawinActivityCode} : {}),
+            participationEvaluation:participationEvaluation(fields,source),
             responsible:fields.responsibleLabel || '',location:fields.locationLabel || '',room:fields.roomLabel || '',
             responsibleSelections:fields.responsibleSelections,publicFreeLabels:fields.publicFreeLabels || [],
             lieuId:preparation.lieu_id || null,lieuLibre:preparation.lieu_libre || '',
@@ -1707,10 +1749,13 @@ function createScopeQuoVadisService({ database = db } = {}){
             preparation:{ type:'OBLIGATION',id:preparation.obligation_id,updatedAt:preparation.updated_at },
             lieuId:preparation.lieu_id || null,
             lieuLibre:preparation.lieu_libre || '',
-            salleTheorieId:preparation.salle_theorie_id || null
+            salleTheorieId:preparation.salle_theorie_id || null,
+            participationEvaluation:participationEvaluation(fields,canonicalSource)
           } : preparation ? {
             preparation:{ type:'OBLIGATION',id:preparation.obligation_id,updatedAt:preparation.updated_at },
-            ...(Object.prototype.hasOwnProperty.call(fields,'activityLabel') ? {
+            ...(Object.prototype.hasOwnProperty.call(fields,'activityLabel') && (
+              preparation.metadata.automatedSnapshot !== true || preparation.metadata.humanDecision === true || preparation.metadata.decisionHumaine === true
+              || preparation.metadata.validatedBy || preparation.metadata.businessValidation) ? {
               label:fields.activityLabel,activityLabel:fields.activityLabel,eventDisplayLabel:fields.activityLabel,eventLabel:fields.activityLabel
             } : {}),
             ...(Object.prototype.hasOwnProperty.call(fields,'statCom') ? { statCom:fields.statCom } : {}),
@@ -1718,7 +1763,8 @@ function createScopeQuoVadisService({ database = db } = {}){
             ...(Array.isArray(fields.themes) ? { themes:fields.themes } : {}),
             ...(Array.isArray(fields.qualificationCodes) ? {qualificationCodes:fields.qualificationCodes,specialisation:fields.specialisation || ''} : {}),
             ...(Object.prototype.hasOwnProperty.call(fields,'cursusId') ? {cursusId:fields.cursusId,cursus:fields.cursus || ''} : {}),
-            ecawinActivityCode:fields.ecawinActivityCode || '',
+            ...(Object.prototype.hasOwnProperty.call(fields,'ecawinActivityCode') ? {ecawinActivityCode:fields.ecawinActivityCode} : {}),
+            participationEvaluation:participationEvaluation(fields,canonicalSource),
             lineage:preparation.metadata.lineage || null,
             businessValidation:preparation.metadata.businessValidation || null,
             startsAt:Object.prototype.hasOwnProperty.call(fields,'date')
@@ -1790,6 +1836,7 @@ function createScopeQuoVadisService({ database = db } = {}){
           startsAt:row.imposedStartAt || proposal && proposal.startsAt || null,endsAt:row.imposedEndAt || proposal && proposal.endsAt || null,
           responsible:fields.responsibleLabel,location:fields.locationLabel,room:fields.roomLabel,lieuId:row.lieuId,
           responsibleSelections:fields.responsibleSelections,publicFreeLabels:fields.publicFreeLabels || [],
+          ecawinActivityCode:fields.ecawinActivityCode || '',participationEvaluation:participationEvaluation(fields,row),
           lieuLibre:row.lieuLibre,salleTheorieId:row.salleTheorieId,responsableFonctionCode:row.responsableFonctionCode,
           sessionStructure:fields.sessionStructure,lineage:row.metadata.lineage,businessValidation:row.metadata.businessValidation,
           preparation:{type:'OBLIGATION',id:row.obligationId},status:row.statut,external:false };
@@ -1937,6 +1984,15 @@ function createScopeQuoVadisService({ database = db } = {}){
         }
       }
     }
+    if(result.canonicalProgramme) result.canonicalProgramme.rows = result.canonicalProgramme.rows.map(row => ({...row,
+      activityLabel:row.eventDisplayLabel || row.activityLabel || row.label,
+      ecawinActivityCode:programmeEcawinActivityCode(row,programme.annee),
+      participationEvaluation:participationEvaluation(row),
+      ...(isUnassignedResponsible(row.responsible) ? {responsible:''} : {}),
+      ...(isUnassignedResponsible(row.responsableFonctionCode) ? {responsableFonctionCode:null} : {}),
+      ...(Array.isArray(row.responsibleSelections) ? {responsibleSelections:row.responsibleSelections
+        .filter(value => !isUnassignedResponsible(value.code || value.label))} : {})
+    }));
     result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || [],result.statComCodes);
     return result;
   }
@@ -2439,6 +2495,7 @@ function createScopeQuoVadisService({ database = db } = {}){
           family: coverage.formationFamily(item.domain),
           subcategory: coverage.formationSubcategory(item.domain, '', item.title),
           statcomCode: item.statcomCode || '',
+          participationEvaluation:resolveParticipationEvaluation({year:programme.annee},item),
           noOperationalEventCreated: true,
           businessJustification: requirement.justification
         }
@@ -2698,12 +2755,15 @@ function createScopeQuoVadisService({ database = db } = {}){
   }
 
   async function generateValidatedReconductions(programme, calendarRows, rulesByDomain){
+    const catalogue = await loadCatalogue(programme.annee);
     const references = await db.query(`select o.*,p.annee from scope_quo_vadis_obligations o
       join scope_quo_vadis_programmes p using(programme_id)
       where p.annee < $1 and (o.metadata ? 'businessValidation' or o.metadata ? 'lifecycleDecision') order by p.annee desc,o.updated_at desc`,[programme.annee]);
     let count = 0;
     for(const reference of consolidation.latestValidatedReferences(references.rows,programme.annee)){
-      const fields = consolidation.businessSnapshot(reference.metadata.businessValidation.fields);
+      const fields = {...consolidation.businessSnapshot(reference.metadata.businessValidation.fields),
+        participationEvaluation:resolveParticipationEvaluation({...reference.metadata.businessValidation.fields,year:programme.annee},
+          programmeDefinition(reference,catalogue))};
       const lineage = { ...reference.metadata.lineage, parentYear:Number(reference.annee),parentOccurrence:reference.source_ref,
         referenceValidatedAt:reference.metadata.businessValidation.validatedAt };
       const obligation = await upsertObligation(programme,{
@@ -3094,7 +3154,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       sets.push(`salle_theorie_id = $${params.length}`);
     }
     if(Object.prototype.hasOwnProperty.call(body, 'responsableFonctionCode')){
-      let code = body.responsableFonctionCode || null;
+      let code = isUnassignedResponsible(body.responsableFonctionCode) ? null : body.responsableFonctionCode || null;
       if(code){
         const fn = await db.query(`select code from scope_responsable_fonctions where code = $1`, [code]);
         if(!fn.rows[0]) code = null;
@@ -3107,7 +3167,8 @@ function createScopeQuoVadisService({ database = db } = {}){
     await db.query(
       `update scope_quo_vadis_obligations
           set ${sets.join(', ')},
-              metadata = coalesce(metadata, '{}'::jsonb) || $${params.length}::jsonb,
+              metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('planningFields',
+                coalesce(metadata->'planningFields','{}'::jsonb) || ($${params.length}::jsonb->'planningFields')),
               updated_at = now()
         where obligation_id = $1`,
       params
@@ -3140,6 +3201,8 @@ function createScopeQuoVadisService({ database = db } = {}){
   }
 
   async function updateProgrammePreparation(itemId, body = {}, options = {}){
+    if(Object.prototype.hasOwnProperty.call(body,'participationEvaluation') && typeof body.participationEvaluation !== 'boolean')
+      throw new HttpError(422,'programme_participation_evaluation_invalide','L’évaluation de participation doit être un booléen.');
     const saveAction = String(body.saveAction || '').toUpperCase();
     if(saveAction && !['SAVE','VALIDATE','PLAN'].includes(saveAction))
       throw new HttpError(422,'programme_action_invalide','Action d’enregistrement invalide.');
@@ -3153,12 +3216,16 @@ function createScopeQuoVadisService({ database = db } = {}){
     const saved = await db.query(`select * from scope_quo_vadis_obligations where programme_id=$1 and source_ref=$2 order by created_at limit 1`,[programme.programme_id,String(itemId)]);
     const existing = saved.rows[0];
     const inherited = existing && (existing.metadata.planningFields || existing.metadata.reconductedBusiness) || {};
+    const humanTitle = existing && (existing.metadata.automatedSnapshot !== true || existing.metadata.humanDecision === true || existing.metadata.decisionHumaine === true
+      || existing.metadata.validatedBy || existing.metadata.businessValidation || existing.metadata.reconductedBusiness)
+      ? inherited.activityLabel : undefined;
     const source = options.manualSource || (year === 2027
       ? canonicalRows.find((row) => String(row.id) === String(itemId)) || existing && existing.metadata && existing.metadata.manualSource
       : existing && existing.metadata.lineage ? {
       id:itemId,label:existing.title,activityLabel:existing.title,domain:inherited.domain || existing.domain,persistenceDomain:existing.domain,family:inherited.family,
           statCom:existing.statcom_code,ois:inherited.oiCodes,publics:existing.cible_codes,sessionStructure:inherited.sessionStructure,
-          themes:inherited.themes
+          themes:inherited.themes,
+          participationEvaluation:programmeParticipationEvaluation(existing,year,programmeDefinition(existing,await loadCatalogue(year)))
     } : null);
     const existingPreparation = existing && existing.metadata && existing.metadata.source === 'QV_PROGRAMME_PREPARATION';
     if(!source || (source.external && !existingPreparation)) return { updated:false,reason:'PROGRAMME_ITEM_NOT_FOUND' };
@@ -3185,7 +3252,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         salleTheorieId: inherited.salleTheorieId ?? body.salleTheorieId,
         responsableFonctionCode: inherited.responsibleLabel || inherited.responsableFonctionCode || body.responsableFonctionCode,
         specialisation: inherited.specialisation, cursus: inherited.cursus,
-        activityLabel: inherited.activityLabel ?? source.activityLabel ?? source.label,
+        activityLabel: humanTitle ?? source.eventDisplayLabel ?? source.activityLabel ?? source.label,
+        participationEvaluation:participationEvaluation(inherited,source),
         themes: inherited.themes ?? source.themes ?? [],
         domain: inherited.domain || source.domain,
         statCom: inherited.statCom ?? source.statCom ?? '',
@@ -3282,7 +3350,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     if(publicCodes.some((code) => !knownPublics.has(code))){
       throw new HttpError(422,'programme_public_invalide','Le public cible doit provenir du référentiel du Programme.');
     }
-    const activityLabel = String(body.activityLabel ?? inherited.activityLabel ?? source.activityLabel ?? source.label ?? '').replace(/\s+/g,' ').trim();
+    const activityLabel = String(body.activityLabel ?? humanTitle ?? source.eventDisplayLabel ?? source.activityLabel ?? source.label ?? '').trim();
     if(!activityLabel || activityLabel.length > 240) throw new HttpError(422,'programme_activite_invalide','L’activité doit contenir entre 1 et 240 caractères.');
     const rawThemes = body.themes ?? inherited.themes ?? source.themes ?? [];
     if(!Array.isArray(rawThemes) || rawThemes.length > 8 || rawThemes.some((theme) => typeof theme !== 'string' || theme.trim().length > 160)){
@@ -3297,15 +3365,11 @@ function createScopeQuoVadisService({ database = db } = {}){
     if(source.manualCreation && existing && existing.metadata.businessValidation
       && statCom !== String(existing.statcom_code || '').trim())
       throw new HttpError(422,'programme_code_valide_immuable','Le Stat.Com d’une activité validée ne peut pas être modifié.');
-    const ecawinActivityCode = String(body.ecawinActivityCode ?? inherited.ecawinActivityCode ?? '').trim();
-    if(ecawinActivityCode && !ecawin.activityCodes.includes(ecawinActivityCode))
-      throw new HttpError(422,'programme_ecawin_code_invalide','Choisissez un code activité ECAwin officiel.');
-    if(ecawinActivityCode && statCom && !ecawin.isCompatible(ecawinActivityCode,statCom))
-      throw new HttpError(422,'programme_ecawin_association_invalide','Le code activité ECAwin et le Stat.Com sont incompatibles.');
     const previousStatCom = String(inherited.statCom ?? source.statCom ?? '').trim();
-    if(statCom && (options.manualSource || statCom !== previousStatCom)
-      && !ecawin.activityForStatCom(statCom) && statCom !== 'EMSEA')
-      throw new HttpError(422,'programme_ecawin_statcom_non_qualifie','Cette association ECAwin n’est pas confirmée dans le référentiel disponible.');
+    const ecawinActivityCode = String(body.ecawinActivityCode ?? inherited.ecawinActivityCode
+      ?? programmeEcawinActivityCode({...source,statCom},year)).trim();
+    if(ecawinActivityCode && !ecawin.isActivityCode(ecawinActivityCode))
+      throw new HttpError(422,'programme_ecawin_code_invalide','Choisissez un code activité ECAwin officiel.');
     if(source.externalActivity && statCom) throw new HttpError(422,'programme_externe_statcom','Une activité externe hors suivi SCOPE ne porte pas de Stat.Com.');
     if(source.manualCreation && body.validateBusiness === true && !source.externalActivity && !statCom)
       throw new HttpError(422,'programme_statcom_manquant','Choisissez un Stat.Com avant la validation métier.');
@@ -3322,6 +3386,12 @@ function createScopeQuoVadisService({ database = db } = {}){
       && (!statcomResult.rows[0] || !isStatComValidForDate(statcomResult.rows[0],date || `${year}-01-01`))){
       throw new HttpError(422,'programme_statcom_invalide','Le Stat.Com doit provenir du référentiel canonique et être valide à cette date.');
     }
+    if(ecawinActivityCode && statCom && !ecawin.isCompatible(ecawinActivityCode,statCom)
+      && (options.manualSource || statCom !== previousStatCom))
+      throw new HttpError(422,'programme_ecawin_association_invalide','Le code activité ECAwin et le Stat.Com sont incompatibles.');
+    if(statCom && (options.manualSource || statCom !== previousStatCom)
+      && !ecawin.activityForStatCom(statCom) && statCom !== 'EMSEA')
+      throw new HttpError(422,'programme_ecawin_statcom_non_qualifie','Cette association ECAwin n’est pas confirmée dans le référentiel disponible.');
     const programmeLieuCatalogue = {
       'centre-formation':'Centre de formation',
       'caserne-sdis':'Caserne SDIS',
@@ -3345,7 +3415,9 @@ function createScopeQuoVadisService({ database = db } = {}){
     }
     const programmeResponsables = new Set(uiLogic.qvResponsableGroups().flat());
     const hasResponsibleSelections = Object.prototype.hasOwnProperty.call(body,'responsibleSelections');
-    const retainedResponsibleSelections = inherited.responsibleSelections || source.responsibleSelections;
+    const retainedResponsibleSelections = inherited.responsibleSelections || source.responsibleSelections
+      || (existing?.responsable_fonction_code && inherited.responsibleLabel && !isUnassignedResponsible(inherited.responsibleLabel)
+        ? [{kind:'REFERENCE',code:existing.responsable_fonction_code,label:inherited.responsibleLabel}] : undefined);
     if(hasResponsibleSelections && (!Array.isArray(body.responsibleSelections) || body.responsibleSelections.length > 20))
       throw new HttpError(422,'programme_responsables_invalides','Sélection de responsables invalide.');
     const referenceCodes = hasResponsibleSelections ? body.responsibleSelections
@@ -3353,8 +3425,9 @@ function createScopeQuoVadisService({ database = db } = {}){
     if(referenceCodes.some(code=>typeof code !== 'string' || !code || code.length > 160 || /[\u0000-\u001f\u007f]/.test(code)))
       throw new HttpError(422,'programme_responsables_invalides','Code de responsable invalide.');
     const hasLegacyResponsible = Object.prototype.hasOwnProperty.call(body,'responsableFonctionCode');
-    const requestedResponsable = hasResponsibleSelections || (retainedResponsibleSelections && !hasLegacyResponsible) ? ''
+    const rawRequestedResponsable = hasResponsibleSelections || (retainedResponsibleSelections && !hasLegacyResponsible) ? ''
       : String(body.responsableFonctionCode ?? inherited.responsableFonctionCode ?? source.responsableFonctionCode ?? '').trim();
+    const requestedResponsable = isUnassignedResponsible(rawRequestedResponsable) ? '' : rawRequestedResponsable;
     const moaResponsable = programmeResponsables.has(requestedResponsable) ? requestedResponsable : '';
     const responsableCode = requestedResponsable === 'Chef JSP' ? 'C JSP'
       : requestedResponsable === 'Chef site JSP' ? 'C site JSP' : requestedResponsable;
@@ -3377,7 +3450,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     const lieu = lieuResult.rows.length === 1 ? lieuResult.rows[0] : null;
     const salle = salleResult.rows[0] || null;
     const responsibleSelections = hasResponsibleSelections ? programmeResponsibleSelections(body.responsibleSelections,responsableResult.rows,retainedResponsibleSelections)
-      : retainedResponsibleSelections;
+      : !hasLegacyResponsible ? retainedResponsibleSelections?.filter(value => !isUnassignedResponsible(value.code || value.label)) : undefined;
     const primaryResponsible = responsibleSelections?.find(value=>value.kind === 'REFERENCE');
     const responsable = hasResponsibleSelections ? responsableResult.rows.find(row=>row.code === primaryResponsible?.code)
       || (primaryResponsible && existing?.responsable_fonction_code === primaryResponsible.code ? {code:primaryResponsible.code,libelle:primaryResponsible.label} : null)
@@ -3403,6 +3476,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     const locationLabel = lieuLibre || catalogueLabel || (lieu ? String(lieu.nom_court || '').trim() : '');
     const planningFields = {
       date,startTime,endTime,oiCodes,publicCodes,activityLabel,statCom,themes,
+      participationEvaluation:participationEvaluation(body,inherited,source),
       domain:requestedDomain,family:uiLogic.qvProgrammeFamily(source),
       lieuId:lieu && lieu.lieu_id || null,salleTheorieId:salle && salle.salle_id || null,
       responsableFonctionCode:responsable && responsable.code || null,
@@ -3412,8 +3486,9 @@ function createScopeQuoVadisService({ database = db } = {}){
       lieuLibre,
       roomLabel:salle ? salle.libelle : '',
       responsibleLabel:responsibleSelections ? responsibleSelections.map(value=>value.label).join(' ; ')
-        : !hasLegacyResponsible ? inherited.responsibleLabel ?? source.responsible ?? ''
-        : moaResponsable || (responsable ? responsable.libelle : ''),
+        : !hasLegacyResponsible ? (isUnassignedResponsible(inherited.responsibleLabel ?? source.responsible) ? '' : inherited.responsibleLabel ?? source.responsible ?? '')
+        : moaResponsable || (responsable ? (responsable.code === existing?.responsable_fonction_code
+          ? inherited.responsibleLabel ?? officialResponsibleLabel(responsable) : officialResponsibleLabel(responsable)) : ''),
       updatedAt:new Date().toISOString()
     };
     planningFields.ecawinActivityCode = ecawinActivityCode;
@@ -3464,6 +3539,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         publicCodes:source.publics || [],responsibleLabel:source.responsible || '',responsableFonctionCode:source.responsableFonctionCode || null,
         locationLabel:source.location || '',lieuId:source.lieuId || null,lieuLibre:source.lieuLibre || '',
         roomLabel:source.roomLabel || '',salleTheorieId:source.salleTheorieId || null,sessionStructure:planningFields.sessionStructure,
+        participationEvaluation:participationEvaluation(source),
         ...existing && existing.metadata.reconductedBusiness
       });
       metadata.businessValidation = {validatedAt:new Date().toISOString(),year,baselineFields,
@@ -3511,7 +3587,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         if(metadata.businessValidation){
           const baseline = metadata.businessValidation.baselineFields;
           writeMetadata.businessValidation = { ...metadata.businessValidation,fields:consolidation.businessSnapshot(fields),
-            changedFields:consolidation.RECONDUCTIBLE_FIELDS.filter((field) => JSON.stringify(fields[field]) !== JSON.stringify(baseline[field])) };
+            changedFields:consolidation.RECONDUCTIBLE_FIELDS.filter(field => JSON.stringify(fields[field]) !== JSON.stringify(baseline[field])) };
         }
       }
       const current = await client.query(`select obligation_id from scope_quo_vadis_obligations

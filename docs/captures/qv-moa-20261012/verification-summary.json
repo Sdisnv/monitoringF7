@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-12",
+  "sourceBaseline": "9fde68077f35bede72ef08f3b3dc65ea5f93c224",
+  "targetedTests": {"passed": 57, "failed": 0},
+  "browser": {"name": "Chromium", "passed": 9, "failed": 0, "viewports": [1440, 960, 390], "pageErrors": []},
+  "statCom": {"compared": 867, "identical": 867, "percentIdentical": 100},
+  "netlifyBuild": {"context": "production", "functions": 25, "status": "PASS"},
+  "netlifyPreflight": "PASS",
+  "diffCheck": "PASS",
+  "production": {
+    "site": "scope-sdisnv",
+    "siteId": "6def8d4d-78c6-4112-bb76-6891df0e0a52",
+    "deploymentId": "6acc550bc15e4abb0465554b",
+    "commit": "9fde68077f35bede72ef08f3b3dc65ea5f93c224",
+    "httpStatus": 200,
+    "authMethods": ["local"],
+    "recipeWrites": false,
+    "correctiveLotPublished": false
+  },
+  "knownPreexistingTestLimits": ["C6 fixture missing public reference query", "historic consolidation test expects 010JY3 replacement forbidden by MOA"],
+  "verdict": "READY_FOR_MOA"
+}

@@ -11676,12 +11676,18 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-edit-grid .qv-programme-choice-list input[type=checkbox]{appearance:none;width:14px;height:14px;min-height:0;padding:0;margin:0;flex:0 0 14px;border:1px solid #687681;border-radius:0;background:#fff;position:relative;cursor:pointer}
 .qv-programme-choice-list input[type=checkbox]:checked{background:#1769aa;border-color:#1769aa}
 .qv-programme-choice-list input[type=checkbox]:checked::after{content:'';position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.qv-programme-choice-list input[type=checkbox]:indeterminate{background:#1769aa;border-color:#1769aa}
+.qv-programme-choice-list input[type=checkbox]:indeterminate::after{content:'';position:absolute;left:2px;top:5px;width:8px;height:2px;background:#fff}
+.qv-programme-edit-grid .qv-programme-choice-list legend label{padding-left:0;font-weight:600}
 .qv-programme-choice-list input[type=checkbox]:focus-visible{outline:2px solid #1769aa;outline-offset:2px}
 @media(forced-colors:active){.qv-programme-edit-grid .qv-programme-choice-list input[type=checkbox]{appearance:auto}.qv-programme-choice-list input[type=checkbox]:checked::after{content:none}}
 .qv-programme-edit-pair{grid-column:1/-1}
 #qv-programme-lieu-libre-field{grid-column:1/-1}
 #qv-programme-lieu-keep-field{grid-column:1/-1}
 .qv-programme-keep-lieu{display:flex;align-items:center;gap:8px;min-height:36px;font-size:.82rem;font-weight:400}
+.qv-programme-edit-grid>label.qv-programme-keep-lieu{display:flex;flex-wrap:wrap;font-weight:400}
+.annual-definition-form .annual-evaluation-default{display:flex;align-items:center;gap:8px;grid-column:1/-1;min-width:0}
+.annual-definition-form .annual-evaluation-default input{width:16px;min-height:16px;height:16px;padding:0;margin:0;flex:0 0 16px}
 .qv-programme-edit-grid .qv-programme-keep-lieu input[type=checkbox]{width:16px;height:16px;min-height:16px;padding:0;margin:0;flex:0 0 16px}
 .qv-programme-choice-field{grid-template-rows:auto auto;align-content:start}
 .qv-programme-choice-menu{min-width:0;border:1px solid #aeb8c2;border-radius:3px;background:#fff}

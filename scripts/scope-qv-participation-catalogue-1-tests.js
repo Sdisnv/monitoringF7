@@ -33,7 +33,7 @@ async function main(){
   });
   assert.equal((await repo.listEvenements({ year:2027 })).length,3);
   const listed = await service.listEvenements({ year:2027 });
-  assert.deepEqual(listed.evenements.map((row) => row.evenement.code_source),['QV-YES']);
+  assert.deepEqual(listed.evenements.map((row) => row.evenement.code_source),['QV-NO','QV-UNKNOWN','QV-YES']);
   const preview = await service.previewAttendus(yes.evenement_id);
   assert.equal(preview.resolutionStatus,'INCOMPLETE');
   assert.deepEqual(preview.personnes,[]);
@@ -136,7 +136,7 @@ async function main(){
   assert.ok(programme.rows.some((row) => row.definitionId === unknownCode));
   const operational = await e2e.listEvenements({ year:2027 });
   assert.deepEqual(operational.evenements.map((row) => row.evenement.evenement_id).sort(),
-    [...prEvents.map((row) => row.evenement_id),publicEvent.evenement_id].sort());
+    [...prEvents.map((row) => row.evenement_id),publicEvent.evenement_id,noEvent.evenement_id,unknownEvent.evenement_id].sort());
   assert.ok((await e2eRepo.listEvenements({ annee:2027 })).some((row) => row.evenement_id === noEvent.evenement_id));
   for(const ev of [noEvent,unknownEvent]){
     await assert.rejects(e2e.previewAttendus(ev.evenement_id),{ error:'participation_catalogue_non_suivie' });
@@ -165,7 +165,7 @@ async function main(){
   assert.equal(allPreview.resolutionStatus,'COMPLETE');
   assert.deepEqual(allPreview.personnes.map((row) => row.personneId).sort(),[papr.personne_id,other.personne_id].sort());
   assert.ok(!allPreview.personnes.some((row) => row.personneId === inactive.personne_id));
-  console.log('PARTICIPATION-CATALOGUE-1 E2E PASS: PAPR daté, PR consolidé, fiche individuelle, Non/inconnu exclus, SDIS éligible');
+  console.log('PARTICIPATION-CATALOGUE-1 E2E PASS: PAPR date, PR consolide, fiche individuelle, evaluation 2027 par defaut, populations Non/inconnu protegees, SDIS eligible');
 }
 
 main().catch((error) => { console.error(error);process.exitCode=1; });

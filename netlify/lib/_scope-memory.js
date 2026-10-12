@@ -4,6 +4,7 @@ const { isoDate } = require('./_scope-rules');
 const { periodFromPersonneRow } = require('./_scope-personnel');
 const statcomReferential = require('./_scope-statcom-referential');
 const eventCodes = require('./_scope-event-code');
+const { participationEvaluation } = require('./_scope-participation-catalogue');
 
 function now(){ return new Date().toISOString(); }
 
@@ -186,8 +187,13 @@ function createMemoryRepo(){
   function decorateEvent(item){
     if(!item) return null;
     const exercice = item.exercice_id ? exercices.get(item.exercice_id) : null;
+    const definitionVersion = eventDefinitionVersions.get(item.definition_version_id || exercice?.definition_version_id);
+    const definition = [...eventDefinitions.values()].find((row) => row.code === item.code_source)
+      || eventDefinitions.get(definitionVersion?.definition_id);
     return {
       ...item,
+      participationEvaluation: participationEvaluation(item, definition),
+      descriptivePublics: item.engine_snapshot?.descriptivePublics || [],
       date: dateOnly(item.date),
       catalogue_participation_rule:item.source_type === 'QUO_VADIS'
         ? catalogueParticipationRules.get(item.code_source) || null : null,
@@ -559,6 +565,9 @@ function createMemoryRepo(){
         created_at: now(),
         updated_at: now()
       };
+      item.engine_snapshot = { ...(item.engine_snapshot || {}),participationEvaluation:decorateEvent({ ...item,
+        ...typeof row.participationEvaluation === 'boolean' ? { participationEvaluation:row.participationEvaluation } : {},
+        ...row.metadata ? { metadata:row.metadata } : {} }).participationEvaluation };
       evenements.set(item.evenement_id, item);
       evenementCibles.set(item.evenement_id, [...(row.cible_ids || [])]);
       return { ...decorateEvent(item), already_exists: false };
@@ -566,7 +575,7 @@ function createMemoryRepo(){
     async listEvenements({ annee, statut, domaine, from, to, includeHidden, participationOnly } = {}){
       return [...evenements.values()]
         .filter((item) => {
-          if(participationOnly && item.source_type === 'QUO_VADIS' && catalogueParticipationRules.get(item.code_source)?.tracking !== true) return false;
+          if(participationOnly && !decorateEvent(item).participationEvaluation) return false;
           if(!includeHidden && item.hidden_at) return false;
           if(annee && String(item.date).slice(0, 4) !== String(annee)) return false;
           if(statut && item.statut !== statut) return false;
@@ -1803,6 +1812,7 @@ function createMemoryRepo(){
       };
       for(const event of evenements.values()){
         const mapped = { ...decorateEvent(event), mode_suivi: inferModeSuivi(event) };
+        if(!mapped.participationEvaluation) continue;
         if(from && to && !inPeriod(mapped.date, { from, to })) continue;
         if(domaineCode && mapped.domaine_code !== domaineCode) continue;
         if(evenementId && mapped.evenement_id !== evenementId) continue;

@@ -1,0 +1,43 @@
+{
+  "verdict": "PASS",
+  "browser": "Chromium",
+  "results": [
+    {
+      "name": "PR 1.1 a 1.6: ouverture, theme, SAVE, retour et reouverture sans renumerotation",
+      "status": "PASS"
+    },
+    {
+      "name": "responsables: defaut non selectionne, inclusifs, domaines tries, libre et persistance",
+      "status": "PASS"
+    },
+    {
+      "name": "public Codir permanent, domaines tries, references et descriptifs distincts",
+      "status": "PASS"
+    },
+    {
+      "name": "DPS DAP JSP globaux, partiel, deselection isolee et persistance",
+      "status": "PASS"
+    },
+    {
+      "name": "EXEPRO liste vide non destructive, recherche activite et Stat.Com conserve",
+      "status": "PASS"
+    },
+    {
+      "name": "evaluation desactivee individuellement puis reactivee et conservee apres reouverture",
+      "status": "PASS"
+    },
+    {
+      "name": "Stat.Com et identifiants de toutes les occurrences 2027 restent identiques",
+      "status": "PASS"
+    },
+    {
+      "name": "nouvelle occurrence: evaluation par defaut et CONCOUR officiel sans evenement operationnel",
+      "status": "PASS"
+    },
+    {
+      "name": "fiche et menus dans les limites des ecrans 1440, 960 et 390 pixels",
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": []
+}
