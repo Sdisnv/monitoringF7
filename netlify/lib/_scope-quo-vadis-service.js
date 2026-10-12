@@ -448,11 +448,19 @@ function programmeFreeLabels(values,error='programme_public_libre_invalide'){
 const isUnassignedResponsible = value => String(value || '').trim() === 'À affecter';
 const isOfficialResponsible = row => !isUnassignedResponsible(row.code) && !isUnassignedResponsible(row.libelle);
 const officialResponsibleLabel = row => /^Présidente (CI|Codir)$/.test(row.code)
-  ? row.code.replace('Présidente ','PrésidentE ') : row.libelle;
+  ? row.code.replace('Présidente ','PrésidentE ') : row.code === 'C scrt' ? 'C sct' : row.libelle;
 
 function programmeEcawinActivityCode(row,year){
   if(Object.prototype.hasOwnProperty.call(row,'ecawinActivityCode')) return row.ecawinActivityCode;
   return Number(year) === 2027 && ecawin.activityForStatCom(row.statCom) === 'EXERCI' ? 'EXERCI' : '';
+}
+
+function programmeEventFlags(...sources){
+  const source=sources[sources.length-1] || {};
+  const defaults=!source.humanDecision && !source.businessValidation && !source.publishedEventId
+    ? uiLogic.qvProgrammeManifestationDefaults(source) : null;
+  return Object.fromEntries(['sold','ecawinExport'].map(key=>[key,
+    sources.find(row=>typeof row?.[key]==='boolean')?.[key] ?? defaults?.[key] ?? (key==='sold')]));
 }
 
 function participationEvaluation(...sources){
@@ -1841,6 +1849,7 @@ function createScopeQuoVadisService({ database = db } = {}){
             qualificationCodes:fields.qualificationCodes || [],cursusId:fields.cursusId || null,
             ...(Object.prototype.hasOwnProperty.call(fields,'ecawinActivityCode') ? {ecawinActivityCode:fields.ecawinActivityCode} : {}),
             participationEvaluation:participationEvaluation(fields,source),
+            ...programmeEventFlags(fields,source),
             responsible:fields.responsibleLabel || '',location:fields.locationLabel || '',room:fields.roomLabel || '',
             responsibleSelections:fields.responsibleSelections,publicFreeLabels:fields.publicFreeLabels || [],
             lieuId:preparation.lieu_id || null,lieuLibre:preparation.lieu_libre || '',
@@ -1894,6 +1903,7 @@ function createScopeQuoVadisService({ database = db } = {}){
             ...(Object.prototype.hasOwnProperty.call(fields,'cursusId') ? {cursusId:fields.cursusId,cursus:fields.cursus || ''} : {}),
             ...(Object.prototype.hasOwnProperty.call(fields,'ecawinActivityCode') ? {ecawinActivityCode:fields.ecawinActivityCode} : {}),
             participationEvaluation:participationEvaluation(fields,canonicalSource),
+            ...programmeEventFlags(fields,canonicalSource),
             lineage:preparation.metadata.lineage || null,
             businessValidation:preparation.metadata.businessValidation || null,
             publicationRevision:preparation.metadata.publicationRevision || null,
@@ -1966,11 +1976,15 @@ function createScopeQuoVadisService({ database = db } = {}){
       result.activities = result.activities.filter((row) => !superseded.has(String(row.sourceRef)));
       const papr=paprRules.proposePaprDates(result.canonicalProgramme.rows,historicalReference2026.rows,
         {year:2027,calendarRows:calendar.rows,rulesByDomain:await loadRulesByDomain(),cursus:result.cursus});
-      result.canonicalProgramme.rows=papr.rows;
+      result.canonicalProgramme.rows=papr.rows.map(row=>({...row,preparatoryCycle:paprRules.preparatoryCycle(row,2027)}));
       result.paprProposals=papr.proposals;
       for(const proposal of result.paprProposals){
-        if(proposal.date && programmeCycles.classifyProgrammeDate(result.programmeCycle,proposal.date)==='OUTSIDE_CYCLE')
-          proposal.cycleNote=`Date hors borne du cycle enregistré (${result.programmeCycle.startDate} à ${result.programmeCycle.endDate}) : rattachement préparatoire à arbitrer, sans déplacement automatique.`;
+        const row=result.canonicalProgramme.rows.find(item=>item.id===proposal.itemId);
+        const classification=programmeCycles.classifyProgrammeDate(result.programmeCycle,proposal.date,row);
+        if(classification==='PREPARATORY_CURSUS')
+          proposal.cycleNote='Module préparatoire rattaché au cursus PAPR 2027 par décision MOA, avant PR 1.1. Date conservée.';
+        else if(proposal.date && classification==='OUTSIDE_CYCLE')
+          proposal.cycleNote=`Date hors borne du cycle enregistré (${result.programmeCycle.startDate} à ${result.programmeCycle.endDate}) : rattachement à contrôler, sans déplacement automatique.`;
       }
     }
     if(Number(programme.annee) !== 2027){
@@ -1984,6 +1998,7 @@ function createScopeQuoVadisService({ database = db } = {}){
           responsible:fields.responsibleLabel,location:fields.locationLabel,room:fields.roomLabel,lieuId:row.lieuId,
           responsibleSelections:fields.responsibleSelections,publicFreeLabels:fields.publicFreeLabels || [],
           ecawinActivityCode:fields.ecawinActivityCode || '',participationEvaluation:participationEvaluation(fields,row),
+          ...programmeEventFlags(fields,row.metadata?.manualSource || row),
           lieuLibre:row.lieuLibre,salleTheorieId:row.salleTheorieId,responsableFonctionCode:row.responsableFonctionCode,
           sessionStructure:fields.sessionStructure,lineage:row.metadata.lineage,businessValidation:row.metadata.businessValidation,
           definitionId:row.metadata.manualSource?.definitionId || fields.sessionStructure?.definitionId,
@@ -2165,7 +2180,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         const closesCycleYear = annualReportCatalog.closesCycleYear(row,programme.annee);
         return {...row,businessCycleYear:closesCycleYear ?? Number(programme.annee),
           civilYear:row.startsAt ? Number(dateOnly(row.startsAt).slice(0,4)) : null,
-          cycleClassification:programmeCycles.classifyProgrammeDate(cycle,row.startsAt),
+          cycleClassification:programmeCycles.classifyProgrammeDate(cycle,row.startsAt,row),
           ...(closesCycleYear != null ? {annualReport:{closesCycleYear,actualDate:String(row.startsAt || '').slice(0,10) || null}} : {}),
           ...(latePreparation ? {
           preparation:{ type:'OBLIGATION',id:latePreparation.obligation_id,updatedAt:latePreparation.updated_at }
@@ -2174,7 +2189,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       });
       if(ctaYear !== 2027 && cycle.generationAllowed){
         result.canonicalProgramme.rows = result.canonicalProgramme.rows.filter(row => row.preparation || row.humanDecision
-          || row.publishedEventId || row.cycleClassification === 'IN_CYCLE' || row.cycleClassification === 'UNDATED');
+          || row.publishedEventId || ['IN_CYCLE','UNDATED','PREPARATORY_CURSUS'].includes(row.cycleClassification));
       }
       const programmeRows = result.canonicalProgramme.rows.filter((row) => !row.external && !row.jspDirectionReconciliation
         && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'));
@@ -2263,6 +2278,11 @@ function createScopeQuoVadisService({ database = db } = {}){
     }
     if(result.canonicalProgramme) result.canonicalProgramme.rows = result.canonicalProgramme.rows.map(row => ({...row,
       activityLabel:row.eventDisplayLabel || row.activityLabel || row.label,
+      ...programmeEventFlags(row),
+      ...(!row.humanDecision && !row.businessValidation && !row.publishedEventId && uiLogic.qvProgrammeManifestationDefaults(row)
+        ? {publics:uiLogic.qvProgrammeManifestationDefaults(row).publicCodes,
+          responsible:'C sct',responsableFonctionCode:'C scrt',
+          responsibleSelections:uiLogic.qvProgrammeManifestationDefaults(row).responsibleSelections} : {}),
       ecawinActivityCode:programmeEcawinActivityCode(row,programme.annee),
       participationEvaluation:participationEvaluation(row),
       ...(isUnassignedResponsible(row.responsible) ? {responsible:''} : {}),
@@ -2270,7 +2290,14 @@ function createScopeQuoVadisService({ database = db } = {}){
       ...(Array.isArray(row.responsibleSelections) ? {responsibleSelections:row.responsibleSelections
         .filter(value => !isUnassignedResponsible(value.code || value.label))} : {})
     }));
-    result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || [],result.statComCodes);
+    const rowsById=new Map((result.canonicalProgramme?.rows || []).map(row=>[row.id,row]));
+    result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || [],result.statComCodes).map(reference=>{
+      const row=rowsById.get(reference.programmeItemId);
+      return {...reference,scopeOccurrenceCode:row?.businessCode || reference.scopeOccurrenceCode,
+        sold:row?.sold,participationEvaluation:row?.participationEvaluation,exportRequested:row?.ecawinExport === true,
+        ...(!row?.statCom && row?.sold === false && row?.ecawinExport === true
+          ? {exportPreparationState:'IMPORT_CONTRACT_REQUIRED'} : {})};
+    });
     return result;
   }
 
@@ -2378,7 +2405,8 @@ function createScopeQuoVadisService({ database = db } = {}){
   }
 
   async function insertProposal(obligation, payload){
-    if(generationCycle && programmeCycles.classifyProgrammeDate(generationCycle,payload.startsAt) === 'OUTSIDE_CYCLE') return;
+    if(generationCycle && programmeCycles.classifyProgrammeDate(generationCycle,payload.startsAt,
+      {preparatoryCycle:paprRules.preparatoryCycle(obligation,generationCycle.year)}) === 'OUTSIDE_CYCLE') return;
     if(obligation.preserveSchedule && !payload.announcedDate) return;
     await db.query(`update scope_quo_vadis_proposals set day_class = $4, reasons = $5::jsonb,
       conflict_summary = $6::jsonb, lieu_id = $7, lieu_libre = $8, status = $9
@@ -3544,6 +3572,8 @@ function createScopeQuoVadisService({ database = db } = {}){
   }
 
   async function updateProgrammePreparation(itemId, body = {}, options = {}){
+    for(const key of ['sold','ecawinExport']) if(Object.hasOwn(body,key) && typeof body[key]!=='boolean')
+      throw new HttpError(422,'programme_parametre_invalide','Les paramètres solde et export doivent être des booléens.');
     if(Object.prototype.hasOwnProperty.call(body,'participationEvaluation') && typeof body.participationEvaluation !== 'boolean')
       throw new HttpError(422,'programme_participation_evaluation_invalide','L’évaluation de participation doit être un booléen.');
     const saveAction = String(body.saveAction || '').toUpperCase();
@@ -3666,7 +3696,8 @@ function createScopeQuoVadisService({ database = db } = {}){
     const date = strictProgrammeDate(body.date);
     if((source.manualCreation || source.cycleExtension) && date && date !== inherited.date){
       const cycle = await getProgrammeCycle(year);
-      const classification = programmeCycles.classifyProgrammeDate(cycle,date);
+      const classification = programmeCycles.classifyProgrammeDate(cycle,date,
+        {preparatoryCycle:paprRules.preparatoryCycle(source,year)});
       if(classification === 'OUTSIDE_CYCLE')
         throw new HttpError(422,'programme_date_hors_cycle','La date réelle doit appartenir au cycle délimité par les Rapports annuels.');
       if(classification === 'PENDING_CYCLE' && (!date.startsWith(`${year}-`) || year !== 2027))
@@ -3706,7 +3737,8 @@ function createScopeQuoVadisService({ database = db } = {}){
     const originalPlanningStatus = ['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(retainedStatus) ? retainedStatus
       : source.manualCreation || source.historicalProposal || source.restoredModule ? 'PROPOSE' : source.startsAt ? 'PLANIFIE' : 'A_PLANIFIER';
     const planningStatus = saveAction === 'PLAN' ? 'PLANIFIE'
-      : saveAction ? originalPlanningStatus : String(body.status || (date ? 'PLANIFIE' : 'A_PLANIFIER')).toUpperCase();
+      : saveAction === 'WITHDRAW' ? originalPlanningStatus
+      : String(body.status ?? (saveAction ? originalPlanningStatus : date ? 'PLANIFIE' : 'A_PLANIFIER')).toUpperCase();
     if(!['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(planningStatus) || planningStatus === 'PLANIFIE' && !date || planningStatus === 'A_PLANIFIER' && date && !saveAction){
       throw new HttpError(422,'programme_statut_invalide','État de planification incompatible avec la date.');
     }
@@ -3737,12 +3769,13 @@ function createScopeQuoVadisService({ database = db } = {}){
       && statCom !== String(existing.statcom_code || '').trim())
       throw new HttpError(422,'programme_code_valide_immuable','Le Stat.Com d’une activité validée ne peut pas être modifié.');
     const previousStatCom = String(inherited.statCom ?? source.statCom ?? '').trim();
+    const eventFlags=programmeEventFlags(body,inherited,source);
     const ecawinActivityCode = String(body.ecawinActivityCode ?? inherited.ecawinActivityCode
       ?? programmeEcawinActivityCode({...source,statCom},year)).trim();
     if(ecawinActivityCode && !ecawin.isActivityCode(ecawinActivityCode))
       throw new HttpError(422,'programme_ecawin_code_invalide','Choisissez un code activité ECAwin officiel.');
     if(source.externalActivity && statCom) throw new HttpError(422,'programme_externe_statcom','Une activité externe hors suivi SCOPE ne porte pas de Stat.Com.');
-    if(source.manualCreation && body.validateBusiness === true && !source.externalActivity && !statCom)
+    if(source.manualCreation && body.validateBusiness === true && !source.externalActivity && !statCom && eventFlags.sold)
       throw new HttpError(422,'programme_statcom_manquant','Choisissez un Stat.Com avant la validation métier.');
     if(statCom === 'EMSEA' && (String(source.statCom || '').trim() !== 'EMSEA'
       || String(source.activityLabel || source.label || '').trim() !== 'Séance État-major')){
@@ -3846,8 +3879,9 @@ function createScopeQuoVadisService({ database = db } = {}){
     }
     const locationLabel = lieuLibre || catalogueLabel || (lieu ? String(lieu.nom_court || '').trim() : '');
     const planningFields = {
-      date,startTime,endTime,oiCodes,publicCodes,activityLabel,statCom,themes,
+      date,startTime,endTime,oiCodes,publicCodes,activityLabel,statCom,themes,planningStatus,
       participationEvaluation:participationEvaluation(body,inherited,source),
+      ...eventFlags,
       domain:requestedDomain,family:uiLogic.qvProgrammeFamily(source),
       lieuId:lieu && lieu.lieu_id || null,salleTheorieId:salle && salle.salle_id || null,
       responsableFonctionCode:responsable && responsable.code || null,
@@ -3913,9 +3947,11 @@ function createScopeQuoVadisService({ database = db } = {}){
       metadata.typeSource = source.typeSource || existing?.metadata?.typeSource || null;
     }
     if(source.cycleExtension) metadata.manualSource = source;
-    if(source.manualCreation || source.cycleExtension)
+    if(source.manualCreation || source.cycleExtension || paprRules.preparatoryCycle(source,year))
       metadata.programmeCycle = {year,actualDate:date,civilYear:date ? Number(date.slice(0,4)) : null,
-        classification:programmeCycles.classifyProgrammeDate(await getProgrammeCycle(year),date)};
+        preparatory:paprRules.preparatoryCycle(source,year),
+        classification:programmeCycles.classifyProgrammeDate(await getProgrammeCycle(year),date,
+          {preparatoryCycle:paprRules.preparatoryCycle(source,year)})};
     if(body.validateBusiness === true){
       const baselineFields = existing && existing.metadata.businessValidation && existing.metadata.businessValidation.baselineFields || consolidation.businessSnapshot({
         activityLabel:source.eventDisplayLabel || source.activityLabel || source.label,statCom:source.statCom || '',
@@ -3956,8 +3992,9 @@ function createScopeQuoVadisService({ database = db } = {}){
           lieuLibre:currentView?.lieuLibre || '',salleTheorieId:currentView?.salleTheorieId || currentView?.business?.salleTheorieId || null,
           qualificationCodes:currentView?.qualificationCodes || [],cursusId:currentView?.cursusId || null,
           participationEvaluation:participationEvaluation(source),ecawinActivityCode:programmeEcawinActivityCode(source,year)};
-      const baseline=link && paprRules.moduleNumber(source)===1 && previousMetadata.publicationRevision?.status!=='PENDING'
-        ? {...rawBaseline,oiCodes:currentView?.publishedEventOiSelections ?? rawBaseline.oiCodes} : rawBaseline;
+      const baseline={planningStatus:originalPlanningStatus,...programmeEventFlags(rawBaseline,source),...rawBaseline,
+        ...(link && paprRules.moduleNumber(source)===1 && previousMetadata.publicationRevision?.status!=='PENDING'
+          ? {oiCodes:currentView?.publishedEventOiSelections ?? rawBaseline.oiCodes} : {})};
       const changes = programmeRevisions.revisionChanges(baseline,planningFields);
       if(link && statCom !== String(source.statCom || existing?.statcom_code || ''))
         throw new HttpError(422,'programme_statcom_publie_immutable','Le Stat.Com de l’événement publié doit être conservé.');
@@ -3974,7 +4011,9 @@ function createScopeQuoVadisService({ database = db } = {}){
         action='RETIRER_VALIDATION';
         if(link) writeMetadata.publicationRevision={status:'WITHDRAWN',eventId:link.evenement_id,motif};
       } else if(major){
-        const stagedChanges=programmeRevisions.revisionChanges(previousMetadata.planningFields || {},planningFields);
+        const stagedChanges=programmeRevisions.revisionChanges({planningStatus:originalPlanningStatus,
+          ...programmeEventFlags(previousMetadata.planningFields,source),
+          ...previousMetadata.planningFields},planningFields);
         const approve = pending && body.validateBusiness === true && stagedChanges.kind !== 'MAJOR';
         const eventVersion = approve ? previousMetadata.publicationRevision.eventVersion : body.publishedEventVersion;
         if(!Number.isInteger(Number(eventVersion)) || Number(eventVersion)<1)
@@ -4012,8 +4051,10 @@ function createScopeQuoVadisService({ database = db } = {}){
           before:{validation:oldValidation,fields:baseline},after:{validation:writeMetadata.businessValidation || null,
             fields:planningFields,revision:writeMetadata.publicationRevision || null},motif});
       }
-      if(source.manualCreation || source.cycleExtension || source.restoredModule){
+      if(source.manualCreation || source.cycleExtension || source.restoredModule || (!statCom && !eventFlags.sold && !source.externalActivity)){
         let businessCode = String(existing && existing.metadata.businessCode || '');
+        if(!statCom && !eventFlags.sold && !source.externalActivity && !businessCode)
+          businessCode=source.businessCode || source.code || await eventCodes.allocateInternalEventCode(client.query.bind(client));
         if(statCom && !source.externalActivity && !businessCode){
           const issued = await client.query(`select code from (
             select code_cours as code from scope_evenements
@@ -4063,12 +4104,16 @@ function createScopeQuoVadisService({ database = db } = {}){
       if(current.rows[0]){
         await client.query(`update scope_quo_vadis_obligations set title=$3,domain=$4,cible_codes=$5::text[],statut=($13::jsonb->>'planningStatus'),
           imposed_start_at=$6,imposed_end_at=$7,statcom_code=$8,lieu_id=$9,lieu_libre=$10,salle_theorie_id=$11,responsable_fonction_code=$12,
+          statcom_policy=case when $8::text is null and ($13::jsonb->'planningFields'->>'sold')='false' then 'NON_APPLICABLE'
+            else statcom_policy end,
           metadata=coalesce(metadata,'{}'::jsonb) || $13::jsonb,updated_at=now() where obligation_id=$14 and programme_id=$1 and source_ref=$2`,params.concat(current.rows[0].obligation_id));
         obligationId = current.rows[0].obligation_id;
       } else {
         const inserted = await client.query(`insert into scope_quo_vadis_obligations
         (programme_id,source_type,source_ref,title,domain,cible_codes,statut,imposed_start_at,imposed_end_at,statcom_policy,statcom_code,lieu_id,lieu_libre,salle_theorie_id,responsable_fonction_code,metadata)
-        values ($1,'MANUAL',$2,$3,$4,$5::text[],($13::jsonb->>'planningStatus'),$6,$7,case when $8::text is null then 'A_CONFIRMER' else 'OBLIGATOIRE' end,$8,$9,$10,$11,$12,$13::jsonb)
+        values ($1,'MANUAL',$2,$3,$4,$5::text[],($13::jsonb->>'planningStatus'),$6,$7,
+          case when $8::text is not null then 'OBLIGATOIRE' when ($13::jsonb->'planningFields'->>'sold')='false' then 'NON_APPLICABLE' else 'A_CONFIRMER' end,
+          $8,$9,$10,$11,$12,$13::jsonb)
         returning obligation_id`,params);
         obligationId = inserted.rows[0].obligation_id;
       }

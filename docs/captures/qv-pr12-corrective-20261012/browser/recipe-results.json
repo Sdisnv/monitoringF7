@@ -1,0 +1,31 @@
+{
+  "base": "http://127.0.0.1:4410",
+  "results": [
+    {
+      "name": "explicit planning states persist through SAVE, Programme and reopen; validation is unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "PAPR 1/2 show confirmed preparatory membership and keep their dates after save",
+      "status": "PASS"
+    },
+    {
+      "name": "ECAwin is dropdown-only; unpaid event flags and its no-Stat.Com code persist",
+      "status": "PASS"
+    },
+    {
+      "name": "DPS/DAP manifestation prefill follows qualified OI and keeps a manual public choice",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile manifestation fields remain within the viewport",
+      "status": "PASS"
+    }
+  ],
+  "javascriptErrors": [],
+  "statComCompared": 929,
+  "statComIdentical": 929,
+  "productionWrites": false,
+  "operationalEventsCreated": 0,
+  "verdict": "PASS"
+}

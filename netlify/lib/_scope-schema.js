@@ -321,11 +321,13 @@ async function ensureScopeSchema(){
   readyPromise = (async () => {
   await db.ensureCoreSchema();
   if(await hasMigration(LATEST_SCOPE_SCHEMA_VERSION)){
+    await migrateQuoVadisFinalIncremental20261012();
     ready = true;
     return true;
   }
   if(await hasMigration('scope-person-qualifications-c3-b')){
     // Canonical C1-C5 migrations are operator-run and never applied from user traffic.
+    await migrateQuoVadisFinalIncremental20261012();
     ready = true;
     return true;
   }
@@ -450,6 +452,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisMoaResponsible20261012();
   await migrateQuoVadisRoadmapResponsible20261012();
   await migrateQuoVadisFinalMoaProposal20261012();
+  await migrateScopeInternalIdentity20261012();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -952,6 +955,42 @@ async function migrateStatComExtrasMoa20261012(){
       [JSON.stringify({ecawin:{activityCode:'EXERCI',source:'Captures ECAwin officielles 09.10.2026',historicalOnly:false}})]);
     await client.query('insert into monitoring_f7_schema_migrations(version) values($1) on conflict(version) do nothing',[version]);
   });
+}
+
+async function migrateScopeInternalIdentity20261012(){
+  return db.transaction(async client=>{
+    const version='scope-internal-event-identity-20261012';
+    await client.query('select pg_advisory_xact_lock(hashtext($1))',[version]);
+    if((await client.query('select 1 from monitoring_f7_schema_migrations where version=$1',[version])).rows[0]) return;
+    await client.query('create sequence if not exists scope_internal_event_code_seq');
+    if(!(await client.query("select to_regclass('scope_qv_publication_activities') as name")).rows[0].name) return;
+    await client.query(`select setval('scope_internal_event_code_seq',greatest(c.maximum+1,
+      s.last_value+case when s.is_called then 1 else 0 end),false)
+      from scope_internal_event_code_seq s cross join (
+        select coalesce(max(substring(code from '^SCOPE-([0-9]+)$')::bigint),0) as maximum from (
+          select code_cours as code from scope_evenements
+          union all select metadata->>'businessCode' from scope_quo_vadis_obligations
+          union all select business_code from scope_qv_publication_activities
+        ) issued where code ~ '^SCOPE-[0-9]{6,18}$'
+      ) c`);
+    await client.query(`alter table scope_qv_publication_activities
+      drop constraint if exists scope_qv_publication_activities_code_chk,
+      drop constraint if exists scope_qv_publication_activities_statcom_chk,
+      add constraint scope_qv_publication_activities_code_chk check (
+        business_code is null or business_code ~ '^[^.]+[.][0-9]{3}$'
+        or (stat_com_code is null and business_code ~ '^SCOPE-[0-9]{6,}$')),
+      add constraint scope_qv_publication_activities_statcom_chk check (
+        business_code is null or stat_com_code is not null or business_code ~ '^SCOPE-[0-9]{6,}$')`);
+    await client.query('insert into monitoring_f7_schema_migrations(version) values($1) on conflict(version) do nothing',[version]);
+  });
+}
+
+async function migrateQuoVadisFinalIncremental20261012(){
+  await migrateStatComExtrasMoa20261012();
+  await migrateQuoVadisMoaResponsible20261012();
+  await migrateQuoVadisRoadmapResponsible20261012();
+  await migrateQuoVadisFinalMoaProposal20261012();
+  await migrateScopeInternalIdentity20261012();
 }
 
 async function migrateQuoVadisFinalMoaProposal20261012(){

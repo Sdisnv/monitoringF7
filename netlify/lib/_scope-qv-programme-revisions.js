@@ -10,7 +10,7 @@ const logic = require('../../assets/js/scope-ui-logic');
 const EDITORIAL_FIELDS = new Set(['activityLabel','themes','publicFreeLabels']);
 const REVISION_FIELDS = ['activityLabel','themes','publicFreeLabels','date','startTime','endTime','statCom',
   'domain','oiCodes','publicCodes','responsibleLabel','lieuId','lieuLibre','salleTheorieId',
-  'qualificationCodes','cursusId','participationEvaluation','ecawinActivityCode'];
+  'qualificationCodes','cursusId','participationEvaluation','ecawinActivityCode','planningStatus','sold','ecawinExport'];
 function comparable(value){
   return Array.isArray(value) ? value.slice().sort() : value == null ? '' : value;
 }
@@ -68,7 +68,8 @@ async function applyPublishedRevision(client,link,fields,changedFields,{actor,mo
   if(relationTarget) await ScopeQvPostgresStore.prototype.replaceRelations.call({query:(...args)=>client.query(...args)},link.evenement_id,relationTarget,references);
   const descriptive=logic.qvProgrammeDescriptivePublics();
   const snapshot={};
-  for(const key of ['themes','publicFreeLabels','participationEvaluation']) if(changedFields.includes(key)) snapshot[key]=fields[key];
+  for(const key of ['themes','publicFreeLabels','participationEvaluation','planningStatus','sold','ecawinExport','ecawinActivityCode'])
+    if(changedFields.includes(key)) snapshot[key]=fields[key];
   if(changedFields.includes('publicCodes')) snapshot.descriptivePublics=fields.publicCodes
     .filter(code=>Object.hasOwn(descriptive,code)).map(code=>({code,label:descriptive[code]}));
   await client.query(`update scope_evenements set lieu_id=case when $5 then $2 else lieu_id end,

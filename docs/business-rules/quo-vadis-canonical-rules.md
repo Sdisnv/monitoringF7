@@ -242,7 +242,7 @@ Le JSON 2027 source reste à 622 séances.
 ## Décisions MOA du 10.10.2026
 
 ### QV-SAVE-001 — Trois actions distinctes
-Enregistrer conserve les décisions et l'état de planification. Enregistrer et valider valide sans modifier cet état.
+Enregistrer conserve les décisions et l'état de planification lorsqu'aucun changement d'état explicite n'est demandé. Le complément MOA PR #12 du 12.10.2026 impose d'enregistrer l'état explicitement sélectionné, dans les deux sens, indépendamment de la validation métier. Enregistrer et valider valide sans planification implicite.
 Enregistrer et planifier valide et place l'occurrence dans l'état `PLANIFIE`, avec date et horaires requis.
 Ces actions ne créent pas d'événement opérationnel : cette création reste soumise à la validation complète du programme annuel.
 Une erreur doit conserver la saisie sans annoncer un succès ni laisser une écriture partielle.
@@ -331,7 +331,7 @@ Sept modules et sept thèmes distincts. OI `DPS:G1/C1/B1/B2`, responsable `C PR`
 La proposition réutilise `qvProjectAnnualWeekday`, `pickProposalSlot`, les règles PR actives, les calendriers persistés et les horaires exacts des lignes 2026. Elle cherche un créneau admissible proche de la projection dans le mois, puis les autres créneaux admissibles si nécessaire ; elle conserve le jour historique ou le jour du cursus référencé, sans recopier arbitrairement une date.
 Les modules 1/2 doivent se terminer avant le premier PR 1.1, identifié par son identité source stable. L'ordre des modules et les chevauchements connus de la fonction C PR sont contrôlés. Une impossibilité conserve les dates protégées et signale les contraintes en conflit ; elle ne fabrique pas une décision humaine.
 La date source explicite du module 1 reste protégée. Les autres dates portent `PROPOSITION_AUTOMATIQUE`, restent modifiables dans la fiche existante et deviennent une décision conservée lorsque la MOA les enregistre. La référence PAPR est une caractéristique de formation, pas une qualification personnelle synthétisée.
-Le tableau PAPR expose module, date, horaire, thème, source, contraintes et état. Les réserves de salles, disponibilité nominative et rattachement aux bornes du cycle ne sont pas réputées validées par le seul calendrier ; les mécanismes existants et décisions humaines restent prioritaires.
+Le tableau PAPR expose module, date, horaire, thème, source, contraintes et état. Les réserves de salles et disponibilité nominative ne sont pas réputées validées par le seul calendrier ; les mécanismes existants et décisions humaines restent prioritaires. Le rattachement préparatoire des modules 1/2 est désormais explicitement confirmé par QV-PAPR-004.
 
 ### QV-CYCLE-005 — Clôture provisoire 10.02.2028
 Le `10.02.2028` clôture provisoirement le cycle métier 2027, statut exact **PROVISOIRE — À VALIDER PAR LE CODIR**. La proposition MOA est versionnée et enregistrée par migration transactionnelle idempotente dans les Dates annoncées existantes. Aucun événement opérationnel n'est créé.
@@ -384,3 +384,27 @@ Une activité externe hors suivi SCOPE reste au Programme et à l'Agenda mais n'
 
 ### QV-ECA-COURSES-001 — Suivi cantonal préservé
 Le suivi individuel par NIP, les cours suivis, les agrégats et leurs exports doivent réutiliser les mécanismes de participation SCOPE. Les codes ECAwin `COURS` et Stat.Com cantonaux restent distincts des obligations internes SDIS. Aucun module parallèle n'est créé. Le rapport du jalon documente les éventuels contrats spécialisés restant à terminer.
+
+## Finalisation corrective PR #12 — 12.10.2026
+
+### QV-SAVE-002 — État explicite indépendant
+Le serveur conserve `body.status` explicitement demandé par Enregistrer et le persiste dans `statut`, `metadata.planningStatus` et les champs préparatoires. La fiche n'envoie un état que si son sélecteur a été modifié ; sans modification, l'état antérieur reste conservé. Le Programme affiche cet état même si la validation métier antérieure est conservée.
+Une modification de planification sur une publication est majeure : motif, révision ciblée en attente, version et journal existants. L'événement opérationnel, ses dates et ses présences ne sont pas supprimés par un retour préparatoire à « À planifier ». La validation antérieure reste traçable ; ce changement n'est pas un retrait implicite de validation d'une préparation non publiée.
+
+### QV-PAPR-004 — Modules préparatoires du cursus 2027
+Les modules 1/2 appartiennent au cursus PAPR 2027, même avant la borne du cycle enregistrée au 05.03.2027 sur le clone. Leur classification est `PREPARATORY_CURSUS`, avec année, cursus, module et règle explicites, conservés à l'enregistrement. Il ne s'agit ni d'un autre cycle ni d'un déplacement de la borne.
+Dates conservées : 02.02, 16.02, 03.06, 29.09, 16.11, 30.11 et 11.12.2027. Les modules 1/2 se terminent avant PR 1.1 du 02.03.2027. L'exception est limitée aux deux modules preparatoires PAPR 2027, pas à toutes les activités hors cycle. Les rotations CTA et les statistiques civiles restent inchangées.
+
+### QV-ECA-004 — Liste d'activités ECAwin
+La fiche présente uniquement la liste déroulante des cinq activités principales, sans recherche supplémentaire. Les références `EXEPRO`, `EXERCI`, `CONCOUR`, les valeurs historiques et toutes les associations officielles restent intactes. Une sélection d'activité n'efface jamais un Stat.Com enregistré.
+
+### QV-MANIFESTATION-001 / QV-CODE-004 — Interne non soldé sans Stat.Com
+Solde (`sold`), évaluation (`participationEvaluation`) et demande d'export ECAwin (`ecawinExport`) sont trois décisions indépendantes, persistantes et reconductibles. Une activité interne non soldée reste publiable après le workflow annuel existant ; elle n'est pas assimilée à une activité externe hors SCOPE.
+Sans Stat.Com, un nouveau code d'occurrence peut être attribué dans l'espace réservé `SCOPE-000001` par une séquence PostgreSQL indépendante. Il ne constitue jamais un Stat.Com, un NIP ou une association ECAwin. Le code est conservé à la réouverture et à la publication ; les contraintes d'unicité des événements et le mécanisme anti-doublons existant restent actifs. Un échec peut laisser un trou dans une séquence, jamais entraîner une renumérotation. Aucun code ni Stat.Com historique n'est remplacé. Le Stat.Com absent est `NON_APPLICABLE`, pas une correspondance fictive à compléter.
+Les données internes de publication et les relations OI qualifiées réutilisent le magasin et le moteur de population datée existants. Aucune affectation individuelle ni événement opérationnel n'est créé lors de la préparation. Aucun fichier d'import ECAwin n'est inventé : le contrat spécifique des manifestations sans Stat.Com reste à démontrer avant livraison d'un tel export. La présence future dans les calendriers individuels reste portée par la roadmap existante, sans nouveau module.
+
+### QV-MANIFESTATION-002 — Préremplissage dépendant des OI
+Journée des familles et Noël des familles : propositions non soldées, export ECAwin activable ; l'évaluation 2027 reste cochée par défaut et désactivable. Pour les OI DPS qualifiées : Sapeur DPS, FOBA 1, FOBA 2. Pour les OI DAP qualifiées : Sapeur DAP, FOBA 1, FOBA 2. Un OI non qualifié n'est pas assimilé à un domaine.
+Responsable proposé : `C sct`, identité historique `C scrt` conservée. Les nouvelles propositions utilisent le libellé corrigé ; aucune décision historique n'est réécrite. Le préremplissage s'arrête pour les champs modifiés manuellement, y compris après enregistrement. Les descriptions libres restent descriptives, sans NIP fictif.
+
+Preuves ciblées : `scripts/scope-qv-pr12-corrective-tests.js`, `scripts/scope-qv-pr12-corrective-clone-tests.js`, `scripts/scope-qv-pr12-corrective-browser.js` et `docs/captures/qv-pr12-corrective-20261012/`. Les recettes acquises des jalons précédents ne sont pas relancées.

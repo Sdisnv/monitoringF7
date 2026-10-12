@@ -11842,9 +11842,9 @@
     if (row.preparation && row.status === 'NON_RETENU') return { tone: 'inactive', label: 'Écarté' };
     if ((row.review || row.publicReviewRequired) && !row.businessValidation) return { tone: 'attention', label: 'À contrôler' };
     if ((row.preparation || row.manualCreation) && row.status === 'PLANIFIE') return { tone:'positive',label:'Planifié' };
-    if (row.businessValidation) return { tone: 'positive', label: 'Validé' };
     if ((row.preparation || row.manualCreation) && row.status === 'PROPOSE') return { tone: 'info', label: 'Activité proposée' };
     if (row.preparation && row.status === 'A_PLANIFIER') return { tone: 'info', label: 'À planifier' };
+    if (row.businessValidation) return { tone: 'positive', label: 'Validé' };
     if (row.preparation && row.status === 'PLANIFIE') return row.businessValidation
       ? { tone: 'positive', label: 'Validé' } : { tone: 'info', label: 'Planifié' };
     if (row.historicalProposal || String(row.provenance || '').includes('HISTORICAL_2026')) return { tone: 'info', label: 'Activité proposée' };
@@ -12763,10 +12763,12 @@
         <label class="qv-programme-edit-half"><span>Thème</span><input id="qv-programme-themes" type="text" maxlength="1320" value="${escapeHtml((row.themes || []).join(' ; '))}"></label>
         ${qvProgrammeQualificationControl(qv,row)}
         <label><span>Cursus de formation</span><select id="qv-programme-cursus" ${row.cursusStepId ? 'disabled' : ''}>${qvProgrammeCursusOptions(qv,row)}</select></label>
-        <div class="qv-programme-choice-field"><label for="qv-programme-ecawin">Code activité ECAwin</label><input id="qv-programme-ecawin-search" type="search" aria-label="Rechercher une activité ECAwin" placeholder="Rechercher"><select id="qv-programme-ecawin"><option value="">Non qualifié</option>${(window.ScopeEcawin?.activityCodes || []).map(code=>`<option value="${code}" ${row.ecawinActivityCode === code ? 'selected' : ''}>${escapeHtml(code+' — '+(window.ScopeEcawin.activityLabels[code] || ''))}</option>`).join('')}${row.ecawinActivityCode && !window.ScopeEcawin?.activityCodes.includes(row.ecawinActivityCode) ? `<option value="${escapeHtml(row.ecawinActivityCode)}" selected>${escapeHtml(row.ecawinActivityCode)} — Valeur conservée</option>` : ''}</select></div>
+        <div class="qv-programme-choice-field"><label for="qv-programme-ecawin">Code activité ECAwin</label><select id="qv-programme-ecawin"><option value="">Non qualifié</option>${(window.ScopeEcawin?.activityCodes || []).map(code=>`<option value="${code}" ${row.ecawinActivityCode === code ? 'selected' : ''}>${escapeHtml(code+' — '+(window.ScopeEcawin.activityLabels[code] || ''))}</option>`).join('')}${row.ecawinActivityCode && !window.ScopeEcawin?.activityCodes.includes(row.ecawinActivityCode) ? `<option value="${escapeHtml(row.ecawinActivityCode)}" selected>${escapeHtml(row.ecawinActivityCode)} — Valeur conservée</option>` : ''}</select></div>
         <label><span>Cycle métier</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
         <label class="qv-programme-edit-full"><span>Suivi SCOPE</span><span class="qv-programme-keep-lieu"><input id="qv-programme-external" type="checkbox" ${row.externalActivity ? 'checked' : ''} ${creating ? '' : 'disabled'}>Activité externe hors suivi SCOPE</span></label>
         <label class="qv-programme-edit-full qv-programme-keep-lieu"><input id="qv-programme-participation-evaluation" type="checkbox" ${row.participationEvaluation !== false ? 'checked' : ''}><span>Évaluer le taux de participation</span></label>
+        <label class="qv-programme-keep-lieu"><input id="qv-programme-sold" type="checkbox" ${row.sold !== false ? 'checked' : ''}><span>Activité soldée</span></label>
+        <label class="qv-programme-keep-lieu"><input id="qv-programme-ecawin-export" type="checkbox" ${row.ecawinExport === true ? 'checked' : ''}><span>Export ECAwin</span></label>
         <p id="qv-programme-ecawin-status" class="qv-programme-edit-full qv-programme-workflow-note" role="status" ${qvProgrammeEcawinStatus(row.ecawinActivityCode,row.statCom) ? '' : 'hidden'}>${escapeHtml(qvProgrammeEcawinStatus(row.ecawinActivityCode,row.statCom))}</p>
         <div class="qv-programme-date-field"><label for="qv-programme-date">Date</label><div class="qv-programme-date-control"><button id="qv-programme-date-picker" type="button" aria-label="Ouvrir le calendrier" aria-expanded="false" aria-controls="qv-programme-calendar">${qvCockpitIcon('calendar')}</button><input id="qv-programme-date" type="text" inputmode="numeric" maxlength="10" pattern="[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}" placeholder="jj.mm.aaaa" value="${escapeHtml(qvProgrammeDateInputValue(row))}"></div><div id="qv-programme-calendar" class="qv-programme-calendar" data-month="${escapeHtml((qvProgrammeDate(row) || `${qvProgrammeYear()}-01-01`).slice(0,7))}" hidden>${qvProgrammeCalendarHtml(qvProgrammeDate(row))}</div></div>
         <label><span>Début</span><span class="qv-programme-time-control">${scopeInlineIcon('watch')}<input id="qv-programme-start" type="time" step="60" value="${escapeHtml(qvTime(row.startsAt))}"></span></label>
@@ -14570,10 +14572,42 @@
         toast('success','Programme','Cycle enregistré.',{preserveForm:true});
       });
     });
+    const preparedProgrammeRow=quoVadisProgrammeData()?.canonicalProgramme?.rows?.find(row=>String(row.id)===String(route().qvProgrammeItemId));
+    if(preparedProgrammeRow && (preparedProgrammeRow.humanDecision || preparedProgrammeRow.businessValidation || preparedProgrammeRow.publishedEventId))
+      for(const id of ['qv-programme-public','qv-programme-responsable','qv-programme-sold','qv-programme-ecawin-export']){
+        const field=document.getElementById(id);if(field) field.dataset.manual='true';
+      }
+    const prefillManifestation = () => {
+      const type=L.qvProgrammeActivityTypes(quoVadisProgrammeData()).find(item=>item.id===document.getElementById('qv-programme-type')?.value);
+      const row={definitionId:type?.definitionId,activityLabel:document.getElementById('qv-programme-activity')?.value,
+        domain:document.getElementById('qv-programme-domain')?.value,
+        externalActivity:document.getElementById('qv-programme-external')?.checked};
+      const ois=[...(document.getElementById('qv-programme-oi')?.querySelectorAll('input:checked:not([data-qv-oi-group])') || [])].map(input=>input.value);
+      const defaults=L.qvProgrammeManifestationDefaults(row,ois);
+      if(!defaults) return;
+      for(const [id,key] of [['qv-programme-sold','sold'],['qv-programme-ecawin-export','ecawinExport']]){
+        const field=document.getElementById(id);
+        if(field && field.dataset.manual!=='true'){field.checked=defaults[key];field.dataset.dirty='true';}
+      }
+      for(const [id,values] of [['qv-programme-public',defaults.publicCodes],['qv-programme-responsable',['C scrt']]]){
+        const list=document.getElementById(id);
+        if(!list || list.dataset.manual==='true' || !ois.length) continue;
+        list.querySelectorAll('input[type="checkbox"]').forEach(input=>{
+          if(input.dataset.choiceKind !== 'FREE') input.checked=values.includes(input.value);
+        });
+        list.dispatchEvent(new CustomEvent('change',{bubbles:true,detail:{automatic:true}}));
+      }
+    };
     document.getElementById('qv-programme-type')?.addEventListener('change',event=>{
       const type=L.qvProgrammeActivityTypes?.(quoVadisProgrammeData())?.find(item=>item.id===event.currentTarget.value);
       if(!type) return;
       const defaults=type.defaults || {};
+      for(const [id,key] of [['qv-programme-sold','sold'],['qv-programme-ecawin-export','ecawinExport']]){
+        const input=document.getElementById(id);
+        if(input && input.dataset.manual!=='true' && typeof defaults[key]==='boolean'){
+          input.checked=defaults[key];input.dataset.dirty='true';
+        }
+      }
       for(const [field,key] of [['activity','activityLabel'],['domain','domain'],['start','startTime'],['end','endTime']]){
         const input=document.getElementById('qv-programme-'+field);
         if(input && (Object.prototype.hasOwnProperty.call(defaults,key) || ['activity','domain'].includes(field))) input.value=defaults[key] || '';
@@ -14590,7 +14624,7 @@
         field?.querySelectorAll('input[type="checkbox"]').forEach(input=>{
           if(input.dataset.choiceKind !== 'FREE' && !input.dataset.qvOiGroup) input.checked=(values || []).includes(input.value);
         });
-        field?.dispatchEvent(new Event('change',{bubbles:true}));
+        field?.dispatchEvent(new CustomEvent('change',{bubbles:true,detail:{automatic:true}}));
       }
       {
         const selections=defaults.responsibleSelections || [];
@@ -14604,10 +14638,11 @@
           if(existing) existing.checked=true;
           else field.querySelector('[data-free-choices]')?.insertAdjacentHTML('beforeend',qvProgrammeFreeChoices([value.label]));
         }
-        field?.dispatchEvent(new Event('change',{bubbles:true}));
+        field?.dispatchEvent(new CustomEvent('change',{bubbles:true,detail:{automatic:true}}));
       }
       const status=document.getElementById('qv-programme-ecawin-status');
       if(status){status.textContent=qvProgrammeEcawinStatus(activity?.value,statCom?.value);status.hidden=!status.textContent;}
+      prefillManifestation();
     });
     ['qv-programme-public','qv-programme-responsable'].forEach(id=>{
       const list=document.getElementById(id);
@@ -14622,7 +14657,10 @@
         document.getElementById(id+'-summary').textContent=labels.join(' ; ') || (id === 'qv-programme-responsable' ? 'À affecter' : 'À définir');
         state.qvProgrammePopupPosition?.();
       };
-      list?.addEventListener('change',refresh);
+      list?.addEventListener('change',event=>{
+        if(!event.detail?.automatic) list.dataset.manual='true';
+        refresh();
+      });
       const add=()=>{
         const input=document.getElementById(id+'-free');
         const value=input?.value || '';
@@ -14634,7 +14672,7 @@
           const group=list.querySelector('[data-free-choices]');
           group.insertAdjacentHTML('beforeend',qvProgrammeFreeChoices([value]));group.hidden=false;
         }
-        input.value='';refresh();
+        input.value='';list.dataset.manual='true';refresh();
       };
       root.querySelector(`[data-qv-add-free="${id}"]`)?.addEventListener('click',add);
       document.getElementById(id+'-free')?.addEventListener('keydown',event=>{if(event.key === 'Enter'){event.preventDefault();add();}});
@@ -14732,6 +14770,7 @@
       if (!summary) return;
       const codes = [...event.currentTarget.querySelectorAll('input:checked:not([data-qv-oi-group])')].map((option) => option.value);
       summary.textContent = qvProgrammeOiSummary(codes);
+      prefillManifestation();
     });
     document.getElementById('qv-programme-external')?.addEventListener('change', (event) => {
       const statCom = document.getElementById('qv-programme-statcom');
@@ -14747,12 +14786,11 @@
       if(summary) summary.textContent = codes.map(code=>(quoVadisData().qualifications || []).find(item=>item.code === code)?.label || code).join(' ; ') || '—';
     });
     document.getElementById('qv-programme-cursus')?.addEventListener('change',event=>{event.currentTarget.dataset.dirty = 'true';});
-    document.getElementById('qv-programme-ecawin-search')?.addEventListener('input',event=>{
-      const query = qvNormalizeSearch(event.currentTarget.value).trim();
-      document.getElementById('qv-programme-ecawin')?.querySelectorAll('option').forEach(option=>{
-        option.hidden = Boolean(option.value && !option.selected && query && !qvNormalizeSearch(option.textContent).includes(query));
+    document.getElementById('qv-programme-occurrence-status')?.addEventListener('change',event=>{event.currentTarget.dataset.dirty='true';});
+    for(const id of ['qv-programme-sold','qv-programme-ecawin-export'])
+      document.getElementById(id)?.addEventListener('change',event=>{
+        event.currentTarget.dataset.dirty='true';event.currentTarget.dataset.manual='true';
       });
-    });
     document.getElementById('qv-programme-ecawin')?.addEventListener('change',event=>{
       event.currentTarget.dataset.dirty = 'true';
       const statCom = document.getElementById('qv-programme-statcom');
@@ -14835,7 +14873,6 @@
         date: qvProgrammeDatePayload(document.getElementById('qv-programme-date')?.value || ''),
         startTime: document.getElementById('qv-programme-start')?.value || null,
         endTime: document.getElementById('qv-programme-end')?.value || null,
-        status: document.getElementById('qv-programme-occurrence-status')?.value || 'A_PLANIFIER',
         participationEvaluation:document.getElementById('qv-programme-participation-evaluation')?.checked !== false,
         oiCodes: selected('qv-programme-oi'),
         publicCodes: selected('qv-programme-public'),
@@ -14847,6 +14884,8 @@
       };
       if(creating && document.getElementById('qv-programme-type')?.value)
         payload.programmeTypeId=document.getElementById('qv-programme-type').value;
+      if(creating || document.getElementById('qv-programme-occurrence-status')?.dataset.dirty==='true')
+        payload.status=document.getElementById('qv-programme-occurrence-status')?.value || 'A_PLANIFIER';
       if(creating || document.getElementById('qv-programme-responsable')?.dataset.dirty === 'true')
         payload.responsibleSelections=[...(document.getElementById('qv-programme-responsable')?.querySelectorAll('input:checked') || [])]
           .map(input=>input.dataset.choiceKind === 'FREE' ? {kind:'FREE',label:input.value} : {kind:'REFERENCE',code:input.value});
@@ -14856,6 +14895,8 @@
         payload.cursusId = document.getElementById('qv-programme-cursus')?.value || null;
       if(creating || document.getElementById('qv-programme-ecawin')?.dataset.dirty === 'true')
         payload.ecawinActivityCode = document.getElementById('qv-programme-ecawin')?.value || '';
+      for(const [id,key] of [['qv-programme-sold','sold'],['qv-programme-ecawin-export','ecawinExport']])
+        if(creating || document.getElementById(id)?.dataset.dirty==='true') payload[key]=document.getElementById(id)?.checked===true;
       if(creating) payload.externalActivity = document.getElementById('qv-programme-external')?.checked === true;
       state.quoVadisBusy = true;
       const saveButtons = ['qv-programme-save','qv-programme-validate','qv-programme-plan','qv-programme-withdraw']

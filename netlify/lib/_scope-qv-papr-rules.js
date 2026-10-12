@@ -21,6 +21,12 @@ function moduleNumber(row){
   return match ? Number(match[1]) : null;
 }
 
+function preparatoryCycle(row,year){
+  const number=moduleNumber(row.metadata?.manualSource || row);
+  return Number(year) === 2027 && [1,2].includes(number)
+    ? {year:2027,cursusCode:'PAPR',module:number,rule:'QV-PAPR-004'} : null;
+}
+
 function restorePaprModules(rows, history){
   const result = rows.slice();
   for(let number=1;number<=7;number++){
@@ -184,4 +190,4 @@ function proposePaprDates(rows,history,{year=2027,calendarRows=[],rulesByDomain=
   return {rows:result,proposals};
 }
 
-module.exports = {DPS_OIS,PAPR_PUBLICS,moduleNumber,restorePaprModules,annualPaprControl,proposePaprDates};
+module.exports = {DPS_OIS,PAPR_PUBLICS,moduleNumber,preparatoryCycle,restorePaprModules,annualPaprControl,proposePaprDates};

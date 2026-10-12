@@ -183,6 +183,8 @@ async function start() {
   for(const table of protectedTables) baseline[table] = await fingerprint(table);
   originalPreparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
   await client.query('begin');
+  if(process.env.SCOPE_RECIPE_CORRECTIVE==='1')
+    await client.query(fs.readFileSync(path.join(root,'database/migrations/20261012_scope_internal_event_identity.sql'),'utf8'));
   await synchronizeEcawinReferential(client);
   if(process.env.SCOPE_RECIPE_FINALISATION==='1') await require('../netlify/lib/_scope-qv-moa-proposals').installAnnualReportProposal(client);
   server.listen(port,'127.0.0.1',() => console.log(`SCOPE CLONE BROWSER http://127.0.0.1:${port}/scope.html#/quo-vadis/programme`));

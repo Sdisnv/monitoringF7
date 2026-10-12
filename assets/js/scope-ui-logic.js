@@ -3307,6 +3307,23 @@
     return [label, themes.join(' · ')].filter(Boolean).join(String(format || '').toLowerCase() === 'pdf' ? '\n' : ' - ');
   }
 
+  function qvProgrammeInternalManifestation(row) {
+    const definition = row.definitionId || row.sessionStructure?.definitionId || '';
+    return /^QV26-(?:JOURNEE-DES-FAMILLES|NOEL-DES-FAMILLES)-/.test(definition)
+      || /^(?:journee des familles|noel des familles)$/.test(qvResponsableKey(row.activityLabel || row.label || row.title || ''));
+  }
+
+  function qvProgrammeManifestationDefaults(row, oiCodes) {
+    if (!qvProgrammeInternalManifestation(row) || row.externalActivity) return null;
+    const codes = qvNormalizeOiSelections(row, oiCodes || row.oiSelections || row.ois || []).codes;
+    const publics = [];
+    if (codes.some(code => /^DPS:/.test(code))) publics.push('GEN:SAPEUR-DPS');
+    if (codes.some(code => /^DAP:/.test(code))) publics.push('GEN:SAPEUR-DAP');
+    if (publics.length) publics.push('FOBA:1','FOBA:2');
+    return {sold:false,ecawinExport:true,publicCodes:publics,
+      responsibleSelections:[{kind:'REFERENCE',code:'C scrt',label:'C sct'}]};
+  }
+
   // Defaults are consensual observations of a canonical type, never a new scheduling rule.
   function qvProgrammeActivityTypes(qv) {
     const data = qv || {};
@@ -3345,7 +3362,7 @@
           ? ref.code === code
           : raw && [ref.code, ref.libelle || ref.label].some(value => qvResponsableCanonique(value, { domain: formationDomain }) === qvResponsableCanonique(raw, { domain: formationDomain }))));
         responsibleSelections = matches.length === 1
-          ? [{ kind: 'REFERENCE', code: matches[0].code, label: matches[0].libelle || matches[0].label || matches[0].code }]
+          ? [{ kind: 'REFERENCE', code: matches[0].code, label: matches[0].code === 'C scrt' ? 'C sct' : matches[0].libelle || matches[0].label || matches[0].code }]
           : raw && !/^(?:a affecter|a definir)$/i.test(qvResponsableKey(raw)) && !matches.length ? [{ kind: 'FREE', label: raw }] : [];
       }
       const ecawinMatches = (data.ecawinReferential?.associations || []).filter(item => item.statCom === row.statCom);
@@ -3353,6 +3370,7 @@
         : ecawinMatches.length === 1 ? ecawinMatches[0].activityCode : '';
       const values = {
         activityLabel: label, domain, statCom: clean(row.statCom), ecawinActivityCode: clean(ecawinCode),
+        sold:row.sold,ecawinExport:row.ecawinExport,
         responsibleSelections: copy(responsibleSelections),
         publicCodes: row.publicCodes || row.publics || [], oiCodes: oi.ambiguous.length ? [] : oi.codes
       };
@@ -3364,11 +3382,11 @@
       const ambiguity = [];
       const missing = [];
       const sourceIds = [...new Set(group.observations.map(({row}) => clean(row.id)).filter(Boolean))].sort();
-      for (const field of ['activityLabel', 'domain', 'statCom', 'ecawinActivityCode', 'responsibleSelections', 'publicCodes', 'oiCodes']) {
+      for (const field of ['activityLabel', 'domain', 'statCom', 'ecawinActivityCode', 'responsibleSelections', 'publicCodes', 'oiCodes','sold','ecawinExport']) {
         const values = group.observations.map(item => item.values[field]);
         const normalized = value => Array.isArray(value)
           ? JSON.stringify(value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).sort()) : JSON.stringify(value);
-        if (values.some(value => !value || Array.isArray(value) && !value.length)) missing.push(field);
+        if (values.some(value => value == null || value === '' || Array.isArray(value) && !value.length)) missing.push(field);
         else if (new Set(values.map(normalized)).size !== 1) ambiguity.push(field);
         else {
           defaults[field] = copy(values[0]);
@@ -5709,6 +5727,8 @@
     qvProgrammePublicCatalogue,
     qvProgrammeDescriptivePublics,
     qvProgrammeActivityTypes,
+    qvProgrammeInternalManifestation,
+    qvProgrammeManifestationDefaults,
     qvProgrammeExportActivity,
     qvProgrammeFilterFamily,
     qvProgrammeFilterType,

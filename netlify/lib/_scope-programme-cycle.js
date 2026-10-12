@@ -46,9 +46,14 @@ function resolveProgrammeCycle(year, metadata = {}, reports = []){
     statisticsBasis:'CIVIL_EVENT_DATE'};
 }
 
-function classifyProgrammeDate(cycle, actualDate){
+function classifyProgrammeDate(cycle, actualDate, row = {}){
   const day = date(actualDate);
   if(!day) return 'UNDATED';
+  const preparatory=row.preparatoryCycle || row.metadata?.programmeCycle?.preparatory;
+  if(cycle.year === 2027 && preparatory?.year === 2027 && preparatory.cursusCode === 'PAPR'
+    && [1,2].includes(preparatory.module) && preparatory.rule === 'QV-PAPR-004'
+    && day.startsWith('2027-') && cycle.startDate && day < cycle.startDate)
+    return 'PREPARATORY_CURSUS';
   if(cycle.startDate && day < cycle.startDate || cycle.endDate && day > cycle.endDate) return 'OUTSIDE_CYCLE';
   if(!cycle.startDate || !cycle.endDate) return 'PENDING_CYCLE';
   return 'IN_CYCLE';

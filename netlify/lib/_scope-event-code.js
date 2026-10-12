@@ -1,6 +1,7 @@
 'use strict';
 
 const CODE_PATTERN = /^([A-Z0-9]+)[.](\d{3})([a-z]?)$/;
+const INTERNAL_CODE_PATTERN = /^SCOPE-\d{6,}$/;
 const OI_ORDER = Object.freeze(['G1','C1','B1','B2','Y1','Y2','Y3','Y4']);
 
 function text(value){ return String(value == null ? '' : value).trim(); }
@@ -159,7 +160,13 @@ async function preparePersistedInitialCodes(query,candidates = [],input = {}){
   return allocations;
 }
 
+async function allocateInternalEventCode(query){
+  // A separate identity namespace, never a synthetic Stat.Com or a person identifier.
+  const number=(await query("select nextval('scope_internal_event_code_seq')::text as number")).rows[0].number;
+  return `SCOPE-${String(number).padStart(6,'0')}`;
+}
+
 module.exports={
   CODE_PATTERN,OI_ORDER,parseEventCode,formatEventCode,initialAllocations,compareEventCodes,compareEvents,
-  consumedByStatCom,appendPersistedEventCode,preparePersistedInitialCodes
+  consumedByStatCom,appendPersistedEventCode,preparePersistedInitialCodes,INTERNAL_CODE_PATTERN,allocateInternalEventCode
 };
