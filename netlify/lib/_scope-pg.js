@@ -6,6 +6,7 @@ const { periodFromPersonneRow } = require('./_scope-personnel');
 const { pgCibleJoinCondition } = require('./_scope-target-resolution');
 const statcomReferential = require('./_scope-statcom-referential');
 const eventCodes = require('./_scope-event-code');
+const { participationEvaluation,HISTORICAL_EVENT_STATUSES } = require('./_scope-participation-catalogue');
 
 function dateOnly(value){
   if(!value) return null;
@@ -54,6 +55,8 @@ function mapEvent(row){
     code_source: row.code_source || null,
     source_type: row.source_type || null,
     catalogue_participation_rule: row.catalogue_participation_rule || null,
+    participationEvaluation: participationEvaluation(row),
+    descriptivePublics: row.engine_snapshot?.descriptivePublics || [],
     heure_debut: row.heure_debut || null,
     heure_fin: row.heure_fin || null,
     heure_debut_prevue: row.heure_debut_prevue || row.heure_debut || null,
@@ -325,8 +328,33 @@ const AFFECTATION_SELECT = `
   a.updated_at
 `;
 
-const EVENT_SELECT = `
+const LINKED_PREPARATION_EVALUATION_SQL = `(select (o.metadata #>> '{planningFields,participationEvaluation}')::boolean
+    from scope_qv_publication_links p
+    join scope_quo_vadis_programmes q on q.annee=p.source_year
+    join scope_quo_vadis_obligations o on o.programme_id=q.programme_id and o.source_ref=p.publication_unit_id
+    where p.evenement_id=e.evenement_id and o.metadata->>'source'='QV_PROGRAMME_PREPARATION'
+      and jsonb_typeof(o.metadata #> '{planningFields,participationEvaluation}')='boolean'
+    order by o.updated_at desc, o.obligation_id limit 1)`;
+
+function participationEvaluationSql(linkedPreparation){
+  return `coalesce(
+  ${linkedPreparation ? `${LINKED_PREPARATION_EVALUATION_SQL},` : ''}
+  case when jsonb_typeof(e.engine_snapshot->'participationEvaluation')='boolean'
+    then (e.engine_snapshot->>'participationEvaluation')::boolean end,
+  case when upper(e.statut) in (${HISTORICAL_EVENT_STATUSES.map((status) => `'${status}'`).join(',')}) then true end,
+  case when extract(year from e.date)<=2027 then true end,
+  (select case when jsonb_typeof(d.metadata->'participationEvaluationDefault')='boolean'
+      then (d.metadata->>'participationEvaluationDefault')::boolean end
+    from scope_event_definitions d
+    where d.code=e.code_source or d.definition_id=(select v.definition_id
+      from scope_event_definition_versions v where v.definition_version_id=e.definition_version_id)
+    order by (d.code=e.code_source) desc nulls last limit 1), true)`;
+}
+
+function eventSelectSql(evaluationSql){
+  return `
   e.*,
+  ${evaluationSql} as participation_evaluation,
   (select jsonb_build_object('tracking', r.tracking, 'populationKind', r.population_kind,
       'populationCode', r.population_code, 'evaluationMode', r.evaluation_mode,
       'evaluationGroupCode', r.evaluation_group_code, 'evaluationSessionIndex', r.evaluation_session_index,
@@ -343,6 +371,7 @@ const EVENT_SELECT = `
   x.source as exercice_source,
   x.cycle_id as exercice_cycle_id
 `;
+}
 
 const cibleJoinCondition = pgCibleJoinCondition;
 
@@ -388,6 +417,17 @@ function createPgRepo(client){
   let eventStatComColumnsKnown = null;
   let exerciseStatComColumnsKnown = null;
   let definitionVersionStatComColumnsKnown = null;
+  let linkedPreparationKnown = null;
+  const evaluationSql = async () => {
+    if(linkedPreparationKnown === null){
+      const result = await q(`select to_regclass('scope_qv_publication_links') is not null
+        and to_regclass('scope_quo_vadis_programmes') is not null
+        and to_regclass('scope_quo_vadis_obligations') is not null as ready`);
+      linkedPreparationKnown = result.rows[0]?.ready === true;
+    }
+    return participationEvaluationSql(linkedPreparationKnown);
+  };
+  const eventSelect = async () => eventSelectSql(await evaluationSql());
   const tableExists = async (tableName) => {
     const result = await q(
       `select exists (
@@ -807,12 +847,20 @@ function createPgRepo(client){
         );
       }
       if(await tableExists('scope_event_definition_versions')){
+        const definitionVersionId = row.definition_version_id || row.definitionVersionId || null;
+        const definitionCode = row.code_source || row.codeSource || codeCours;
+        const definition = definitionCode || definitionVersionId ? (await q(`select d.metadata
+          from scope_event_definitions d where d.code=$1 or d.definition_id=(select v.definition_id
+            from scope_event_definition_versions v where v.definition_version_id=$2)
+          order by (d.code=$1) desc nulls last limit 1`, [definitionCode,definitionVersionId])).rows[0] || {} : {};
+        const engineSnapshot = row.engine_snapshot || row.engineSnapshot || {};
         eventColumns.push('definition_version_id', 'policy_version_id', 'engine_route', 'engine_snapshot');
         params.push(
-          row.definition_version_id || row.definitionVersionId || null,
+          definitionVersionId,
           row.policy_version_id || row.policyVersionId || null,
           row.engine_route || row.engineRoute || null,
-          JSON.stringify(row.engine_snapshot || row.engineSnapshot || null)
+          JSON.stringify({ ...engineSnapshot,
+            participationEvaluation:participationEvaluation({ ...row,engine_snapshot:engineSnapshot },definition) })
         );
       }
       if(await hasEventStatComColumns()){
@@ -864,9 +912,7 @@ function createPgRepo(client){
       if(!includeHidden){
         clauses.push('e.hidden_at is null');
       }
-      if(participationOnly) clauses.push(`(e.source_type is distinct from 'QUO_VADIS' or exists (
-        select 1 from scope_event_definitions d join scope_activity_participation_rules r on r.definition_id=d.definition_id
-        where d.code=e.code_source and r.superseded_at is null and r.tracking=true))`);
+      if(participationOnly) clauses.push(await evaluationSql());
       if(annee){
         clauses.push(`extract(year from e.date) = $${i}`);
         params.push(Number(annee));
@@ -893,11 +939,11 @@ function createPgRepo(client){
         i += 1;
       }
       const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
-      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id ${where} order by e.date desc, e.libelle`, params);
+      const result = await q(`select ${await eventSelect()} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id ${where} order by e.date desc, e.libelle`, params);
       return result.rows.map(mapEvent);
     },
     async getEvent(id){
-      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.evenement_id = $1`, [id]);
+      const result = await q(`select ${await eventSelect()} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.evenement_id = $1`, [id]);
       return mapEvent(result.rows[0] || null);
     },
     async getEventForUpdate(id){
@@ -1060,7 +1106,7 @@ function createPgRepo(client){
     },
     async listMultisessionV2Sessions(multisessionId){
       const result = await q(
-        `select ${EVENT_SELECT}, s.multisession_session_id, s.multisession_id, s.event_id, s.sequence, s.status, s.metadata
+        `select ${await eventSelect()}, s.multisession_session_id, s.multisession_id, s.event_id, s.sequence, s.status, s.metadata
          from scope_multisession_v2_sessions s
          join scope_evenements e on e.evenement_id = s.event_id
          left join scope_exercices x on x.exercice_id = e.exercice_id
@@ -1535,7 +1581,7 @@ function createPgRepo(client){
       return mapCycle(result.rows[0] || null);
     },
     async listCycleEvents(cycleId){
-      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.cycle_id = $1 and e.hidden_at is null order by e.date, e.libelle`, [cycleId]);
+      const result = await q(`select ${await eventSelect()} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.cycle_id = $1 and e.hidden_at is null order by e.date, e.libelle`, [cycleId]);
       return result.rows.map(mapEvent);
     },
     async listPrExerciseEvents(groupKey){
@@ -1543,11 +1589,11 @@ function createPgRepo(client){
       if(textKey.startsWith('EXERCICE:') && api.listExerciseEvents){
         return api.listExerciseEvents(textKey.slice('EXERCICE:'.length));
       }
-      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.pr_exercise_group_key = $1 and e.hidden_at is null order by e.date, e.libelle`, [groupKey]);
+      const result = await q(`select ${await eventSelect()} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.pr_exercise_group_key = $1 and e.hidden_at is null order by e.date, e.libelle`, [groupKey]);
       return result.rows.map(mapEvent);
     },
     async listExerciseEvents(exerciceId){
-      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.exercice_id = $1 and e.hidden_at is null order by coalesce(e.session_index, 999999), e.date, e.libelle`, [exerciceId]);
+      const result = await q(`select ${await eventSelect()} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.exercice_id = $1 and e.hidden_at is null order by coalesce(e.session_index, 999999), e.date, e.libelle`, [exerciceId]);
       return result.rows.map(mapEvent);
     },
     async getExercise(id){
@@ -2818,9 +2864,7 @@ function createPgRepo(client){
     },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
       const clauses = ['e.date >= $1::date', 'e.date <= $2::date', 'e.hidden_at is null',
-        `(e.source_type is distinct from 'QUO_VADIS' or exists (
-          select 1 from scope_event_definitions d join scope_activity_participation_rules r on r.definition_id=d.definition_id
-          where d.code=e.code_source and r.superseded_at is null and r.tracking=true))`];
+        await evaluationSql()];
       const params = [from, to];
       let i = 3;
       if(domaineCode){
@@ -2850,7 +2894,7 @@ function createPgRepo(client){
         i += 1;
       }
       const eventsRes = await q(
-        `select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where ${clauses.join(' and ')} order by e.date, e.libelle`,
+        `select ${await eventSelect()} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where ${clauses.join(' and ')} order by e.date, e.libelle`,
         params
       );
       const events = eventsRes.rows.map(mapEvent);

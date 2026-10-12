@@ -110,6 +110,9 @@ function buildCanonicalDataset(){
       },
       label: definition.label || row.label,
       eventLabel: row.label,
+      participationEvaluation: row.participationEvaluation,
+      metadata: row.metadata,
+      definition,
       status: row.status,
       externalHistorical: row.status === 'NON_RECONDUIT',
       referencesValidated: row.status === 'VALIDATED',
@@ -212,6 +215,8 @@ async function buildCurrentCandidateDataset(){
       source,
       label: row.activityLabel || row.label,
       eventLabel: row.eventLabel || row.label,
+      participationEvaluation: row.participationEvaluation,
+      metadata: row.metadata,
       status: row.status,
       externalHistorical: false,
       referencesValidated: row.status === 'VALIDATED' && !(row.business && row.business.missing || [])

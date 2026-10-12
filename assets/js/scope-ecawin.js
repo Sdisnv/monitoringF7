@@ -4,9 +4,10 @@
   root.ScopeEcawin = api;
 })(typeof window !== 'undefined' ? window : globalThis,function(){
   'use strict';
-  const activityCodes = Object.freeze(['COURS','EXERPO','EXERCI','EXERSR','EXOFSI']);
+  const activityCodes = Object.freeze(['COURS','EXEPRO','EXERCI','EXERSR','EXOFSI']);
+  const historicalActivityAliases = Object.freeze({EXERPO:'EXEPRO'});
   const source = 'ECAWIN_CAPTURE_MOA_20261009';
-  const activityLabels = Object.freeze({COURS:'Cours de formation',EXERPO:'Exercice SPP',EXERCI:'Exercices SDIS',
+  const activityLabels = Object.freeze({COURS:'Cours de formation',EXEPRO:'Exercice SPP',EXERPO:'Exercice SPP',EXERCI:'Exercices SDIS',
     EXERSR:'Exercice Secours Routier',EXOFSI:'Formation continue OFSI'});
   const sourceImage = Object.freeze({path:'docs/references/ECAwin_captures_originales_regroupees_20261009.png',
     sha256:'3884f6af43a02c310e81a964747b88b24e5d024f060c6fdd8d5c1e083b2ec81e'});
@@ -75,19 +76,25 @@
   ].map(([activityCode,statCom,description,confirmationSource])=>Object.freeze({activityCode,statCom,description,
     active:statCom !== '010JY3',source:confirmationSource || source})));
   const unresolvedAssociations = Object.freeze([]);
+  function canonicalActivityCode(code){
+    return historicalActivityAliases[code] || code;
+  }
+  function isActivityCode(code){
+    return activityCodes.includes(canonicalActivityCode(code));
+  }
   function activityForStatCom(statCom){
     const matches = associations.filter(row=>row.statCom === statCom && row.active);
     return matches.length === 1 ? matches[0].activityCode : '';
   }
   function isCompatible(activityCode,statCom){
-    return associations.some(row=>row.activityCode === activityCode && row.statCom === statCom && row.active);
+    return associations.some(row=>row.activityCode === canonicalActivityCode(activityCode) && row.statCom === statCom && row.active);
   }
   function correspondenceRows(rows,references){
     return (rows || []).map(row=>{
       const statCom = row.statCom || '';
       const activityCode = row.ecawinActivityCode || '';
       const qualified = isCompatible(activityCode,statCom);
-      const association = associations.find(item=>item.activityCode === activityCode && item.statCom === statCom);
+      const association = associations.find(item=>item.activityCode === canonicalActivityCode(activityCode) && item.statCom === statCom);
       const descriptionKnown = association?.description != null;
       const reference = references?.find(item=>item.code === statCom);
       const date = String(row.startsAt || row.date || '').slice(0,10);
@@ -102,7 +109,7 @@
         exportable:qualified && descriptionKnown && applicable,source:association?.source || null};
     });
   }
-  return {activityCodes,activityLabels,associations,sourceImage,unresolvedAssociations,
+  return {activityCodes,activityLabels,historicalActivityAliases,canonicalActivityCode,isActivityCode,associations,sourceImage,unresolvedAssociations,
     complete:unresolvedAssociations.length === 0,source,
     activityForStatCom,isCompatible,correspondenceRows};
 });

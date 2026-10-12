@@ -352,10 +352,11 @@ function createScopeParticipationReportingService(repo){
       peopleById(repo),
       assignmentsByPerson(repo),
       ['FOSPEC', 'PR', 'AUTO'].includes(domaineCode)
-        ? repo.listEvenements({ from: period.from, to: period.to })
-        : repo.listEvenements({ domaine: domaineCode, from: period.from, to: period.to })
+        ? repo.listEvenements({ from: period.from, to: period.to, participationOnly:true })
+        : repo.listEvenements({ domaine: domaineCode, from: period.from, to: period.to, participationOnly:true })
     ]);
     const countableEvents = (eventsRaw || [])
+      .filter((event) => event.participationEvaluation !== false)
       .filter((event) => acceptedDomains.has(contract.canonicalEventDomaineFromLegacy(
         event.domaine_code || event.domaineCode,
         event.sous_domaine_code || event.sousDomaineCode

@@ -726,15 +726,20 @@ function createScopeAnnualCatalogService(options = {}){
       const history = rows(await database.query(`select r.* from scope_activity_participation_rules r
         where r.definition_id=$1 order by r.version_number desc`,[context.definition.definitionId]));
       result.participation = participationCatalog.serializeRule(history.find((row) => !row.superseded_at));
+      result.participationEvaluationDefault = context.definition.metadata?.participationEvaluationDefault !== false;
       result.participationHistory = history.map(participationCatalog.serializeRule);
       return result;
     },
 
     async updateParticipationRule(code,body = {},actor){
       await requireReady(database,readinessInspector);
+      const hasEvaluationDefault = Object.prototype.hasOwnProperty.call(body,'participationEvaluationDefault');
+      if(hasEvaluationDefault && typeof body.participationEvaluationDefault !== 'boolean'){
+        throw new HttpError(422,'participation_evaluation_default_invalide','Le défaut d’évaluation de participation doit être un booléen.');
+      }
       const input = participationCatalog.normalizeDecision(body);
       return database.transaction(async (client) => {
-        const definition = one(await client.query(`select definition_id,code from scope_event_definitions
+        const definition = one(await client.query(`select definition_id,code,metadata from scope_event_definitions
           where code=$1 and status='ACTIF' for update`,[text(code).toUpperCase()]));
         if(!definition) throw new HttpError(404,'activite_catalogue_introuvable','Activité active introuvable.');
         const current = one(await client.query(`select * from scope_activity_participation_rules
@@ -778,7 +783,12 @@ function createScopeAnnualCatalogService(options = {}){
           values ($1,$2,$3,$4,$5,$6,$7,$8,'CATALOGUE_MANUAL','{}'::jsonb,$9) returning *`,
           [definition.definition_id,version+1,input.tracking,input.populationKind,input.populationCode,
             input.evaluationMode,input.evaluationGroupCode,input.evaluationSessionIndex,actorId(actor)]));
-        return { participation:participationCatalog.serializeRule(saved),versioned:true };
+        if(hasEvaluationDefault) await client.query(`update scope_event_definitions
+          set metadata=metadata || $2::jsonb,updated_at=now() where definition_id=$1`,
+        [definition.definition_id,JSON.stringify({ participationEvaluationDefault:body.participationEvaluationDefault })]);
+        return { participation:participationCatalog.serializeRule(saved),versioned:true,
+          participationEvaluationDefault:hasEvaluationDefault ? body.participationEvaluationDefault
+            : definition.metadata?.participationEvaluationDefault !== false };
       });
     },
 

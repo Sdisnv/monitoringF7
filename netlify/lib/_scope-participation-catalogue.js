@@ -4,6 +4,20 @@ const { HttpError } = require('./_scope-rules');
 
 const POPULATIONS = Object.freeze(['PUBLIC','QUALIFICATION','OI','SDIS']);
 const MODES = Object.freeze(['EVENT','MULTI_SESSION','CURSUS']);
+const HISTORICAL_EVENT_STATUSES = Object.freeze(['REALISE','TERMINE','TERMINEE','CLOTURE','CLOTUREE','TRAITE','ANNULE','ANNULEE']);
+
+function participationEvaluation(row = {}, type = {}){
+  const values = [row.participationEvaluation, row.metadata?.planningFields?.participationEvaluation,
+    row.participation_evaluation, row.engine_snapshot?.participationEvaluation];
+  const individual = values.find((value) => typeof value === 'boolean');
+  if(individual !== undefined) return individual;
+  if(HISTORICAL_EVENT_STATUSES.includes(String(row.statut || row.status || '').trim().toUpperCase())) return true;
+  const year = row.year || row.annee || row.sourceYear || row.source_year
+    || (row.date instanceof Date ? row.date.getFullYear() : String(row.date || '').slice(0, 4));
+  if(Number(year) > 0 && Number(year) <= 2027) return true;
+  return typeof type.metadata?.participationEvaluationDefault === 'boolean'
+    ? type.metadata.participationEvaluationDefault : true;
+}
 
 function normalizeDecision(input = {}){
   if(typeof input.tracking !== 'boolean'){
@@ -41,4 +55,4 @@ function serializeRule(row){
     source:row.source,createdAt:row.created_at,createdBy:row.created_by };
 }
 
-module.exports = { normalizeDecision,serializeRule };
+module.exports = { normalizeDecision,serializeRule,participationEvaluation,HISTORICAL_EVENT_STATUSES };

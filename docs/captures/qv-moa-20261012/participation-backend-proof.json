@@ -1,0 +1,130 @@
+{
+  "date": "2026-10-12",
+  "workspace": "/private/tmp/scope-qv-moa-20261012",
+  "branch": "codex/scope-qv-moa-consolide-20261012",
+  "baseline": "9fde68077f35bede72ef08f3b3dc65ea5f93c224",
+  "ownership": "participation operational backend, consolidation and publication",
+  "ownRuntimeFiles": [
+    "netlify/lib/_scope-participation-catalogue.js",
+    "netlify/lib/_scope-quo-vadis-consolidation.js",
+    "netlify/lib/_scope-qv-publication-plan.js",
+    "netlify/lib/_scope-qv-publication-postgres-store.js",
+    "netlify/lib/_scope-pg.js",
+    "netlify/lib/_scope-memory.js",
+    "netlify/lib/_scope-analytics-service.js",
+    "netlify/lib/_scope-jsp-reporting.js",
+    "netlify/lib/_scope-annual-catalog-service.js",
+    "scripts/lib/scope-c22-canonical-dataset.js"
+  ],
+  "contract": {
+    "programmeFlag": "row.participationEvaluation / metadata.planningFields.participationEvaluation",
+    "reconduction": "participationEvaluation included in RECONDUCTIBLE_FIELDS and validated businessSnapshot",
+    "operationalReadPriority": [
+      "strict boolean on current QV_PROGRAMME_PREPARATION linked by publication_unit_id = obligation.source_ref and matching programme year",
+      "strict boolean in event.engine_snapshot.participationEvaluation",
+      "true for a realised, completed, closed or cancelled historical event without an individual flag",
+      "true for event date year <= 2027",
+      "strict boolean in definition.metadata.participationEvaluationDefault",
+      "true"
+    ],
+    "preparationAfterPublication": "Read-only projection changes the operational list and statistics immediately. It does not mutate scope_evenements. Publication snapshots continue to read the persisted event flag for reconciliation.",
+    "publication": "Existing readiness, conflict, authorization and operational-history guards retained. No preparation action creates an operational event.",
+    "legacyFingerprints": "Explicit true and absent participationEvaluation hash identically; false remains an actual publication change.",
+    "creationFreeze": "insertEvenement resolves the current individual or type default once and stores a boolean in engine_snapshot. Later type changes cannot alter that event's evaluation choice.",
+    "optionalC23": "createPgRepo caches a to_regclass probe for publication links, programmes and obligations. Every event projection and participation filter uses the linked-preparation subquery only when all three exist; otherwise it uses the same snapshot/history/type fallback without those relations.",
+    "tracking": "Catalogue tracking and population resolution remain independent. False/unqualified tracking still prevents nominative population preparation; evaluation=true does not bypass that guard.",
+    "typeSettings": {
+      "endpoint": "PUT /annual-catalog/activities/:code/participation",
+      "bodyField": "participationEvaluationDefault",
+      "validation": "strict boolean if present; existing tracking form fields and optimistic baseVersion still required",
+      "storage": "scope_event_definitions.metadata.participationEvaluationDefault",
+      "getActivityAndSaveResponse": "top-level participationEvaluationDefault",
+      "legacyPayload": "Omitting the field preserves the saved default",
+      "protectedVersions": "No definition-version or operational-history mutation introduced"
+    },
+    "descriptivePublic": {
+      "code": "CMDT:CODIR",
+      "label": "Membres du Codir",
+      "planner": "Excluded explicitly from public reference checks and target.relations.publicCodes",
+      "preservation": "target.event.descriptivePublics and event.engine_snapshot.descriptivePublics",
+      "projection": "Operational event.descriptivePublics",
+      "population": "No canonical public, person, NIP, assignment or expected population created from the descriptive declaration"
+    },
+    "uiParent": "assets/js/scope-ui.js renderListe filters item.evenement.participationEvaluation !== false; parent owns UI edits",
+    "serviceAgentIntegration": "Implemented by the service agent and confirmed by code inspection: programmeParticipationEvaluation delegates to the shared resolver for listing projection and the update fallback, with definition metadata for future years. Explicit reconducted booleans override the type; 2027 remains true by default. The QV service file was not edited by this owner."
+  },
+  "checks": [
+    {
+      "command": "node --test scripts/scope-qv-participation-evaluation-moa-20261012-tests.js",
+      "status": "PASS",
+      "passed": 17,
+      "finalMemoryRunAfterServiceIntegration": true,
+      "coverage": ["strict booleans", "2027 default isolation", "reconduction false", "type metadata", "editable annual form contract", "optimistic version guard", "legacy payload", "publication fingerprint compatibility", "CMDT:CODIR descriptive-only publication", "list filtering", "history preservation", "participation statistics", "qualification and dated assignment engines", "historical status fallback", "type default frozen at insertion", "standard installation without C23 optional tables", "closed multi-session rates and stored presences preserved", "evaluated ABSENT plus unevaluated PRESENT gives exactly 0/1 in global, individual and directory rates"],
+      "discriminatingMultiSessionCase": {
+        "evaluatedSession": "ABSENT_NON_EXCUSE",
+        "unevaluatedSession": "PRESENT",
+        "global": { "numerator": 0, "denominator": 1, "eventCount": 1, "percentage": 0 },
+        "individual": { "numerator": 0, "denominator": 1, "eventCount": 1, "percentage": 0 },
+        "directory": { "numerator": 0, "denominator": 1, "eventCount": 1, "percentage": 0 },
+        "unevaluatedPresenceAndExpectedPopulationPreserved": true
+      }
+    },
+    {
+      "command": "node --test scripts/scope-qv-participation-evaluation-moa-20261012-clone-tests.js",
+      "status": "PASS",
+      "passed": 1,
+      "host": "localhost",
+      "port": 5432,
+      "database": "scope_qv_2027_recipe_20261006",
+      "transactions": ["BEGIN / ROLLBACK", "BEGIN READ ONLY / ROLLBACK"],
+      "guards": {
+        "protectedTablesHashUnchanged": true,
+        "eventsAndPublicationTablesRestoredAfterRollback": true,
+        "definitionsRestoredAfterRollback": true,
+        "createdEventAbsentAfterRollback": true,
+        "temporaryCatalogueMigrationRolledBack": true,
+        "poolClosed": true
+      },
+      "proven": ["current linked preparation flag changes listing without changing event snapshot", "publication update and create persist false", "full event lists preserve excluded events", "analytics excludes false", "2027 stays true with a false type default", "2028 reads the false type default", "explicit true overrides type false", "no expected population or presence created", "relations and session shape preserved"],
+      "latestDescriptiveAssertionsReexecuted": true,
+      "finalP2Assertions": ["Native queries succeed with each optional C23 relation temporarily absent", "2028 false type default is frozen in the insertion snapshot", "Closing an event preserves its stored true or false flag across later type flips", "REALISE 2028 without a snapshot remains evaluated and keeps its status", "JSON null snapshot is merged into a proper object", "CMDT:CODIR declaration persists and projects without any public relation"],
+      "note": "Final native SQL run after the parent's browser STOP signal: PASS, 5202 ms. All simulations and temporary relation renames were inside BEGIN/ROLLBACK; post-rollback integrity verification used BEGIN READ ONLY/ROLLBACK. Pool closed before FIN SQL P2 released the clone for the parent's final server/UI recipe."
+    },
+    {
+      "command": "node scripts/scope-c20-quo-vadis-integration-architecture-1-tests.js",
+      "status": "PASS",
+      "passed": 30,
+      "finalMemoryRunAfterServiceIntegration": true,
+      "finalPlannerIncludingDescriptivePublic": true
+    },
+    {
+      "command": "node scripts/scope-qv-participation-catalogue-1-tests.js",
+      "status": "PASS",
+      "finalMemoryRunAfterServiceIntegration": true,
+      "scope": "Existing PAPR dated qualifications, consolidated PR sessions, person KPI, SDIS eligibility and false/unknown catalogue population guards. Listing expectations updated for MOA evaluation default true."
+    },
+    {
+      "command": "node scripts/scope-qv-business-consolidation-tests.js",
+      "status": "FAILED",
+      "reason": "Earlier working-tree run stopped on an ECAwin rejection in the concurrently edited service. Parent then confirmed the old main baseline separately: 35 checks pass, followed by the same pre-existing JY3 versus expected JC1 failure. Service fixes remain owned by Pascal; no compatibility test changes made for that baseline failure."
+    },
+    {
+      "command": "node scripts/scope-annual-catalog-moa-c6-b-tests.js",
+      "status": "FAILED",
+      "reason": "Existing fixture lacks the loadCatalogReferences SELECT on scope_public_definitions. Parent confirmed the same old main baseline failure after 23 passing checks. No out-of-scope fixture edits made; the new annual-setting tests cover the requested contract."
+    }
+  ],
+  "coordination": {
+    "ownCloneRunsFinished": true,
+    "ownPostgresTransactionsActive": false,
+    "parentBrowserPort": 4410,
+    "postgresWritesHeldUntilBrowserStopSignal": true,
+    "browserStopSignalReceived": true,
+    "finalP2CloneRunFinished": true,
+    "serviceAgentCloneProof": "docs/captures/qv-moa-20261012/backend-clone-integrity.json",
+    "serviceAgentCloneProofStatus": "PASS"
+  },
+  "productionWrites": false,
+  "commit": false,
+  "push": false
+}
