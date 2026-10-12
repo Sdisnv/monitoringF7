@@ -117,18 +117,12 @@ function initialStatComCodes(){
   }));
 }
 
-const STATCOM_SUCCESSIONS = Object.freeze([
-  Object.freeze({ sourceCode:'010JY3',canonicalCode:'010JC1',effectiveFrom:'2026-01-01' })
-]);
+const STATCOM_SUCCESSIONS = Object.freeze([]);
 
 function resolveStatComCode(value,date){
   const sourceCode = normalizeStatComCode(value);
   if(!sourceCode) return { sourceCode:null,canonicalCode:null,successionApplied:false,effectiveFrom:null };
-  const day = date ? String(date).slice(0,10) : null;
-  const succession = STATCOM_SUCCESSIONS.find((row) => row.sourceCode === sourceCode && day && day >= row.effectiveFrom);
-  return succession
-    ? { sourceCode,canonicalCode:succession.canonicalCode,successionApplied:true,effectiveFrom:succession.effectiveFrom }
-    : { sourceCode,canonicalCode:sourceCode,successionApplied:false,effectiveFrom:null };
+  return { sourceCode,canonicalCode:sourceCode,successionApplied:false,effectiveFrom:null };
 }
 
 function isStatComValidForDate(row, date){

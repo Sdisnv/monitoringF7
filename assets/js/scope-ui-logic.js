@@ -1100,6 +1100,12 @@
     return Array.from(new Set((codes || []).filter(Boolean))).sort(compareScopeSites);
   }
 
+  function qvProgrammeIsPermanence(row) {
+    const item = row || {};
+    return item.definitionId === 'CTA-PERMANENCE'
+      || /permanence/i.test([item.activityLabel,item.label,item.title,item.definitionId].filter(Boolean).join(' '));
+  }
+
   function qvProgrammeDragLock(row) {
     const item = row || {};
     if (item.definitionId === 'CTA-PERMANENCE') return 'CTA_PERMANENCE';
@@ -2631,9 +2637,10 @@
     if (status === 401) {
       return {
         tone: 'error',
-        title: 'Session institutionnelle requise',
-        message: 'Connectez-vous avec Okta. SCOPE live n’utilise pas de jeton technique injecté.',
-        okta: true
+        title: 'Session SCOPE expirée',
+        message: 'Reconnectez-vous à SCOPE pour poursuivre votre travail.',
+        sessionRequired: true,
+        okta: false
       };
     }
     if (status === 403) {
@@ -5436,6 +5443,7 @@
     QV_PR_ABC_LABEL,
     qvSalleTree,
     qvProgrammeDragLock,
+    qvProgrammeIsPermanence,
     qvProgrammeDragReason,
     qvPublicCibleLabel,
     qvIsStructuredMultiSession,

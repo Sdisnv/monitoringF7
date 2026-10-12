@@ -59,7 +59,8 @@ test('EMSEA est accepté sans conversion, mais reste réservé aux séances Éta
   assert.deepEqual(fresh.preparations[0].metadata.planningFields.themes,['Ordre du jour']);
   assert.equal(fresh.preparations[0].metadata.humanDecision,true);
   const { fixture } = await existingEmseaFixture();
-  await assert.rejects(fixture.service.updateProgrammePreparation(row.id,body(row,{statCom:'EMSEA2'})),/référentiel canonique/);
+  await assert.rejects(fixture.service.updateProgrammePreparation(row.id,body(row,{statCom:'EMSEA2'})),
+    error=>error.error === 'programme_ecawin_statcom_non_qualifie');
   const other = (await fixture.service.listProgramme(2027)).canonicalProgramme.rows.find((item) => item.label.startsWith('Exercice PR 1'));
   await assert.rejects(fixture.service.updateProgrammePreparation(other.id,body(other,{domain:'F7'})),/réservé aux séances État-major/);
   assert.equal(fixture.preparations[0].statcom_code,'EMSEA');

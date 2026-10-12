@@ -1,0 +1,50 @@
+{
+  "browser": "Chromium",
+  "safari": "NOT_COVERED",
+  "results": [
+    {
+      "name": "LOCAL et refus anonyme",
+      "status": "PASS"
+    },
+    {
+      "name": "référentiel ECAwin issu de la capture et filtres réciproques",
+      "status": "PASS"
+    },
+    {
+      "name": "création, ECAwin et sélection des référentiels",
+      "status": "PASS"
+    },
+    {
+      "name": "notification centrale visible",
+      "status": "PASS"
+    },
+    {
+      "name": "modification, validation, planification et contexte",
+      "status": "PASS"
+    },
+    {
+      "name": "erreur centrale sans perte des saisies",
+      "status": "PASS"
+    },
+    {
+      "name": "Drag & Drop tableau avec persistance",
+      "status": "PASS"
+    },
+    {
+      "name": "Drag & Drop mensuel sur barre de date et rechargement",
+      "status": "PASS"
+    },
+    {
+      "name": "gabarit commun des quatre provenances",
+      "status": "PASS"
+    },
+    {
+      "name": "calendriers et listes desktop, tablette, mobile",
+      "status": "PASS"
+    },
+    {
+      "name": "permanences jaunes tableau, mois, agenda et fiche",
+      "status": "PASS"
+    }
+  ]
+}

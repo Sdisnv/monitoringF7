@@ -26,32 +26,32 @@ test('01 expose les quatre références JSP canoniques exactes',() => {
   assert.equal(rows.has('010JY3'),false);
 });
 
-test('02 applique la succession seulement à partir du 01.01.2026',() => {
-  assert.deepEqual(statCom.resolveStatComCode('010JY3','2026-01-01'),{ sourceCode:'010JY3',canonicalCode:'010JC1',successionApplied:true,effectiveFrom:'2026-01-01' });
+test('02 conserve le code historique sans conversion automatique',() => {
+  assert.deepEqual(statCom.resolveStatComCode('010JY3','2026-01-01'),{ sourceCode:'010JY3',canonicalCode:'010JY3',successionApplied:false,effectiveFrom:null });
   assert.deepEqual(statCom.resolveStatComCode('010JY3','2025-12-31'),{ sourceCode:'010JY3',canonicalCode:'010JY3',successionApplied:false,effectiveFrom:null });
   assert.equal(statCom.resolveStatComCode('010JC1','2026-09-14').canonicalCode,'010JC1');
   assert.equal(statCom.resolveStatComCode('013Y3','2026-09-14').canonicalCode,'013Y3');
 });
 
-test('03 conserve la provenance 010JY3 et produit 010JC1 dans le vrai XLSX',() => {
+test('03 conserve 010JY3 et sa provenance dans le vrai XLSX',() => {
   const rows = importer.rowsFromWorkbook(workbook).rows;
   const source = rows.find((row) => row.sourceRow === 619);
   assert.equal(source.sourceStatCom,'010JY3');
-  assert.equal(source.statCom,'010JC1');
-  assert.equal(source.statComResolution.successionApplied,true);
+  assert.equal(source.statCom,'010JY3');
+  assert.equal(source.statComResolution.successionApplied,false);
   const proposal = preview.proposals.find((row) => row.activityLabel === 'Séance interne cadres JSP');
   assert(proposal.sourceStatComCodes.includes('010JY3'));
-  assert(proposal.statComCodes.includes('010JC1'));
-  assert(!proposal.statComCodes.includes('010JY3'));
-  assert(proposal.statComResolutions.some((row) => row.sourceCode === '010JY3' && row.canonicalCode === '010JC1'));
+  assert(proposal.statComCodes.includes('010JY3'));
+  assert(proposal.statComResolutions.some((row) => row.sourceCode === '010JY3' && row.canonicalCode === '010JY3'));
 });
 
-test('04 rend les 290 propositions Stat.Com résolvables avec le seed partagé',() => {
+test('04 garde les propositions actives et signale le code historique hors seed',() => {
   const active = new Set(statCom.initialStatComCodes().filter((row) => row.active).map((row) => row.code));
   const referenced = preview.proposals.filter((row) => row.classification === 'AUTO_IMPORT' && row.statComCodes.length);
   const unresolved = referenced.filter((row) => row.statComCodes.some((code) => !active.has(code)));
   assert.equal(referenced.length,290);
-  assert.deepEqual(unresolved.map((row) => ({ activity:row.activityLabel,codes:row.statComCodes.filter((code) => !active.has(code)) })),[]);
+  assert.equal(unresolved.length,1);
+  assert.deepEqual(unresolved[0].statComCodes.filter(code=>!active.has(code)),['010JY3']);
 });
 
 test('05 maintient les 80 thèmes et les réparations C15',() => {
