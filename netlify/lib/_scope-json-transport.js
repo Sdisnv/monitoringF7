@@ -9,17 +9,6 @@ function header(headers,name) {
   const key=Object.keys(headers || {}).find(key=>key.toLowerCase()===name);
   return key?headers[key]:undefined;
 }
-function acceptsGzip(headers) {
-  const accepted=header(headers,'accept-encoding');
-  if(accepted === undefined) return true;
-  const entries=String(accepted).split(',').map(entry=>{
-    const [name,...parameters]=entry.trim().toLowerCase().split(';');
-    const quality=parameters.map(part=>part.trim()).find(part=>part.startsWith('q='));
-    return {name,quality:quality?Number(quality.slice(2)):1};
-  });
-  const gzip=entries.find(entry=>entry.name==='gzip') || entries.find(entry=>entry.name==='*');
-  return Boolean(gzip && gzip.quality>0);
-}
 async function compactJsonResponse(event,result) {
   if(!result || (result.statusCode!==200 && result.statusCode!==201) || result.isBase64Encoded
     || typeof result.body!=='string' || !/^application\/json\b/i.test(header(result.headers,'content-type') || '')
