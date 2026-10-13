@@ -9,17 +9,6 @@ function header(headers,name) {
   const key=Object.keys(headers || {}).find(key=>key.toLowerCase()===name);
   return key?headers[key]:undefined;
 }
-function acceptsGzip(headers) {
-  const accepted=header(headers,'accept-encoding');
-  if(accepted === undefined) return true;
-  const entries=String(accepted).split(',').map(entry=>{
-    const [name,...parameters]=entry.trim().toLowerCase().split(';');
-    const quality=parameters.map(part=>part.trim()).find(part=>part.startsWith('q='));
-    return {name,quality:quality?Number(quality.slice(2)):1};
-  });
-  const gzip=entries.find(entry=>entry.name==='gzip') || entries.find(entry=>entry.name==='*');
-  return Boolean(gzip && gzip.quality>0);
-}
 async function compactJsonResponse(event,result) {
   if(!result || (result.statusCode!==200 && result.statusCode!==201) || result.isBase64Encoded
     || typeof result.body!=='string' || !/^application\/json\b/i.test(header(result.headers,'content-type') || '')
@@ -35,8 +24,10 @@ async function compactJsonResponse(event,result) {
     for(const key of Object.keys(clean)) if(['content-length','content-encoding'].includes(key.toLowerCase())) delete clean[key];
     return {...result,statusCode,headers:clean,isBase64Encoded:false,body:JSON.stringify({ok:false,error,message})};
   };
-  if(!acceptsGzip(event.headers)) return envelopeBytes(result)>MAX_ENVELOPE_BYTES
-    ? reject(406,'scope_response_encoding_required','Cette réponse nécessite un client acceptant la compression gzip.') : {...result,headers};
+  // Netlify may rewrite Accept-Encoding before forwarding to the Lambda. It is
+  // not a reliable statement of browser support: do not reject a large JSON
+  // response based on this proxy-facing request header. The response uses
+  // Content-Encoding so the HTTP client can decode it normally.
   // Lambda counts the escaped response envelope, not only the JSON document.
   const compressed=await compress(result.body,{level:1});
   for(const key of Object.keys(headers)) if(key.toLowerCase()==='content-length') delete headers[key];
