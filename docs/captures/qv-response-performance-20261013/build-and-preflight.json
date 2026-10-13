@@ -1,0 +1,12 @@
+{
+  "site": "scope-sdisnv",
+  "siteId": "6def8d4d-78c6-4112-bb76-6891df0e0a52",
+  "base": "89a2f15fb835e40ddc90bbff4132d4868ed6f4c6",
+  "command": "NETLIFY_SITE_ID=6def8d4d-78c6-4112-bb76-6891df0e0a52 netlify build --context production",
+  "status": "PASS",
+  "exitCode": 0,
+  "output": "​\nNetlify Build                                                 \n────────────────────────────────────────────────────────────────\n​\n❯ Version\n  @netlify/build 35.13.4\n​\n❯ Flags\n  accountId: 6a029f9cc4469cce2e578568\n  dry: false\n​\n❯ Current directory\n  /private/tmp/scope-qv-roadmap-v1-20261012\n​\n❯ Config file\n  /private/tmp/scope-qv-roadmap-v1-20261012/netlify.toml\n​\n❯ Context\n  production\n​\nbuild.command from netlify.toml                               \n────────────────────────────────────────────────────────────────\n​\n$ node scripts/build-scope-static.js\nSCOPE static site built: dist/scope\n​\n(build.command completed in 81ms)\n​\nFunctions bundling                                            \n────────────────────────────────────────────────────────────────\n​\nPackaging Functions from netlify/functions directory:\n - admin-settings.js\n - admin-users.js\n - audit-log.js\n - auth-config.js\n - auth-login.mjs\n - auth-logout.js\n - auth-me.js\n - auth-oidc-callback.js\n - auth-oidc-start.js\n - auth-refresh.js\n - data-imported-events.js\n - data-objectives.js\n - data-records.js\n - data-reference-periods.js\n - data-status.js\n - scope-personnel-correct-period.js\n - scope-personnel-detail.js\n - scope-personnel-effectif-at-date.js\n - scope-personnel-history.js\n - scope-personnel-import-analyze.js\n - scope-personnel-import-commit.js\n - scope-personnel-inactivate.js\n - scope-personnel-list.js\n - scope.js\n - users.js\n​\n​\n(Functions bundling completed in 6.1s)\n​\nNetlify Build Complete                                        \n────────────────────────────────────────────────────────────────\n​\n(Netlify Build completed in 7.5s)\n",
+  "preflight": "PASS - SCOPE Netlify target verified",
+  "transportTests": 22,
+  "productionDeployment": false
+}

@@ -14,6 +14,7 @@ const { createScopePersonService } = require('../lib/_scope-person-service');
 const { createScopeQuoVadisService } = require('../lib/_scope-quo-vadis-service');
 const { createScopeAnnualCatalogService } = require('../lib/_scope-annual-catalog-service');
 const { withMetrics } = require('../lib/_postgres');
+const { compactJsonResponse } = require('../lib/_scope-json-transport');
 
 async function requireAccess(event){
   const claims = await verifyAccess(event);
@@ -872,5 +873,5 @@ async function scopeHandler(event){
 exports.handler = async function(event){
   if(event.httpMethod === 'OPTIONS') return scopeHandler(event);
   const label = `${event.httpMethod || 'GET'} ${scopePath(event)}`;
-  return withMetrics(label, () => scopeHandler(event));
+  return compactJsonResponse(event, await withMetrics(label, () => scopeHandler(event)));
 };

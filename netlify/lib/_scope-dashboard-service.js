@@ -41,12 +41,11 @@ function createScopeDashboardService(repo){
       includeQualification: resolved.includeQualification,
       include_qualification: resolved.include_qualification
     };
-    const evaluated = await analytics.evaluate(sdisQuery);
-    const [series, explain, alertsPayload] = await Promise.all([
-      analytics.timeseries(sdisQuery),
-      analytics.explain(sdisQuery),
+    const [snapshot, alertsPayload] = await Promise.all([
+      analytics.snapshot(sdisQuery),
       alertsService.listAlerts(resolved)
     ]);
+    const {evaluated, timeseries:series, explain}=snapshot;
 
     const absences = {
       count: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.nonExcuses) || 0),

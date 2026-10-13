@@ -1,0 +1,136 @@
+{
+  "mode": "after",
+  "status": "PASS",
+  "productionWrites": false,
+  "handler": "corrective branch",
+  "volume": 933,
+  "auth": "LOCAL",
+  "timings": {
+    "homeReadyMs": 1358.2572920000002,
+    "programmeReadyMs": 801.8982499999997,
+    "browserJsonParse": {
+      "ms": 6.399999976158142,
+      "rows": 933
+    },
+    "searchReadyMs": 441.99816699999974,
+    "programmeFicheReadyMs": 32.78808299999946,
+    "publishedFicheReadyMs": 181.10729100000026
+  },
+  "homeResources": [
+    {
+      "path": "/api/scope/referentiels",
+      "durationMs": 83.09999996423721,
+      "encodedBytes": 123941,
+      "decodedBytes": 1250737
+    },
+    {
+      "path": "/api/scope/evenements",
+      "durationMs": 106.40000003576279,
+      "encodedBytes": 43245,
+      "decodedBytes": 471852
+    },
+    {
+      "path": "/api/scope/dashboard",
+      "durationMs": 786.3000000119209,
+      "encodedBytes": 36109,
+      "decodedBytes": 372409
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/scope/referentiels",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 83.09,
+      "decodedBytes": 1250737,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/scope/evenements",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 106.407,
+      "decodedBytes": 471852,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/scope/dashboard",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 786.374,
+      "decodedBytes": 372409,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/scope/alerts",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 468.071,
+      "decodedBytes": 268781,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/scope/quo-vadis/programmes/2027",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 521.104,
+      "decodedBytes": 5605944,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/scope/quo-vadis/programmes/2027",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 357.643,
+      "decodedBytes": 5605944,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/scope/quo-vadis/programme-items/QV26-EXERCICE-PR-1-1-30B1E01A%3AO1%3AS3/history",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 3.97,
+      "decodedBytes": 24,
+      "encoding": "identity"
+    },
+    {
+      "path": "/api/scope/evenements/82ed7ed5-f1b5-4d66-a74c-5f96f432e606",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 144.941,
+      "decodedBytes": 17638,
+      "encoding": "identity"
+    },
+    {
+      "path": "/api/scope/evenements/82ed7ed5-f1b5-4d66-a74c-5f96f432e606/preview-attendus",
+      "status": 422,
+      "method": "POST",
+      "durationMs": 2.87,
+      "decodedBytes": 167,
+      "encoding": "identity",
+      "error": {
+        "ok": false,
+        "error": "participation_catalogue_non_suivie",
+        "message": "Cette activité QUO VADIS n’est pas qualifiée pour le suivi des participations.",
+        "details": null
+      }
+    }
+  ],
+  "businessGuards": [
+    {
+      "path": "/api/scope/evenements/82ed7ed5-f1b5-4d66-a74c-5f96f432e606/preview-attendus",
+      "status": 422,
+      "method": "POST",
+      "durationMs": 2.87,
+      "decodedBytes": 167,
+      "encoding": "identity",
+      "error": {
+        "ok": false,
+        "error": "participation_catalogue_non_suivie",
+        "message": "Cette activité QUO VADIS n’est pas qualifiée pour le suivi des participations.",
+        "details": null
+      }
+    }
+  ],
+  "javascriptErrors": []
+}

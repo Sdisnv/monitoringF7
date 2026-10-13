@@ -1,0 +1,252 @@
+{
+  "site": "scope-sdisnv",
+  "publishedCommit": "89a2f15fb835e40ddc90bbff4132d4868ed6f4c6",
+  "source": "Netlify CLI readonly logs; function scope; since 2026-10-13T11:55:00Z",
+  "entries": [
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:56:56.163Z",
+      "level": "info",
+      "message": "Duration: 1768.91 ms\tMemory Usage: 194 MB\tInit Duration: 764.23 ms\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:56:57.410Z",
+      "level": "info",
+      "message": "[ERROR] [1791892621809] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:57:01.788Z",
+      "level": "info",
+      "message": "Duration: 4378.66 ms\tMemory Usage: 333 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:57:07.095Z",
+      "level": "info",
+      "message": "Duration: 5152.18 ms\tMemory Usage: 335 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:57:38.105Z",
+      "level": "info",
+      "message": "Duration: 894.12 ms\tMemory Usage: 340 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:57:38.487Z",
+      "level": "info",
+      "message": "[ERROR] [1791892661410] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:57:41.394Z",
+      "level": "info",
+      "message": "Duration: 2907.05 ms\tMemory Usage: 360 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:57:46.148Z",
+      "level": "info",
+      "message": "Duration: 4473.92 ms\tMemory Usage: 361 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:58:43.973Z",
+      "level": "info",
+      "message": "Duration: 1623.63 ms\tMemory Usage: 194 MB\tInit Duration: 774.76 ms\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:58:45.190Z",
+      "level": "info",
+      "message": "[ERROR] [1791892729722] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:58:49.705Z",
+      "level": "info",
+      "message": "Duration: 4515.76 ms\tMemory Usage: 336 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:58:55.107Z",
+      "level": "info",
+      "message": "Duration: 5258.92 ms\tMemory Usage: 349 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:58:56.896Z",
+      "level": "info",
+      "message": "Duration: 1691.86 ms\tMemory Usage: 351 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:59:00.938Z",
+      "level": "info",
+      "message": "Duration: 5733.55 ms\tMemory Usage: 368 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:59:07.818Z",
+      "level": "info",
+      "message": "[ERROR] [1791892751124] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:59:11.108Z",
+      "level": "info",
+      "message": "Duration: 3290.80 ms\tMemory Usage: 378 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:59:11.242Z",
+      "level": "info",
+      "message": "[ERROR] [1791892754288] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T11:59:14.267Z",
+      "level": "info",
+      "message": "Duration: 3025.77 ms\tMemory Usage: 379 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:04:52.359Z",
+      "level": "info",
+      "message": "Duration: 993.48 ms\tMemory Usage: 379 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:04:52.625Z",
+      "level": "info",
+      "message": "[ERROR] [1791893096108] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:04:56.086Z",
+      "level": "info",
+      "message": "Duration: 3461.47 ms\tMemory Usage: 379 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:05:06.001Z",
+      "level": "info",
+      "message": "Duration: 863.52 ms\tMemory Usage: 379 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:05:08.945Z",
+      "level": "info",
+      "message": "Duration: 2676.76 ms\tMemory Usage: 198 MB\tInit Duration: 623.03 ms\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:05:11.797Z",
+      "level": "info",
+      "message": "Duration: 5528.12 ms\tMemory Usage: 379 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:05:17.024Z",
+      "level": "info",
+      "message": "Duration: 5034.21 ms\tMemory Usage: 379 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:05:19.894Z",
+      "level": "info",
+      "message": "[ERROR] [1791893123288] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:05:23.275Z",
+      "level": "info",
+      "message": "Duration: 3381.28 ms\tMemory Usage: 393 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:15:48.902Z",
+      "level": "info",
+      "message": "Duration: 1593.72 ms\tMemory Usage: 194 MB\tInit Duration: 766.88 ms\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:15:50.352Z",
+      "level": "info",
+      "message": "[ERROR] [1791893754776] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:15:54.760Z",
+      "level": "info",
+      "message": "Duration: 4408.63 ms\tMemory Usage: 334 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:16:00.143Z",
+      "level": "info",
+      "message": "Duration: 5225.13 ms\tMemory Usage: 349 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:16:44.737Z",
+      "level": "info",
+      "message": "Duration: 865.11 ms\tMemory Usage: 354 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:16:44.977Z",
+      "level": "info",
+      "message": "[ERROR] [1791893808078] LAMBDA_RUNTIME Failed to post handler success response. Http response code: 413. {\"errorMessage\":\"Exceeded maximum allowed payload size (6291556 bytes).\",\"errorType\":\"RequestEntityTooLarge\"}"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:16:48.062Z",
+      "level": "info",
+      "message": "Duration: 3085.40 ms\tMemory Usage: 374 MB\t"
+    },
+    {
+      "source": "function",
+      "name": "scope",
+      "timestamp": "2026-10-13T12:16:52.616Z",
+      "level": "info",
+      "message": "Duration: 4404.77 ms\tMemory Usage: 374 MB\t"
+    }
+  ]
+}
