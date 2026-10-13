@@ -35,8 +35,10 @@ async function compactJsonResponse(event,result) {
     for(const key of Object.keys(clean)) if(['content-length','content-encoding'].includes(key.toLowerCase())) delete clean[key];
     return {...result,statusCode,headers:clean,isBase64Encoded:false,body:JSON.stringify({ok:false,error,message})};
   };
-  if(!acceptsGzip(event.headers)) return envelopeBytes(result)>MAX_ENVELOPE_BYTES
-    ? reject(406,'scope_response_encoding_required','Cette réponse nécessite un client acceptant la compression gzip.') : {...result,headers};
+  // Netlify may rewrite Accept-Encoding before forwarding to the Lambda. It is
+  // not a reliable statement of browser support: do not reject a large JSON
+  // response based on this proxy-facing request header. The response uses
+  // Content-Encoding so the HTTP client can decode it normally.
   // Lambda counts the escaped response envelope, not only the JSON document.
   const compressed=await compress(result.body,{level:1});
   for(const key of Object.keys(headers)) if(key.toLowerCase()==='content-length') delete headers[key];
