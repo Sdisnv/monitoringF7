@@ -35,12 +35,28 @@ function fieldsFromProgrammeRow(row,qv){
     ...logic.qvProgrammeParameters(row)};
 }
 
-async function history(query,year,itemId){
-  return (await query(`select j.* from scope_journal_metier j where
+async function history(query,year,itemId,{personnelRead=false}={}){
+  const entries=(await query(`select j.* from scope_journal_metier j where
     (j.entite='quo_vadis_occurrence' and j.entite_id=$2)
     or (j.entite in ('evenement','SCOPE_EVENEMENT') and j.entite_id in (
       select evenement_id::text from scope_qv_publication_links where source_year=$1 and publication_unit_id=$2))
     order by j.at desc,j.journal_id`,[Number(year),String(itemId)])).rows;
+  if(!personnelRead || !entries.length) return entries;
+  const authors=[...new Set(entries.map(row=>row.auteur_id).filter(Boolean))];
+  const people=(await query(`select nip,nom,prenom from scope_personnes
+    where nip=any($1::text[]) or ('local:' || nip)=any($1::text[])`,[authors])).rows;
+  const unresolved=authors.filter(actor=>!people.some(person=>(actor===String(person.nip) || actor===`local:${person.nip}`)
+    && (person.nom || person.prenom)));
+  let profiles=[];
+  if(unresolved.length && (await query("select to_regclass('public.monitoring_f7_user_profiles') is not null as ready")).rows[0]?.ready)
+    profiles=(await query(`select subject,nip,display_name from monitoring_f7_user_profiles
+      where subject=any($1::text[]) or nip=any($1::text[]) or ('local:' || nip)=any($1::text[])`,[unresolved])).rows;
+  return entries.map(entry=>{
+    const person=people.find(row=>entry.auteur_id===String(row.nip) || entry.auteur_id===`local:${row.nip}`);
+    const profile=profiles.find(row=>entry.auteur_id===row.subject || entry.auteur_id===row.nip || entry.auteur_id===`local:${row.nip}`);
+    const label=[person?.prenom,person?.nom].filter(Boolean).join(' ') || profile?.display_name;
+    return {...entry,...(label?{authorLabel:label}:{})};
+  });
 }
 
 function reservationConflicts(rows){

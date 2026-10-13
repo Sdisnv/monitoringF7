@@ -9,7 +9,8 @@ const {baselineService}=require('./lib/scope-qv-pr13-complement-recipe');
 const root=path.resolve(__dirname,'..'),directory=path.join(root,'docs/captures/qv-pr13-final-controls-20261013');
 const snapshot=require('../docs/captures/qv-pr13-final-controls-20261013/production-business-snapshot.json');
 const venues=require('../docs/captures/qv-pr13-final-controls-20261013/production-venues-readonly.json');
-async function replay(query) {
+async function replay(query,snapshotOverride) {
+  const snapshot=snapshotOverride || require('../docs/captures/qv-pr13-final-controls-20261013/production-business-snapshot.json');
   assert.equal(snapshot.readOnly,'on');assert.equal(snapshot.project.id,'bnfbqzqisdkysnoaeuej');
   const programme=(await query('select programme_id from scope_quo_vadis_programmes where annee=2027')).rows[0];
   assert.ok(snapshot.preparations.every(row=>row.programme_id===programme.programme_id));

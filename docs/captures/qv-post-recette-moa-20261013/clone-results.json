@@ -1,0 +1,2042 @@
+{
+  "status": "PASS",
+  "source": "CURRENT_AUTHORIZED_PRODUCTION_BUSINESS_READS",
+  "productionWrites": false,
+  "tests": [
+    "Only five demonstrated unqualified grouped DPS sessions requalified by explicit MOA rule",
+    "Cycle reflects approved report rather than automated snapshot",
+    "Actual DPS Friday rule requires an authorized, recorded derogation",
+    "CFF external occupation accepted without participation or Stat.Com",
+    "SDIS activity can be created on 01 January without moving existing occurrences",
+    "Plan action still changes an already validated proposed occurrence",
+    "Repeated PAPR 3 validation does not append a transaction",
+    "Withdrawal and new validation remain two legitimate decisions"
+  ],
+  "statComCorrections": [
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S2",
+      "before": "0162F7",
+      "after": "0120F7",
+      "rule": "QV-DPS-GROUP-001"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S3",
+      "before": "0162F7",
+      "after": "0120F7",
+      "rule": "QV-DPS-GROUP-001"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S4",
+      "before": "0162F7",
+      "after": "0120F7",
+      "rule": "QV-DPS-GROUP-001"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S5",
+      "before": "0162F7",
+      "after": "0120F7",
+      "rule": "QV-DPS-GROUP-001"
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S6",
+      "before": "0162F7",
+      "after": "0120F7",
+      "rule": "QV-DPS-GROUP-001"
+    }
+  ],
+  "cycles": {
+    "before": {
+      "year": 2027,
+      "startDate": "2027-03-05",
+      "endDate": "2028-02-10",
+      "status": "PROVISIONAL",
+      "parametersDefined": true,
+      "provisional": true,
+      "approvalRequired": "CODIR",
+      "generationAllowed": true,
+      "openingReport": {
+        "sourceType": "PROGRAMME_ITEM",
+        "itemId": "qv-source-923",
+        "programmeYear": 2027,
+        "closesCycleYear": 2026,
+        "actualDate": "2027-03-04",
+        "provisional": false
+      },
+      "closingReport": {
+        "sourceType": "FUTURE_DATE",
+        "itemId": "2b2e86a2-0752-47d1-82f1-4c928e9cc0ef",
+        "programmeYear": 2027,
+        "closesCycleYear": 2027,
+        "actualDate": "2028-02-10",
+        "provisional": true,
+        "approvalStatus": "PROVISOIRE",
+        "source": "MISSION FINALISATION MOA 12.10.2026"
+      },
+      "missing": [],
+      "reportOptions": [
+        {
+          "sourceType": "PROGRAMME_ITEM",
+          "itemId": "qv-source-923",
+          "programmeYear": 2027,
+          "closesCycleYear": 2026,
+          "actualDate": "2027-03-04",
+          "provisional": false,
+          "label": "Rapport annuel"
+        },
+        {
+          "sourceType": "FUTURE_DATE",
+          "itemId": "2b2e86a2-0752-47d1-82f1-4c928e9cc0ef",
+          "programmeYear": 2027,
+          "closesCycleYear": 2027,
+          "actualDate": "2028-02-10",
+          "provisional": true,
+          "approvalStatus": "PROVISOIRE",
+          "source": "MISSION FINALISATION MOA 12.10.2026",
+          "label": "Rapport annuel"
+        }
+      ],
+      "statisticsBasis": "CIVIL_EVENT_DATE",
+      "automaticExtension": {
+        "status": "DEMONSTRATED",
+        "cta": true,
+        "historicalExplicitNextYear": [
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E:852",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+            "label": "Intégration personnel DPS, phase I",
+            "date": "2028-01-04",
+            "sourceLine": 852,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:853",
+            "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+            "label": "Échange tenue",
+            "date": "2028-01-05",
+            "sourceLine": 853,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:858",
+            "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+            "label": "Échange tenue",
+            "date": "2028-01-06",
+            "sourceLine": 858,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:854",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+            "label": "Intégration personnel DPS, phase II",
+            "date": "2028-01-05",
+            "sourceLine": 854,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:855",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+            "label": "Intégration personnel DPS, phase II",
+            "date": "2028-01-05",
+            "sourceLine": 855,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:856",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+            "label": "Intégration personnel DPS, phase II",
+            "date": "2028-01-05",
+            "sourceLine": 856,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:857",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+            "label": "Intégration personnel DPS, phase II",
+            "date": "2028-01-05",
+            "sourceLine": 857,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF:859",
+            "definitionId": "QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF",
+            "label": "Répétition garde drapeau RA'25",
+            "date": "2028-01-06",
+            "sourceLine": 859,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:860",
+            "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+            "label": "Exercice JSP 1",
+            "date": "2028-01-10",
+            "sourceLine": 860,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:882",
+            "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+            "label": "Exercice JSP 1",
+            "date": "2028-01-25",
+            "sourceLine": 882,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD:861",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD",
+            "label": "Intégration personnel DAP",
+            "date": "2028-01-10",
+            "sourceLine": 861,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-EM-ED042EBD:862",
+            "definitionId": "QV26-SEANCE-EM-ED042EBD",
+            "label": "Séance État-major",
+            "date": "2028-01-11",
+            "sourceLine": 862,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CADRES-F5-6-A6B9A14F:863",
+            "definitionId": "QV26-SEANCE-CADRES-F5-6-A6B9A14F",
+            "label": "Séance cadres F5/6",
+            "date": "2028-01-12",
+            "sourceLine": 863,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:864",
+            "definitionId": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+            "label": "Séance Direction JSP",
+            "date": "2028-01-12",
+            "sourceLine": 864,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB:865",
+            "definitionId": "QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB",
+            "label": "Séance échelons II, III et IV",
+            "date": "2028-01-13",
+            "sourceLine": 865,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4:866",
+            "definitionId": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+            "label": "Séance de préparation concours de la FVSP",
+            "date": "2028-01-17",
+            "sourceLine": 866,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0:869",
+            "definitionId": "QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0",
+            "label": "Séance audiovisuel et communication F5/6",
+            "date": "2028-01-18",
+            "sourceLine": 869,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+            "label": "Séance instruction DAP",
+            "date": "2028-01-18",
+            "sourceLine": 870,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+            "label": "Séance instruction DAP",
+            "date": "2028-01-19",
+            "sourceLine": 875,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+            "label": "Séance instruction DAP",
+            "date": "2028-01-27",
+            "sourceLine": 891,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+            "label": "Séance instruction DAP",
+            "date": "2028-01-27",
+            "sourceLine": 892,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:874",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+            "label": "Séance personnel DPS",
+            "date": "2028-01-19",
+            "sourceLine": 874,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:871",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+            "label": "Séance personnel DPS",
+            "date": "2028-01-19",
+            "sourceLine": 871,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:872",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+            "label": "Séance personnel DPS",
+            "date": "2028-01-19",
+            "sourceLine": 872,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:873",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+            "label": "Séance personnel DPS",
+            "date": "2028-01-19",
+            "sourceLine": 873,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CADRES-JSP-1591AA8A:876",
+            "definitionId": "QV26-SEANCE-CADRES-JSP-1591AA8A",
+            "label": "Séance cadres JSP",
+            "date": "2028-01-20",
+            "sourceLine": 876,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361:877",
+            "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361",
+            "label": "Cours de cadres Formateurs cursus MEA",
+            "date": "2028-01-24",
+            "sourceLine": 877,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-FOURRIERS-DPS-A39F1CE0:878",
+            "definitionId": "QV26-SEANCE-FOURRIERS-DPS-A39F1CE0",
+            "label": "Séance Fourriers DPS",
+            "date": "2028-01-24",
+            "sourceLine": 878,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6:879",
+            "definitionId": "QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6",
+            "label": "Séance responsables MAT SDIS",
+            "date": "2028-01-24",
+            "sourceLine": 879,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-FOURRIERS-DAP-997F4819:880",
+            "definitionId": "QV26-SEANCE-FOURRIERS-DAP-997F4819",
+            "label": "Séance Fourriers DAP",
+            "date": "2028-01-24",
+            "sourceLine": 880,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:884",
+            "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+            "label": "Séance chefs de section DPS",
+            "date": "2028-01-25",
+            "sourceLine": 884,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:881",
+            "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+            "label": "Séance chefs de section DPS",
+            "date": "2028-01-25",
+            "sourceLine": 881,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:885",
+            "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+            "label": "Séance chefs de section DPS C1",
+            "date": "2028-01-25",
+            "sourceLine": 885,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:883",
+            "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+            "label": "Séance chefs de section DPS C1",
+            "date": "2028-01-25",
+            "sourceLine": 883,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:901",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+            "label": "Séance instruction DPS",
+            "date": "2028-02-01",
+            "sourceLine": 901,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:887",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+            "label": "Séance instruction DPS",
+            "date": "2028-01-26",
+            "sourceLine": 887,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:889",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+            "label": "Séance instruction DPS",
+            "date": "2028-01-26",
+            "sourceLine": 889,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:900",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+            "label": "Séance instruction DPS",
+            "date": "2028-02-01",
+            "sourceLine": 900,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+            "label": "Séance personnel DAP",
+            "date": "2028-01-26",
+            "sourceLine": 888,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CODIR-92921E7C:893",
+            "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+            "label": "Séance Codir",
+            "date": "2028-01-28",
+            "sourceLine": 893,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0:894",
+            "definitionId": "QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0",
+            "label": "Équipement des recrues FOBA 1",
+            "date": "2028-01-29",
+            "sourceLine": 894,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FOBA-FD15AA5A:895",
+            "definitionId": "QV26-COURS-DE-CADRES-FOBA-FD15AA5A",
+            "label": "Cours de cadres FOBA",
+            "date": "2028-01-29",
+            "sourceLine": 895,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684:896",
+            "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684",
+            "label": "Cours de cadres Formateurs MEA 1",
+            "date": "2028-01-31",
+            "sourceLine": 896,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-2-0DDB59DA:897",
+            "definitionId": "QV26-EXERCICE-JSP-2-0DDB59DA",
+            "label": "Exercice JSP 2",
+            "date": "2028-01-31",
+            "sourceLine": 897,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE:898",
+            "definitionId": "QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE",
+            "label": "Séance des chefs de section DAP",
+            "date": "2028-01-31",
+            "sourceLine": 898,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:904",
+            "definitionId": "QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC",
+            "label": "Séance communication F5/6",
+            "date": "2028-02-02",
+            "sourceLine": 904,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-PR-3817D3C2:905",
+            "definitionId": "QV26-COURS-DE-CADRES-PR-3817D3C2",
+            "label": "Cours de cadres PR",
+            "date": "2028-02-02",
+            "sourceLine": 905,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:909",
+            "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+            "label": "Séance Préposés mat DPS",
+            "date": "2028-02-03",
+            "sourceLine": 909,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:906",
+            "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+            "label": "Séance Préposés mat DPS",
+            "date": "2028-02-03",
+            "sourceLine": 906,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:907",
+            "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+            "label": "Séance Préposés mat DPS",
+            "date": "2028-02-03",
+            "sourceLine": 907,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:908",
+            "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+            "label": "Séance Préposés mat DPS",
+            "date": "2028-02-03",
+            "sourceLine": 908,
+            "status": "PROPOSED"
+          }
+        ],
+        "missingCadence": []
+      }
+    },
+    "after": {
+      "year": 2027,
+      "startDate": "2027-02-24",
+      "endDate": "2028-02-10",
+      "status": "PROVISIONAL",
+      "parametersDefined": true,
+      "provisional": true,
+      "approvalRequired": "CODIR",
+      "generationAllowed": true,
+      "openingReport": {
+        "sourceType": "PROGRAMME_ITEM",
+        "itemId": "qv-source-923",
+        "programmeYear": 2027,
+        "closesCycleYear": 2026,
+        "actualDate": "2027-02-23",
+        "provisional": false
+      },
+      "closingReport": {
+        "sourceType": "FUTURE_DATE",
+        "itemId": "2b2e86a2-0752-47d1-82f1-4c928e9cc0ef",
+        "programmeYear": 2027,
+        "closesCycleYear": 2027,
+        "actualDate": "2028-02-10",
+        "provisional": true,
+        "approvalStatus": "PROVISOIRE",
+        "source": "MISSION FINALISATION MOA 12.10.2026"
+      },
+      "missing": [],
+      "reportOptions": [
+        {
+          "sourceType": "PROGRAMME_ITEM",
+          "itemId": "qv-source-923",
+          "programmeYear": 2027,
+          "closesCycleYear": 2026,
+          "actualDate": "2027-02-23",
+          "provisional": false,
+          "label": "Rapport annuel"
+        },
+        {
+          "sourceType": "FUTURE_DATE",
+          "itemId": "2b2e86a2-0752-47d1-82f1-4c928e9cc0ef",
+          "programmeYear": 2027,
+          "closesCycleYear": 2027,
+          "actualDate": "2028-02-10",
+          "provisional": true,
+          "approvalStatus": "PROVISOIRE",
+          "source": "MISSION FINALISATION MOA 12.10.2026",
+          "label": "Rapport annuel"
+        }
+      ],
+      "statisticsBasis": "CIVIL_EVENT_DATE",
+      "automaticExtension": {
+        "status": "DEMONSTRATED",
+        "cta": true,
+        "historicalExplicitNextYear": [
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E:852",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+            "label": "Intégration personnel DPS, phase I",
+            "date": "2028-01-04",
+            "sourceLine": 852,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:853",
+            "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+            "label": "Échange tenue",
+            "date": "2028-01-05",
+            "sourceLine": 853,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:858",
+            "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+            "label": "Échange tenue",
+            "date": "2028-01-06",
+            "sourceLine": 858,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:854",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+            "label": "Intégration personnel DPS, phase II",
+            "date": "2028-01-05",
+            "sourceLine": 854,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:855",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+            "label": "Intégration personnel DPS, phase II",
+            "date": "2028-01-05",
+            "sourceLine": 855,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:856",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+            "label": "Intégration personnel DPS, phase II",
+            "date": "2028-01-05",
+            "sourceLine": 856,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:857",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+            "label": "Intégration personnel DPS, phase II",
+            "date": "2028-01-05",
+            "sourceLine": 857,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF:859",
+            "definitionId": "QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF",
+            "label": "Répétition garde drapeau RA'25",
+            "date": "2028-01-06",
+            "sourceLine": 859,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:860",
+            "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+            "label": "Exercice JSP 1",
+            "date": "2028-01-10",
+            "sourceLine": 860,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:882",
+            "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+            "label": "Exercice JSP 1",
+            "date": "2028-01-25",
+            "sourceLine": 882,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD:861",
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD",
+            "label": "Intégration personnel DAP",
+            "date": "2028-01-10",
+            "sourceLine": 861,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-EM-ED042EBD:862",
+            "definitionId": "QV26-SEANCE-EM-ED042EBD",
+            "label": "Séance État-major",
+            "date": "2028-01-11",
+            "sourceLine": 862,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CADRES-F5-6-A6B9A14F:863",
+            "definitionId": "QV26-SEANCE-CADRES-F5-6-A6B9A14F",
+            "label": "Séance cadres F5/6",
+            "date": "2028-01-12",
+            "sourceLine": 863,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:864",
+            "definitionId": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+            "label": "Séance Direction JSP",
+            "date": "2028-01-12",
+            "sourceLine": 864,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB:865",
+            "definitionId": "QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB",
+            "label": "Séance échelons II, III et IV",
+            "date": "2028-01-13",
+            "sourceLine": 865,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4:866",
+            "definitionId": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+            "label": "Séance de préparation concours de la FVSP",
+            "date": "2028-01-17",
+            "sourceLine": 866,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0:869",
+            "definitionId": "QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0",
+            "label": "Séance audiovisuel et communication F5/6",
+            "date": "2028-01-18",
+            "sourceLine": 869,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+            "label": "Séance instruction DAP",
+            "date": "2028-01-18",
+            "sourceLine": 870,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+            "label": "Séance instruction DAP",
+            "date": "2028-01-19",
+            "sourceLine": 875,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+            "label": "Séance instruction DAP",
+            "date": "2028-01-27",
+            "sourceLine": 891,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+            "label": "Séance instruction DAP",
+            "date": "2028-01-27",
+            "sourceLine": 892,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:874",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+            "label": "Séance personnel DPS",
+            "date": "2028-01-19",
+            "sourceLine": 874,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:871",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+            "label": "Séance personnel DPS",
+            "date": "2028-01-19",
+            "sourceLine": 871,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:872",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+            "label": "Séance personnel DPS",
+            "date": "2028-01-19",
+            "sourceLine": 872,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:873",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+            "label": "Séance personnel DPS",
+            "date": "2028-01-19",
+            "sourceLine": 873,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CADRES-JSP-1591AA8A:876",
+            "definitionId": "QV26-SEANCE-CADRES-JSP-1591AA8A",
+            "label": "Séance cadres JSP",
+            "date": "2028-01-20",
+            "sourceLine": 876,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361:877",
+            "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361",
+            "label": "Cours de cadres Formateurs cursus MEA",
+            "date": "2028-01-24",
+            "sourceLine": 877,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-FOURRIERS-DPS-A39F1CE0:878",
+            "definitionId": "QV26-SEANCE-FOURRIERS-DPS-A39F1CE0",
+            "label": "Séance Fourriers DPS",
+            "date": "2028-01-24",
+            "sourceLine": 878,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6:879",
+            "definitionId": "QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6",
+            "label": "Séance responsables MAT SDIS",
+            "date": "2028-01-24",
+            "sourceLine": 879,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-FOURRIERS-DAP-997F4819:880",
+            "definitionId": "QV26-SEANCE-FOURRIERS-DAP-997F4819",
+            "label": "Séance Fourriers DAP",
+            "date": "2028-01-24",
+            "sourceLine": 880,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:884",
+            "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+            "label": "Séance chefs de section DPS",
+            "date": "2028-01-25",
+            "sourceLine": 884,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:881",
+            "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+            "label": "Séance chefs de section DPS",
+            "date": "2028-01-25",
+            "sourceLine": 881,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:885",
+            "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+            "label": "Séance chefs de section DPS C1",
+            "date": "2028-01-25",
+            "sourceLine": 885,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:883",
+            "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+            "label": "Séance chefs de section DPS C1",
+            "date": "2028-01-25",
+            "sourceLine": 883,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:901",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+            "label": "Séance instruction DPS",
+            "date": "2028-02-01",
+            "sourceLine": 901,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:887",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+            "label": "Séance instruction DPS",
+            "date": "2028-01-26",
+            "sourceLine": 887,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:889",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+            "label": "Séance instruction DPS",
+            "date": "2028-01-26",
+            "sourceLine": 889,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:900",
+            "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+            "label": "Séance instruction DPS",
+            "date": "2028-02-01",
+            "sourceLine": 900,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+            "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+            "label": "Séance personnel DAP",
+            "date": "2028-01-26",
+            "sourceLine": 888,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-CODIR-92921E7C:893",
+            "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+            "label": "Séance Codir",
+            "date": "2028-01-28",
+            "sourceLine": 893,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0:894",
+            "definitionId": "QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0",
+            "label": "Équipement des recrues FOBA 1",
+            "date": "2028-01-29",
+            "sourceLine": 894,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FOBA-FD15AA5A:895",
+            "definitionId": "QV26-COURS-DE-CADRES-FOBA-FD15AA5A",
+            "label": "Cours de cadres FOBA",
+            "date": "2028-01-29",
+            "sourceLine": 895,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684:896",
+            "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684",
+            "label": "Cours de cadres Formateurs MEA 1",
+            "date": "2028-01-31",
+            "sourceLine": 896,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-2-0DDB59DA:897",
+            "definitionId": "QV26-EXERCICE-JSP-2-0DDB59DA",
+            "label": "Exercice JSP 2",
+            "date": "2028-01-31",
+            "sourceLine": 897,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE:898",
+            "definitionId": "QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE",
+            "label": "Séance des chefs de section DAP",
+            "date": "2028-01-31",
+            "sourceLine": 898,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:904",
+            "definitionId": "QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC",
+            "label": "Séance communication F5/6",
+            "date": "2028-02-02",
+            "sourceLine": 904,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-PR-3817D3C2:905",
+            "definitionId": "QV26-COURS-DE-CADRES-PR-3817D3C2",
+            "label": "Cours de cadres PR",
+            "date": "2028-02-02",
+            "sourceLine": 905,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:909",
+            "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+            "label": "Séance Préposés mat DPS",
+            "date": "2028-02-03",
+            "sourceLine": 909,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:906",
+            "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+            "label": "Séance Préposés mat DPS",
+            "date": "2028-02-03",
+            "sourceLine": 906,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:907",
+            "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+            "label": "Séance Préposés mat DPS",
+            "date": "2028-02-03",
+            "sourceLine": 907,
+            "status": "PROPOSED"
+          },
+          {
+            "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:908",
+            "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+            "label": "Séance Préposés mat DPS",
+            "date": "2028-02-03",
+            "sourceLine": 908,
+            "status": "PROPOSED"
+          }
+        ],
+        "missingCadence": []
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5:O1:S1",
+      "label": "Cours de cadres Formation groupée DPS",
+      "date": "2027-03-15T14:00",
+      "statCom": "0162F7",
+      "ois": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "status": "A_POSITIONNER",
+      "review": false,
+      "reason": "",
+      "proposal": {
+        "source": "HISTORICAL_2026",
+        "sourceLine": 145,
+        "date2026": "2026-03-16",
+        "proposedDate2027": "2027-03-15",
+        "start": "14:00",
+        "end": "17:00"
+      },
+      "human": false,
+      "validated": false
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S1",
+      "label": "Formation groupée 1.1",
+      "date": "2027-05-12T18:30:00",
+      "statCom": "0120F7",
+      "ois": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "status": "PLANIFIE",
+      "review": false,
+      "reason": "",
+      "human": true,
+      "validated": true
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S2",
+      "label": "Formation groupée 1.2",
+      "date": "2027-05-21T18:30",
+      "statCom": "0120F7",
+      "ois": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1"
+      ],
+      "status": "A_POSITIONNER",
+      "review": false,
+      "reason": "",
+      "human": false,
+      "validated": false
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S3",
+      "label": "Formation groupée 1.3",
+      "date": "2027-05-26T18:30",
+      "statCom": "0120F7",
+      "ois": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1"
+      ],
+      "status": "A_POSITIONNER",
+      "review": false,
+      "reason": "",
+      "human": false,
+      "validated": false
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S4",
+      "label": "Formation groupée 1.4",
+      "date": "2027-06-04T18:30",
+      "statCom": "0120F7",
+      "ois": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1"
+      ],
+      "status": "A_POSITIONNER",
+      "review": false,
+      "reason": "",
+      "human": false,
+      "validated": false
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S5",
+      "label": "Formation groupée 1.5",
+      "date": "2027-06-08T18:30",
+      "statCom": "0120F7",
+      "ois": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1"
+      ],
+      "status": "A_POSITIONNER",
+      "review": false,
+      "reason": "",
+      "human": false,
+      "validated": false
+    },
+    {
+      "id": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S6",
+      "label": "Formation groupée 1.6",
+      "date": "2027-06-15T18:30",
+      "statCom": "0120F7",
+      "ois": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1"
+      ],
+      "status": "A_POSITIONNER",
+      "review": false,
+      "reason": "",
+      "human": false,
+      "validated": false
+    },
+    {
+      "id": "QV27:PAPR:M03",
+      "label": "Cursus PAPR - module 3",
+      "date": "2027-06-02T17:00:00",
+      "statCom": "011PR",
+      "ois": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "status": "PLANIFIE",
+      "review": true,
+      "reason": "Module PAPR rétabli depuis QUO VADIS 2026 ; date annuelle à confirmer.",
+      "human": true,
+      "validated": true
+    }
+  ],
+  "compared": 933,
+  "rollback": {
+    "status": "PASS",
+    "tables": 113
+  },
+  "before": {
+    "monitoring_f7_schema_migrations": {
+      "count": 54,
+      "hash": "d79acefa388b5152abeb130fa67a0f9c"
+    },
+    "scope_activity_domain_bindings": {
+      "count": 350,
+      "hash": "ac0dc00ddeeb22bea5b7ca0ed016ef0c"
+    },
+    "scope_activity_functional_profiles": {
+      "count": 2,
+      "hash": "3f5305e3273730b8fe0a702e4cb130ca"
+    },
+    "scope_activity_legacy_aliases": {
+      "count": 311,
+      "hash": "2c2f63615b129cac368fbf094476fe05"
+    },
+    "scope_activity_location_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_periodicities": {
+      "count": 302,
+      "hash": "51dea9cf2b0e80b802b56ad2f2707a9a"
+    },
+    "scope_activity_planning_constraints": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_public_bindings": {
+      "count": 886,
+      "hash": "1e3428d7068b6c3aedecb3193ad9c176"
+    },
+    "scope_activity_qualification_bindings": {
+      "count": 148,
+      "hash": "e45b3d7212f0d9b27035523107ab71ff"
+    },
+    "scope_activity_responsible_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_role_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_session_templates": {
+      "count": 307,
+      "hash": "6c36cddfc4a80f13fc5ee359f8854242"
+    },
+    "scope_activity_statistical_contributions": {
+      "count": 393,
+      "hash": "f63c4dff291ec8e5cf273aebb5ff846c"
+    },
+    "scope_activity_theme_bindings": {
+      "count": 104,
+      "hash": "99daffb78b78ef1c2f7916a6e07173bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_alertes_acquittements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_program_entries": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_requirement_theme_assignments": {
+      "count": 2,
+      "hash": "b5ad51c32d21269bf5cc5c1336886d27"
+    },
+    "scope_annual_requirements": {
+      "count": 5,
+      "hash": "c32e530c0d3852d6d06605a245b48934"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_catalog_convergence_links": {
+      "count": 14,
+      "hash": "0073a5e0f6974f41998385609dfb761d"
+    },
+    "scope_catalog_import_decisions": {
+      "count": 345,
+      "hash": "7fc510364b122c3fe05460b3f5a30f30"
+    },
+    "scope_catalog_import_runs": {
+      "count": 1,
+      "hash": "0a873f03e496508127b16e16a8b42878"
+    },
+    "scope_cibles": {
+      "count": 36,
+      "hash": "09acc9482993dcfb10308e63bea64436"
+    },
+    "scope_competence_aliases": {
+      "count": 25,
+      "hash": "4e7dc5d8f6df970efc98d32135be058b"
+    },
+    "scope_competence_definitions": {
+      "count": 17,
+      "hash": "57d380595374647031ab01f476992011"
+    },
+    "scope_competence_implications": {
+      "count": 1,
+      "hash": "aa842786d98f8a8c326d0aafc636c0bb"
+    },
+    "scope_cycle_personnes": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_cycles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_domaine_ois": {
+      "count": 11,
+      "hash": "0997e5c227226479d31f52d324db575c"
+    },
+    "scope_domaines": {
+      "count": 10,
+      "hash": "01b279aeff93a944a086d90c57a727bf"
+    },
+    "scope_evenement_cibles": {
+      "count": 340,
+      "hash": "4629b7521cdf9148510ce14fd339b50b"
+    },
+    "scope_evenement_cibles_qv": {
+      "count": 205,
+      "hash": "39ea08d7b1e938c0cd6da5c73e801958"
+    },
+    "scope_evenement_domaines": {
+      "count": 125,
+      "hash": "c83dc6af46d3288271652fa1b9683494"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_public_rule_versions": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_evenement_ressources_qv": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_roles_qv": {
+      "count": 1,
+      "hash": "aff2eb614e65c4e53a9e2ef93d87d1c2"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_event_code_sequences": {
+      "count": 28,
+      "hash": "8c0519c684d745b2ad167339c5887b9b"
+    },
+    "scope_event_definition_versions": {
+      "count": 305,
+      "hash": "e110db664e9fe1a7a5fe671771fc3d32"
+    },
+    "scope_event_definitions": {
+      "count": 305,
+      "hash": "2a872f932f5ed8a50a658dce8b3d8e96"
+    },
+    "scope_event_person_roles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_event_role_aliases": {
+      "count": 1,
+      "hash": "6ac5141919a332b688d525ed1b5072a4"
+    },
+    "scope_event_role_definitions": {
+      "count": 8,
+      "hash": "bf5caa86e0efd1ceef898e2b34f542d2"
+    },
+    "scope_exercices": {
+      "count": 2,
+      "hash": "649ff3fd6bb91906603bbcc89f3b9f45"
+    },
+    "scope_foba_niveaux": {
+      "count": 3,
+      "hash": "2201f54b1c9a9e80a2aabcc4bb416d84"
+    },
+    "scope_import_lignes": {
+      "count": 139,
+      "hash": "453eb341e1825053b58f05c65472cb0b"
+    },
+    "scope_imports": {
+      "count": 1,
+      "hash": "b8c9a9f9b0875cb65822d08686641f49"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_legacy_aggregates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_legacy_cible_competence_mappings": {
+      "count": 6,
+      "hash": "abf087209f8e40e4f855549117622ac8"
+    },
+    "scope_legacy_cible_foba_niveau_mappings": {
+      "count": 3,
+      "hash": "9e0d9efcb89528f39b59a58e0b7e8842"
+    },
+    "scope_legacy_cible_oi_mappings": {
+      "count": 15,
+      "hash": "8e01e627ae67394f4f727fec1e083a88"
+    },
+    "scope_legacy_cible_pr_parcours_mappings": {
+      "count": 6,
+      "hash": "b1b8cbf8f79e298d2946c3b04ec2e778"
+    },
+    "scope_legacy_cible_reviews": {
+      "count": 10,
+      "hash": "64d4f37d2fb3300e31cca5292905171f"
+    },
+    "scope_lieux": {
+      "count": 8,
+      "hash": "a00ca61f72768c069e89e12c3f215c98"
+    },
+    "scope_location_categories": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_multisession_v2_participations": {
+      "count": 69,
+      "hash": "d37be33f42e66567f1868bf014b37ae0"
+    },
+    "scope_multisession_v2_population": {
+      "count": 71,
+      "hash": "b7e6ddcd27cbbc314521c720993fe5d9"
+    },
+    "scope_multisession_v2_sessions": {
+      "count": 2,
+      "hash": "e8ece1be96cc34e479be220994881bcf"
+    },
+    "scope_multisessions_v2": {
+      "count": 1,
+      "hash": "ccf9f30187a7e30a689558b847c2770a"
+    },
+    "scope_objectifs": {
+      "count": 6,
+      "hash": "f5295ff222872620bf7fce0e4e3b449f"
+    },
+    "scope_ois": {
+      "count": 8,
+      "hash": "27d082edc900c4e093334967527c7eb5"
+    },
+    "scope_participation_motifs": {
+      "count": 19,
+      "hash": "b38df2c0b41910f11f18951b6717ec26"
+    },
+    "scope_participation_policies": {
+      "count": 8,
+      "hash": "4d4dad74ff2e614db50b37c9a82896eb"
+    },
+    "scope_participation_policy_versions": {
+      "count": 12,
+      "hash": "691bcfc8c06bee853a4322db815f20d8"
+    },
+    "scope_participation_statuses": {
+      "count": 5,
+      "hash": "48da7ed480a7bb00204d30a6822da819"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_permutations": {
+      "count": 9,
+      "hash": "6560f1a92012a503bd641b3017f1cc5b"
+    },
+    "scope_person_qualification_evidence": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_person_qualifications": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_personne_periodes": {
+      "count": 315,
+      "hash": "6a663666c7327a48cc9eb43c94afd3c7"
+    },
+    "scope_personnel_import_batches": {
+      "count": 14,
+      "hash": "4ed8d263f0ba57a09778b66fff841411"
+    },
+    "scope_personnel_import_lines": {
+      "count": 772,
+      "hash": "1b928388a2b82b7b27387506329005c9"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    },
+    "scope_planned_occurrence_sessions": {
+      "count": 10,
+      "hash": "6145b2d6e29abd3fefca87554e37bb0d"
+    },
+    "scope_planned_occurrences": {
+      "count": 10,
+      "hash": "ff6daf4a00b85a75aec58a324c2bf711"
+    },
+    "scope_planned_site_slots": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_pr_parcours": {
+      "count": 3,
+      "hash": "6b6ff0fb90e36065eb126a5dfd67cc06"
+    },
+    "scope_pr_parcours_aliases": {
+      "count": 6,
+      "hash": "bf760c4acb335a446bb6f9b5954f9f81"
+    },
+    "scope_public_definitions": {
+      "count": 34,
+      "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+    },
+    "scope_public_rule_versions": {
+      "count": 27,
+      "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+    },
+    "scope_quo_vadis_calendar_days": {
+      "count": 18,
+      "hash": "31449a187fd3a01780001acb6f70f9a2"
+    },
+    "scope_quo_vadis_cohortes": {
+      "count": 2,
+      "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+    },
+    "scope_quo_vadis_cursus_definitions": {
+      "count": 11,
+      "hash": "598a451891d35b8b9bbe976fdc306fb1"
+    },
+    "scope_quo_vadis_cursus_programmes": {
+      "count": 11,
+      "hash": "70856ff041a262be4d959cb4e584e972"
+    },
+    "scope_quo_vadis_cursus_step_programmes": {
+      "count": 59,
+      "hash": "768f2870adbc07ed57c6e2e4837e4204"
+    },
+    "scope_quo_vadis_cursus_steps": {
+      "count": 59,
+      "hash": "73a216591405ea28f145f52b63516076"
+    },
+    "scope_quo_vadis_cursus_versions": {
+      "count": 11,
+      "hash": "a209803843cd767593099392dad8410c"
+    },
+    "scope_quo_vadis_dps_organisation_versions": {
+      "count": 4,
+      "hash": "14ebb8fb0f13c3ed58b77e04fb9f3064"
+    },
+    "scope_quo_vadis_future_dates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_quo_vadis_planning_rules": {
+      "count": 12,
+      "hash": "18cb99c52a70580cf2c0f4bd4bb82e84"
+    },
+    "scope_quo_vadis_programme_history": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_programmes": {
+      "count": 1,
+      "hash": "180bcb3daaa42a2c62c9868a3851b548"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "8311de7912a41a8250dc802490327d65"
+    },
+    "scope_qv_publication_activities": {
+      "count": 52,
+      "hash": "8ef159fcfdffa4e3107063b3e268e79c"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_qv_publication_runs": {
+      "count": 7,
+      "hash": "825c4db1f70bb59bc0fdb8da87514436"
+    },
+    "scope_qv_session_events": {
+      "count": 125,
+      "hash": "1ac193fd08c98f83c06ffd4c94da270b"
+    },
+    "scope_qv_session_groups": {
+      "count": 125,
+      "hash": "ea4de3c8f096a796d8ec713ca930798f"
+    },
+    "scope_regles_bascule": {
+      "count": 1,
+      "hash": "1814609c6ad125d820c30dcf6ea74e16"
+    },
+    "scope_responsable_fonctions": {
+      "count": 28,
+      "hash": "00c69bec9f05d275a1013b39f87f08cf"
+    },
+    "scope_saisies_quantitatives": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_salles_theorie": {
+      "count": 11,
+      "hash": "7a1679704187bd0804dbde3e61d080e3"
+    },
+    "scope_sous_domaines": {
+      "count": 2,
+      "hash": "05462606a17fda7e495490fbc898be0b"
+    },
+    "scope_statcom_referentiel": {
+      "count": 91,
+      "hash": "3240a49db480bb4dcf635221eb1dd09f"
+    },
+    "scope_suivi_nominatif": {
+      "count": 1,
+      "hash": "ad814676b9fc711505ae64c61812ca82"
+    },
+    "scope_theme_definitions": {
+      "count": 68,
+      "hash": "9e2c1567ee5007166b0a6f12e7956e6e"
+    },
+    "scope_theme_versions": {
+      "count": 68,
+      "hash": "16199537773c5e7d47130e50b0ba08a1"
+    }
+  },
+  "after": {
+    "monitoring_f7_schema_migrations": {
+      "count": 54,
+      "hash": "d79acefa388b5152abeb130fa67a0f9c"
+    },
+    "scope_activity_domain_bindings": {
+      "count": 350,
+      "hash": "ac0dc00ddeeb22bea5b7ca0ed016ef0c"
+    },
+    "scope_activity_functional_profiles": {
+      "count": 2,
+      "hash": "3f5305e3273730b8fe0a702e4cb130ca"
+    },
+    "scope_activity_legacy_aliases": {
+      "count": 311,
+      "hash": "2c2f63615b129cac368fbf094476fe05"
+    },
+    "scope_activity_location_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_periodicities": {
+      "count": 302,
+      "hash": "51dea9cf2b0e80b802b56ad2f2707a9a"
+    },
+    "scope_activity_planning_constraints": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_public_bindings": {
+      "count": 886,
+      "hash": "1e3428d7068b6c3aedecb3193ad9c176"
+    },
+    "scope_activity_qualification_bindings": {
+      "count": 148,
+      "hash": "e45b3d7212f0d9b27035523107ab71ff"
+    },
+    "scope_activity_responsible_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_role_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_session_templates": {
+      "count": 307,
+      "hash": "6c36cddfc4a80f13fc5ee359f8854242"
+    },
+    "scope_activity_statistical_contributions": {
+      "count": 393,
+      "hash": "f63c4dff291ec8e5cf273aebb5ff846c"
+    },
+    "scope_activity_theme_bindings": {
+      "count": 104,
+      "hash": "99daffb78b78ef1c2f7916a6e07173bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_alertes_acquittements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_program_entries": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_requirement_theme_assignments": {
+      "count": 2,
+      "hash": "b5ad51c32d21269bf5cc5c1336886d27"
+    },
+    "scope_annual_requirements": {
+      "count": 5,
+      "hash": "c32e530c0d3852d6d06605a245b48934"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_catalog_convergence_links": {
+      "count": 14,
+      "hash": "0073a5e0f6974f41998385609dfb761d"
+    },
+    "scope_catalog_import_decisions": {
+      "count": 345,
+      "hash": "7fc510364b122c3fe05460b3f5a30f30"
+    },
+    "scope_catalog_import_runs": {
+      "count": 1,
+      "hash": "0a873f03e496508127b16e16a8b42878"
+    },
+    "scope_cibles": {
+      "count": 36,
+      "hash": "09acc9482993dcfb10308e63bea64436"
+    },
+    "scope_competence_aliases": {
+      "count": 25,
+      "hash": "4e7dc5d8f6df970efc98d32135be058b"
+    },
+    "scope_competence_definitions": {
+      "count": 17,
+      "hash": "57d380595374647031ab01f476992011"
+    },
+    "scope_competence_implications": {
+      "count": 1,
+      "hash": "aa842786d98f8a8c326d0aafc636c0bb"
+    },
+    "scope_cycle_personnes": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_cycles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_domaine_ois": {
+      "count": 11,
+      "hash": "0997e5c227226479d31f52d324db575c"
+    },
+    "scope_domaines": {
+      "count": 10,
+      "hash": "01b279aeff93a944a086d90c57a727bf"
+    },
+    "scope_evenement_cibles": {
+      "count": 340,
+      "hash": "4629b7521cdf9148510ce14fd339b50b"
+    },
+    "scope_evenement_cibles_qv": {
+      "count": 205,
+      "hash": "39ea08d7b1e938c0cd6da5c73e801958"
+    },
+    "scope_evenement_domaines": {
+      "count": 125,
+      "hash": "c83dc6af46d3288271652fa1b9683494"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_public_rule_versions": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_evenement_ressources_qv": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_roles_qv": {
+      "count": 1,
+      "hash": "aff2eb614e65c4e53a9e2ef93d87d1c2"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_event_code_sequences": {
+      "count": 28,
+      "hash": "8c0519c684d745b2ad167339c5887b9b"
+    },
+    "scope_event_definition_versions": {
+      "count": 305,
+      "hash": "e110db664e9fe1a7a5fe671771fc3d32"
+    },
+    "scope_event_definitions": {
+      "count": 305,
+      "hash": "2a872f932f5ed8a50a658dce8b3d8e96"
+    },
+    "scope_event_person_roles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_event_role_aliases": {
+      "count": 1,
+      "hash": "6ac5141919a332b688d525ed1b5072a4"
+    },
+    "scope_event_role_definitions": {
+      "count": 8,
+      "hash": "bf5caa86e0efd1ceef898e2b34f542d2"
+    },
+    "scope_exercices": {
+      "count": 2,
+      "hash": "649ff3fd6bb91906603bbcc89f3b9f45"
+    },
+    "scope_foba_niveaux": {
+      "count": 3,
+      "hash": "2201f54b1c9a9e80a2aabcc4bb416d84"
+    },
+    "scope_import_lignes": {
+      "count": 139,
+      "hash": "453eb341e1825053b58f05c65472cb0b"
+    },
+    "scope_imports": {
+      "count": 1,
+      "hash": "b8c9a9f9b0875cb65822d08686641f49"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_legacy_aggregates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_legacy_cible_competence_mappings": {
+      "count": 6,
+      "hash": "abf087209f8e40e4f855549117622ac8"
+    },
+    "scope_legacy_cible_foba_niveau_mappings": {
+      "count": 3,
+      "hash": "9e0d9efcb89528f39b59a58e0b7e8842"
+    },
+    "scope_legacy_cible_oi_mappings": {
+      "count": 15,
+      "hash": "8e01e627ae67394f4f727fec1e083a88"
+    },
+    "scope_legacy_cible_pr_parcours_mappings": {
+      "count": 6,
+      "hash": "b1b8cbf8f79e298d2946c3b04ec2e778"
+    },
+    "scope_legacy_cible_reviews": {
+      "count": 10,
+      "hash": "64d4f37d2fb3300e31cca5292905171f"
+    },
+    "scope_lieux": {
+      "count": 8,
+      "hash": "a00ca61f72768c069e89e12c3f215c98"
+    },
+    "scope_location_categories": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_multisession_v2_participations": {
+      "count": 69,
+      "hash": "d37be33f42e66567f1868bf014b37ae0"
+    },
+    "scope_multisession_v2_population": {
+      "count": 71,
+      "hash": "b7e6ddcd27cbbc314521c720993fe5d9"
+    },
+    "scope_multisession_v2_sessions": {
+      "count": 2,
+      "hash": "e8ece1be96cc34e479be220994881bcf"
+    },
+    "scope_multisessions_v2": {
+      "count": 1,
+      "hash": "ccf9f30187a7e30a689558b847c2770a"
+    },
+    "scope_objectifs": {
+      "count": 6,
+      "hash": "f5295ff222872620bf7fce0e4e3b449f"
+    },
+    "scope_ois": {
+      "count": 8,
+      "hash": "27d082edc900c4e093334967527c7eb5"
+    },
+    "scope_participation_motifs": {
+      "count": 19,
+      "hash": "b38df2c0b41910f11f18951b6717ec26"
+    },
+    "scope_participation_policies": {
+      "count": 8,
+      "hash": "4d4dad74ff2e614db50b37c9a82896eb"
+    },
+    "scope_participation_policy_versions": {
+      "count": 12,
+      "hash": "691bcfc8c06bee853a4322db815f20d8"
+    },
+    "scope_participation_statuses": {
+      "count": 5,
+      "hash": "48da7ed480a7bb00204d30a6822da819"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_permutations": {
+      "count": 9,
+      "hash": "6560f1a92012a503bd641b3017f1cc5b"
+    },
+    "scope_person_qualification_evidence": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_person_qualifications": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_personne_periodes": {
+      "count": 315,
+      "hash": "6a663666c7327a48cc9eb43c94afd3c7"
+    },
+    "scope_personnel_import_batches": {
+      "count": 14,
+      "hash": "4ed8d263f0ba57a09778b66fff841411"
+    },
+    "scope_personnel_import_lines": {
+      "count": 772,
+      "hash": "1b928388a2b82b7b27387506329005c9"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    },
+    "scope_planned_occurrence_sessions": {
+      "count": 10,
+      "hash": "6145b2d6e29abd3fefca87554e37bb0d"
+    },
+    "scope_planned_occurrences": {
+      "count": 10,
+      "hash": "ff6daf4a00b85a75aec58a324c2bf711"
+    },
+    "scope_planned_site_slots": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_pr_parcours": {
+      "count": 3,
+      "hash": "6b6ff0fb90e36065eb126a5dfd67cc06"
+    },
+    "scope_pr_parcours_aliases": {
+      "count": 6,
+      "hash": "bf760c4acb335a446bb6f9b5954f9f81"
+    },
+    "scope_public_definitions": {
+      "count": 34,
+      "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+    },
+    "scope_public_rule_versions": {
+      "count": 27,
+      "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+    },
+    "scope_quo_vadis_calendar_days": {
+      "count": 18,
+      "hash": "31449a187fd3a01780001acb6f70f9a2"
+    },
+    "scope_quo_vadis_cohortes": {
+      "count": 2,
+      "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+    },
+    "scope_quo_vadis_cursus_definitions": {
+      "count": 11,
+      "hash": "598a451891d35b8b9bbe976fdc306fb1"
+    },
+    "scope_quo_vadis_cursus_programmes": {
+      "count": 11,
+      "hash": "70856ff041a262be4d959cb4e584e972"
+    },
+    "scope_quo_vadis_cursus_step_programmes": {
+      "count": 59,
+      "hash": "768f2870adbc07ed57c6e2e4837e4204"
+    },
+    "scope_quo_vadis_cursus_steps": {
+      "count": 59,
+      "hash": "73a216591405ea28f145f52b63516076"
+    },
+    "scope_quo_vadis_cursus_versions": {
+      "count": 11,
+      "hash": "a209803843cd767593099392dad8410c"
+    },
+    "scope_quo_vadis_dps_organisation_versions": {
+      "count": 4,
+      "hash": "14ebb8fb0f13c3ed58b77e04fb9f3064"
+    },
+    "scope_quo_vadis_future_dates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_quo_vadis_planning_rules": {
+      "count": 12,
+      "hash": "18cb99c52a70580cf2c0f4bd4bb82e84"
+    },
+    "scope_quo_vadis_programme_history": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_programmes": {
+      "count": 1,
+      "hash": "180bcb3daaa42a2c62c9868a3851b548"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "8311de7912a41a8250dc802490327d65"
+    },
+    "scope_qv_publication_activities": {
+      "count": 52,
+      "hash": "8ef159fcfdffa4e3107063b3e268e79c"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_qv_publication_runs": {
+      "count": 7,
+      "hash": "825c4db1f70bb59bc0fdb8da87514436"
+    },
+    "scope_qv_session_events": {
+      "count": 125,
+      "hash": "1ac193fd08c98f83c06ffd4c94da270b"
+    },
+    "scope_qv_session_groups": {
+      "count": 125,
+      "hash": "ea4de3c8f096a796d8ec713ca930798f"
+    },
+    "scope_regles_bascule": {
+      "count": 1,
+      "hash": "1814609c6ad125d820c30dcf6ea74e16"
+    },
+    "scope_responsable_fonctions": {
+      "count": 28,
+      "hash": "00c69bec9f05d275a1013b39f87f08cf"
+    },
+    "scope_saisies_quantitatives": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_salles_theorie": {
+      "count": 11,
+      "hash": "7a1679704187bd0804dbde3e61d080e3"
+    },
+    "scope_sous_domaines": {
+      "count": 2,
+      "hash": "05462606a17fda7e495490fbc898be0b"
+    },
+    "scope_statcom_referentiel": {
+      "count": 91,
+      "hash": "3240a49db480bb4dcf635221eb1dd09f"
+    },
+    "scope_suivi_nominatif": {
+      "count": 1,
+      "hash": "ad814676b9fc711505ae64c61812ca82"
+    },
+    "scope_theme_definitions": {
+      "count": 68,
+      "hash": "9e2c1567ee5007166b0a6f12e7956e6e"
+    },
+    "scope_theme_versions": {
+      "count": 68,
+      "hash": "16199537773c5e7d47130e50b0ba08a1"
+    }
+  }
+}

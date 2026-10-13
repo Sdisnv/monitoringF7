@@ -3308,6 +3308,8 @@
       : /crimson/i.test(source.activityLabel || source.label || source.title || '') ? 'SDIS_EXTRAORDINARY' : 'SDIS_RECURRENT');
     const occupation=nature==='EXTERNAL_OCCUPATION';
     const manifestation=qvProgrammeInternalManifestation(source);
+    if(occupation) return {activityNature:nature,externalActivity:true,annualRecurrence:false,
+      participationEvaluation:false,sold:false,ecawinExport:false};
     return {activityNature:nature,externalActivity:occupation,
       annualRecurrence:explicit('annualRecurrence') ?? (nature==='SDIS_RECURRENT'),
       participationEvaluation:explicit('participationEvaluation') ?? !occupation,
@@ -3333,7 +3335,8 @@
       { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:')) },
       { group: 'Échelons', items: [['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
       { group: 'Sections DPS', items: ['N01', 'N01a', 'N01b', 'N02', 'N02a', 'N02b', 'N03', 'N03a', 'N03b', 'N04', 'N04a', 'N04b', 'N05', 'N05a', 'N05b', 'N06'].map(code => [code, code]) },
-      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe'], ['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidat CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidat CI DAP']] },
+      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe']] },
+      { group: 'OPÉRATIONNEL', items: [['ENC:OSR','OSR'],['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidat CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidat CI DAP']] },
       { group: 'Formation', items: [['FOBA:1', 'FOBA 1'], ['FOBA:2', 'FOBA 2'], ['FOBA:3', 'FOBA 3']] },
       { group: 'PR', items: [['PR:2', 'PAPR'], ['PR:CAND-PAPR', 'Candidat PAPR'], ['PR:3', 'PABC'], ['PR:FORMATEURS', 'Formateur PR'], ['PR:FMF', 'Formateur maison Feu (FMF)'], ['PR:CHEF-PISTE', 'Chef piste']] },
       { group: 'AUTO', items: [['AUTO:1', 'cond PL'], ['AUTO:CAND-PL', 'Candidat cond PL'], ['AUTO:3', 'cond VL'], ['AUTO:5', 'Machiniste EA'], ['AUTO:CAND-EA', 'Candidat machiniste EA'], ['AUTO:6', 'Pilote BAT'], ['AUTO:2', 'cond TP9'], ['AUTO:CAND-TP9', 'Candidat cond TP9'], ['AUTO:4', 'Grutier'], ['AUTO:MONITEURS', 'Moniteur conduite'], ['AUTO:FORM-C1', 'Formateur C1/118'], ['AUTO:FORM-EA', 'Formateur EA'], ['AUTO:FORM-GRUTIER', 'Formateur grutier']] },

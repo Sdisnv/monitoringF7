@@ -11848,7 +11848,7 @@ body.scope-pdf-open { overflow: hidden; }
 /* Compact programme controls retain the existing four-column form grid. */
 .qv-programme-preparation .qv-programme-parameters{grid-column:1/-1;display:grid;grid-template-columns:minmax(240px,1.8fr) repeat(4,minmax(130px,1fr));gap:12px;align-items:end;padding:12px 0;border-block:1px solid #d7dfe7;min-width:0}
 .qv-programme-preparation .qv-programme-parameters>label{min-width:0;margin:0}
-.qv-programme-preparation .qv-programme-parameters .qv-programme-keep-lieu{display:flex;align-items:center;gap:8px;min-height:36px;font-weight:400}
+.qv-programme-preparation .qv-programme-parameters .qv-programme-keep-lieu{display:flex;flex-direction:row;align-items:center;align-self:end;gap:8px;min-height:39px;font-weight:400}
 .qv-programme-preparation .qv-programme-parameters input[type=checkbox]{width:16px;height:16px;min-height:16px;flex:0 0 16px;padding:0;margin:0}
 .qv-programme-preparation .qv-programme-choice-menu{height:39px;box-sizing:border-box}
 .qv-programme-preparation .qv-programme-choice-menu>summary{height:37px;min-height:37px;line-height:21px;padding-block:8px}

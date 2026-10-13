@@ -11056,7 +11056,7 @@
 
   function qvProgrammePdfControl() {
     const monthly = qvView() !== 'agenda-annuel' && state.quoVadisProgrammeMode === 'mensuelle';
-    return `<select id="qv-export-programme-variant" class="qv-pdf-variant" aria-label="Format PDF"><option value="annual" ${monthly ? '' : 'selected'}>Planning détaillé</option><option value="compact">Liste compacte</option><option value="monthly" ${monthly ? 'selected' : ''}>Planning mensuel</option></select>`;
+    return `<select id="qv-export-programme-variant" class="qv-pdf-variant" aria-label="Format PDF"><option value="annual" ${monthly ? '' : 'selected'}>Planning annuel</option><option value="compact">Liste compacte</option><option value="monthly" ${monthly ? 'selected' : ''}>Planning mensuel</option></select>`;
   }
 
   function renderQuoVadisNav(qv) {
@@ -11836,6 +11836,7 @@
         ? {tone:'attention',label:'Publié · Validation retirée'} : { tone: 'positive', label: 'Publié' };
     if (row.preparation && row.status === 'ANNULE') return { tone: 'inactive', label: 'Annulé' };
     if (row.preparation && row.status === 'NON_RETENU') return { tone: 'inactive', label: 'Écarté' };
+    if(row.planningDayControl && !row.businessValidation) return {tone:'attention',label:'À contrôler'};
     if ((row.review || row.publicReviewRequired) && !row.businessValidation) return { tone: 'attention', label: 'À contrôler' };
     if ((row.preparation || row.manualCreation) && row.status === 'PLANIFIE') return { tone:'positive',label:'Planifié' };
     if ((row.preparation || row.manualCreation) && row.status === 'PROPOSE') return { tone: 'info', label: 'Activité proposée' };
@@ -11844,7 +11845,10 @@
     if (row.preparation && row.status === 'PLANIFIE') return row.businessValidation
       ? { tone: 'positive', label: 'Validé' } : { tone: 'info', label: 'Planifié' };
     if (row.historicalProposal || String(row.provenance || '').includes('HISTORICAL_2026')) return { tone: 'info', label: 'Activité proposée' };
-    if (row.status !== 'VALIDATED') return { tone: row.status === 'A_POSITIONNER' ? 'info' : 'attention', label: 'À contrôler' };
+    if(row.status==='A_POSITIONNER') return {tone:'info',label:'À planifier'};
+    if(['MOA_ARBITRATION','INSUFFICIENT_INFORMATION','MOA_REQUIRED'].includes(row.status)) return {tone:'attention',label:'À contrôler'};
+    if(row.definitionId==='CTA-PERMANENCE') return {tone:'info',label:'Calculé'};
+    if (row.status !== 'VALIDATED') return { tone:'info',label:'Activité proposée' };
     return { tone: 'positive', label: 'Validé' };
   }
 
@@ -12742,13 +12746,34 @@
         'Horaires, thème, public et responsable à confirmer.'].filter(Boolean).join(' ')]);
     if(row.paprOiRevisionRequired) controls.push(['OI publiés','Les quatre OI DPS ne sont pas persistés dans la publication.','Confirmer une révision ciblée.']);
     if(row.paprProposal?.status==='CONFLIT') controls.push(['Cursus PAPR',row.paprProposal.conflicts?.join(' ; ') || row.reason || 'Contraintes de calendrier incompatibles.','Adapter la proposition ou arbitrer le conflit.']);
-    if(row.reservationConflicts?.length) controls.push(['Réservation',row.reservationConflicts.map(item=>item.otherLabel).join(' ; '),'Modifier la date, le lieu ou la salle.']);
+    if(row.reservationConflicts?.length) controls.push(['Réservation',
+      `${qvFormatDate(row.startsAt)} · ${qvProgrammeTime(row)} · ${qvProgrammeLocationLabel(row)} : ${row.reservationConflicts.map(item=>item.otherLabel).join(' ; ')}.`,
+      'QV-NATURE-001 : modifier la date, le lieu ou la salle pour résoudre le conflit de disponibilité.']);
     const ecawin=qvProgrammeEcawinStatus(row.ecawinActivityCode,row.statCom);
     if(ecawin) controls.push(['ECAwin',ecawin,'Contrôler la correspondance sans modifier le Stat.Com historique.']);
     if(row.oiQualification==='AMBIGUOUS' && !row.externalActivity) controls.push(['OI','Le domaine de certains OI n’est pas qualifié.','Choisir les OI dans leur domaine.']);
     if(row.annualReportConstraint?.status==='BLOCKED_BY_ANNUAL_REPORT') controls.push(['Rapport annuel',row.reason || 'Le créneau est réservé au Rapport annuel.','Repositionner l’activité.']);
+    if(row.annualReportConstraint?.status==='PUBLICATION_UPDATE_REQUIRED') controls.push(['Rapport annuel publié',
+      `Date publiée : ${qvFormatDate(row.publishedEventDate)}. Date du Programme : ${qvFormatDate(row.startsAt)}.`,
+      'QV-CYCLE-001 : coordonner une révision ciblée de la publication ; aucune date publiée n’est déplacée automatiquement.']);
+    if(row.planningDayControl && !row.businessValidation) controls.push(['Jour de planification',
+      `${qvFormatDate(row.planningDayControl.date)} : ${row.planningDayControl.reasons.join(' ')}`,
+      `Règle : ${row.planningDayControl.ruleCode || 'Calendrier du Programme'}. ${row.planningDayControl.derogationAllowed
+        ? 'Repositionner ou soumettre une dérogation motivée.' : 'Repositionner ; la dérogation est interdite.'}`]);
+    if((row.review || row.publicReviewRequired || ['MOA_ARBITRATION','INSUFFICIENT_INFORMATION','MOA_REQUIRED'].includes(row.status)) && !row.businessValidation) {
+      const reason=row.reason || row.historicalProposal?.reason;
+      if(reason && !controls.some(item=>item[1]===reason)) controls.push(['Contrôle métier',reason,
+        [row.projectionRule || row.historicalProposal?.rule,row.dayClassLabel || row.historicalProposal?.dayClass].filter(Boolean).join(' · ')
+          ? `Règle : ${[row.projectionRule || row.historicalProposal?.rule,row.dayClassLabel || row.historicalProposal?.dayClass].filter(Boolean).join(' · ')}. Contrôler la date et la qualification.`
+          : 'Contrôler la date et la qualification selon la règle métier affichée.']);
+      if(!reason && !controls.length) controls.push(['Contrôle métier','Le marqueur de contrôle existe, mais sa cause n’est pas enregistrée.',
+        'Faire qualifier ce contrôle ; aucune cause ne peut être déduite automatiquement.']);
+    }
     if(!controls.length) return '';
-    return `<section class="qv-programme-controls" aria-label="À contrôler"><h3>À contrôler</h3><ul>${controls.map(([point,reason,action])=>`<li><strong>${escapeHtml(point)}</strong><span>${escapeHtml(reason)}</span><span>${escapeHtml(action)}</span></li>`).join('')}</ul></section>`;
+    const proposalDates=row.dapGroupedProposal && !row.businessValidation && hasScopePermission('references:manage')
+      ? [...new Set([row.dapGroupedProposal.proposedDate,...(row.dapGroupedProposal.replanning?.candidates || []).slice(0,2).map(item=>item.date)].filter(Boolean))] : [];
+    return `<section class="qv-programme-controls" aria-label="À contrôler"><h3>À contrôler</h3><ul>${controls.map(([point,reason,action])=>`<li><strong>${escapeHtml(point)}</strong><span>${escapeHtml(reason)}</span><span>${escapeHtml(action)}</span></li>`).join('')}</ul>
+      ${proposalDates.length?`<div class="scope-actions">${proposalDates.map(date=>`<button type="button" class="scope-btn scope-btn-secondary" data-qv-proposed-date="${escapeHtml(date)}">Appliquer le ${escapeHtml(qvFormatDate(date))}</button>`).join('')}</div>`:''}</section>`;
   }
 
   function qvHistoryHtml(history,qv){
@@ -12756,6 +12781,16 @@
       responsibleLabel:'Responsable',responsibleSelections:'Responsable',statCom:'Stat.Com',planningStatus:'État de planification',statut:'État',
       participationEvaluation:'Participation',sold:'Solde',ecawinExport:'Export ECAwin',annualRecurrence:'Reconduction annuelle',activityNature:'Nature',
       lieuId:'Lieu',locationLabel:'Lieu',salleTheorieId:'Salle',roomLabel:'Salle',qualificationCodes:'Spécialisation',publicFreeLabels:'Public libre'};
+    Object.assign(labels,{responsableFonctionCode:'Fonction responsable',sessionStructure:'Séances',cursusId:'Cursus de formation',
+      cursus:'Cursus de formation',specialisation:'Spécialisation',family:'Famille',externalActivity:'Occupation externe',
+      libelle:'Activité',date_fin:'Date de fin',heure_debut:'Début',heure_fin:'Fin',heure_debut_prevue:'Début prévu',heure_fin_prevue:'Fin prévue',
+      statcom_code:'Stat.Com',domaine_code:'Domaine',lieu_id:'Lieu',salle_theorie_id:'Salle',responsable_fonction_code:'Responsable'});
+    const actions={VALIDER_OCCURRENCE:'Validation',RETIRER_VALIDATION:'Retrait de validation',MODIFIER_OCCURRENCE:'Modification',
+      CREER_OCCURRENCE:'Création',PUBLIER:'Publication',PUBLIER_EVENEMENT:'Publication',ANNULER_OCCURRENCE:'Annulation',
+      ANNULER:'Annulation',SUPPRIMER_LOGIQUEMENT:'Suppression logique',OUVRIR_REVISION_CIBLEE:'Révision',
+      VALIDER_REVISION_CIBLEE:'Validation de révision',MODIFIER_PUBLICATION_MINEURE:'Modification de publication',
+      MODIFIER_EVENEMENT:'Modification',MODIFIER:'Modification',CREER:'Création',PLANIFIER:'Planification',
+      EXPORTER_QUO_VADIS_PDF:'Export PDF',GENERER_RAPPORT:'Génération de rapport'};
     const value=(key,item)=>{
       if(item==null || item==='') return '—';
       if(typeof item==='boolean') return item?'Oui':'Non';
@@ -12768,12 +12803,22 @@
       return String(item);
     };
     if(!history.length) return '<p class="scope-muted">Aucune transaction enregistrée.</p>';
-    return `<div class="scope-table-wrap"><table class="scope-table qv-history-table"><thead><tr><th>Date et heure</th><th>Auteur</th><th>Action</th><th>Champ</th><th>Ancienne valeur</th><th>Nouvelle valeur</th><th>Motif</th></tr></thead><tbody>${history.map(entry=>{
+    return `<div class="scope-table-wrap"><table class="scope-table qv-history-table"><thead><tr><th>Date et heure</th><th>Auteur</th><th>Action</th><th>Motif</th><th>Détail de la transaction</th></tr></thead><tbody>${history.map(entry=>{
       const before=entry.avant?.fields || entry.avant || {},after=entry.apres?.fields || entry.apres || {};
-      const changes=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(key=>labels[key]
+      const changes=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(key=>!['updatedAt','updated_at','version'].includes(key)
         && JSON.stringify(before[key])!==JSON.stringify(after[key]));
-      const author=entry.auteur_id && !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(entry.auteur_id) ? entry.auteur_id.replace(/^local:/i,'') : 'Auteur non renseigné';
-      return (changes.length?changes:[null]).map(key=>`<tr><td>${escapeHtml(new Date(entry.at).toLocaleString('fr-CH',{timeZone:'Europe/Zurich'}))}</td><td>${escapeHtml(author)}</td><td>${escapeHtml(entry.action.replace(/_/g,' '))}</td><td>${escapeHtml(labels[key] || 'Décision')}</td><td>${escapeHtml(key?value(key,before[key]):'—')}</td><td>${escapeHtml(key?value(key,after[key]):'Décision enregistrée')}</td><td>${escapeHtml(entry.commentaire || '—')}</td></tr>`).join('');
+      const author=entry.authorLabel || (entry.auteur_id?'Auteur référencé':'Auteur non renseigné');
+      const raw=String(entry.action || '').replace(/_/g,' ').toLocaleLowerCase('fr-CH');
+      const action=actions[entry.action] || raw.charAt(0).toLocaleUpperCase('fr-CH')+raw.slice(1);
+      const fields=changes.map(key=>({label:labels[key] || (/id$/i.test(key)?'Référence':key.replace(/_/g,' ')),before:Object.hasOwn(before,key)?value(key,before[key]):'Non enregistré',
+        after:Object.hasOwn(after,key)?value(key,after[key]):'Non enregistré'}));
+      if(entry.avant && entry.apres && Object.hasOwn(entry.avant,'validation') && Object.hasOwn(entry.apres,'validation')
+        && Boolean(entry.avant.validation)!==Boolean(entry.apres.validation)) fields.push({label:'Validation',
+          before:entry.avant.validation?'Validé':'Non validé',after:entry.apres.validation?'Validé':'Non validé'});
+      const workflow={SAVE:'Enregistrement',PLAN:'Validation et planification',VALIDATE:'Validation',WITHDRAW:'Retrait motivé'};
+      const method=entry.apres?.transaction?`${entry.apres.transaction.source} · ${workflow[entry.apres.transaction.workflow] || entry.apres.transaction.workflow}`:'';
+      const detail=(method?`<p>${escapeHtml(method)}</p>`:'')+(fields.length?`<details class="qv-history-changes"><summary>${fields.length} changement${fields.length>1?'s':''}</summary><table class="scope-table"><thead><tr><th>Champ</th><th>Ancienne valeur</th><th>Nouvelle valeur</th></tr></thead><tbody>${fields.map(field=>`<tr><td>${escapeHtml(field.label)}</td><td>${escapeHtml(field.before)}</td><td>${escapeHtml(field.after)}</td></tr>`).join('')}</tbody></table></details>`:'Aucun changement de champ enregistré.');
+      return `<tr data-qv-transaction="${escapeHtml(entry.journal_id || '')}"><td>${escapeHtml(new Date(entry.at).toLocaleString('fr-CH',{timeZone:'Europe/Zurich'}))}</td><td>${escapeHtml(author)}</td><td>${escapeHtml(action)}</td><td>${escapeHtml(entry.commentaire || '—')}</td><td>${detail}</td></tr>`;
     }).join('')}</tbody></table></div>`;
   }
 
@@ -12842,7 +12887,7 @@
         ${qvProgrammeQualificationControl(qv,row)}
         <label><span>Cursus de formation</span><select id="qv-programme-cursus" ${row.cursusStepId ? 'disabled' : ''}>${qvProgrammeCursusOptions(qv,row)}</select></label>
         <div class="qv-programme-choice-field"><label for="qv-programme-ecawin">Code activité ECAwin</label><select id="qv-programme-ecawin"><option value="">Non qualifié</option>${(window.ScopeEcawin?.activityCodes || []).map(code=>`<option value="${code}" ${row.ecawinActivityCode === code ? 'selected' : ''}>${escapeHtml(code+' '+(window.ScopeEcawin.activityLabels[code] || ''))}</option>`).join('')}${row.ecawinActivityCode && !window.ScopeEcawin?.activityCodes.includes(row.ecawinActivityCode) ? `<option value="${escapeHtml(row.ecawinActivityCode)}" selected>${escapeHtml(row.ecawinActivityCode)} Valeur conservée</option>` : ''}</select></div>
-        <label><span>Cycle métier</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
+        <label><span>Cycle métier</span><input id="qv-programme-cycle-year" type="text" value="${escapeHtml(row.externalActivity?'Sans cycle SDIS':row.businessCycleYear ?? 'À déterminer')}" readonly></label>
         <div class="qv-programme-parameters"><label><span>Nature de l’activité</span><select id="qv-programme-nature">${[['SDIS_RECURRENT','Activité SDIS récurrente'],['SDIS_EXTRAORDINARY','Activité SDIS extraordinaire'],['EXTERNAL_OCCUPATION','Occupation externe']].map(([code,label])=>`<option value="${code}" ${L.qvProgrammeParameters(row).activityNature===code?'selected':''}>${label}</option>`).join('')}</select></label>
         <label class="qv-programme-keep-lieu"><input id="qv-programme-recurrence" type="checkbox" ${L.qvProgrammeParameters(row).annualRecurrence ? 'checked' : ''}><span>Reconduction annuelle</span></label>
         <label class="qv-programme-keep-lieu"><input id="qv-programme-participation-evaluation" type="checkbox" ${row.participationEvaluation !== false ? 'checked' : ''}><span>Évaluer les participations</span></label>
@@ -14026,6 +14071,10 @@
   }
 
   function render() {
+    const focused=document.activeElement;
+    const preserveSearch=route().screen==='quo-vadis' && route().qvView==='programme'
+      && focused?.id==='qv-filter-q' && root.querySelector('#qv-filter-q')===focused
+      ? {node:focused,start:focused.selectionStart,end:focused.selectionEnd} : null;
     if(state.turnstileWidgetId != null && window.turnstile){
       window.turnstile.remove(state.turnstileWidgetId);
       state.turnstileWidgetId = null;
@@ -14066,6 +14115,11 @@
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
     root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderPersonnelAssignmentModal()}${renderPersonnelManualAddModal()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalUnsavedSaisie()}${renderModalCancel()}${renderModalDelete()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
+    if(preserveSearch && root.querySelector('#qv-filter-q')) {
+      root.querySelector('#qv-filter-q').replaceWith(preserveSearch.node);
+      preserveSearch.node.focus({preventScroll:true});
+      if(preserveSearch.start!==null) preserveSearch.node.setSelectionRange(preserveSearch.start,preserveSearch.end);
+    }
     bind();
     if (state.objectifMenuId) positionObjectifRowMenu();
     const statutSel = document.getElementById('filter-statut');
@@ -14438,13 +14492,17 @@
     };
     const queryField=document.getElementById('qv-filter-q');
     let queryTimer;
-    queryField?.addEventListener('input', event => {
+    if(queryField && queryField.dataset.searchBound!=='true') {
+    queryField.dataset.searchBound='true';
+    queryField.addEventListener('compositionstart',()=>clearTimeout(queryTimer));
+    queryField.addEventListener('input', event => {
       readQvFilters();
       state.quoVadisProgrammePage = 1;
       clearTimeout(queryTimer);
       if(event.isComposing) return;
       queryTimer=setTimeout(()=>{if(queryField.isConnected) renderPreservingInput('qv-filter-q');},180);
     });
+    }
     document.getElementById('qv-filter-year')?.addEventListener('change', (event) => {
       const year = Number(event.target.value) || 2027;
       if (year === qvProgrammeYear()) return;
@@ -14661,6 +14719,13 @@
       });
     });
     const preparedProgrammeRow=quoVadisProgrammeData()?.canonicalProgramme?.rows?.find(row=>String(row.id)===String(route().qvProgrammeItemId));
+    document.querySelectorAll('[data-qv-proposed-date]').forEach(button=>button.addEventListener('click',()=>{
+      const field=document.getElementById('qv-programme-date');
+      if(!field || field.disabled || !hasScopePermission('references:manage')) return;
+      field.value=qvProgrammeDateInputValue({startsAt:button.dataset.qvProposedDate});
+      field.dispatchEvent(new Event('input',{bubbles:true}));field.dispatchEvent(new Event('change',{bubbles:true}));
+      field.focus({preventScroll:true});
+    }));
     if(preparedProgrammeRow && (preparedProgrammeRow.humanDecision || preparedProgrammeRow.businessValidation || preparedProgrammeRow.publishedEventId))
       for(const id of ['qv-programme-public','qv-programme-responsable','qv-programme-sold','qv-programme-ecawin-export']){
         const field=document.getElementById(id);if(field) field.dataset.manual='true';
@@ -14678,6 +14743,8 @@
       const field=document.getElementById('qv-programme-nature');
       if(!field) return;
       const occupation=field.value==='EXTERNAL_OCCUPATION';
+      const cycleField=document.getElementById('qv-programme-cycle-year');
+      if(cycleField) cycleField.value=occupation?'Sans cycle SDIS':String(preparedProgrammeRow?.businessCycleYear ?? 'À déterminer');
       for(const id of ['qv-programme-recurrence','qv-programme-participation-evaluation','qv-programme-sold','qv-programme-ecawin-export']){
         const input=document.getElementById(id);if(!input) continue;
         input.disabled=occupation;
@@ -15046,8 +15113,8 @@
           : saveAction === 'VALIDATE' ? 'Activité validée.' : creating ? 'Activité créée dans le programme.' : 'Préparation enregistrée.', {preserveForm:true,preserveRoute:true});
       } catch (error) {
         if(error.error==='programme_motif_obligatoire' && saveAction!=='WITHDRAW')
-          qvWorkflowDialog('Réviser la publication',qvProgrammeActivityLabel(preparedProgrammeRow),
-            'Confirmer la révision',motif=>saveProgrammePreparation(saveAction,{motif}),
+          qvWorkflowDialog(error.details?.kind==='DAY_DEROGATION'?'Dérogation métier':'Réviser la publication',qvProgrammeActivityLabel(preparedProgrammeRow),
+            error.details?.kind==='DAY_DEROGATION'?'Confirmer la dérogation':'Confirmer la révision',motif=>saveProgrammePreparation(saveAction,{motif}),
             payload.revisePublishedOis ? 'Mise en conformité des quatre OI DPS PAPR : décision MOA.' : '');
         else toast('error', 'Programme', L.friendlyError(error).message || 'L’enregistrement a échoué.', {preserveForm:true});
       } finally {
@@ -19515,12 +19582,8 @@
       await Promise.all(jobs);
     },navigationSeq);
     refreshAlertCounts().then(() => {
-      // A badge refresh must not rebuild an editable Programme form.
-      if(route().qvView !== 'programme-fiche') render();
-      else {
-        const link=root.querySelector('a.scope-btn[href="#/vigilance"]');
-        if(link) link.textContent=`À traiter · ${Number((state.alertCounts && (state.alertCounts.active ?? state.alertCounts.p0)) || 0)}`;
-      }
+      const link=root.querySelector('a.scope-btn[href="#/vigilance"]');
+      if(link) link.textContent=`À traiter · ${Number((state.alertCounts && (state.alertCounts.active ?? state.alertCounts.p0)) || 0)}`;
     }).catch(() => {});
     if (r.screen === 'saisie' && r.id) {
       if (state.eventUnavailable) return;
@@ -19625,6 +19688,7 @@
         location.hash='#/quo-vadis/programme/'+encodeURIComponent(id);window.location.hash=location.hash;
         return renderQuoVadisProgrammeFiche(payload);
       },
+      renderQuoVadisHistoryHtml(history,payload){return qvHistoryHtml(history,payload || {});},
       renderQuoVadisArbitrerHtml(payload) {
         state.quoVadis = payload || {};
         state.quoVadisFilters = { q: '', domain: 'tous', family: 'tous', oi: 'tous', status: 'tous' };

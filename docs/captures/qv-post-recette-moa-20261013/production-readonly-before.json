@@ -1,0 +1,58 @@
+{
+  "project": "bnfbqzqisdkysnoaeuej",
+  "productionWrites": false,
+  "tables": {
+    "events": {
+      "hash": "fba3f2c585ff2d0263f5aa277d7b06df",
+      "count": 257
+    },
+    "journal": {
+      "hash": "623b50fb1e3ce9ca8fd13b7a6adb2ed8",
+      "count": 2441
+    },
+    "obligations": {
+      "hash": "be5a6e6c1b8dbb8a0c28d75b07bd3122",
+      "count": 968
+    },
+    "affectations": {
+      "hash": "a25cf27b765a3ce9eb56ec739a7a90d7",
+      "count": 636
+    },
+    "publications": {
+      "hash": "5b1160c12416b88571d8be0f59e98b52",
+      "count": 125
+    },
+    "participations": {
+      "hash": "5724d6cf9585198bf683282f94937dbf",
+      "count": 5967
+    }
+  },
+  "readOnly": "on",
+  "capturedAt": "2026-10-13T17:26:17.557729+00:00",
+  "migrations": [
+    {
+      "version": "scope-qv-moa-consolidated-20261013",
+      "applied_at": "2026-10-13T11:56:56.433686+00:00"
+    },
+    {
+      "version": "scope-internal-event-identity-20261012",
+      "applied_at": "2026-10-12T17:10:36.722933+00:00"
+    },
+    {
+      "version": "scope-qv-final-moa-report-20261012",
+      "applied_at": "2026-10-12T17:10:36.646452+00:00"
+    },
+    {
+      "version": "scope-qv-roadmap-responsible-20261012",
+      "applied_at": "2026-10-12T17:10:36.597925+00:00"
+    },
+    {
+      "version": "scope-qv-moa-responsible-20261012",
+      "applied_at": "2026-10-12T17:10:36.530458+00:00"
+    },
+    {
+      "version": "scope-statcom-extras-moa-20261012",
+      "applied_at": "2026-10-12T17:10:36.479087+00:00"
+    }
+  ]
+}

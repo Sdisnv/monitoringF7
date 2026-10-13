@@ -10,11 +10,13 @@ const { permissionsForRoles } = require('../netlify/lib/_rbac');
 const { generateQuoVadisProgrammeReport } = require('../netlify/lib/_scope-report-service');
 
 const performanceMode=process.argv.find(arg=>/^--performance-(before|after)$/.test(arg));
-if(performanceMode) {
+const postRecetteMode=process.argv.includes('--post-recette-moa');
+if(performanceMode || postRecetteMode) {
   for(const mode of ['ROADMAP','COMPLEMENT','FINALISATION','CORRECTIVE','MOA13','FINAL_CONTROLS','PERFORMANCE'])
     process.env[`SCOPE_RECIPE_${mode}`]='1';
   process.env.SCOPE_RECIPE_PERFORMANCE_BEFORE=performanceMode==='--performance-before'?'1':'0';
-  process.env.SCOPE_RECIPE_EVIDENCE_DIR=`docs/captures/qv-response-performance-20261013/browser-${performanceMode.slice(14)}`;
+  process.env.SCOPE_RECIPE_EVIDENCE_DIR=postRecetteMode?'docs/captures/qv-post-recette-moa-20261013/browser'
+    :`docs/captures/qv-response-performance-20261013/browser-${performanceMode.slice(14)}`;
 }
 
 const root = path.resolve(__dirname, '..');
@@ -134,7 +136,8 @@ const server = http.createServer((request,response) => {
     if(performanceHandler && url.pathname.startsWith('/api/scope/')) {
       const body=(await Array.fromAsync(request)).map(chunk=>chunk.toString()).join('');
       const started=performance.now();
-      let result=await performanceHandler({httpMethod:request.method,headers:request.headers,
+      const handlerHeaders=postRecetteMode?{...request.headers,'accept-encoding':'identity'}:request.headers;
+      let result=await performanceHandler({httpMethod:request.method,headers:handlerHeaders,
         path:url.pathname,rawUrl:url.href,queryStringParameters:Object.fromEntries(url.searchParams),body});
       const durationMs=performance.now()-started;
       const envelopeBytes=Buffer.byteLength(JSON.stringify(result));
@@ -249,6 +252,10 @@ async function start() {
     await require('./scope-qv-pr13-final-controls-clone').replay(query);
     for(const row of require('../docs/captures/qv-pr13-final-controls-20261013/production-business-snapshot.json').preparations)
       touchedReferences.add(row.source_ref);
+  }
+  if(postRecetteMode) {
+    const snapshot=await require('./scope-qv-post-recette-moa-clone').replayCurrent(query);
+    for(const row of snapshot?.preparations || []) touchedReferences.add(row.source_ref);
   }
   if(process.env.SCOPE_RECIPE_CORRECTIVE==='1')
     await client.query(fs.readFileSync(path.join(root,'database/migrations/20261012_scope_internal_event_identity.sql'),'utf8'));

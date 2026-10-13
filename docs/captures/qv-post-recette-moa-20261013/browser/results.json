@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "productionWrites": false,
+  "auth": "LOCAL",
+  "scenarios": [
+    "Rapid typing across delayed badge refresh retains the same input and caret",
+    "Five programme parameters vertically aligned",
+    "Readable grouped history, unchanged legacy decisions",
+    "Required withdrawal reason and idempotent repeated validation",
+    "Actual DPS Friday control and confirmed 0120F7",
+    "DAP date applied without invented hours or automatic validation",
+    "CFF exact MOA case recorded on clone, no event publication or participation",
+    "Both PDF downloads retain the applied search and exact filenames"
+  ],
+  "layout": {
+    "selectCenter": 1336.671875,
+    "checkboxCenters": [
+      1336.671875,
+      1336.671875,
+      1336.671875,
+      1336.671875
+    ]
+  },
+  "downloads": [
+    {
+      "mode": "annual",
+      "filename": "QUO VADIS 2027, Planning annuel.pdf",
+      "filter": "Exercice DAP 4"
+    },
+    {
+      "mode": "compact",
+      "filename": "QUO VADIS 2027, Liste compacte.pdf",
+      "filter": "Exercice DAP 4"
+    }
+  ],
+  "volume": 934,
+  "gzipProxyFacingIdentity": true,
+  "javascriptErrors": []
+}

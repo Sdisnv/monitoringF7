@@ -1,0 +1,33 @@
+{
+  "project": "bnfbqzqisdkysnoaeuej",
+  "productionWrites": false,
+  "tables": {
+    "events": {
+      "hash": "fba3f2c585ff2d0263f5aa277d7b06df",
+      "count": 257
+    },
+    "journal": {
+      "hash": "628dd8d1de91bd6eedb215b66651f6fc",
+      "count": 2448
+    },
+    "obligations": {
+      "hash": "33b288356cf2352a7498cf31d376d4ea",
+      "count": 969
+    },
+    "affectations": {
+      "hash": "a25cf27b765a3ce9eb56ec739a7a90d7",
+      "count": 636
+    },
+    "publications": {
+      "hash": "5b1160c12416b88571d8be0f59e98b52",
+      "count": 125
+    },
+    "participations": {
+      "hash": "5724d6cf9585198bf683282f94937dbf",
+      "count": 5967
+    }
+  },
+  "readOnly": "on",
+  "capturedAt": "2026-10-13T17:42:12.341961+00:00",
+  "identicalToBefore": false
+}
