@@ -1,0 +1,81 @@
+{
+  "mode": "before",
+  "status": "OVERSIZE_REPRODUCED",
+  "productionWrites": false,
+  "handler": "Git 89a2f15",
+  "volume": 933,
+  "auth": "LOCAL",
+  "timings": {
+    "homeReadyMs": 1941.662667,
+    "programmeErrorMs": 787.5582920000002
+  },
+  "homeResources": [
+    {
+      "path": "/api/scope/referentiels",
+      "durationMs": 102.39999997615814,
+      "encodedBytes": 1250737,
+      "decodedBytes": 1250737
+    },
+    {
+      "path": "/api/scope/evenements",
+      "durationMs": 119.80000001192093,
+      "encodedBytes": 471852,
+      "decodedBytes": 471852
+    },
+    {
+      "path": "/api/scope/dashboard",
+      "durationMs": 1101.199999988079,
+      "encodedBytes": 372409,
+      "decodedBytes": 372409
+    },
+    {
+      "path": "/api/scope/alerts",
+      "durationMs": 534.5,
+      "encodedBytes": 268781,
+      "decodedBytes": 268781
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/scope/referentiels",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 102.508,
+      "decodedBytes": 1250737,
+      "encoding": "identity"
+    },
+    {
+      "path": "/api/scope/evenements",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 119.814,
+      "decodedBytes": 471852,
+      "encoding": "identity"
+    },
+    {
+      "path": "/api/scope/dashboard",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 1101.248,
+      "decodedBytes": 372409,
+      "encoding": "identity"
+    },
+    {
+      "path": "/api/scope/alerts",
+      "status": 200,
+      "method": "GET",
+      "durationMs": 534.565,
+      "decodedBytes": 268781,
+      "encoding": "identity"
+    },
+    {
+      "path": "/api/scope/quo-vadis/programmes/2027",
+      "status": 502,
+      "method": "GET",
+      "durationMs": 529.799,
+      "decodedBytes": 134,
+      "encoding": "identity"
+    }
+  ],
+  "javascriptErrors": []
+}

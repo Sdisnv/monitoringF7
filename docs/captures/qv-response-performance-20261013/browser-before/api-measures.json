@@ -1,0 +1,47 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 94.80625000000873,
+    "envelopeBytes": 1383984,
+    "wireBytes": 1250737,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/evenements",
+    "status": 200,
+    "durationMs": 115.62866699999722,
+    "envelopeBytes": 522313,
+    "wireBytes": 471852,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/dashboard",
+    "status": 200,
+    "durationMs": 979.2737079999933,
+    "envelopeBytes": 417092,
+    "wireBytes": 372409,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 530.5922500000015,
+    "envelopeBytes": 300336,
+    "wireBytes": 268781,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 513.0442079999921,
+    "envelopeBytes": 6343533,
+    "wireBytes": 5605944,
+    "encoding": "identity"
+  }
+]

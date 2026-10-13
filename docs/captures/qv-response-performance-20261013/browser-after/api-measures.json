@@ -1,0 +1,92 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 80.41329200000109,
+    "envelopeBytes": 165675,
+    "wireBytes": 123941,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/evenements",
+    "status": 200,
+    "durationMs": 104.61962500000118,
+    "envelopeBytes": 58081,
+    "wireBytes": 43245,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/dashboard",
+    "status": 200,
+    "durationMs": 679.7393749999992,
+    "envelopeBytes": 48569,
+    "wireBytes": 36109,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 466.81483300000036,
+    "envelopeBytes": 31261,
+    "wireBytes": 23128,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 502.82787499999904,
+    "envelopeBytes": 741769,
+    "wireBytes": 556009,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 368.9431249999998,
+    "envelopeBytes": 741773,
+    "wireBytes": 556014,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 351.19074999999975,
+    "envelopeBytes": 741761,
+    "wireBytes": 556004,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV26-EXERCICE-PR-1-1-30B1E01A%3AO1%3AS3/history",
+    "status": 200,
+    "durationMs": 2.9810419999994338,
+    "envelopeBytes": 371,
+    "wireBytes": 24,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/evenements/82ed7ed5-f1b5-4d66-a74c-5f96f432e606",
+    "status": 200,
+    "durationMs": 143.8465410000008,
+    "envelopeBytes": 20375,
+    "wireBytes": 17638,
+    "encoding": "identity"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/evenements/82ed7ed5-f1b5-4d66-a74c-5f96f432e606/preview-attendus",
+    "status": 422,
+    "durationMs": 2.0509170000004815,
+    "envelopeBytes": 522,
+    "wireBytes": 167,
+    "encoding": "identity"
+  }
+]

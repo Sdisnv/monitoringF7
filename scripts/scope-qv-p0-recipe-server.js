@@ -9,6 +9,14 @@ const { synchronizeEcawinReferential } = require('../netlify/lib/_scope-ecawin-r
 const { permissionsForRoles } = require('../netlify/lib/_rbac');
 const { generateQuoVadisProgrammeReport } = require('../netlify/lib/_scope-report-service');
 
+const performanceMode=process.argv.find(arg=>/^--performance-(before|after)$/.test(arg));
+if(performanceMode) {
+  for(const mode of ['ROADMAP','COMPLEMENT','FINALISATION','CORRECTIVE','MOA13','FINAL_CONTROLS','PERFORMANCE'])
+    process.env[`SCOPE_RECIPE_${mode}`]='1';
+  process.env.SCOPE_RECIPE_PERFORMANCE_BEFORE=performanceMode==='--performance-before'?'1':'0';
+  process.env.SCOPE_RECIPE_EVIDENCE_DIR=`docs/captures/qv-response-performance-20261013/browser-${performanceMode.slice(14)}`;
+}
+
 const root = path.resolve(__dirname, '..');
 const sessions = new Map();
 const blobsId = require.resolve('@netlify/blobs');
@@ -86,6 +94,27 @@ const service = createScopeQuoVadisService({database:{query,transaction:async wo
     await query(`rollback to savepoint ${name}`);await query(`release savepoint ${name}`);throw error;
   }
 }}});
+let performanceHandler;
+const performanceRequests=[];
+if(process.env.SCOPE_RECIPE_PERFORMANCE==='1') {
+  const pg=require('../netlify/lib/_scope-pg'),db=require('../netlify/lib/_postgres');
+  Object.assign(db,{query,transaction:async work=>{
+    const name=`performance_request_${++transactionId}`;await query(`SAVEPOINT ${name}`);
+    try{const result=await work({query});await query(`RELEASE SAVEPOINT ${name}`);return result;}
+    catch(error){await query(`ROLLBACK TO SAVEPOINT ${name}`);throw error;}
+  }});
+  pg.getPgRepo=async()=>pg.createPgRepo({query});
+  if(process.env.SCOPE_RECIPE_PERFORMANCE_BEFORE==='1') {
+    const Module=require('node:module'),{execFileSync}=require('node:child_process');
+    for(const relative of ['netlify/lib/_scope-dashboard-service.js','netlify/functions/scope.js']) {
+      const file=path.join(root,relative),entry=new Module(file,module);entry.filename=file;
+      entry.paths=Module._nodeModulePaths(path.dirname(file));
+      entry._compile(execFileSync('git',['show',`89a2f15:${relative}`],{cwd:root,encoding:'utf8'}),file);
+      require.cache[file]=entry;
+    }
+  }
+  performanceHandler=require('../netlify/functions/scope').handler;
+}
 let requests = Promise.resolve();
 const server = http.createServer((request,response) => {
   const work = async () => {
@@ -101,6 +130,21 @@ const server = http.createServer((request,response) => {
     if(url.pathname.startsWith('/api/')){
       try { await authUtils.verifyAccess({headers:request.headers}); }
       catch(_error){return json(response,401,{ok:false,error:'unauthorized'});}
+    }
+    if(performanceHandler && url.pathname.startsWith('/api/scope/')) {
+      const body=(await Array.fromAsync(request)).map(chunk=>chunk.toString()).join('');
+      const started=performance.now();
+      let result=await performanceHandler({httpMethod:request.method,headers:request.headers,
+        path:url.pathname,rawUrl:url.href,queryStringParameters:Object.fromEntries(url.searchParams),body});
+      const durationMs=performance.now()-started;
+      const envelopeBytes=Buffer.byteLength(JSON.stringify(result));
+      performanceRequests.push({method:request.method,path:url.pathname,status:result.statusCode,durationMs,envelopeBytes,
+        wireBytes:result.isBase64Encoded?Buffer.from(result.body,'base64').length:Buffer.byteLength(result.body),
+        encoding:result.headers['Content-Encoding'] || 'identity'});
+      if(envelopeBytes>6291556) return json(response,502,{errorType:'Function.ResponseSizeTooLarge',
+        message:'Response payload size exceeded maximum allowed payload size (6291556 bytes).'});
+      response.writeHead(result.statusCode,result.headers);
+      return response.end(result.isBase64Encoded?Buffer.from(result.body,'base64'):result.body);
     }
     if(url.pathname === '/api/scope/referentiels') return json(response,200,{domaines:[],cibles:[],arbre:[],formationCatalog:{statComCodes:[]}});
     if(url.pathname === '/api/scope/alerts') return json(response,200,{ok:true,alerts:[],counts:{}});
@@ -184,6 +228,7 @@ async function stop() {
     const directory=path.resolve(root,process.env.SCOPE_RECIPE_EVIDENCE_DIR);
     if(!directory.startsWith(path.join(root,'docs','captures')+path.sep)) throw new Error('Invalid evidence destination');
     fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(path.join(directory,'postgres-integrity.json'),JSON.stringify(evidence,null,2));
+    if(performanceHandler) fs.writeFileSync(path.join(directory,'api-measures.json'),JSON.stringify(performanceRequests,null,2));
   }
   await client.end();
   process.exit(0);

@@ -1,0 +1,4881 @@
+{
+  "target": "CLONE_WITH_PRODUCTION_BUSINESS_REPLAY",
+  "productionWrites": false,
+  "limitBytes": 6291556,
+  "measures": {
+    "beforePr13": {
+      "serviceMs": 534.8531250000001,
+      "bodyBytes": 5405963,
+      "lambdaEnvelopeBytes": 6122393,
+      "transport": {
+        "lambdaEnvelopeBytes": 723318,
+        "wireBytes": 542344,
+        "compressionMs": 39.183042000000114,
+        "lossless": true
+      },
+      "serializedMs": 12.374625000000151,
+      "parseMs": 88.02720799999997,
+      "fields": [
+        {
+          "key": "canonicalProgramme",
+          "bytes": 2796265,
+          "count": null
+        },
+        {
+          "key": "historicalAgenda2026",
+          "bytes": 1304853,
+          "count": null
+        },
+        {
+          "key": "ecawinCorrespondence",
+          "bytes": 387937,
+          "count": 931
+        },
+        {
+          "key": "catalogue",
+          "bytes": 224745,
+          "count": 291
+        },
+        {
+          "key": "activities",
+          "bytes": 116954,
+          "count": 36
+        },
+        {
+          "key": "agendaYears",
+          "bytes": 104764,
+          "count": null
+        },
+        {
+          "key": "obligations",
+          "bytes": 91261,
+          "count": 36
+        },
+        {
+          "key": "planning",
+          "bytes": 61959,
+          "count": null
+        },
+        {
+          "key": "programme",
+          "bytes": 60996,
+          "count": null
+        },
+        {
+          "key": "statComCodes",
+          "bytes": 50369,
+          "count": 91
+        },
+        {
+          "key": "coverage",
+          "bytes": 48672,
+          "count": null
+        },
+        {
+          "key": "proposals",
+          "bytes": 45706,
+          "count": 77
+        },
+        {
+          "key": "cursus",
+          "bytes": 34127,
+          "count": 59
+        },
+        {
+          "key": "calendarDays",
+          "bytes": 14364,
+          "count": 66
+        },
+        {
+          "key": "programmeCycle",
+          "bytes": 12285,
+          "count": null
+        },
+        {
+          "key": "ecawinReferential",
+          "bytes": 8626,
+          "count": null
+        },
+        {
+          "key": "rules",
+          "bytes": 7415,
+          "count": 9
+        },
+        {
+          "key": "ctaParameters",
+          "bytes": 6100,
+          "count": null
+        },
+        {
+          "key": "paprProposals",
+          "bytes": 4188,
+          "count": 7
+        },
+        {
+          "key": "cibles",
+          "bytes": 3911,
+          "count": 36
+        },
+        {
+          "key": "responsableFonctions",
+          "bytes": 3100,
+          "count": 28
+        },
+        {
+          "key": "cursusSelections",
+          "bytes": 2912,
+          "count": 11
+        },
+        {
+          "key": "lieux",
+          "bytes": 2704,
+          "count": 12
+        },
+        {
+          "key": "sallesTheorie",
+          "bytes": 2514,
+          "count": 11
+        },
+        {
+          "key": "qualifications",
+          "bytes": 2091,
+          "count": 17
+        },
+        {
+          "key": "breakdown",
+          "bytes": 1988,
+          "count": null
+        },
+        {
+          "key": "alerts",
+          "bytes": 1525,
+          "count": 3
+        },
+        {
+          "key": "dpsOrganisation",
+          "bytes": 1521,
+          "count": 4
+        },
+        {
+          "key": "annualValidationControl",
+          "bytes": 496,
+          "count": null
+        },
+        {
+          "key": "domainOis",
+          "bytes": 386,
+          "count": 11
+        },
+        {
+          "key": "engineNotes",
+          "bytes": 373,
+          "count": 5
+        },
+        {
+          "key": "summary",
+          "bytes": 154,
+          "count": null
+        },
+        {
+          "key": "sectionPublicSummary",
+          "bytes": 63,
+          "count": null
+        },
+        {
+          "key": "personnelView",
+          "bytes": 26,
+          "count": null
+        },
+        {
+          "key": "statComSuccessions",
+          "bytes": 2,
+          "count": 0
+        },
+        {
+          "key": "futureDates",
+          "bytes": 2,
+          "count": 0
+        }
+      ],
+      "rowFields": [
+        {
+          "key": "business",
+          "bytes": 588792
+        },
+        {
+          "key": "historicalProposal",
+          "bytes": 164057
+        },
+        {
+          "key": "businessValidation",
+          "bytes": 120408
+        },
+        {
+          "key": "preparation",
+          "bytes": 89504
+        },
+        {
+          "key": "projectionEvidence",
+          "bytes": 50684
+        },
+        {
+          "key": "sessionId",
+          "bytes": 41321
+        },
+        {
+          "key": "id",
+          "bytes": 40567
+        },
+        {
+          "key": "reason",
+          "bytes": 39187
+        },
+        {
+          "key": "occurrenceId",
+          "bytes": 38848
+        },
+        {
+          "key": "definitionId",
+          "bytes": 33846
+        },
+        {
+          "key": "lieuId",
+          "bytes": 29760
+        },
+        {
+          "key": "provenance",
+          "bytes": 27373
+        },
+        {
+          "key": "eventLabel",
+          "bytes": 25361
+        },
+        {
+          "key": "ctaAssignments",
+          "bytes": 24131
+        },
+        {
+          "key": "sessionLabel",
+          "bytes": 23218
+        },
+        {
+          "key": "label",
+          "bytes": 23035
+        },
+        {
+          "key": "activityLabel",
+          "bytes": 23032
+        },
+        {
+          "key": "eventDisplayLabel",
+          "bytes": 22167
+        },
+        {
+          "key": "rotationEvidence",
+          "bytes": 19480
+        },
+        {
+          "key": "conduiteSlots",
+          "bytes": 19152
+        },
+        {
+          "key": "lineage",
+          "bytes": 19102
+        },
+        {
+          "key": "occurrenceLabel",
+          "bytes": 18059
+        },
+        {
+          "key": "startsAt",
+          "bytes": 16927
+        },
+        {
+          "key": "endsAt",
+          "bytes": 16927
+        },
+        {
+          "key": "oiSelections",
+          "bytes": 14773
+        },
+        {
+          "key": "status",
+          "bytes": 12787
+        },
+        {
+          "key": "projectionStatus",
+          "bytes": 11532
+        },
+        {
+          "key": "oiQualification",
+          "bytes": 10925
+        },
+        {
+          "key": "location",
+          "bytes": 10115
+        },
+        {
+          "key": "cycleClassification",
+          "bytes": 10062
+        },
+        {
+          "key": "family",
+          "bytes": 10006
+        },
+        {
+          "key": "publics",
+          "bytes": 9852
+        },
+        {
+          "key": "responsible",
+          "bytes": 9728
+        },
+        {
+          "key": "definitionCode",
+          "bytes": 9512
+        },
+        {
+          "key": "conduiteEvidence",
+          "bytes": 9224
+        },
+        {
+          "key": "code",
+          "bytes": 9140
+        },
+        {
+          "key": "ois",
+          "bytes": 8789
+        },
+        {
+          "key": "salleTheorieId",
+          "bytes": 7320
+        },
+        {
+          "key": "cycleExtension",
+          "bytes": 7086
+        },
+        {
+          "key": "statCom",
+          "bytes": 6654
+        },
+        {
+          "key": "ecawinActivityCode",
+          "bytes": 6590
+        },
+        {
+          "key": "statComProjectionEvidence",
+          "bytes": 6387
+        },
+        {
+          "key": "projectionRule",
+          "bytes": 6188
+        },
+        {
+          "key": "ctaHolidayWindows",
+          "bytes": 6058
+        },
+        {
+          "key": "historicalMatchStatus",
+          "bytes": 5790
+        },
+        {
+          "key": "publishedEventLabel",
+          "bytes": 5412
+        },
+        {
+          "key": "publishedEventId",
+          "bytes": 5386
+        },
+        {
+          "key": "domain",
+          "bytes": 4906
+        },
+        {
+          "key": "external",
+          "bytes": 4638
+        },
+        {
+          "key": "ecawinExport",
+          "bytes": 4635
+        },
+        {
+          "key": "humanDecision",
+          "bytes": 4508
+        },
+        {
+          "key": "review",
+          "bytes": 4449
+        },
+        {
+          "key": "paprProposal",
+          "bytes": 4180
+        },
+        {
+          "key": "rotationRule",
+          "bytes": 3998
+        },
+        {
+          "key": "coverageEvidence",
+          "bytes": 3790
+        },
+        {
+          "key": "participationEvaluation",
+          "bytes": 3768
+        },
+        {
+          "key": "sold",
+          "bytes": 3733
+        },
+        {
+          "key": "businessCycleYear",
+          "bytes": 3724
+        },
+        {
+          "key": "civilYear",
+          "bytes": 3724
+        },
+        {
+          "key": "preparatoryCycle",
+          "bytes": 3702
+        },
+        {
+          "key": "eventCode",
+          "bytes": 3572
+        },
+        {
+          "key": "room",
+          "bytes": 3491
+        },
+        {
+          "key": "responsableFonctionCode",
+          "bytes": 3454
+        },
+        {
+          "key": "sectionPublicRule",
+          "bytes": 3222
+        },
+        {
+          "key": "prAbcProposal",
+          "bytes": 2873
+        },
+        {
+          "key": "persistenceDomain",
+          "bytes": 2536
+        },
+        {
+          "key": "lieuLibre",
+          "bytes": 2392
+        },
+        {
+          "key": "ctaPublicStatus",
+          "bytes": 2360
+        },
+        {
+          "key": "cmdtEvidence",
+          "bytes": 2270
+        },
+        {
+          "key": "publishedEventOiSelections",
+          "bytes": 2248
+        },
+        {
+          "key": "calendarAdjustment",
+          "bytes": 2018
+        },
+        {
+          "key": "publishedEventCodeState",
+          "bytes": 1998
+        },
+        {
+          "key": "sectionPublicStatus",
+          "bytes": 1974
+        },
+        {
+          "key": "ambiguousOis",
+          "bytes": 1862
+        },
+        {
+          "key": "publishedEventDate",
+          "bytes": 1752
+        },
+        {
+          "key": "pionnierCta",
+          "bytes": 1665
+        },
+        {
+          "key": "themeSource",
+          "bytes": 1551
+        },
+        {
+          "key": "responsibleSelections",
+          "bytes": 1476
+        },
+        {
+          "key": "publishedEventStatus",
+          "bytes": 1460
+        },
+        {
+          "key": "rotationStatus",
+          "bytes": 1430
+        },
+        {
+          "key": "instructionFamilyRule",
+          "bytes": 1368
+        },
+        {
+          "key": "themes",
+          "bytes": 1289
+        },
+        {
+          "key": "publishedEventCode",
+          "bytes": 1232
+        },
+        {
+          "key": "occurrenceCount",
+          "bytes": 1187
+        },
+        {
+          "key": "cursusReconciliation",
+          "bytes": 1150
+        },
+        {
+          "key": "publishedEventStart",
+          "bytes": 1022
+        },
+        {
+          "key": "publishedEventEnd",
+          "bytes": 1022
+        },
+        {
+          "key": "statComEvidence",
+          "bytes": 972
+        },
+        {
+          "key": "cursusId",
+          "bytes": 962
+        },
+        {
+          "key": "occurrenceIndex",
+          "bytes": 904
+        },
+        {
+          "key": "sessionIndex",
+          "bytes": 896
+        },
+        {
+          "key": "sessionCount",
+          "bytes": 896
+        },
+        {
+          "key": "paprEvidence",
+          "bytes": 861
+        },
+        {
+          "key": "sectionPublicDerived",
+          "bytes": 799
+        },
+        {
+          "key": "tp9000Rule",
+          "bytes": 690
+        },
+        {
+          "key": "dapAnnualEvidence",
+          "bytes": 572
+        },
+        {
+          "key": "sectionPublicOi",
+          "bytes": 564
+        },
+        {
+          "key": "programmeDomain",
+          "bytes": 554
+        },
+        {
+          "key": "publicationRevision",
+          "bytes": 552
+        },
+        {
+          "key": "validationWithdrawal",
+          "bytes": 552
+        },
+        {
+          "key": "projectionAdded",
+          "bytes": 548
+        },
+        {
+          "key": "sourceCorrection",
+          "bytes": 540
+        },
+        {
+          "key": "cursusStepId",
+          "bytes": 494
+        },
+        {
+          "key": "annualReportConstraint",
+          "bytes": 467
+        },
+        {
+          "key": "pionnierRule",
+          "bytes": 367
+        },
+        {
+          "key": "publicFreeLabels",
+          "bytes": 300
+        },
+        {
+          "key": "cursus",
+          "bytes": 284
+        },
+        {
+          "key": "validationHistory",
+          "bytes": 276
+        },
+        {
+          "key": "dapAnnualStatus",
+          "bytes": 264
+        },
+        {
+          "key": "prRule",
+          "bytes": 264
+        },
+        {
+          "key": "qualificationCodes",
+          "bytes": 262
+        },
+        {
+          "key": "specialisation",
+          "bytes": 246
+        },
+        {
+          "key": "businessCode",
+          "bytes": 234
+        },
+        {
+          "key": "seriesProvenance",
+          "bytes": 234
+        },
+        {
+          "key": "conduiteRule",
+          "bytes": 192
+        },
+        {
+          "key": "sessionStructure",
+          "bytes": 186
+        },
+        {
+          "key": "personnel",
+          "bytes": 180
+        },
+        {
+          "key": "fobaRule",
+          "bytes": 169
+        },
+        {
+          "key": "rotationAdded",
+          "bytes": 152
+        },
+        {
+          "key": "publishedEventVersion",
+          "bytes": 146
+        },
+        {
+          "key": "conduiteMinutesPerParticipant",
+          "bytes": 112
+        },
+        {
+          "key": "coverageAdded",
+          "bytes": 108
+        },
+        {
+          "key": "activityKind",
+          "bytes": 104
+        },
+        {
+          "key": "dapAnnualRule",
+          "bytes": 96
+        },
+        {
+          "key": "cursusCode",
+          "bytes": 76
+        },
+        {
+          "key": "jspDirectionReconciliation",
+          "bytes": 74
+        },
+        {
+          "key": "kind",
+          "bytes": 72
+        },
+        {
+          "key": "prAbcStatus",
+          "bytes": 69
+        },
+        {
+          "key": "cursusStepCode",
+          "bytes": 69
+        },
+        {
+          "key": "pionnierEvidence",
+          "bytes": 66
+        },
+        {
+          "key": "sourceLine2026",
+          "bytes": 65
+        },
+        {
+          "key": "annualReportRule",
+          "bytes": 53
+        },
+        {
+          "key": "annualReport",
+          "bytes": 50
+        },
+        {
+          "key": "publicEvidence",
+          "bytes": 44
+        },
+        {
+          "key": "prAbcRule",
+          "bytes": 42
+        },
+        {
+          "key": "seriesSite",
+          "bytes": 36
+        },
+        {
+          "key": "oiCorrection",
+          "bytes": 27
+        },
+        {
+          "key": "restoredModule",
+          "bytes": 24
+        },
+        {
+          "key": "sourceLine",
+          "bytes": 18
+        },
+        {
+          "key": "seriesOccurrenceCount",
+          "bytes": 17
+        },
+        {
+          "key": "ctaReferenceFriday",
+          "bytes": 12
+        },
+        {
+          "key": "target",
+          "bytes": 10
+        },
+        {
+          "key": "externalActivity",
+          "bytes": 10
+        },
+        {
+          "key": "seriesOccurrenceIndex",
+          "bytes": 9
+        },
+        {
+          "key": "publicReviewRequired",
+          "bytes": 8
+        },
+        {
+          "key": "manualCreation",
+          "bytes": 8
+        },
+        {
+          "key": "paprModule",
+          "bytes": 7
+        },
+        {
+          "key": "paprOiRevisionRequired",
+          "bytes": 4
+        },
+        {
+          "key": "ctaHolidayOnly",
+          "bytes": 4
+        }
+      ],
+      "obligationMetadata": [
+        {
+          "key": "sessions",
+          "bytes": 15187
+        },
+        {
+          "key": "businessValidation",
+          "bytes": 12739
+        },
+        {
+          "key": "planningFields",
+          "bytes": 7550
+        },
+        {
+          "key": "consolidation",
+          "bytes": 5539
+        },
+        {
+          "key": "businessJustification",
+          "bytes": 1540
+        },
+        {
+          "key": "historicalActivityKey",
+          "bytes": 1090
+        },
+        {
+          "key": "lineage",
+          "bytes": 1076
+        },
+        {
+          "key": "source",
+          "bytes": 936
+        },
+        {
+          "key": "manualSource",
+          "bytes": 922
+        },
+        {
+          "key": "arbitrationReason",
+          "bytes": 878
+        },
+        {
+          "key": "statusDecision",
+          "bytes": 480
+        },
+        {
+          "key": "programmeCycle",
+          "bytes": 390
+        },
+        {
+          "key": "lastOccurrence",
+          "bytes": 336
+        },
+        {
+          "key": "activityKind",
+          "bytes": 286
+        },
+        {
+          "key": "canonicalProgrammeItemId",
+          "bytes": 190
+        },
+        {
+          "key": "family",
+          "bytes": 182
+        },
+        {
+          "key": "organisationalLevel",
+          "bytes": 160
+        },
+        {
+          "key": "subcategory",
+          "bytes": 158
+        },
+        {
+          "key": "needsArbitration",
+          "bytes": 112
+        },
+        {
+          "key": "historicalReferenceOnly",
+          "bytes": 112
+        },
+        {
+          "key": "noOperationalEventCreated",
+          "bytes": 112
+        },
+        {
+          "key": "businessCode",
+          "bytes": 90
+        },
+        {
+          "key": "planningStatus",
+          "bytes": 80
+        },
+        {
+          "key": "instructionKind",
+          "bytes": 63
+        },
+        {
+          "key": "theme",
+          "bytes": 62
+        },
+        {
+          "key": "statcomCode",
+          "bytes": 56
+        },
+        {
+          "key": "humanDecision",
+          "bytes": 32
+        },
+        {
+          "key": "validationWithdrawal",
+          "bytes": 32
+        },
+        {
+          "key": "sessionCount",
+          "bytes": 29
+        },
+        {
+          "key": "catalogueSource",
+          "bytes": 12
+        },
+        {
+          "key": "modeOrganisation",
+          "bytes": 8
+        },
+        {
+          "key": "codeEvenementPreview",
+          "bytes": 8
+        },
+        {
+          "key": "typeSource",
+          "bytes": 8
+        },
+        {
+          "key": "definitionVersionId",
+          "bytes": 4
+        }
+      ],
+      "queries": [
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 3.72950000000003,
+          "rows": 1
+        },
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 2.095166000000063,
+          "rows": 1
+        },
+        {
+          "sql": "select o.source_ref,o.statcom_code,o.imposed_start_at,o.metadata,p.annee from scope_quo_vadis_obligations o join scope_quo_vadis_programmes p using(programme_id) where o.statcom_co",
+          "ms": 4.216624999999908,
+          "rows": 2
+        },
+        {
+          "sql": "select future_date_id,target_year,date_debut,metadata from scope_quo_vadis_future_dates where metadata ? 'annualReport'",
+          "ms": 0.5907090000000608,
+          "rows": 0
+        },
+        {
+          "sql": "delete from scope_quo_vadis_calendar_days where programme_id = $1 and source in ('SEED_CORE_1', 'CALENDAR_VD_FINAL_3')",
+          "ms": 0.8517919999999322,
+          "rows": 18
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 1.3410420000000158,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.7535420000001523,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.7204580000000078,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.7587080000000697,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 1.144708000000037,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5704169999999067,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5809580000000096,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6228750000000218,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6437909999999647,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5769999999999982,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.45637499999998,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5164580000000569,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.32387500000004366,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.33295799999996234,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.3452500000000782,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.3267080000000533,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.34295799999995324,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6526659999999538,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.44570900000007896,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.31554099999993923,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.328708000000006,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.38666699999998855,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2679169999998976,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.23304200000006858,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.31558399999994435,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.23987499999998363,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.23908399999982066,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.27804199999991397,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2923749999999927,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.3324170000000777,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.26441700000009405,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2717079999999896,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.29891700000007404,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.26099999999996726,
+          "rows": 1
+        },
+        {
+          "sql": " insert into scope_quo_vadis_cursus_programmes(programme_id, cursus_id, retenu, justification, metadata) select $1, d.cursus_id, case when d.code = 'CI-DPS' and $2 = 2027 then true",
+          "ms": 0.4205410000001848,
+          "rows": 0
+        },
+        {
+          "sql": " insert into scope_quo_vadis_cursus_step_programmes(programme_id, step_id, retenu, metadata) select $1, s.step_id, false, '{\"source\":\"REFERENTIEL-CURSUS-TAXONOMIE-2\"}'::jsonb from ",
+          "ms": 0.752292000000125,
+          "rows": 0
+        },
+        {
+          "sql": "select o.*, count(p.proposal_id)::int as proposal_count from scope_quo_vadis_obligations o left join scope_quo_vadis_proposals p on p.obligation_id = o.obligation_id where o.progra",
+          "ms": 16.998874999999998,
+          "rows": 967
+        },
+        {
+          "sql": "select p.* from scope_quo_vadis_proposals p join scope_quo_vadis_obligations o on o.obligation_id = p.obligation_id where o.programme_id = $1 order by p.starts_at, p.created_at",
+          "ms": 1.8842500000000655,
+          "rows": 159
+        },
+        {
+          "sql": "select * from scope_quo_vadis_calendar_days where programme_id = $1 order by jour, type_jour, libelle",
+          "ms": 0.5811250000001564,
+          "rows": 31
+        },
+        {
+          "sql": "select * from scope_lieux order by actif desc, oi_code nulls last, nom_court",
+          "ms": 0.2854170000000522,
+          "rows": 12
+        },
+        {
+          "sql": " select d.cursus_id, d.code, d.libelle, v.version_code, s.step_id, s.step_code, s.libelle as step_label, s.ordre, s.logical_year, s.usual_start_time, s.usual_end_time, s.crosses_mi",
+          "ms": 1.1839590000001863,
+          "rows": 59
+        },
+        {
+          "sql": " select d.cursus_id, d.code, d.libelle, d.description, d.domain_code, d.cible_id, d.duration_months, d.statut, cp.retenu, cp.justification from scope_quo_vadis_cursus_definitions d",
+          "ms": 0.3194590000000517,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_quo_vadis_planning_rules where active is true order by domain nulls last, code",
+          "ms": 0.23708399999986796,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_quo_vadis_future_dates where target_year = $1 order by date_debut, activite_label",
+          "ms": 0.16845800000010058,
+          "rows": 0
+        },
+        {
+          "sql": "select * from scope_quo_vadis_dps_organisation_versions order by oi_code, valid_from",
+          "ms": 0.14975000000004002,
+          "rows": 4
+        },
+        {
+          "sql": " select d.definition_id as id, 'DEFINITION' as source, d.label as title, d.domain, d.description, d.status, v.definition_version_id as version_id, v.mode_organisation, v.session_co",
+          "ms": 4.504916999999978,
+          "rows": 291
+        },
+        {
+          "sql": " select s.*, p.code as parent_code from scope_salles_theorie s left join scope_salles_theorie p on p.salle_id = s.parent_salle_id order by s.libelle ",
+          "ms": 0.32987500000012915,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_responsable_fonctions where actif is true order by sort_order, libelle",
+          "ms": 0.23816600000009203,
+          "rows": 28
+        },
+        {
+          "sql": "select cible_id, domaine_code, niveau_code, libelle, actif from scope_cibles where actif is true order by domaine_code, niveau_code",
+          "ms": 0.5011670000001232,
+          "rows": 36
+        },
+        {
+          "sql": "select * from scope_statcom_referentiel order by code",
+          "ms": 0.9994160000001102,
+          "rows": 91
+        },
+        {
+          "sql": "select d.domaine_code,o.code from scope_domaine_ois d join scope_ois o using(oi_id) where o.actif is true",
+          "ms": 0.3942090000000462,
+          "rows": 11
+        },
+        {
+          "sql": "select competence_id,code,libelle,domaine_code,type from scope_competence_definitions where actif is true order by sort_order,code",
+          "ms": 0.26720799999998235,
+          "rows": 17
+        },
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 0.6701249999998709,
+          "rows": 1
+        },
+        {
+          "sql": "select o.source_ref,o.statcom_code,o.imposed_start_at,o.metadata,p.annee from scope_quo_vadis_obligations o join scope_quo_vadis_programmes p using(programme_id) where o.statcom_co",
+          "ms": 1.3269580000001042,
+          "rows": 2
+        },
+        {
+          "sql": "select future_date_id,target_year,date_debut,metadata from scope_quo_vadis_future_dates where metadata ? 'annualReport'",
+          "ms": 0.19062499999995453,
+          "rows": 0
+        },
+        {
+          "sql": "select e.evenement_id, e.date, e.domaine_code, e.sous_domaine_code, e.libelle, e.code_cours, e.code_source, e.heure_debut, e.heure_fin, e.heure_debut_prevue, e.heure_fin_prevue, e.",
+          "ms": 9.549041999999872,
+          "rows": 130
+        },
+        {
+          "sql": " select l.publication_unit_id, l.evenement_id, e.libelle, e.date, e.heure_debut, e.heure_fin, e.statut, e.version, e.code_cours, e.statcom_code, e.publication_key, coalesce((select",
+          "ms": 3.8242499999998927,
+          "rows": 125
+        },
+        {
+          "sql": " select evenement_id,event_code from scope_event_code_allocations where evenement_id = any($1::uuid[]) ",
+          "ms": 0.8327080000001388,
+          "rows": 70
+        },
+        {
+          "sql": " select obligation_id,source_ref,title,domain,statcom_code,imposed_start_at,imposed_end_at,cible_codes,lieu_id,lieu_libre,statut, salle_theorie_id,responsable_fonction_code,metadat",
+          "ms": 5.679084000000103,
+          "rows": 858
+        },
+        {
+          "sql": "select p.metadata from scope_event_definitions d join scope_event_definition_versions v on v.definition_id=d.definition_id and v.status='ACTIVE' join scope_activity_functional_prof",
+          "ms": 2.1629590000000007,
+          "rows": 0
+        },
+        {
+          "sql": "select r.*, c.niveau_code as cible_code from scope_quo_vadis_planning_rules r left join scope_cibles c on c.cible_id = r.cible_id where r.active is true",
+          "ms": 0.8614579999998568,
+          "rows": 11
+        },
+        {
+          "sql": "select d.code as definition_id,p.recurrence_kind,p.metadata from scope_event_definitions d join scope_event_definition_versions v using(definition_id) join scope_activity_functiona",
+          "ms": 4.009457999999995,
+          "rows": 0
+        }
+      ]
+    },
+    "published": {
+      "serviceMs": 486.518458,
+      "bodyBytes": 5585600,
+      "lambdaEnvelopeBytes": 6321226,
+      "transport": {
+        "lambdaEnvelopeBytes": 740638,
+        "wireBytes": 555334,
+        "compressionMs": 34.07612500000005,
+        "lossless": true
+      },
+      "serializedMs": 11.469291999999768,
+      "parseMs": 80.90774999999985,
+      "fields": [
+        {
+          "key": "canonicalProgramme",
+          "bytes": 2932936,
+          "count": null
+        },
+        {
+          "key": "historicalAgenda2026",
+          "bytes": 1336826,
+          "count": null
+        },
+        {
+          "key": "ecawinCorrespondence",
+          "bytes": 387843,
+          "count": 933
+        },
+        {
+          "key": "catalogue",
+          "bytes": 224745,
+          "count": 291
+        },
+        {
+          "key": "activities",
+          "bytes": 116954,
+          "count": 36
+        },
+        {
+          "key": "agendaYears",
+          "bytes": 104764,
+          "count": null
+        },
+        {
+          "key": "obligations",
+          "bytes": 91261,
+          "count": 36
+        },
+        {
+          "key": "planning",
+          "bytes": 61959,
+          "count": null
+        },
+        {
+          "key": "programme",
+          "bytes": 60996,
+          "count": null
+        },
+        {
+          "key": "statComCodes",
+          "bytes": 50369,
+          "count": 91
+        },
+        {
+          "key": "coverage",
+          "bytes": 48672,
+          "count": null
+        },
+        {
+          "key": "proposals",
+          "bytes": 45706,
+          "count": 77
+        },
+        {
+          "key": "cursus",
+          "bytes": 34127,
+          "count": 59
+        },
+        {
+          "key": "calendarDays",
+          "bytes": 14364,
+          "count": 66
+        },
+        {
+          "key": "programmeCycle",
+          "bytes": 12285,
+          "count": null
+        },
+        {
+          "key": "ecawinReferential",
+          "bytes": 8626,
+          "count": null
+        },
+        {
+          "key": "rules",
+          "bytes": 7415,
+          "count": 9
+        },
+        {
+          "key": "ctaParameters",
+          "bytes": 6100,
+          "count": null
+        },
+        {
+          "key": "dapGroupedProposals",
+          "bytes": 6015,
+          "count": 2
+        },
+        {
+          "key": "dapGroupedReplanning",
+          "bytes": 4884,
+          "count": null
+        },
+        {
+          "key": "paprProposals",
+          "bytes": 4188,
+          "count": 7
+        },
+        {
+          "key": "cibles",
+          "bytes": 3911,
+          "count": 36
+        },
+        {
+          "key": "responsableFonctions",
+          "bytes": 3100,
+          "count": 28
+        },
+        {
+          "key": "cursusSelections",
+          "bytes": 2912,
+          "count": 11
+        },
+        {
+          "key": "lieux",
+          "bytes": 2704,
+          "count": 12
+        },
+        {
+          "key": "sallesTheorie",
+          "bytes": 2514,
+          "count": 11
+        },
+        {
+          "key": "qualifications",
+          "bytes": 2091,
+          "count": 17
+        },
+        {
+          "key": "breakdown",
+          "bytes": 1988,
+          "count": null
+        },
+        {
+          "key": "alerts",
+          "bytes": 1525,
+          "count": 3
+        },
+        {
+          "key": "dpsOrganisation",
+          "bytes": 1521,
+          "count": 4
+        },
+        {
+          "key": "annualValidationControl",
+          "bytes": 551,
+          "count": null
+        },
+        {
+          "key": "domainOis",
+          "bytes": 386,
+          "count": 11
+        },
+        {
+          "key": "engineNotes",
+          "bytes": 373,
+          "count": 5
+        },
+        {
+          "key": "summary",
+          "bytes": 154,
+          "count": null
+        },
+        {
+          "key": "sectionPublicSummary",
+          "bytes": 63,
+          "count": null
+        },
+        {
+          "key": "publicationReconciliation",
+          "bytes": 31,
+          "count": null
+        },
+        {
+          "key": "personnelView",
+          "bytes": 26,
+          "count": null
+        },
+        {
+          "key": "statComSuccessions",
+          "bytes": 2,
+          "count": 0
+        },
+        {
+          "key": "futureDates",
+          "bytes": 2,
+          "count": 0
+        },
+        {
+          "key": "reservationConflicts",
+          "bytes": 2,
+          "count": 0
+        }
+      ],
+      "rowFields": [
+        {
+          "key": "business",
+          "bytes": 610897
+        },
+        {
+          "key": "historicalProposal",
+          "bytes": 164057
+        },
+        {
+          "key": "businessValidation",
+          "bytes": 120408
+        },
+        {
+          "key": "preparation",
+          "bytes": 89512
+        },
+        {
+          "key": "projectionEvidence",
+          "bytes": 50684
+        },
+        {
+          "key": "sessionId",
+          "bytes": 41361
+        },
+        {
+          "key": "id",
+          "bytes": 40607
+        },
+        {
+          "key": "reason",
+          "bytes": 39535
+        },
+        {
+          "key": "occurrenceId",
+          "bytes": 38884
+        },
+        {
+          "key": "definitionId",
+          "bytes": 33892
+        },
+        {
+          "key": "lieuId",
+          "bytes": 29760
+        },
+        {
+          "key": "provenance",
+          "bytes": 27429
+        },
+        {
+          "key": "eventLabel",
+          "bytes": 25417
+        },
+        {
+          "key": "ctaAssignments",
+          "bytes": 24131
+        },
+        {
+          "key": "sessionLabel",
+          "bytes": 23244
+        },
+        {
+          "key": "label",
+          "bytes": 23091
+        },
+        {
+          "key": "activityLabel",
+          "bytes": 23088
+        },
+        {
+          "key": "eventDisplayLabel",
+          "bytes": 22223
+        },
+        {
+          "key": "rotationEvidence",
+          "bytes": 19480
+        },
+        {
+          "key": "conduiteSlots",
+          "bytes": 19152
+        },
+        {
+          "key": "lineage",
+          "bytes": 19102
+        },
+        {
+          "key": "occurrenceLabel",
+          "bytes": 18097
+        },
+        {
+          "key": "startsAt",
+          "bytes": 16935
+        },
+        {
+          "key": "endsAt",
+          "bytes": 16935
+        },
+        {
+          "key": "activityNature",
+          "bytes": 14936
+        },
+        {
+          "key": "oiSelections",
+          "bytes": 14812
+        },
+        {
+          "key": "status",
+          "bytes": 12817
+        },
+        {
+          "key": "projectionStatus",
+          "bytes": 11532
+        },
+        {
+          "key": "oiQualification",
+          "bytes": 10947
+        },
+        {
+          "key": "location",
+          "bytes": 10115
+        },
+        {
+          "key": "cycleClassification",
+          "bytes": 10080
+        },
+        {
+          "key": "family",
+          "bytes": 10028
+        },
+        {
+          "key": "publics",
+          "bytes": 9856
+        },
+        {
+          "key": "responsible",
+          "bytes": 9728
+        },
+        {
+          "key": "definitionCode",
+          "bytes": 9520
+        },
+        {
+          "key": "conduiteEvidence",
+          "bytes": 9224
+        },
+        {
+          "key": "code",
+          "bytes": 9144
+        },
+        {
+          "key": "ois",
+          "bytes": 8812
+        },
+        {
+          "key": "salleTheorieId",
+          "bytes": 7320
+        },
+        {
+          "key": "cycleExtension",
+          "bytes": 7086
+        },
+        {
+          "key": "statCom",
+          "bytes": 6670
+        },
+        {
+          "key": "ecawinActivityCode",
+          "bytes": 6606
+        },
+        {
+          "key": "statComProjectionEvidence",
+          "bytes": 6387
+        },
+        {
+          "key": "projectionRule",
+          "bytes": 6188
+        },
+        {
+          "key": "ctaHolidayWindows",
+          "bytes": 6058
+        },
+        {
+          "key": "dapGroupedProposal",
+          "bytes": 5831
+        },
+        {
+          "key": "historicalMatchStatus",
+          "bytes": 5790
+        },
+        {
+          "key": "publishedEventId",
+          "bytes": 5386
+        },
+        {
+          "key": "publishedEventLabel",
+          "bytes": 5010
+        },
+        {
+          "key": "domain",
+          "bytes": 4916
+        },
+        {
+          "key": "externalActivity",
+          "bytes": 4665
+        },
+        {
+          "key": "external",
+          "bytes": 4648
+        },
+        {
+          "key": "humanDecision",
+          "bytes": 4518
+        },
+        {
+          "key": "review",
+          "bytes": 4449
+        },
+        {
+          "key": "paprProposal",
+          "bytes": 4180
+        },
+        {
+          "key": "rotationRule",
+          "bytes": 3998
+        },
+        {
+          "key": "coverageEvidence",
+          "bytes": 3790
+        },
+        {
+          "key": "participationEvaluation",
+          "bytes": 3776
+        },
+        {
+          "key": "sold",
+          "bytes": 3741
+        },
+        {
+          "key": "annualRecurrence",
+          "bytes": 3734
+        },
+        {
+          "key": "ecawinExport",
+          "bytes": 3734
+        },
+        {
+          "key": "businessCycleYear",
+          "bytes": 3732
+        },
+        {
+          "key": "civilYear",
+          "bytes": 3732
+        },
+        {
+          "key": "preparatoryCycle",
+          "bytes": 3710
+        },
+        {
+          "key": "eventCode",
+          "bytes": 3580
+        },
+        {
+          "key": "room",
+          "bytes": 3491
+        },
+        {
+          "key": "responsableFonctionCode",
+          "bytes": 3454
+        },
+        {
+          "key": "sectionPublicRule",
+          "bytes": 3222
+        },
+        {
+          "key": "prAbcProposal",
+          "bytes": 2873
+        },
+        {
+          "key": "persistenceDomain",
+          "bytes": 2536
+        },
+        {
+          "key": "lieuLibre",
+          "bytes": 2392
+        },
+        {
+          "key": "ctaPublicStatus",
+          "bytes": 2360
+        },
+        {
+          "key": "cmdtEvidence",
+          "bytes": 2270
+        },
+        {
+          "key": "calendarAdjustment",
+          "bytes": 2018
+        },
+        {
+          "key": "publishedEventOiSelections",
+          "bytes": 2002
+        },
+        {
+          "key": "sectionPublicStatus",
+          "bytes": 1974
+        },
+        {
+          "key": "publishedEventCodeState",
+          "bytes": 1964
+        },
+        {
+          "key": "ambiguousOis",
+          "bytes": 1866
+        },
+        {
+          "key": "reservationConflicts",
+          "bytes": 1866
+        },
+        {
+          "key": "publishedEventDate",
+          "bytes": 1704
+        },
+        {
+          "key": "pionnierCta",
+          "bytes": 1665
+        },
+        {
+          "key": "themeSource",
+          "bytes": 1551
+        },
+        {
+          "key": "responsibleSelections",
+          "bytes": 1476
+        },
+        {
+          "key": "publishedEventStatus",
+          "bytes": 1454
+        },
+        {
+          "key": "rotationStatus",
+          "bytes": 1430
+        },
+        {
+          "key": "instructionFamilyRule",
+          "bytes": 1368
+        },
+        {
+          "key": "themes",
+          "bytes": 1293
+        },
+        {
+          "key": "publishedEventCode",
+          "bytes": 1232
+        },
+        {
+          "key": "occurrenceCount",
+          "bytes": 1189
+        },
+        {
+          "key": "cursusReconciliation",
+          "bytes": 1150
+        },
+        {
+          "key": "publishedEventStart",
+          "bytes": 1079
+        },
+        {
+          "key": "publishedEventEnd",
+          "bytes": 1079
+        },
+        {
+          "key": "statComEvidence",
+          "bytes": 972
+        },
+        {
+          "key": "cursusId",
+          "bytes": 962
+        },
+        {
+          "key": "occurrenceIndex",
+          "bytes": 906
+        },
+        {
+          "key": "sessionIndex",
+          "bytes": 898
+        },
+        {
+          "key": "sessionCount",
+          "bytes": 898
+        },
+        {
+          "key": "paprEvidence",
+          "bytes": 861
+        },
+        {
+          "key": "sectionPublicDerived",
+          "bytes": 799
+        },
+        {
+          "key": "tp9000Rule",
+          "bytes": 690
+        },
+        {
+          "key": "dapAnnualEvidence",
+          "bytes": 572
+        },
+        {
+          "key": "sectionPublicOi",
+          "bytes": 564
+        },
+        {
+          "key": "programmeDomain",
+          "bytes": 554
+        },
+        {
+          "key": "publicationRevision",
+          "bytes": 552
+        },
+        {
+          "key": "validationWithdrawal",
+          "bytes": 552
+        },
+        {
+          "key": "projectionAdded",
+          "bytes": 548
+        },
+        {
+          "key": "sourceCorrection",
+          "bytes": 540
+        },
+        {
+          "key": "cursusStepId",
+          "bytes": 494
+        },
+        {
+          "key": "annualReportConstraint",
+          "bytes": 467
+        },
+        {
+          "key": "pionnierRule",
+          "bytes": 367
+        },
+        {
+          "key": "publishedEventVersion",
+          "bytes": 329
+        },
+        {
+          "key": "publicFreeLabels",
+          "bytes": 314
+        },
+        {
+          "key": "cursus",
+          "bytes": 284
+        },
+        {
+          "key": "validationHistory",
+          "bytes": 276
+        },
+        {
+          "key": "dapAnnualStatus",
+          "bytes": 264
+        },
+        {
+          "key": "prRule",
+          "bytes": 264
+        },
+        {
+          "key": "qualificationCodes",
+          "bytes": 262
+        },
+        {
+          "key": "specialisation",
+          "bytes": 246
+        },
+        {
+          "key": "businessCode",
+          "bytes": 238
+        },
+        {
+          "key": "seriesProvenance",
+          "bytes": 234
+        },
+        {
+          "key": "conduiteRule",
+          "bytes": 192
+        },
+        {
+          "key": "sessionStructure",
+          "bytes": 186
+        },
+        {
+          "key": "personnel",
+          "bytes": 180
+        },
+        {
+          "key": "fobaRule",
+          "bytes": 169
+        },
+        {
+          "key": "rotationAdded",
+          "bytes": 152
+        },
+        {
+          "key": "conduiteMinutesPerParticipant",
+          "bytes": 112
+        },
+        {
+          "key": "coverageAdded",
+          "bytes": 108
+        },
+        {
+          "key": "activityKind",
+          "bytes": 104
+        },
+        {
+          "key": "dapAnnualRule",
+          "bytes": 96
+        },
+        {
+          "key": "cursusCode",
+          "bytes": 76
+        },
+        {
+          "key": "jspDirectionReconciliation",
+          "bytes": 74
+        },
+        {
+          "key": "kind",
+          "bytes": 72
+        },
+        {
+          "key": "prAbcStatus",
+          "bytes": 69
+        },
+        {
+          "key": "cursusStepCode",
+          "bytes": 69
+        },
+        {
+          "key": "pionnierEvidence",
+          "bytes": 66
+        },
+        {
+          "key": "sourceLine2026",
+          "bytes": 65
+        },
+        {
+          "key": "annualReportRule",
+          "bytes": 53
+        },
+        {
+          "key": "annualReport",
+          "bytes": 50
+        },
+        {
+          "key": "publicEvidence",
+          "bytes": 44
+        },
+        {
+          "key": "prAbcRule",
+          "bytes": 42
+        },
+        {
+          "key": "seriesSite",
+          "bytes": 36
+        },
+        {
+          "key": "oiCorrection",
+          "bytes": 27
+        },
+        {
+          "key": "restoredModule",
+          "bytes": 24
+        },
+        {
+          "key": "sourceLine",
+          "bytes": 18
+        },
+        {
+          "key": "seriesOccurrenceCount",
+          "bytes": 17
+        },
+        {
+          "key": "ctaReferenceFriday",
+          "bytes": 12
+        },
+        {
+          "key": "target",
+          "bytes": 10
+        },
+        {
+          "key": "seriesOccurrenceIndex",
+          "bytes": 9
+        },
+        {
+          "key": "publicReviewRequired",
+          "bytes": 8
+        },
+        {
+          "key": "manualCreation",
+          "bytes": 8
+        },
+        {
+          "key": "paprModule",
+          "bytes": 7
+        },
+        {
+          "key": "paprOiRevisionRequired",
+          "bytes": 4
+        },
+        {
+          "key": "ctaHolidayOnly",
+          "bytes": 4
+        }
+      ],
+      "obligationMetadata": [
+        {
+          "key": "sessions",
+          "bytes": 15187
+        },
+        {
+          "key": "businessValidation",
+          "bytes": 12739
+        },
+        {
+          "key": "planningFields",
+          "bytes": 7550
+        },
+        {
+          "key": "consolidation",
+          "bytes": 5539
+        },
+        {
+          "key": "businessJustification",
+          "bytes": 1540
+        },
+        {
+          "key": "historicalActivityKey",
+          "bytes": 1090
+        },
+        {
+          "key": "lineage",
+          "bytes": 1076
+        },
+        {
+          "key": "source",
+          "bytes": 936
+        },
+        {
+          "key": "manualSource",
+          "bytes": 922
+        },
+        {
+          "key": "arbitrationReason",
+          "bytes": 878
+        },
+        {
+          "key": "statusDecision",
+          "bytes": 480
+        },
+        {
+          "key": "programmeCycle",
+          "bytes": 390
+        },
+        {
+          "key": "lastOccurrence",
+          "bytes": 336
+        },
+        {
+          "key": "activityKind",
+          "bytes": 286
+        },
+        {
+          "key": "canonicalProgrammeItemId",
+          "bytes": 190
+        },
+        {
+          "key": "family",
+          "bytes": 182
+        },
+        {
+          "key": "organisationalLevel",
+          "bytes": 160
+        },
+        {
+          "key": "subcategory",
+          "bytes": 158
+        },
+        {
+          "key": "needsArbitration",
+          "bytes": 112
+        },
+        {
+          "key": "historicalReferenceOnly",
+          "bytes": 112
+        },
+        {
+          "key": "noOperationalEventCreated",
+          "bytes": 112
+        },
+        {
+          "key": "businessCode",
+          "bytes": 90
+        },
+        {
+          "key": "planningStatus",
+          "bytes": 80
+        },
+        {
+          "key": "instructionKind",
+          "bytes": 63
+        },
+        {
+          "key": "theme",
+          "bytes": 62
+        },
+        {
+          "key": "statcomCode",
+          "bytes": 56
+        },
+        {
+          "key": "humanDecision",
+          "bytes": 32
+        },
+        {
+          "key": "validationWithdrawal",
+          "bytes": 32
+        },
+        {
+          "key": "sessionCount",
+          "bytes": 29
+        },
+        {
+          "key": "catalogueSource",
+          "bytes": 12
+        },
+        {
+          "key": "modeOrganisation",
+          "bytes": 8
+        },
+        {
+          "key": "codeEvenementPreview",
+          "bytes": 8
+        },
+        {
+          "key": "typeSource",
+          "bytes": 8
+        },
+        {
+          "key": "definitionVersionId",
+          "bytes": 4
+        }
+      ],
+      "queries": [
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 2.1442919999999503,
+          "rows": 1
+        },
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 1.8032920000000559,
+          "rows": 1
+        },
+        {
+          "sql": "select o.source_ref,o.statcom_code,o.imposed_start_at,o.metadata,p.annee from scope_quo_vadis_obligations o join scope_quo_vadis_programmes p using(programme_id) where o.statcom_co",
+          "ms": 2.12237499999992,
+          "rows": 2
+        },
+        {
+          "sql": "select future_date_id,target_year,date_debut,metadata from scope_quo_vadis_future_dates where metadata ? 'annualReport'",
+          "ms": 0.37525000000005093,
+          "rows": 0
+        },
+        {
+          "sql": "delete from scope_quo_vadis_calendar_days where programme_id = $1 and source in ('SEED_CORE_1', 'CALENDAR_VD_FINAL_3')",
+          "ms": 0.8534170000002632,
+          "rows": 31
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6990419999997357,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6027919999996811,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5399999999999636,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.4500420000003942,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5956670000000486,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5262499999998909,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5490840000002208,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6149579999996604,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5372919999999795,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.45245799999975134,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.23462500000005093,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.14241699999956836,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.14383300000008603,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.1385840000002645,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.30908399999998437,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.3769999999999527,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.36620799999991505,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.3563750000002983,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5060419999999795,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.35116699999980483,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.8878750000003492,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2733339999999771,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.1860410000003867,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.1683749999997417,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.24787500000002183,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2345829999999296,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2755409999999756,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.22337500000003274,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.21766600000000835,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.24545899999975518,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2762079999997695,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.26812500000005457,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2244999999998072,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2341670000000704,
+          "rows": 1
+        },
+        {
+          "sql": " insert into scope_quo_vadis_cursus_programmes(programme_id, cursus_id, retenu, justification, metadata) select $1, d.cursus_id, case when d.code = 'CI-DPS' and $2 = 2027 then true",
+          "ms": 0.38716699999986304,
+          "rows": 0
+        },
+        {
+          "sql": " insert into scope_quo_vadis_cursus_step_programmes(programme_id, step_id, retenu, metadata) select $1, s.step_id, false, '{\"source\":\"REFERENTIEL-CURSUS-TAXONOMIE-2\"}'::jsonb from ",
+          "ms": 0.7420000000001892,
+          "rows": 0
+        },
+        {
+          "sql": "select o.*, count(p.proposal_id)::int as proposal_count from scope_quo_vadis_obligations o left join scope_quo_vadis_proposals p on p.obligation_id = o.obligation_id where o.progra",
+          "ms": 14.6215830000001,
+          "rows": 967
+        },
+        {
+          "sql": "select p.* from scope_quo_vadis_proposals p join scope_quo_vadis_obligations o on o.obligation_id = p.obligation_id where o.programme_id = $1 order by p.starts_at, p.created_at",
+          "ms": 1.6963330000003225,
+          "rows": 159
+        },
+        {
+          "sql": "select * from scope_quo_vadis_calendar_days where programme_id = $1 order by jour, type_jour, libelle",
+          "ms": 0.2843750000001819,
+          "rows": 31
+        },
+        {
+          "sql": "select * from scope_lieux order by actif desc, oi_code nulls last, nom_court",
+          "ms": 0.4844169999996666,
+          "rows": 12
+        },
+        {
+          "sql": " select d.cursus_id, d.code, d.libelle, v.version_code, s.step_id, s.step_code, s.libelle as step_label, s.ordre, s.logical_year, s.usual_start_time, s.usual_end_time, s.crosses_mi",
+          "ms": 0.9070000000001528,
+          "rows": 59
+        },
+        {
+          "sql": " select d.cursus_id, d.code, d.libelle, d.description, d.domain_code, d.cible_id, d.duration_months, d.statut, cp.retenu, cp.justification from scope_quo_vadis_cursus_definitions d",
+          "ms": 0.21733399999993708,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_quo_vadis_planning_rules where active is true order by domain nulls last, code",
+          "ms": 0.21691699999973935,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_quo_vadis_future_dates where target_year = $1 order by date_debut, activite_label",
+          "ms": 0.14620800000011513,
+          "rows": 0
+        },
+        {
+          "sql": "select * from scope_quo_vadis_dps_organisation_versions order by oi_code, valid_from",
+          "ms": 0.13970800000015515,
+          "rows": 4
+        },
+        {
+          "sql": " select d.definition_id as id, 'DEFINITION' as source, d.label as title, d.domain, d.description, d.status, v.definition_version_id as version_id, v.mode_organisation, v.session_co",
+          "ms": 4.289582999999766,
+          "rows": 291
+        },
+        {
+          "sql": " select s.*, p.code as parent_code from scope_salles_theorie s left join scope_salles_theorie p on p.salle_id = s.parent_salle_id order by s.libelle ",
+          "ms": 0.3263329999999769,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_responsable_fonctions where actif is true order by sort_order, libelle",
+          "ms": 0.20258400000011534,
+          "rows": 28
+        },
+        {
+          "sql": "select cible_id, domaine_code, niveau_code, libelle, actif from scope_cibles where actif is true order by domaine_code, niveau_code",
+          "ms": 0.24062499999990905,
+          "rows": 36
+        },
+        {
+          "sql": "select * from scope_statcom_referentiel order by code",
+          "ms": 0.9766249999997854,
+          "rows": 91
+        },
+        {
+          "sql": "select d.domaine_code,o.code from scope_domaine_ois d join scope_ois o using(oi_id) where o.actif is true",
+          "ms": 0.23045799999999872,
+          "rows": 11
+        },
+        {
+          "sql": "select competence_id,code,libelle,domaine_code,type from scope_competence_definitions where actif is true order by sort_order,code",
+          "ms": 0.1639170000003105,
+          "rows": 17
+        },
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 0.8289580000000569,
+          "rows": 1
+        },
+        {
+          "sql": "select o.source_ref,o.statcom_code,o.imposed_start_at,o.metadata,p.annee from scope_quo_vadis_obligations o join scope_quo_vadis_programmes p using(programme_id) where o.statcom_co",
+          "ms": 1.4181670000002669,
+          "rows": 2
+        },
+        {
+          "sql": "select future_date_id,target_year,date_debut,metadata from scope_quo_vadis_future_dates where metadata ? 'annualReport'",
+          "ms": 0.18387500000017099,
+          "rows": 0
+        },
+        {
+          "sql": "select e.evenement_id, e.date, e.domaine_code, e.sous_domaine_code, e.libelle, e.code_cours, e.code_source, e.heure_debut, e.heure_fin, e.heure_debut_prevue, e.heure_fin_prevue, e.",
+          "ms": 4.76141699999971,
+          "rows": 130
+        },
+        {
+          "sql": " select l.publication_unit_id, l.evenement_id, e.libelle, e.date, e.heure_debut, e.heure_fin, e.statut, e.version, e.code_cours, e.statcom_code, e.publication_key, coalesce((select",
+          "ms": 3.5642499999999018,
+          "rows": 125
+        },
+        {
+          "sql": " select evenement_id,event_code from scope_event_code_allocations where evenement_id = any($1::uuid[]) ",
+          "ms": 0.45524999999997817,
+          "rows": 70
+        },
+        {
+          "sql": " select obligation_id,source_ref,title,domain,statcom_code,imposed_start_at,imposed_end_at,cible_codes,lieu_id,lieu_libre,statut, salle_theorie_id,responsable_fonction_code,metadat",
+          "ms": 6.363749999999982,
+          "rows": 858
+        },
+        {
+          "sql": "select p.metadata from scope_event_definitions d join scope_event_definition_versions v on v.definition_id=d.definition_id and v.status='ACTIVE' join scope_activity_functional_prof",
+          "ms": 1.0954999999999018,
+          "rows": 0
+        },
+        {
+          "sql": "select r.*, c.niveau_code as cible_code from scope_quo_vadis_planning_rules r left join scope_cibles c on c.cible_id = r.cible_id where r.active is true",
+          "ms": 1.1732919999999467,
+          "rows": 11
+        },
+        {
+          "sql": "select d.code as definition_id,p.recurrence_kind,p.metadata from scope_event_definitions d join scope_event_definition_versions v using(definition_id) join scope_activity_functiona",
+          "ms": 1.4682499999998981,
+          "rows": 0
+        },
+        {
+          "sql": "select r.*, c.niveau_code as cible_code from scope_quo_vadis_planning_rules r left join scope_cibles c on c.cible_id = r.cible_id where r.active is true",
+          "ms": 0.936167000000296,
+          "rows": 11
+        }
+      ]
+    },
+    "corrected": {
+      "serviceMs": 437.184792,
+      "bodyBytes": 5585600,
+      "lambdaEnvelopeBytes": 6321226,
+      "transport": {
+        "lambdaEnvelopeBytes": 740622,
+        "wireBytes": 555323,
+        "compressionMs": 33.924625000000106,
+        "lossless": true
+      },
+      "serializedMs": 11.316208000000188,
+      "parseMs": 77.98495899999989,
+      "fields": [
+        {
+          "key": "canonicalProgramme",
+          "bytes": 2932936,
+          "count": null
+        },
+        {
+          "key": "historicalAgenda2026",
+          "bytes": 1336826,
+          "count": null
+        },
+        {
+          "key": "ecawinCorrespondence",
+          "bytes": 387843,
+          "count": 933
+        },
+        {
+          "key": "catalogue",
+          "bytes": 224745,
+          "count": 291
+        },
+        {
+          "key": "activities",
+          "bytes": 116954,
+          "count": 36
+        },
+        {
+          "key": "agendaYears",
+          "bytes": 104764,
+          "count": null
+        },
+        {
+          "key": "obligations",
+          "bytes": 91261,
+          "count": 36
+        },
+        {
+          "key": "planning",
+          "bytes": 61959,
+          "count": null
+        },
+        {
+          "key": "programme",
+          "bytes": 60996,
+          "count": null
+        },
+        {
+          "key": "statComCodes",
+          "bytes": 50369,
+          "count": 91
+        },
+        {
+          "key": "coverage",
+          "bytes": 48672,
+          "count": null
+        },
+        {
+          "key": "proposals",
+          "bytes": 45706,
+          "count": 77
+        },
+        {
+          "key": "cursus",
+          "bytes": 34127,
+          "count": 59
+        },
+        {
+          "key": "calendarDays",
+          "bytes": 14364,
+          "count": 66
+        },
+        {
+          "key": "programmeCycle",
+          "bytes": 12285,
+          "count": null
+        },
+        {
+          "key": "ecawinReferential",
+          "bytes": 8626,
+          "count": null
+        },
+        {
+          "key": "rules",
+          "bytes": 7415,
+          "count": 9
+        },
+        {
+          "key": "ctaParameters",
+          "bytes": 6100,
+          "count": null
+        },
+        {
+          "key": "dapGroupedProposals",
+          "bytes": 6015,
+          "count": 2
+        },
+        {
+          "key": "dapGroupedReplanning",
+          "bytes": 4884,
+          "count": null
+        },
+        {
+          "key": "paprProposals",
+          "bytes": 4188,
+          "count": 7
+        },
+        {
+          "key": "cibles",
+          "bytes": 3911,
+          "count": 36
+        },
+        {
+          "key": "responsableFonctions",
+          "bytes": 3100,
+          "count": 28
+        },
+        {
+          "key": "cursusSelections",
+          "bytes": 2912,
+          "count": 11
+        },
+        {
+          "key": "lieux",
+          "bytes": 2704,
+          "count": 12
+        },
+        {
+          "key": "sallesTheorie",
+          "bytes": 2514,
+          "count": 11
+        },
+        {
+          "key": "qualifications",
+          "bytes": 2091,
+          "count": 17
+        },
+        {
+          "key": "breakdown",
+          "bytes": 1988,
+          "count": null
+        },
+        {
+          "key": "alerts",
+          "bytes": 1525,
+          "count": 3
+        },
+        {
+          "key": "dpsOrganisation",
+          "bytes": 1521,
+          "count": 4
+        },
+        {
+          "key": "annualValidationControl",
+          "bytes": 551,
+          "count": null
+        },
+        {
+          "key": "domainOis",
+          "bytes": 386,
+          "count": 11
+        },
+        {
+          "key": "engineNotes",
+          "bytes": 373,
+          "count": 5
+        },
+        {
+          "key": "summary",
+          "bytes": 154,
+          "count": null
+        },
+        {
+          "key": "sectionPublicSummary",
+          "bytes": 63,
+          "count": null
+        },
+        {
+          "key": "publicationReconciliation",
+          "bytes": 31,
+          "count": null
+        },
+        {
+          "key": "personnelView",
+          "bytes": 26,
+          "count": null
+        },
+        {
+          "key": "statComSuccessions",
+          "bytes": 2,
+          "count": 0
+        },
+        {
+          "key": "futureDates",
+          "bytes": 2,
+          "count": 0
+        },
+        {
+          "key": "reservationConflicts",
+          "bytes": 2,
+          "count": 0
+        }
+      ],
+      "rowFields": [
+        {
+          "key": "business",
+          "bytes": 610897
+        },
+        {
+          "key": "historicalProposal",
+          "bytes": 164057
+        },
+        {
+          "key": "businessValidation",
+          "bytes": 120408
+        },
+        {
+          "key": "preparation",
+          "bytes": 89512
+        },
+        {
+          "key": "projectionEvidence",
+          "bytes": 50684
+        },
+        {
+          "key": "sessionId",
+          "bytes": 41361
+        },
+        {
+          "key": "id",
+          "bytes": 40607
+        },
+        {
+          "key": "reason",
+          "bytes": 39535
+        },
+        {
+          "key": "occurrenceId",
+          "bytes": 38884
+        },
+        {
+          "key": "definitionId",
+          "bytes": 33892
+        },
+        {
+          "key": "lieuId",
+          "bytes": 29760
+        },
+        {
+          "key": "provenance",
+          "bytes": 27429
+        },
+        {
+          "key": "eventLabel",
+          "bytes": 25417
+        },
+        {
+          "key": "ctaAssignments",
+          "bytes": 24131
+        },
+        {
+          "key": "sessionLabel",
+          "bytes": 23244
+        },
+        {
+          "key": "label",
+          "bytes": 23091
+        },
+        {
+          "key": "activityLabel",
+          "bytes": 23088
+        },
+        {
+          "key": "eventDisplayLabel",
+          "bytes": 22223
+        },
+        {
+          "key": "rotationEvidence",
+          "bytes": 19480
+        },
+        {
+          "key": "conduiteSlots",
+          "bytes": 19152
+        },
+        {
+          "key": "lineage",
+          "bytes": 19102
+        },
+        {
+          "key": "occurrenceLabel",
+          "bytes": 18097
+        },
+        {
+          "key": "startsAt",
+          "bytes": 16935
+        },
+        {
+          "key": "endsAt",
+          "bytes": 16935
+        },
+        {
+          "key": "activityNature",
+          "bytes": 14936
+        },
+        {
+          "key": "oiSelections",
+          "bytes": 14812
+        },
+        {
+          "key": "status",
+          "bytes": 12817
+        },
+        {
+          "key": "projectionStatus",
+          "bytes": 11532
+        },
+        {
+          "key": "oiQualification",
+          "bytes": 10947
+        },
+        {
+          "key": "location",
+          "bytes": 10115
+        },
+        {
+          "key": "cycleClassification",
+          "bytes": 10080
+        },
+        {
+          "key": "family",
+          "bytes": 10028
+        },
+        {
+          "key": "publics",
+          "bytes": 9856
+        },
+        {
+          "key": "responsible",
+          "bytes": 9728
+        },
+        {
+          "key": "definitionCode",
+          "bytes": 9520
+        },
+        {
+          "key": "conduiteEvidence",
+          "bytes": 9224
+        },
+        {
+          "key": "code",
+          "bytes": 9144
+        },
+        {
+          "key": "ois",
+          "bytes": 8812
+        },
+        {
+          "key": "salleTheorieId",
+          "bytes": 7320
+        },
+        {
+          "key": "cycleExtension",
+          "bytes": 7086
+        },
+        {
+          "key": "statCom",
+          "bytes": 6670
+        },
+        {
+          "key": "ecawinActivityCode",
+          "bytes": 6606
+        },
+        {
+          "key": "statComProjectionEvidence",
+          "bytes": 6387
+        },
+        {
+          "key": "projectionRule",
+          "bytes": 6188
+        },
+        {
+          "key": "ctaHolidayWindows",
+          "bytes": 6058
+        },
+        {
+          "key": "dapGroupedProposal",
+          "bytes": 5831
+        },
+        {
+          "key": "historicalMatchStatus",
+          "bytes": 5790
+        },
+        {
+          "key": "publishedEventId",
+          "bytes": 5386
+        },
+        {
+          "key": "publishedEventLabel",
+          "bytes": 5010
+        },
+        {
+          "key": "domain",
+          "bytes": 4916
+        },
+        {
+          "key": "externalActivity",
+          "bytes": 4665
+        },
+        {
+          "key": "external",
+          "bytes": 4648
+        },
+        {
+          "key": "humanDecision",
+          "bytes": 4518
+        },
+        {
+          "key": "review",
+          "bytes": 4449
+        },
+        {
+          "key": "paprProposal",
+          "bytes": 4180
+        },
+        {
+          "key": "rotationRule",
+          "bytes": 3998
+        },
+        {
+          "key": "coverageEvidence",
+          "bytes": 3790
+        },
+        {
+          "key": "participationEvaluation",
+          "bytes": 3776
+        },
+        {
+          "key": "sold",
+          "bytes": 3741
+        },
+        {
+          "key": "annualRecurrence",
+          "bytes": 3734
+        },
+        {
+          "key": "ecawinExport",
+          "bytes": 3734
+        },
+        {
+          "key": "businessCycleYear",
+          "bytes": 3732
+        },
+        {
+          "key": "civilYear",
+          "bytes": 3732
+        },
+        {
+          "key": "preparatoryCycle",
+          "bytes": 3710
+        },
+        {
+          "key": "eventCode",
+          "bytes": 3580
+        },
+        {
+          "key": "room",
+          "bytes": 3491
+        },
+        {
+          "key": "responsableFonctionCode",
+          "bytes": 3454
+        },
+        {
+          "key": "sectionPublicRule",
+          "bytes": 3222
+        },
+        {
+          "key": "prAbcProposal",
+          "bytes": 2873
+        },
+        {
+          "key": "persistenceDomain",
+          "bytes": 2536
+        },
+        {
+          "key": "lieuLibre",
+          "bytes": 2392
+        },
+        {
+          "key": "ctaPublicStatus",
+          "bytes": 2360
+        },
+        {
+          "key": "cmdtEvidence",
+          "bytes": 2270
+        },
+        {
+          "key": "calendarAdjustment",
+          "bytes": 2018
+        },
+        {
+          "key": "publishedEventOiSelections",
+          "bytes": 2002
+        },
+        {
+          "key": "sectionPublicStatus",
+          "bytes": 1974
+        },
+        {
+          "key": "publishedEventCodeState",
+          "bytes": 1964
+        },
+        {
+          "key": "ambiguousOis",
+          "bytes": 1866
+        },
+        {
+          "key": "reservationConflicts",
+          "bytes": 1866
+        },
+        {
+          "key": "publishedEventDate",
+          "bytes": 1704
+        },
+        {
+          "key": "pionnierCta",
+          "bytes": 1665
+        },
+        {
+          "key": "themeSource",
+          "bytes": 1551
+        },
+        {
+          "key": "responsibleSelections",
+          "bytes": 1476
+        },
+        {
+          "key": "publishedEventStatus",
+          "bytes": 1454
+        },
+        {
+          "key": "rotationStatus",
+          "bytes": 1430
+        },
+        {
+          "key": "instructionFamilyRule",
+          "bytes": 1368
+        },
+        {
+          "key": "themes",
+          "bytes": 1293
+        },
+        {
+          "key": "publishedEventCode",
+          "bytes": 1232
+        },
+        {
+          "key": "occurrenceCount",
+          "bytes": 1189
+        },
+        {
+          "key": "cursusReconciliation",
+          "bytes": 1150
+        },
+        {
+          "key": "publishedEventStart",
+          "bytes": 1079
+        },
+        {
+          "key": "publishedEventEnd",
+          "bytes": 1079
+        },
+        {
+          "key": "statComEvidence",
+          "bytes": 972
+        },
+        {
+          "key": "cursusId",
+          "bytes": 962
+        },
+        {
+          "key": "occurrenceIndex",
+          "bytes": 906
+        },
+        {
+          "key": "sessionIndex",
+          "bytes": 898
+        },
+        {
+          "key": "sessionCount",
+          "bytes": 898
+        },
+        {
+          "key": "paprEvidence",
+          "bytes": 861
+        },
+        {
+          "key": "sectionPublicDerived",
+          "bytes": 799
+        },
+        {
+          "key": "tp9000Rule",
+          "bytes": 690
+        },
+        {
+          "key": "dapAnnualEvidence",
+          "bytes": 572
+        },
+        {
+          "key": "sectionPublicOi",
+          "bytes": 564
+        },
+        {
+          "key": "programmeDomain",
+          "bytes": 554
+        },
+        {
+          "key": "publicationRevision",
+          "bytes": 552
+        },
+        {
+          "key": "validationWithdrawal",
+          "bytes": 552
+        },
+        {
+          "key": "projectionAdded",
+          "bytes": 548
+        },
+        {
+          "key": "sourceCorrection",
+          "bytes": 540
+        },
+        {
+          "key": "cursusStepId",
+          "bytes": 494
+        },
+        {
+          "key": "annualReportConstraint",
+          "bytes": 467
+        },
+        {
+          "key": "pionnierRule",
+          "bytes": 367
+        },
+        {
+          "key": "publishedEventVersion",
+          "bytes": 329
+        },
+        {
+          "key": "publicFreeLabels",
+          "bytes": 314
+        },
+        {
+          "key": "cursus",
+          "bytes": 284
+        },
+        {
+          "key": "validationHistory",
+          "bytes": 276
+        },
+        {
+          "key": "dapAnnualStatus",
+          "bytes": 264
+        },
+        {
+          "key": "prRule",
+          "bytes": 264
+        },
+        {
+          "key": "qualificationCodes",
+          "bytes": 262
+        },
+        {
+          "key": "specialisation",
+          "bytes": 246
+        },
+        {
+          "key": "businessCode",
+          "bytes": 238
+        },
+        {
+          "key": "seriesProvenance",
+          "bytes": 234
+        },
+        {
+          "key": "conduiteRule",
+          "bytes": 192
+        },
+        {
+          "key": "sessionStructure",
+          "bytes": 186
+        },
+        {
+          "key": "personnel",
+          "bytes": 180
+        },
+        {
+          "key": "fobaRule",
+          "bytes": 169
+        },
+        {
+          "key": "rotationAdded",
+          "bytes": 152
+        },
+        {
+          "key": "conduiteMinutesPerParticipant",
+          "bytes": 112
+        },
+        {
+          "key": "coverageAdded",
+          "bytes": 108
+        },
+        {
+          "key": "activityKind",
+          "bytes": 104
+        },
+        {
+          "key": "dapAnnualRule",
+          "bytes": 96
+        },
+        {
+          "key": "cursusCode",
+          "bytes": 76
+        },
+        {
+          "key": "jspDirectionReconciliation",
+          "bytes": 74
+        },
+        {
+          "key": "kind",
+          "bytes": 72
+        },
+        {
+          "key": "prAbcStatus",
+          "bytes": 69
+        },
+        {
+          "key": "cursusStepCode",
+          "bytes": 69
+        },
+        {
+          "key": "pionnierEvidence",
+          "bytes": 66
+        },
+        {
+          "key": "sourceLine2026",
+          "bytes": 65
+        },
+        {
+          "key": "annualReportRule",
+          "bytes": 53
+        },
+        {
+          "key": "annualReport",
+          "bytes": 50
+        },
+        {
+          "key": "publicEvidence",
+          "bytes": 44
+        },
+        {
+          "key": "prAbcRule",
+          "bytes": 42
+        },
+        {
+          "key": "seriesSite",
+          "bytes": 36
+        },
+        {
+          "key": "oiCorrection",
+          "bytes": 27
+        },
+        {
+          "key": "restoredModule",
+          "bytes": 24
+        },
+        {
+          "key": "sourceLine",
+          "bytes": 18
+        },
+        {
+          "key": "seriesOccurrenceCount",
+          "bytes": 17
+        },
+        {
+          "key": "ctaReferenceFriday",
+          "bytes": 12
+        },
+        {
+          "key": "target",
+          "bytes": 10
+        },
+        {
+          "key": "seriesOccurrenceIndex",
+          "bytes": 9
+        },
+        {
+          "key": "publicReviewRequired",
+          "bytes": 8
+        },
+        {
+          "key": "manualCreation",
+          "bytes": 8
+        },
+        {
+          "key": "paprModule",
+          "bytes": 7
+        },
+        {
+          "key": "paprOiRevisionRequired",
+          "bytes": 4
+        },
+        {
+          "key": "ctaHolidayOnly",
+          "bytes": 4
+        }
+      ],
+      "obligationMetadata": [
+        {
+          "key": "sessions",
+          "bytes": 15187
+        },
+        {
+          "key": "businessValidation",
+          "bytes": 12739
+        },
+        {
+          "key": "planningFields",
+          "bytes": 7550
+        },
+        {
+          "key": "consolidation",
+          "bytes": 5539
+        },
+        {
+          "key": "businessJustification",
+          "bytes": 1540
+        },
+        {
+          "key": "historicalActivityKey",
+          "bytes": 1090
+        },
+        {
+          "key": "lineage",
+          "bytes": 1076
+        },
+        {
+          "key": "source",
+          "bytes": 936
+        },
+        {
+          "key": "manualSource",
+          "bytes": 922
+        },
+        {
+          "key": "arbitrationReason",
+          "bytes": 878
+        },
+        {
+          "key": "statusDecision",
+          "bytes": 480
+        },
+        {
+          "key": "programmeCycle",
+          "bytes": 390
+        },
+        {
+          "key": "lastOccurrence",
+          "bytes": 336
+        },
+        {
+          "key": "activityKind",
+          "bytes": 286
+        },
+        {
+          "key": "canonicalProgrammeItemId",
+          "bytes": 190
+        },
+        {
+          "key": "family",
+          "bytes": 182
+        },
+        {
+          "key": "organisationalLevel",
+          "bytes": 160
+        },
+        {
+          "key": "subcategory",
+          "bytes": 158
+        },
+        {
+          "key": "needsArbitration",
+          "bytes": 112
+        },
+        {
+          "key": "historicalReferenceOnly",
+          "bytes": 112
+        },
+        {
+          "key": "noOperationalEventCreated",
+          "bytes": 112
+        },
+        {
+          "key": "businessCode",
+          "bytes": 90
+        },
+        {
+          "key": "planningStatus",
+          "bytes": 80
+        },
+        {
+          "key": "instructionKind",
+          "bytes": 63
+        },
+        {
+          "key": "theme",
+          "bytes": 62
+        },
+        {
+          "key": "statcomCode",
+          "bytes": 56
+        },
+        {
+          "key": "humanDecision",
+          "bytes": 32
+        },
+        {
+          "key": "validationWithdrawal",
+          "bytes": 32
+        },
+        {
+          "key": "sessionCount",
+          "bytes": 29
+        },
+        {
+          "key": "catalogueSource",
+          "bytes": 12
+        },
+        {
+          "key": "modeOrganisation",
+          "bytes": 8
+        },
+        {
+          "key": "codeEvenementPreview",
+          "bytes": 8
+        },
+        {
+          "key": "typeSource",
+          "bytes": 8
+        },
+        {
+          "key": "definitionVersionId",
+          "bytes": 4
+        }
+      ],
+      "queries": [
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 2.1333749999998872,
+          "rows": 1
+        },
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 1.7524579999999332,
+          "rows": 1
+        },
+        {
+          "sql": "select o.source_ref,o.statcom_code,o.imposed_start_at,o.metadata,p.annee from scope_quo_vadis_obligations o join scope_quo_vadis_programmes p using(programme_id) where o.statcom_co",
+          "ms": 3.829167000000325,
+          "rows": 2
+        },
+        {
+          "sql": "select future_date_id,target_year,date_debut,metadata from scope_quo_vadis_future_dates where metadata ? 'annualReport'",
+          "ms": 0.4171249999999418,
+          "rows": 0
+        },
+        {
+          "sql": "delete from scope_quo_vadis_calendar_days where programme_id = $1 and source in ('SEED_CORE_1', 'CALENDAR_VD_FINAL_3')",
+          "ms": 0.5826250000000073,
+          "rows": 31
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.7488330000001042,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5986669999997503,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6597499999998035,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5405000000000655,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.4597920000001068,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5025829999999587,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6407500000000255,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.9005419999998594,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.5574999999998909,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.45220900000003894,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.46820900000011534,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.6280000000001564,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.36887499999966167,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.32858299999998053,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.3295419999999467,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.43224999999983993,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.29683299999987867,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.3692080000000715,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.39412499999980355,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{\"historizedF",
+          "ms": 0.28770799999983865,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.3525830000003225,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.39466700000002675,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.27891700000009223,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.21420899999975518,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.26437499999974534,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.20779200000015408,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.23250000000007276,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2371250000001055,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2903329999999187,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2260830000000169,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.23762500000020736,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2056670000001759,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.2387499999999818,
+          "rows": 1
+        },
+        {
+          "sql": "insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata) values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $",
+          "ms": 0.22616700000025958,
+          "rows": 1
+        },
+        {
+          "sql": " insert into scope_quo_vadis_cursus_programmes(programme_id, cursus_id, retenu, justification, metadata) select $1, d.cursus_id, case when d.code = 'CI-DPS' and $2 = 2027 then true",
+          "ms": 0.3136670000003505,
+          "rows": 0
+        },
+        {
+          "sql": " insert into scope_quo_vadis_cursus_step_programmes(programme_id, step_id, retenu, metadata) select $1, s.step_id, false, '{\"source\":\"REFERENTIEL-CURSUS-TAXONOMIE-2\"}'::jsonb from ",
+          "ms": 0.7018749999997453,
+          "rows": 0
+        },
+        {
+          "sql": "select o.*, count(p.proposal_id)::int as proposal_count from scope_quo_vadis_obligations o left join scope_quo_vadis_proposals p on p.obligation_id = o.obligation_id where o.progra",
+          "ms": 13.127665999999863,
+          "rows": 967
+        },
+        {
+          "sql": "select p.* from scope_quo_vadis_proposals p join scope_quo_vadis_obligations o on o.obligation_id = p.obligation_id where o.programme_id = $1 order by p.starts_at, p.created_at",
+          "ms": 1.2190839999998389,
+          "rows": 159
+        },
+        {
+          "sql": "select * from scope_quo_vadis_calendar_days where programme_id = $1 order by jour, type_jour, libelle",
+          "ms": 0.3295419999999467,
+          "rows": 31
+        },
+        {
+          "sql": "select * from scope_lieux order by actif desc, oi_code nulls last, nom_court",
+          "ms": 0.230167000000165,
+          "rows": 12
+        },
+        {
+          "sql": " select d.cursus_id, d.code, d.libelle, v.version_code, s.step_id, s.step_code, s.libelle as step_label, s.ordre, s.logical_year, s.usual_start_time, s.usual_end_time, s.crosses_mi",
+          "ms": 0.6941659999997682,
+          "rows": 59
+        },
+        {
+          "sql": " select d.cursus_id, d.code, d.libelle, d.description, d.domain_code, d.cible_id, d.duration_months, d.statut, cp.retenu, cp.justification from scope_quo_vadis_cursus_definitions d",
+          "ms": 0.2739999999998872,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_quo_vadis_planning_rules where active is true order by domain nulls last, code",
+          "ms": 0.2384580000002643,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_quo_vadis_future_dates where target_year = $1 order by date_debut, activite_label",
+          "ms": 0.18520799999987503,
+          "rows": 0
+        },
+        {
+          "sql": "select * from scope_quo_vadis_dps_organisation_versions order by oi_code, valid_from",
+          "ms": 0.16166599999996834,
+          "rows": 4
+        },
+        {
+          "sql": " select d.definition_id as id, 'DEFINITION' as source, d.label as title, d.domain, d.description, d.status, v.definition_version_id as version_id, v.mode_organisation, v.session_co",
+          "ms": 2.7015409999999065,
+          "rows": 291
+        },
+        {
+          "sql": " select s.*, p.code as parent_code from scope_salles_theorie s left join scope_salles_theorie p on p.salle_id = s.parent_salle_id order by s.libelle ",
+          "ms": 0.28083299999980227,
+          "rows": 11
+        },
+        {
+          "sql": "select * from scope_responsable_fonctions where actif is true order by sort_order, libelle",
+          "ms": 0.228874999999789,
+          "rows": 28
+        },
+        {
+          "sql": "select cible_id, domaine_code, niveau_code, libelle, actif from scope_cibles where actif is true order by domaine_code, niveau_code",
+          "ms": 0.19154200000002675,
+          "rows": 36
+        },
+        {
+          "sql": "select * from scope_statcom_referentiel order by code",
+          "ms": 0.8482920000001286,
+          "rows": 91
+        },
+        {
+          "sql": "select d.domaine_code,o.code from scope_domaine_ois d join scope_ois o using(oi_id) where o.actif is true",
+          "ms": 0.20341600000028848,
+          "rows": 11
+        },
+        {
+          "sql": "select competence_id,code,libelle,domaine_code,type from scope_competence_definitions where actif is true order by sort_order,code",
+          "ms": 0.14900000000034197,
+          "rows": 17
+        },
+        {
+          "sql": "select * from scope_quo_vadis_programmes where annee = $1",
+          "ms": 0.7083749999997053,
+          "rows": 1
+        },
+        {
+          "sql": "select o.source_ref,o.statcom_code,o.imposed_start_at,o.metadata,p.annee from scope_quo_vadis_obligations o join scope_quo_vadis_programmes p using(programme_id) where o.statcom_co",
+          "ms": 1.23895900000025,
+          "rows": 2
+        },
+        {
+          "sql": "select future_date_id,target_year,date_debut,metadata from scope_quo_vadis_future_dates where metadata ? 'annualReport'",
+          "ms": 0.11641699999972843,
+          "rows": 0
+        },
+        {
+          "sql": "select e.evenement_id, e.date, e.domaine_code, e.sous_domaine_code, e.libelle, e.code_cours, e.code_source, e.heure_debut, e.heure_fin, e.heure_debut_prevue, e.heure_fin_prevue, e.",
+          "ms": 3.97754199999963,
+          "rows": 130
+        },
+        {
+          "sql": " select l.publication_unit_id, l.evenement_id, e.libelle, e.date, e.heure_debut, e.heure_fin, e.statut, e.version, e.code_cours, e.statcom_code, e.publication_key, coalesce((select",
+          "ms": 2.6116659999997864,
+          "rows": 125
+        },
+        {
+          "sql": " select evenement_id,event_code from scope_event_code_allocations where evenement_id = any($1::uuid[]) ",
+          "ms": 0.38875000000007276,
+          "rows": 70
+        },
+        {
+          "sql": " select obligation_id,source_ref,title,domain,statcom_code,imposed_start_at,imposed_end_at,cible_codes,lieu_id,lieu_libre,statut, salle_theorie_id,responsable_fonction_code,metadat",
+          "ms": 5.185666999999739,
+          "rows": 858
+        },
+        {
+          "sql": "select p.metadata from scope_event_definitions d join scope_event_definition_versions v on v.definition_id=d.definition_id and v.status='ACTIVE' join scope_activity_functional_prof",
+          "ms": 1.3698330000001988,
+          "rows": 0
+        },
+        {
+          "sql": "select r.*, c.niveau_code as cible_code from scope_quo_vadis_planning_rules r left join scope_cibles c on c.cible_id = r.cible_id where r.active is true",
+          "ms": 1.0672500000000582,
+          "rows": 11
+        },
+        {
+          "sql": "select d.code as definition_id,p.recurrence_kind,p.metadata from scope_event_definitions d join scope_event_definition_versions v using(definition_id) join scope_activity_functiona",
+          "ms": 1.4264579999999114,
+          "rows": 0
+        },
+        {
+          "sql": "select r.*, c.niveau_code as cible_code from scope_quo_vadis_planning_rules r left join scope_cibles c on c.cible_id = r.cible_id where r.active is true",
+          "ms": 1.192667000000256,
+          "rows": 11
+        }
+      ]
+    }
+  },
+  "home": {
+    "referentiels": {
+      "serviceMs": 57.739250000000084,
+      "bodyBytes": 1230924,
+      "lambdaEnvelopeBytes": 1362216,
+      "wireBytes": 123302,
+      "queries": 49,
+      "sqlMs": 54.25012699999888
+    },
+    "evenements": {
+      "serviceMs": 81.92258300000003,
+      "bodyBytes": 481452,
+      "lambdaEnvelopeBytes": 532786,
+      "wireBytes": 43965,
+      "queries": 281,
+      "sqlMs": 76.07675999999583
+    },
+    "dashboardPublished": {
+      "serviceMs": 805.4274999999998,
+      "bodyBytes": 375757,
+      "lambdaEnvelopeBytes": 420605,
+      "wireBytes": 36738,
+      "queries": 320,
+      "sqlMs": 667.3717869999973
+    },
+    "dashboardCorrected": {
+      "serviceMs": 676.0687079999998,
+      "bodyBytes": 375757,
+      "lambdaEnvelopeBytes": 420605,
+      "wireBytes": 36738,
+      "queries": 300,
+      "sqlMs": 580.7854909999996
+    },
+    "dashboardIdentical": true,
+    "alerts": {
+      "serviceMs": 478.46008299999994,
+      "bodyBytes": 271689,
+      "lambdaEnvelopeBytes": 303349,
+      "wireBytes": 23607,
+      "queries": 223,
+      "sqlMs": 385.63690999999744
+    }
+  },
+  "programmeIntegrity": {
+    "compared": 933,
+    "allFieldsIdentical": true,
+    "statComIdentical": true,
+    "codesIdentical": true,
+    "decisionsIdentical": true
+  },
+  "statisticalCases": [
+    {
+      "params": {
+        "year": 2026,
+        "domaine": "DAP"
+      },
+      "status": "IDENTICAL",
+      "eventCount": 8
+    },
+    {
+      "params": {
+        "year": 2026,
+        "domaine": "DAP",
+        "cible": "769979f9-878d-4078-bc97-efadc05e08ad"
+      },
+      "status": "IDENTICAL",
+      "eventCount": 1
+    },
+    {
+      "params": {
+        "year": 2027
+      },
+      "status": "IDENTICAL",
+      "eventCount": 0
+    }
+  ],
+  "rollback": {
+    "status": "PASS",
+    "tables": 113
+  },
+  "before": {
+    "monitoring_f7_schema_migrations": {
+      "count": 54,
+      "hash": "d79acefa388b5152abeb130fa67a0f9c"
+    },
+    "scope_activity_domain_bindings": {
+      "count": 350,
+      "hash": "ac0dc00ddeeb22bea5b7ca0ed016ef0c"
+    },
+    "scope_activity_functional_profiles": {
+      "count": 2,
+      "hash": "3f5305e3273730b8fe0a702e4cb130ca"
+    },
+    "scope_activity_legacy_aliases": {
+      "count": 311,
+      "hash": "2c2f63615b129cac368fbf094476fe05"
+    },
+    "scope_activity_location_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_periodicities": {
+      "count": 302,
+      "hash": "51dea9cf2b0e80b802b56ad2f2707a9a"
+    },
+    "scope_activity_planning_constraints": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_public_bindings": {
+      "count": 886,
+      "hash": "1e3428d7068b6c3aedecb3193ad9c176"
+    },
+    "scope_activity_qualification_bindings": {
+      "count": 148,
+      "hash": "e45b3d7212f0d9b27035523107ab71ff"
+    },
+    "scope_activity_responsible_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_role_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_session_templates": {
+      "count": 307,
+      "hash": "6c36cddfc4a80f13fc5ee359f8854242"
+    },
+    "scope_activity_statistical_contributions": {
+      "count": 393,
+      "hash": "f63c4dff291ec8e5cf273aebb5ff846c"
+    },
+    "scope_activity_theme_bindings": {
+      "count": 104,
+      "hash": "99daffb78b78ef1c2f7916a6e07173bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_alertes_acquittements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_program_entries": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_requirement_theme_assignments": {
+      "count": 2,
+      "hash": "b5ad51c32d21269bf5cc5c1336886d27"
+    },
+    "scope_annual_requirements": {
+      "count": 5,
+      "hash": "c32e530c0d3852d6d06605a245b48934"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_catalog_convergence_links": {
+      "count": 14,
+      "hash": "0073a5e0f6974f41998385609dfb761d"
+    },
+    "scope_catalog_import_decisions": {
+      "count": 345,
+      "hash": "7fc510364b122c3fe05460b3f5a30f30"
+    },
+    "scope_catalog_import_runs": {
+      "count": 1,
+      "hash": "0a873f03e496508127b16e16a8b42878"
+    },
+    "scope_cibles": {
+      "count": 36,
+      "hash": "09acc9482993dcfb10308e63bea64436"
+    },
+    "scope_competence_aliases": {
+      "count": 25,
+      "hash": "4e7dc5d8f6df970efc98d32135be058b"
+    },
+    "scope_competence_definitions": {
+      "count": 17,
+      "hash": "57d380595374647031ab01f476992011"
+    },
+    "scope_competence_implications": {
+      "count": 1,
+      "hash": "aa842786d98f8a8c326d0aafc636c0bb"
+    },
+    "scope_cycle_personnes": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_cycles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_domaine_ois": {
+      "count": 11,
+      "hash": "0997e5c227226479d31f52d324db575c"
+    },
+    "scope_domaines": {
+      "count": 10,
+      "hash": "01b279aeff93a944a086d90c57a727bf"
+    },
+    "scope_evenement_cibles": {
+      "count": 340,
+      "hash": "4629b7521cdf9148510ce14fd339b50b"
+    },
+    "scope_evenement_cibles_qv": {
+      "count": 205,
+      "hash": "39ea08d7b1e938c0cd6da5c73e801958"
+    },
+    "scope_evenement_domaines": {
+      "count": 125,
+      "hash": "c83dc6af46d3288271652fa1b9683494"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_public_rule_versions": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_evenement_ressources_qv": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_roles_qv": {
+      "count": 1,
+      "hash": "aff2eb614e65c4e53a9e2ef93d87d1c2"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_event_code_sequences": {
+      "count": 28,
+      "hash": "8c0519c684d745b2ad167339c5887b9b"
+    },
+    "scope_event_definition_versions": {
+      "count": 305,
+      "hash": "e110db664e9fe1a7a5fe671771fc3d32"
+    },
+    "scope_event_definitions": {
+      "count": 305,
+      "hash": "2a872f932f5ed8a50a658dce8b3d8e96"
+    },
+    "scope_event_person_roles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_event_role_aliases": {
+      "count": 1,
+      "hash": "6ac5141919a332b688d525ed1b5072a4"
+    },
+    "scope_event_role_definitions": {
+      "count": 8,
+      "hash": "bf5caa86e0efd1ceef898e2b34f542d2"
+    },
+    "scope_exercices": {
+      "count": 2,
+      "hash": "649ff3fd6bb91906603bbcc89f3b9f45"
+    },
+    "scope_foba_niveaux": {
+      "count": 3,
+      "hash": "2201f54b1c9a9e80a2aabcc4bb416d84"
+    },
+    "scope_import_lignes": {
+      "count": 139,
+      "hash": "453eb341e1825053b58f05c65472cb0b"
+    },
+    "scope_imports": {
+      "count": 1,
+      "hash": "b8c9a9f9b0875cb65822d08686641f49"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_legacy_aggregates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_legacy_cible_competence_mappings": {
+      "count": 6,
+      "hash": "abf087209f8e40e4f855549117622ac8"
+    },
+    "scope_legacy_cible_foba_niveau_mappings": {
+      "count": 3,
+      "hash": "9e0d9efcb89528f39b59a58e0b7e8842"
+    },
+    "scope_legacy_cible_oi_mappings": {
+      "count": 15,
+      "hash": "8e01e627ae67394f4f727fec1e083a88"
+    },
+    "scope_legacy_cible_pr_parcours_mappings": {
+      "count": 6,
+      "hash": "b1b8cbf8f79e298d2946c3b04ec2e778"
+    },
+    "scope_legacy_cible_reviews": {
+      "count": 10,
+      "hash": "64d4f37d2fb3300e31cca5292905171f"
+    },
+    "scope_lieux": {
+      "count": 8,
+      "hash": "a00ca61f72768c069e89e12c3f215c98"
+    },
+    "scope_location_categories": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_multisession_v2_participations": {
+      "count": 69,
+      "hash": "d37be33f42e66567f1868bf014b37ae0"
+    },
+    "scope_multisession_v2_population": {
+      "count": 71,
+      "hash": "b7e6ddcd27cbbc314521c720993fe5d9"
+    },
+    "scope_multisession_v2_sessions": {
+      "count": 2,
+      "hash": "e8ece1be96cc34e479be220994881bcf"
+    },
+    "scope_multisessions_v2": {
+      "count": 1,
+      "hash": "ccf9f30187a7e30a689558b847c2770a"
+    },
+    "scope_objectifs": {
+      "count": 6,
+      "hash": "f5295ff222872620bf7fce0e4e3b449f"
+    },
+    "scope_ois": {
+      "count": 8,
+      "hash": "27d082edc900c4e093334967527c7eb5"
+    },
+    "scope_participation_motifs": {
+      "count": 19,
+      "hash": "b38df2c0b41910f11f18951b6717ec26"
+    },
+    "scope_participation_policies": {
+      "count": 8,
+      "hash": "4d4dad74ff2e614db50b37c9a82896eb"
+    },
+    "scope_participation_policy_versions": {
+      "count": 12,
+      "hash": "691bcfc8c06bee853a4322db815f20d8"
+    },
+    "scope_participation_statuses": {
+      "count": 5,
+      "hash": "48da7ed480a7bb00204d30a6822da819"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_permutations": {
+      "count": 9,
+      "hash": "6560f1a92012a503bd641b3017f1cc5b"
+    },
+    "scope_person_qualification_evidence": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_person_qualifications": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_personne_periodes": {
+      "count": 315,
+      "hash": "6a663666c7327a48cc9eb43c94afd3c7"
+    },
+    "scope_personnel_import_batches": {
+      "count": 14,
+      "hash": "4ed8d263f0ba57a09778b66fff841411"
+    },
+    "scope_personnel_import_lines": {
+      "count": 772,
+      "hash": "1b928388a2b82b7b27387506329005c9"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    },
+    "scope_planned_occurrence_sessions": {
+      "count": 10,
+      "hash": "6145b2d6e29abd3fefca87554e37bb0d"
+    },
+    "scope_planned_occurrences": {
+      "count": 10,
+      "hash": "ff6daf4a00b85a75aec58a324c2bf711"
+    },
+    "scope_planned_site_slots": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_pr_parcours": {
+      "count": 3,
+      "hash": "6b6ff0fb90e36065eb126a5dfd67cc06"
+    },
+    "scope_pr_parcours_aliases": {
+      "count": 6,
+      "hash": "bf760c4acb335a446bb6f9b5954f9f81"
+    },
+    "scope_public_definitions": {
+      "count": 34,
+      "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+    },
+    "scope_public_rule_versions": {
+      "count": 27,
+      "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+    },
+    "scope_quo_vadis_calendar_days": {
+      "count": 18,
+      "hash": "31449a187fd3a01780001acb6f70f9a2"
+    },
+    "scope_quo_vadis_cohortes": {
+      "count": 2,
+      "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+    },
+    "scope_quo_vadis_cursus_definitions": {
+      "count": 11,
+      "hash": "598a451891d35b8b9bbe976fdc306fb1"
+    },
+    "scope_quo_vadis_cursus_programmes": {
+      "count": 11,
+      "hash": "70856ff041a262be4d959cb4e584e972"
+    },
+    "scope_quo_vadis_cursus_step_programmes": {
+      "count": 59,
+      "hash": "768f2870adbc07ed57c6e2e4837e4204"
+    },
+    "scope_quo_vadis_cursus_steps": {
+      "count": 59,
+      "hash": "73a216591405ea28f145f52b63516076"
+    },
+    "scope_quo_vadis_cursus_versions": {
+      "count": 11,
+      "hash": "a209803843cd767593099392dad8410c"
+    },
+    "scope_quo_vadis_dps_organisation_versions": {
+      "count": 4,
+      "hash": "14ebb8fb0f13c3ed58b77e04fb9f3064"
+    },
+    "scope_quo_vadis_future_dates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_quo_vadis_planning_rules": {
+      "count": 12,
+      "hash": "18cb99c52a70580cf2c0f4bd4bb82e84"
+    },
+    "scope_quo_vadis_programme_history": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_programmes": {
+      "count": 1,
+      "hash": "180bcb3daaa42a2c62c9868a3851b548"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "8311de7912a41a8250dc802490327d65"
+    },
+    "scope_qv_publication_activities": {
+      "count": 52,
+      "hash": "8ef159fcfdffa4e3107063b3e268e79c"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_qv_publication_runs": {
+      "count": 7,
+      "hash": "825c4db1f70bb59bc0fdb8da87514436"
+    },
+    "scope_qv_session_events": {
+      "count": 125,
+      "hash": "1ac193fd08c98f83c06ffd4c94da270b"
+    },
+    "scope_qv_session_groups": {
+      "count": 125,
+      "hash": "ea4de3c8f096a796d8ec713ca930798f"
+    },
+    "scope_regles_bascule": {
+      "count": 1,
+      "hash": "1814609c6ad125d820c30dcf6ea74e16"
+    },
+    "scope_responsable_fonctions": {
+      "count": 28,
+      "hash": "00c69bec9f05d275a1013b39f87f08cf"
+    },
+    "scope_saisies_quantitatives": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_salles_theorie": {
+      "count": 11,
+      "hash": "7a1679704187bd0804dbde3e61d080e3"
+    },
+    "scope_sous_domaines": {
+      "count": 2,
+      "hash": "05462606a17fda7e495490fbc898be0b"
+    },
+    "scope_statcom_referentiel": {
+      "count": 91,
+      "hash": "3240a49db480bb4dcf635221eb1dd09f"
+    },
+    "scope_suivi_nominatif": {
+      "count": 1,
+      "hash": "ad814676b9fc711505ae64c61812ca82"
+    },
+    "scope_theme_definitions": {
+      "count": 68,
+      "hash": "9e2c1567ee5007166b0a6f12e7956e6e"
+    },
+    "scope_theme_versions": {
+      "count": 68,
+      "hash": "16199537773c5e7d47130e50b0ba08a1"
+    }
+  },
+  "after": {
+    "monitoring_f7_schema_migrations": {
+      "count": 54,
+      "hash": "d79acefa388b5152abeb130fa67a0f9c"
+    },
+    "scope_activity_domain_bindings": {
+      "count": 350,
+      "hash": "ac0dc00ddeeb22bea5b7ca0ed016ef0c"
+    },
+    "scope_activity_functional_profiles": {
+      "count": 2,
+      "hash": "3f5305e3273730b8fe0a702e4cb130ca"
+    },
+    "scope_activity_legacy_aliases": {
+      "count": 311,
+      "hash": "2c2f63615b129cac368fbf094476fe05"
+    },
+    "scope_activity_location_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_periodicities": {
+      "count": 302,
+      "hash": "51dea9cf2b0e80b802b56ad2f2707a9a"
+    },
+    "scope_activity_planning_constraints": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_public_bindings": {
+      "count": 886,
+      "hash": "1e3428d7068b6c3aedecb3193ad9c176"
+    },
+    "scope_activity_qualification_bindings": {
+      "count": 148,
+      "hash": "e45b3d7212f0d9b27035523107ab71ff"
+    },
+    "scope_activity_responsible_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_role_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_session_templates": {
+      "count": 307,
+      "hash": "6c36cddfc4a80f13fc5ee359f8854242"
+    },
+    "scope_activity_statistical_contributions": {
+      "count": 393,
+      "hash": "f63c4dff291ec8e5cf273aebb5ff846c"
+    },
+    "scope_activity_theme_bindings": {
+      "count": 104,
+      "hash": "99daffb78b78ef1c2f7916a6e07173bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_alertes_acquittements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_program_entries": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_requirement_theme_assignments": {
+      "count": 2,
+      "hash": "b5ad51c32d21269bf5cc5c1336886d27"
+    },
+    "scope_annual_requirements": {
+      "count": 5,
+      "hash": "c32e530c0d3852d6d06605a245b48934"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_catalog_convergence_links": {
+      "count": 14,
+      "hash": "0073a5e0f6974f41998385609dfb761d"
+    },
+    "scope_catalog_import_decisions": {
+      "count": 345,
+      "hash": "7fc510364b122c3fe05460b3f5a30f30"
+    },
+    "scope_catalog_import_runs": {
+      "count": 1,
+      "hash": "0a873f03e496508127b16e16a8b42878"
+    },
+    "scope_cibles": {
+      "count": 36,
+      "hash": "09acc9482993dcfb10308e63bea64436"
+    },
+    "scope_competence_aliases": {
+      "count": 25,
+      "hash": "4e7dc5d8f6df970efc98d32135be058b"
+    },
+    "scope_competence_definitions": {
+      "count": 17,
+      "hash": "57d380595374647031ab01f476992011"
+    },
+    "scope_competence_implications": {
+      "count": 1,
+      "hash": "aa842786d98f8a8c326d0aafc636c0bb"
+    },
+    "scope_cycle_personnes": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_cycles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_domaine_ois": {
+      "count": 11,
+      "hash": "0997e5c227226479d31f52d324db575c"
+    },
+    "scope_domaines": {
+      "count": 10,
+      "hash": "01b279aeff93a944a086d90c57a727bf"
+    },
+    "scope_evenement_cibles": {
+      "count": 340,
+      "hash": "4629b7521cdf9148510ce14fd339b50b"
+    },
+    "scope_evenement_cibles_qv": {
+      "count": 205,
+      "hash": "39ea08d7b1e938c0cd6da5c73e801958"
+    },
+    "scope_evenement_domaines": {
+      "count": 125,
+      "hash": "c83dc6af46d3288271652fa1b9683494"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_public_rule_versions": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_evenement_ressources_qv": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_roles_qv": {
+      "count": 1,
+      "hash": "aff2eb614e65c4e53a9e2ef93d87d1c2"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_event_code_sequences": {
+      "count": 28,
+      "hash": "8c0519c684d745b2ad167339c5887b9b"
+    },
+    "scope_event_definition_versions": {
+      "count": 305,
+      "hash": "e110db664e9fe1a7a5fe671771fc3d32"
+    },
+    "scope_event_definitions": {
+      "count": 305,
+      "hash": "2a872f932f5ed8a50a658dce8b3d8e96"
+    },
+    "scope_event_person_roles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_event_role_aliases": {
+      "count": 1,
+      "hash": "6ac5141919a332b688d525ed1b5072a4"
+    },
+    "scope_event_role_definitions": {
+      "count": 8,
+      "hash": "bf5caa86e0efd1ceef898e2b34f542d2"
+    },
+    "scope_exercices": {
+      "count": 2,
+      "hash": "649ff3fd6bb91906603bbcc89f3b9f45"
+    },
+    "scope_foba_niveaux": {
+      "count": 3,
+      "hash": "2201f54b1c9a9e80a2aabcc4bb416d84"
+    },
+    "scope_import_lignes": {
+      "count": 139,
+      "hash": "453eb341e1825053b58f05c65472cb0b"
+    },
+    "scope_imports": {
+      "count": 1,
+      "hash": "b8c9a9f9b0875cb65822d08686641f49"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_legacy_aggregates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_legacy_cible_competence_mappings": {
+      "count": 6,
+      "hash": "abf087209f8e40e4f855549117622ac8"
+    },
+    "scope_legacy_cible_foba_niveau_mappings": {
+      "count": 3,
+      "hash": "9e0d9efcb89528f39b59a58e0b7e8842"
+    },
+    "scope_legacy_cible_oi_mappings": {
+      "count": 15,
+      "hash": "8e01e627ae67394f4f727fec1e083a88"
+    },
+    "scope_legacy_cible_pr_parcours_mappings": {
+      "count": 6,
+      "hash": "b1b8cbf8f79e298d2946c3b04ec2e778"
+    },
+    "scope_legacy_cible_reviews": {
+      "count": 10,
+      "hash": "64d4f37d2fb3300e31cca5292905171f"
+    },
+    "scope_lieux": {
+      "count": 8,
+      "hash": "a00ca61f72768c069e89e12c3f215c98"
+    },
+    "scope_location_categories": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_multisession_v2_participations": {
+      "count": 69,
+      "hash": "d37be33f42e66567f1868bf014b37ae0"
+    },
+    "scope_multisession_v2_population": {
+      "count": 71,
+      "hash": "b7e6ddcd27cbbc314521c720993fe5d9"
+    },
+    "scope_multisession_v2_sessions": {
+      "count": 2,
+      "hash": "e8ece1be96cc34e479be220994881bcf"
+    },
+    "scope_multisessions_v2": {
+      "count": 1,
+      "hash": "ccf9f30187a7e30a689558b847c2770a"
+    },
+    "scope_objectifs": {
+      "count": 6,
+      "hash": "f5295ff222872620bf7fce0e4e3b449f"
+    },
+    "scope_ois": {
+      "count": 8,
+      "hash": "27d082edc900c4e093334967527c7eb5"
+    },
+    "scope_participation_motifs": {
+      "count": 19,
+      "hash": "b38df2c0b41910f11f18951b6717ec26"
+    },
+    "scope_participation_policies": {
+      "count": 8,
+      "hash": "4d4dad74ff2e614db50b37c9a82896eb"
+    },
+    "scope_participation_policy_versions": {
+      "count": 12,
+      "hash": "691bcfc8c06bee853a4322db815f20d8"
+    },
+    "scope_participation_statuses": {
+      "count": 5,
+      "hash": "48da7ed480a7bb00204d30a6822da819"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_permutations": {
+      "count": 9,
+      "hash": "6560f1a92012a503bd641b3017f1cc5b"
+    },
+    "scope_person_qualification_evidence": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_person_qualifications": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_personne_periodes": {
+      "count": 315,
+      "hash": "6a663666c7327a48cc9eb43c94afd3c7"
+    },
+    "scope_personnel_import_batches": {
+      "count": 14,
+      "hash": "4ed8d263f0ba57a09778b66fff841411"
+    },
+    "scope_personnel_import_lines": {
+      "count": 772,
+      "hash": "1b928388a2b82b7b27387506329005c9"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    },
+    "scope_planned_occurrence_sessions": {
+      "count": 10,
+      "hash": "6145b2d6e29abd3fefca87554e37bb0d"
+    },
+    "scope_planned_occurrences": {
+      "count": 10,
+      "hash": "ff6daf4a00b85a75aec58a324c2bf711"
+    },
+    "scope_planned_site_slots": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_pr_parcours": {
+      "count": 3,
+      "hash": "6b6ff0fb90e36065eb126a5dfd67cc06"
+    },
+    "scope_pr_parcours_aliases": {
+      "count": 6,
+      "hash": "bf760c4acb335a446bb6f9b5954f9f81"
+    },
+    "scope_public_definitions": {
+      "count": 34,
+      "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+    },
+    "scope_public_rule_versions": {
+      "count": 27,
+      "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+    },
+    "scope_quo_vadis_calendar_days": {
+      "count": 18,
+      "hash": "31449a187fd3a01780001acb6f70f9a2"
+    },
+    "scope_quo_vadis_cohortes": {
+      "count": 2,
+      "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+    },
+    "scope_quo_vadis_cursus_definitions": {
+      "count": 11,
+      "hash": "598a451891d35b8b9bbe976fdc306fb1"
+    },
+    "scope_quo_vadis_cursus_programmes": {
+      "count": 11,
+      "hash": "70856ff041a262be4d959cb4e584e972"
+    },
+    "scope_quo_vadis_cursus_step_programmes": {
+      "count": 59,
+      "hash": "768f2870adbc07ed57c6e2e4837e4204"
+    },
+    "scope_quo_vadis_cursus_steps": {
+      "count": 59,
+      "hash": "73a216591405ea28f145f52b63516076"
+    },
+    "scope_quo_vadis_cursus_versions": {
+      "count": 11,
+      "hash": "a209803843cd767593099392dad8410c"
+    },
+    "scope_quo_vadis_dps_organisation_versions": {
+      "count": 4,
+      "hash": "14ebb8fb0f13c3ed58b77e04fb9f3064"
+    },
+    "scope_quo_vadis_future_dates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_quo_vadis_planning_rules": {
+      "count": 12,
+      "hash": "18cb99c52a70580cf2c0f4bd4bb82e84"
+    },
+    "scope_quo_vadis_programme_history": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_programmes": {
+      "count": 1,
+      "hash": "180bcb3daaa42a2c62c9868a3851b548"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "8311de7912a41a8250dc802490327d65"
+    },
+    "scope_qv_publication_activities": {
+      "count": 52,
+      "hash": "8ef159fcfdffa4e3107063b3e268e79c"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_qv_publication_runs": {
+      "count": 7,
+      "hash": "825c4db1f70bb59bc0fdb8da87514436"
+    },
+    "scope_qv_session_events": {
+      "count": 125,
+      "hash": "1ac193fd08c98f83c06ffd4c94da270b"
+    },
+    "scope_qv_session_groups": {
+      "count": 125,
+      "hash": "ea4de3c8f096a796d8ec713ca930798f"
+    },
+    "scope_regles_bascule": {
+      "count": 1,
+      "hash": "1814609c6ad125d820c30dcf6ea74e16"
+    },
+    "scope_responsable_fonctions": {
+      "count": 28,
+      "hash": "00c69bec9f05d275a1013b39f87f08cf"
+    },
+    "scope_saisies_quantitatives": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_salles_theorie": {
+      "count": 11,
+      "hash": "7a1679704187bd0804dbde3e61d080e3"
+    },
+    "scope_sous_domaines": {
+      "count": 2,
+      "hash": "05462606a17fda7e495490fbc898be0b"
+    },
+    "scope_statcom_referentiel": {
+      "count": 91,
+      "hash": "3240a49db480bb4dcf635221eb1dd09f"
+    },
+    "scope_suivi_nominatif": {
+      "count": 1,
+      "hash": "ad814676b9fc711505ae64c61812ca82"
+    },
+    "scope_theme_definitions": {
+      "count": 68,
+      "hash": "9e2c1567ee5007166b0a6f12e7956e6e"
+    },
+    "scope_theme_versions": {
+      "count": 68,
+      "hash": "16199537773c5e7d47130e50b0ba08a1"
+    }
+  }
+}
