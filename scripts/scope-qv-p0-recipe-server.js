@@ -207,6 +207,8 @@ async function start() {
   }
   await synchronizeEcawinReferential(client);
   if(process.env.SCOPE_RECIPE_FINALISATION==='1') await require('../netlify/lib/_scope-qv-moa-proposals').installAnnualReportProposal(client);
+  if(process.env.SCOPE_RECIPE_PR13_COMPLEMENT==='1')
+    await require('./lib/scope-qv-pr13-complement-recipe').seedPublishedAliases(query,await service.listProgramme(2027));
   server.listen(port,'127.0.0.1',() => console.log(`SCOPE CLONE BROWSER http://127.0.0.1:${port}/scope.html#/quo-vadis/programme`));
 }
 process.on('SIGINT',() => { stop().catch((error) => {console.error(error);process.exitCode=1;}); });

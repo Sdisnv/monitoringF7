@@ -1,21 +1,7 @@
 'use strict';
 
 const statements=[
-  `do $$ begin if exists (
-    select 1 from (
-      select code_cours as code from scope_evenements
-      union all select metadata->>'businessCode' from scope_quo_vadis_obligations
-      union all select business_code from scope_qv_publication_activities
-    ) issued where code ~ '^SCOPE-[0-9]+$' and substring(code from '^SCOPE-([0-9]+)$')::numeric not between 1 and 999
-  ) then raise exception 'HSC_IDENTITY_REVIEW_REQUIRED'; end if; if exists (
-    select number from (
-      select distinct code,substring(code from '(?:SCOPE-|HSC[.])0*([0-9]+)$')::int as number from (
-        select code_cours as code from scope_evenements
-        union all select metadata->>'businessCode' from scope_quo_vadis_obligations
-        union all select business_code from scope_qv_publication_activities
-      ) issued where code ~ '^(SCOPE-[0-9]{6,9}|HSC[.][0-9]{3})$'
-    ) identities group by number having count(*)>1 or max(number)>999 or min(number)<1
-  ) then raise exception 'HSC_IDENTITY_REVIEW_REQUIRED'; end if; end $$`,
+  require('./_scope-hsc-preflight').guard,
   'create sequence if not exists scope_internal_event_code_seq',
   `select setval('scope_internal_event_code_seq',greatest(c.maximum+1,s.last_value+case when s.is_called then 1 else 0 end),false)
     from scope_internal_event_code_seq s cross join (
@@ -23,6 +9,7 @@ const statements=[
         select code_cours as code from scope_evenements
         union all select metadata->>'businessCode' from scope_quo_vadis_obligations
         union all select business_code from scope_qv_publication_activities
+        union all select event_code from scope_event_code_allocations
       ) issued where code ~ '^(SCOPE-[0-9]{6,9}|HSC[.][0-9]{3})$'
     ) c`,
   `alter table scope_qv_publication_activities

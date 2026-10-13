@@ -3678,6 +3678,12 @@
   // C'est la règle déjà appliquée pour produire chaque historicalProposal.proposedDate2027.
   const QV_HISTORICAL_SHIFT_DAYS = 364;
 
+  function qvProgrammeIsActive(row) {
+    return Boolean(row) && !row.external && !row.jspDirectionReconciliation
+      && row.cursusReconciliation?.status !== 'SUPERSEDED_BY_VALIDATED_MODULE'
+      && row.programmeReconciliation?.status !== 'LINKED_TO_PUBLISHED_OCCURRENCE';
+  }
+
   function qvShiftHistoricalDate(date2026, days = QV_HISTORICAL_SHIFT_DAYS) {
     const key = String(date2026 || '').slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return '';
@@ -5766,6 +5772,7 @@
     orchestrateClosePresence,
     orchestrateLeaveSaisie,
     PRESENCE_SAVE_FAILED_CLOSE_MESSAGE,
+    qvProgrammeIsActive,
     qvResponsableGroups,
     qvResponsableCanonique,
     qvResponsableVisualGroup,

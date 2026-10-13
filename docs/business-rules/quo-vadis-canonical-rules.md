@@ -145,7 +145,15 @@ La formation groupée remplace un exercice de la série 2026 à cinq exercices. 
 conserve les exercices 1 à 4 par section et les quatre cours de cadres correspondants ; le dernier
 exercice reprend les créneaux vendredi/samedi de l'exercice 5 historique, sans renuméroter les
 codes métier. Les lignes 5 générées restent identifiables mais hors programme, sauf décision humaine
-ou publication à préserver. La date de la formation groupée n'est pas démontrée par 2026.
+ou publication à préserver. Le classeur QUO VADIS 2026 ne démontre pas la formation groupée DAP.
+Complément du 13.10 : les événements/imports 2026 existants démontrent les séances 1.1 et 1.2,
+les 23.04 et 07.05.2026, Stat.Com d'import `0130F7`, public historique générique `DAP/GEN`.
+Ce public est conservé comme description `DAP`, sans correspondance officielle de fonction inventée.
+La reconduction existante de 52 semaines donne uniquement des propositions au 22.04 et 06.05.2027 ;
+la seconde est en conflit avec l'Ascension. Aucun déplacement ni horaire n'est inventé.
+Deux séances d'une même occurrence, OI DAP Y1–Y4, restent à positionner/confirmer ; thèmes,
+horaires et responsable non démontrés. Les programmations manuelles identifiées sont réutilisées,
+jamais remplacées par ces propositions. Les six formations DPS restent distinctes et inchangées.
 
 ### QV-FOBA-001 / QV-PR-001 — Thèmes propres aux occurrences
 Les dix exercices FOBA 1/2 et les trois FOBA 3 sont conservés. Les trois FOBA 3 reprennent leurs
@@ -441,3 +449,37 @@ Avant installation, contrôle des identités déjà présentes : collision d'ali
 Un seul encadré de fiche regroupe les contrôles factuels : OI publiés incomplets, conflit PAPR, réservation, correspondance ECAwin historique non confirmée, OI ambigu ou conflit Rapport annuel. Il indique point, raison et action. Aucune boîte si aucune cause active ; disparition après résolution.
 
 Preuves du lot : `docs/captures/qv-moa-20261013/`. Acquis sept PAPR, dates/thèmes, spécialisation multiple, 0180F7, A+1, Rapport 10.02.2028 provisoire, statistiques civiles et suivi Cours ECA conservés. Aucune recette historique rejouée globalement.
+
+## Complément ciblé PR #13 — 13.10.2026
+
+### QV-PUBLICATION-003 — Rapprochement non destructif
+Un identifiant de source distinct ne suffit pas à distinguer deux réalisations. Le rapprochement
+avec une publication exige intitulé normalisé exact, date réelle, horaires, Stat.Com, OI qualifiés
+et séance identiques. Les horaires/OI de la publication doivent correspondre réellement à la fiche.
+Les thèmes, publics, responsables, lieux, paramètres et décisions de retrait/révision distincts
+interdisent un rapprochement automatique. Aucun rapprochement approximatif ou par intitulé seul.
+Un alias exact et univoque reste enregistré, avec tous ses identifiants, décisions et journal,
+mais renvoie à la fiche publiée et n'est pas une seconde ligne Programme/export/publication.
+Toute pluralité de publications ou décision divergente bloque la validation annuelle pour arbitrage.
+L'événement opérationnel et ses affectations/présences ne sont ni recréés, ni supprimés, ni modifiés.
+Une occurrence A+1, une autre séance ou un autre OI reste distincte, même avec le même intitulé.
+
+### QV-CODE-006 — Préflight HSC préalable à la décision de production
+Inventaire readonly des événements, préparations, activités de publication, allocations, contraintes
+et index. Le SQL `database/ops/20261013_scope_hsc_preflight_readonly.sql` s'exécute avec `psql`
+sur la connexion SCOPE existante, `ON_ERROR_STOP` et transaction READ ONLY. Le même garde SQL
+est exécuté avant le DDL : format/plage, collisions d'alias, réutilisation par plusieurs événements,
+allocation divergente, liens orphelins et séquence épuisée bloquent, sans réparation automatique.
+Un résultat du clone n'est jamais une preuve d'inventaire SQL de production. Sans cet accès,
+la vérification réelle préalable et le GO restent obligatoires. Aucun code historique renuméroté.
+
+### QV-RESP-005 — Références absentes non supposées
+Chercher Fourrier, Chef FOCA, Chef communication et Chef publication dans les fonctions, rôles,
+aliases et référentiels existants ; ne pas réutiliser une identité de public ou de cursus comme fonction.
+Dans le clone accessible, aucune correspondance permanente de fonction n'est démontrée pour ces
+quatre noms. Les 28 codes de fonctions existants sont préservés ; les descriptions libres restent
+disponibles. Les correspondances encore absentes attendent une source métier autorisée.
+
+Preuves complémentaires : `docs/captures/qv-pr13-complement-20261013/`.
+Les 25 contrôles précédents et leurs preuves restent conservés, sans recette globale répétée.
+Suivi spécialisé des Cours ECA maintenu dans la roadmap existante, sans module parallèle.

@@ -1,0 +1,26 @@
+{
+  "sourcePath": "assets/data/monitoring_exercices_sdis_2026_2026-04-24_1446.json",
+  "sourceSha256": "b0591d35f0bf536ce57275bc0fc15dd2c8283bb8d5b40592c635f8582a88d0ab",
+  "importedEvents": [
+    {
+      "id": "c096f77a-0dd6-4745-a154-b6e4c3e5c6e4",
+      "dateExercice": "2026-05-07",
+      "template": "Formation groupée DAP 1.2",
+      "domain": "DAP",
+      "statCom": "0130F7",
+      "subStructure": "DAP",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "9ab566ae-67f4-4fe7-ba05-e809d77d7955",
+      "dateExercice": "2026-04-23",
+      "template": "Formation groupée DAP 1.1",
+      "domain": "DAP",
+      "statCom": "0130F7",
+      "subStructure": "DAP",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    }
+  ]
+}
