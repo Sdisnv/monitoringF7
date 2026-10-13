@@ -1,0 +1,69 @@
+{
+  "results": [
+    {
+      "name": "published PAPR SAVE without changes succeeds without revision",
+      "status": "PASS"
+    },
+    {
+      "name": "minor published theme edit keeps publication and is visible in immutable history",
+      "status": "PASS"
+    },
+    {
+      "name": "major revision is confirmed in a dedicated required-motif dialog; cancellation preserves draft",
+      "status": "PASS"
+    },
+    {
+      "name": "CRIMSON non-recurrent paid and non-exported, and CFF resource occupation, persist independently",
+      "status": "PASS"
+    },
+    {
+      "name": "full search typing remains fluent on 911 occurrences and keeps all characters and filter context",
+      "status": "PASS"
+    },
+    {
+      "name": "responsible visual grouping and one PR trainer keep multiselection and free values",
+      "status": "PASS"
+    },
+    {
+      "name": "PR DPS DAP F0 and external forms align on desktop, laptop and mobile",
+      "status": "PASS"
+    },
+    {
+      "name": "withdrawal requires motive in dedicated dialog and leaves published/history data intact",
+      "status": "PASS"
+    },
+    {
+      "name": "cycle, annual validation and PAPR controls remain in existing parameter views",
+      "status": "PASS"
+    }
+  ],
+  "typing": {
+    "occurrences": 911,
+    "milliseconds": 200,
+    "characters": "Exercice PR 1.3",
+    "retained": true
+  },
+  "screenshots": [
+    "desktop-PR.png",
+    "desktop-DPS.png",
+    "desktop-DAP.png",
+    "desktop-F0.png",
+    "desktop-externe.png",
+    "portable-PR.png",
+    "portable-DPS.png",
+    "portable-DAP.png",
+    "portable-F0.png",
+    "portable-externe.png",
+    "mobile-PR.png",
+    "mobile-DPS.png",
+    "mobile-DAP.png",
+    "mobile-F0.png",
+    "mobile-externe.png"
+  ],
+  "javascriptErrors": [],
+  "statComCompared": 929,
+  "statComIdentical": 929,
+  "productionWrites": false,
+  "temporaryProgrammeFixtures": 2,
+  "verdict": "PASS"
+}

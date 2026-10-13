@@ -1,0 +1,2212 @@
+{
+  "target": "CLONE_REPLAY_OF_AUTHORIZED_PRODUCTION_BUSINESS_READS",
+  "productionWrites": false,
+  "counts": {
+    "main": 911,
+    "previousPr": 913,
+    "current": 913
+  },
+  "cases": [
+    {
+      "id": "qv-source-870",
+      "main": {
+        "id": "qv-source-870",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "qv-source-870:O1",
+        "sessionId": "qv-source-870:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP",
+        "themes": [],
+        "startsAt": "2027-01-19T19:00:00",
+        "endsAt": "2027-01-19T21:00:00",
+        "statCom": "013Y2",
+        "code": "013Y2.001",
+        "domain": "DAP",
+        "ois": [
+          "Y2"
+        ],
+        "oiSelections": [
+          "DAP:Y2"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "provenance": "SOURCE_2027_EXPLICIT",
+        "status": "PLANIFIE",
+        "external": false,
+        "humanDecision": true,
+        "preparation": {
+          "type": "OBLIGATION",
+          "id": "51f8a224-f44e-42a1-a907-68e2674bc9a5",
+          "updatedAt": "2026-10-06T05:00:36.865Z"
+        },
+        "publishedEventId": "48d8e96c-73fa-4bc0-aef1-8c65c12bd44a",
+        "publishedEventCode": "013Y2.001",
+        "publishedEventDate": "2027-01-19",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:00",
+        "publishedEventOiSelections": [
+          "DAP:Y2"
+        ]
+      },
+      "pr": {
+        "id": "qv-source-870",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "qv-source-870:O1",
+        "sessionId": "qv-source-870:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP",
+        "themes": [],
+        "startsAt": "2027-01-19T19:00:00",
+        "endsAt": "2027-01-19T21:00:00",
+        "statCom": "013Y2",
+        "code": "013Y2.001",
+        "domain": "DAP",
+        "ois": [
+          "Y2"
+        ],
+        "oiSelections": [
+          "DAP:Y2"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "provenance": "SOURCE_2027_EXPLICIT",
+        "status": "PLANIFIE",
+        "external": false,
+        "humanDecision": true,
+        "preparation": {
+          "type": "OBLIGATION",
+          "id": "51f8a224-f44e-42a1-a907-68e2674bc9a5",
+          "updatedAt": "2026-10-06T05:00:36.865Z"
+        },
+        "publishedEventId": "48d8e96c-73fa-4bc0-aef1-8c65c12bd44a",
+        "publishedEventCode": "013Y2.001",
+        "publishedEventDate": "2027-01-19",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:00",
+        "publishedEventOiSelections": [
+          "DAP:Y2"
+        ]
+      },
+      "classification": "ONE_PREPARATION_LINKED_TO_ONE_PUBLICATION_NO_DUPLICATE"
+    },
+    {
+      "id": "qv-source-888",
+      "main": {
+        "id": "qv-source-888",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+        "occurrenceId": "qv-source-888:O1",
+        "sessionId": "qv-source-888:S1",
+        "label": "Séance personnel DAP",
+        "eventLabel": "Séance personnel DAP",
+        "themes": [
+          "Kick-off"
+        ],
+        "startsAt": "2027-01-27T19:00:00",
+        "endsAt": "2027-01-27T21:30:00",
+        "statCom": "070F1",
+        "code": "070F1.013",
+        "domain": "DAP",
+        "ois": [
+          "Y1",
+          "Y2",
+          "Y3",
+          "Y4"
+        ],
+        "oiSelections": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "publics": [
+          "GEN:SAPEUR-DAP",
+          "FOBA:2"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C DAP",
+        "provenance": "SOURCE_2027_EXPLICIT",
+        "status": "PLANIFIE",
+        "external": false,
+        "humanDecision": true,
+        "preparation": {
+          "type": "OBLIGATION",
+          "id": "22fa1002-1ece-4529-ac3c-764532cfaa0e",
+          "updatedAt": "2026-10-06T05:00:36.865Z"
+        },
+        "publishedEventId": "389b5f4a-cd38-48b3-ac3d-e40801e1b702",
+        "publishedEventCode": "070F1.012",
+        "publishedEventDate": "2027-01-27",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:30",
+        "publishedEventOiSelections": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ]
+      },
+      "pr": {
+        "id": "qv-source-888",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+        "occurrenceId": "qv-source-888:O1",
+        "sessionId": "qv-source-888:S1",
+        "label": "Séance personnel DAP",
+        "eventLabel": "Séance personnel DAP",
+        "themes": [
+          "Kick-off"
+        ],
+        "startsAt": "2027-01-27T19:00:00",
+        "endsAt": "2027-01-27T21:30:00",
+        "statCom": "070F1",
+        "code": "070F1.013",
+        "domain": "DAP",
+        "ois": [
+          "Y1",
+          "Y2",
+          "Y3",
+          "Y4"
+        ],
+        "oiSelections": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "publics": [
+          "GEN:SAPEUR-DAP",
+          "FOBA:2"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C DAP",
+        "provenance": "SOURCE_2027_EXPLICIT",
+        "status": "PLANIFIE",
+        "external": false,
+        "humanDecision": true,
+        "preparation": {
+          "type": "OBLIGATION",
+          "id": "22fa1002-1ece-4529-ac3c-764532cfaa0e",
+          "updatedAt": "2026-10-06T05:00:36.865Z"
+        },
+        "publishedEventId": "389b5f4a-cd38-48b3-ac3d-e40801e1b702",
+        "publishedEventCode": "070F1.012",
+        "publishedEventDate": "2027-01-27",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:30",
+        "publishedEventOiSelections": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ]
+      },
+      "classification": "ONE_PREPARATION_LINKED_TO_ONE_PUBLICATION_NO_DUPLICATE"
+    }
+  ],
+  "dapCandidates": [
+    {
+      "date": "2027-05-13",
+      "weekday": "THURSDAY",
+      "dayClass": "PREFERE",
+      "reasons": [
+        "Jeudi: Préférée."
+      ],
+      "rank": -0.2
+    },
+    {
+      "date": "2027-05-20",
+      "weekday": "THURSDAY",
+      "dayClass": "PREFERE",
+      "reasons": [
+        "Jeudi: Préférée."
+      ],
+      "rank": -0.2
+    },
+    {
+      "date": "2027-05-12",
+      "weekday": "WEDNESDAY",
+      "dayClass": "AUTORISE",
+      "reasons": [
+        "Mercredi: Possible."
+      ],
+      "rank": 1
+    },
+    {
+      "date": "2027-05-15",
+      "weekday": "SATURDAY",
+      "dayClass": "AUTORISE",
+      "reasons": [
+        "Samedi: Possible."
+      ],
+      "rank": 1
+    },
+    {
+      "date": "2027-05-21",
+      "weekday": "FRIDAY",
+      "dayClass": "AUTORISE",
+      "reasons": [
+        "Vendredi: Possible."
+      ],
+      "rank": 1
+    },
+    {
+      "date": "2027-05-22",
+      "weekday": "SATURDAY",
+      "dayClass": "AUTORISE",
+      "reasons": [
+        "Samedi: Possible."
+      ],
+      "rank": 1
+    },
+    {
+      "date": "2027-05-26",
+      "weekday": "WEDNESDAY",
+      "dayClass": "AUTORISE",
+      "reasons": [
+        "Mercredi: Possible."
+      ],
+      "rank": 1
+    },
+    {
+      "date": "2027-05-28",
+      "weekday": "FRIDAY",
+      "dayClass": "AUTORISE",
+      "reasons": [
+        "Vendredi: Possible."
+      ],
+      "rank": 1
+    },
+    {
+      "date": "2027-05-29",
+      "weekday": "SATURDAY",
+      "dayClass": "AUTORISE",
+      "reasons": [
+        "Samedi: Possible."
+      ],
+      "rank": 1
+    },
+    {
+      "date": "2027-05-31",
+      "weekday": "MONDAY",
+      "dayClass": "AUTORISE",
+      "reasons": [
+        "Lundi: Possible."
+      ],
+      "rank": 1
+    }
+  ],
+  "excluded": [
+    {
+      "date": "2027-05-06",
+      "day": {
+        "date": "2027-05-06",
+        "weekday": "THURSDAY",
+        "dayClass": "INTERDIT",
+        "reasons": [
+          "Jeudi: Préférée.",
+          "Jour férié: proposition interdite."
+        ],
+        "rank": 9
+      },
+      "activities": []
+    },
+    {
+      "date": "2027-05-13",
+      "day": {
+        "date": "2027-05-13",
+        "weekday": "THURSDAY",
+        "dayClass": "PREFERE",
+        "reasons": [
+          "Jeudi: Préférée."
+        ],
+        "rank": 0
+      },
+      "activities": []
+    },
+    {
+      "date": "2027-05-20",
+      "day": {
+        "date": "2027-05-20",
+        "weekday": "THURSDAY",
+        "dayClass": "PREFERE",
+        "reasons": [
+          "Jeudi: Préférée."
+        ],
+        "rank": 0
+      },
+      "activities": []
+    },
+    {
+      "date": "2027-05-27",
+      "day": {
+        "date": "2027-05-27",
+        "weekday": "THURSDAY",
+        "dayClass": "PREFERE",
+        "reasons": [
+          "Jeudi: Préférée."
+        ],
+        "rank": 0
+      },
+      "activities": [
+        {
+          "id": "QV26-EXERCICE-DAP-2-6285EF74:O4:S1",
+          "definitionId": "QV26-EXERCICE-DAP-2-6285EF74",
+          "occurrenceId": "QV26-EXERCICE-DAP-2-6285EF74:O4",
+          "sessionId": "QV26-EXERCICE-DAP-2-6285EF74:O4:S1",
+          "label": "Exercice DAP 2",
+          "eventLabel": "Exercice DAP 2",
+          "themes": [],
+          "startsAt": "2027-05-27T19:00:00",
+          "endsAt": "2027-05-27T21:30:00",
+          "statCom": "013Y4",
+          "code": "013Y4.006",
+          "domain": "DAP",
+          "ois": [
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y4"
+          ],
+          "publics": [
+            "GEN:SAPEUR-DAP",
+            "FOBA:2"
+          ],
+          "publicFreeLabels": [],
+          "responsible": "C sct",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 298,
+            "title2026": "Exercice DAP 2",
+            "date2026": "2026-05-07",
+            "proposedDate2027": "2027-05-06",
+            "start": "19:00",
+            "end": "21:30",
+            "confidence": "Correspondance probable"
+          },
+          "projectionEvidence": {
+            "date2026": "2026-05-07",
+            "shiftDays": 364,
+            "ois": [
+              "Y4"
+            ],
+            "location": "Local Y4",
+            "theme": "",
+            "sourceLines": [
+              298
+            ]
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "dd45f0f9-1b4a-4e2f-a4ec-e471b3dcfbe3",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          }
+        }
+      ]
+    }
+  ],
+  "statComCompared": 933,
+  "displayRegression": {
+    "before": [
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP Y2",
+        "themes": [],
+        "startsAt": "2028-01-18T19:00",
+        "endsAt": "2028-01-18T21:00",
+        "statCom": "013Y2",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y2"
+        ],
+        "oiSelections": [
+          "DAP:Y2"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 870,
+          "date2026": "2027-01-19",
+          "proposedDate2027": "2028-01-18",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-19",
+          "shiftDays": 364,
+          "ois": [
+            "Y2"
+          ],
+          "location": "Local Y2",
+          "theme": "",
+          "sourceLines": [
+            870
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": "2027-01-19",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:00",
+        "publishedEventOiSelections": [
+          "DAP:Y2"
+        ]
+      },
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP Y4",
+        "themes": [],
+        "startsAt": "2028-01-19T19:00",
+        "endsAt": "2028-01-19T21:00",
+        "statCom": "013Y4",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y4"
+        ],
+        "oiSelections": [
+          "DAP:Y4"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 875,
+          "date2026": "2027-01-20",
+          "proposedDate2027": "2028-01-19",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-20",
+          "shiftDays": 364,
+          "ois": [
+            "Y4"
+          ],
+          "location": "Local Y4",
+          "theme": "",
+          "sourceLines": [
+            875
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": "2027-01-19",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:00",
+        "publishedEventOiSelections": [
+          "DAP:Y2"
+        ]
+      },
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP Y1",
+        "themes": [],
+        "startsAt": "2028-01-27T19:00",
+        "endsAt": "2028-01-27T21:00",
+        "statCom": "013Y1",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y1"
+        ],
+        "oiSelections": [
+          "DAP:Y1"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 891,
+          "date2026": "2027-01-28",
+          "proposedDate2027": "2028-01-27",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-28",
+          "shiftDays": 364,
+          "ois": [
+            "Y1"
+          ],
+          "location": "Local Y1",
+          "theme": "",
+          "sourceLines": [
+            891
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": "2027-01-19",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:00",
+        "publishedEventOiSelections": [
+          "DAP:Y2"
+        ]
+      },
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP Y3",
+        "themes": [],
+        "startsAt": "2028-01-27T19:00",
+        "endsAt": "2028-01-27T21:00",
+        "statCom": "013Y3",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y3"
+        ],
+        "oiSelections": [
+          "DAP:Y3"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 892,
+          "date2026": "2027-01-28",
+          "proposedDate2027": "2028-01-27",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-28",
+          "shiftDays": 364,
+          "ois": [
+            "Y3"
+          ],
+          "location": "Local Y3",
+          "theme": "",
+          "sourceLines": [
+            892
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": "2027-01-19",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:00",
+        "publishedEventOiSelections": [
+          "DAP:Y2"
+        ]
+      },
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888:S1",
+        "label": "Séance personnel DAP",
+        "eventLabel": "Séance personnel DAP — Kick-off",
+        "themes": [
+          "Kick-off"
+        ],
+        "startsAt": "2028-01-26T19:00",
+        "endsAt": "2028-01-26T21:30",
+        "statCom": "070F1",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y1",
+          "Y2",
+          "Y3",
+          "Y4"
+        ],
+        "oiSelections": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "publics": [
+          "GEN:SAPEUR-DAP",
+          "FOBA:2"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C DAP",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 888,
+          "date2026": "2027-01-27",
+          "proposedDate2027": "2028-01-26",
+          "start": "19:00",
+          "end": "21:30"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-27",
+          "shiftDays": 364,
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "location": "Caserne G1",
+          "theme": "Kick-off",
+          "sourceLines": [
+            888
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": "2027-01-27",
+        "publishedEventStart": "19:00",
+        "publishedEventEnd": "21:30",
+        "publishedEventOiSelections": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ]
+      }
+    ],
+    "after": [
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP Y2",
+        "themes": [],
+        "startsAt": "2028-01-18T19:00",
+        "endsAt": "2028-01-18T21:00",
+        "statCom": "013Y2",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y2"
+        ],
+        "oiSelections": [
+          "DAP:Y2"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 870,
+          "date2026": "2027-01-19",
+          "proposedDate2027": "2028-01-18",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-19",
+          "shiftDays": 364,
+          "ois": [
+            "Y2"
+          ],
+          "location": "Local Y2",
+          "theme": "",
+          "sourceLines": [
+            870
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": null,
+        "publishedEventStart": null,
+        "publishedEventEnd": null,
+        "publishedEventOiSelections": []
+      },
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP Y4",
+        "themes": [],
+        "startsAt": "2028-01-19T19:00",
+        "endsAt": "2028-01-19T21:00",
+        "statCom": "013Y4",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y4"
+        ],
+        "oiSelections": [
+          "DAP:Y4"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 875,
+          "date2026": "2027-01-20",
+          "proposedDate2027": "2028-01-19",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-20",
+          "shiftDays": 364,
+          "ois": [
+            "Y4"
+          ],
+          "location": "Local Y4",
+          "theme": "",
+          "sourceLines": [
+            875
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": null,
+        "publishedEventStart": null,
+        "publishedEventEnd": null,
+        "publishedEventOiSelections": []
+      },
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP Y1",
+        "themes": [],
+        "startsAt": "2028-01-27T19:00",
+        "endsAt": "2028-01-27T21:00",
+        "statCom": "013Y1",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y1"
+        ],
+        "oiSelections": [
+          "DAP:Y1"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 891,
+          "date2026": "2027-01-28",
+          "proposedDate2027": "2028-01-27",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-28",
+          "shiftDays": 364,
+          "ois": [
+            "Y1"
+          ],
+          "location": "Local Y1",
+          "theme": "",
+          "sourceLines": [
+            891
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": null,
+        "publishedEventStart": null,
+        "publishedEventEnd": null,
+        "publishedEventOiSelections": []
+      },
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+        "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892:S1",
+        "label": "Séance instruction DAP",
+        "eventLabel": "Séance instruction DAP Y3",
+        "themes": [],
+        "startsAt": "2028-01-27T19:00",
+        "endsAt": "2028-01-27T21:00",
+        "statCom": "013Y3",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y3"
+        ],
+        "oiSelections": [
+          "DAP:Y3"
+        ],
+        "publics": [
+          "ECH:I",
+          "ECH:II",
+          "ECH:III"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C sct",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 892,
+          "date2026": "2027-01-28",
+          "proposedDate2027": "2028-01-27",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-28",
+          "shiftDays": 364,
+          "ois": [
+            "Y3"
+          ],
+          "location": "Local Y3",
+          "theme": "",
+          "sourceLines": [
+            892
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": null,
+        "publishedEventStart": null,
+        "publishedEventEnd": null,
+        "publishedEventOiSelections": []
+      },
+      {
+        "id": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+        "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+        "occurrenceId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+        "sessionId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888:S1",
+        "label": "Séance personnel DAP",
+        "eventLabel": "Séance personnel DAP — Kick-off",
+        "themes": [
+          "Kick-off"
+        ],
+        "startsAt": "2028-01-26T19:00",
+        "endsAt": "2028-01-26T21:30",
+        "statCom": "070F1",
+        "code": "",
+        "businessCode": "",
+        "domain": "DAP",
+        "ois": [
+          "Y1",
+          "Y2",
+          "Y3",
+          "Y4"
+        ],
+        "oiSelections": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "publics": [
+          "GEN:SAPEUR-DAP",
+          "FOBA:2"
+        ],
+        "publicFreeLabels": [],
+        "responsible": "C DAP",
+        "historicalProposal": {
+          "source": "HISTORICAL_2026",
+          "sourceLine": 888,
+          "date2026": "2027-01-27",
+          "proposedDate2027": "2028-01-26",
+          "start": "19:00",
+          "end": "21:30"
+        },
+        "projectionEvidence": {
+          "date2026": "2027-01-27",
+          "shiftDays": 364,
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "location": "Caserne G1",
+          "theme": "Kick-off",
+          "sourceLines": [
+            888
+          ]
+        },
+        "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+        "status": "PROPOSE",
+        "external": false,
+        "humanDecision": false,
+        "preparation": null,
+        "publishedEventId": null,
+        "publishedEventCode": null,
+        "publishedEventDate": null,
+        "publishedEventStart": null,
+        "publishedEventEnd": null,
+        "publishedEventOiSelections": []
+      }
+    ],
+    "status": "FIXED"
+  },
+  "dapReplanning": {
+    "rule": "QV-DAP-003",
+    "source": "EXISTING_PICK_PROPOSAL_SLOT",
+    "initialDate": "2027-05-06",
+    "firstSessionDate": "2027-04-22",
+    "candidates": [
+      {
+        "date": "2027-05-13",
+        "weekday": "THURSDAY",
+        "dayClass": "PREFERE",
+        "reasons": [
+          "Jeudi: Préférée."
+        ],
+        "rank": -0.2
+      },
+      {
+        "date": "2027-05-20",
+        "weekday": "THURSDAY",
+        "dayClass": "PREFERE",
+        "reasons": [
+          "Jeudi: Préférée."
+        ],
+        "rank": -0.2
+      },
+      {
+        "date": "2027-05-12",
+        "weekday": "WEDNESDAY",
+        "dayClass": "AUTORISE",
+        "reasons": [
+          "Mercredi: Possible."
+        ],
+        "rank": 1
+      },
+      {
+        "date": "2027-05-17",
+        "weekday": "MONDAY",
+        "dayClass": "AUTORISE",
+        "reasons": [
+          "Lundi: Possible."
+        ],
+        "rank": 1
+      },
+      {
+        "date": "2027-05-21",
+        "weekday": "FRIDAY",
+        "dayClass": "AUTORISE",
+        "reasons": [
+          "Vendredi: Possible."
+        ],
+        "rank": 1
+      }
+    ],
+    "occupied": [
+      {
+        "date": "2027-05-19",
+        "itemId": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O2:S1",
+        "label": "Exercice DPS-DAP 1",
+        "ois": [
+          "DAP:Y4"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-19",
+        "itemId": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O4:S1",
+        "label": "Exercice DPS-DAP 1",
+        "ois": [
+          "DAP:Y1"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-19",
+        "itemId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O2:S1",
+        "label": "Cours de cadres exercice DAP 2",
+        "ois": [
+          "DAP:Y1"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-04",
+        "itemId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O3:S1",
+        "label": "Cours de cadres exercice DAP 2",
+        "ois": [
+          "DAP:Y3"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-11",
+        "itemId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O4:S1",
+        "label": "Cours de cadres exercice DAP 2",
+        "ois": [
+          "DAP:Y4"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-19",
+        "itemId": "QV26-EXERCICE-DAP-2-6285EF74:O1:S1",
+        "label": "Exercice DAP 2",
+        "ois": [
+          "DAP:Y2"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-19",
+        "itemId": "QV26-EXERCICE-DAP-2-6285EF74:O2:S1",
+        "label": "Exercice DAP 2",
+        "ois": [
+          "DAP:Y3"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-27",
+        "itemId": "QV26-EXERCICE-DAP-2-6285EF74:O4:S1",
+        "label": "Exercice DAP 2",
+        "ois": [
+          "DAP:Y4"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-04",
+        "itemId": "QV26-SOIREE-INFORMATION-DAP-Y2-5AAA8CF4:O1:S1",
+        "label": "Soirée information DAP Y2",
+        "ois": [
+          "DAP:Y2"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-11",
+        "itemId": "QV26-SOIREE-INFORMATION-DAP-Y3-594760FB:O1:S1",
+        "label": "Soirée information DAP Y3",
+        "ois": [
+          "DAP:Y3"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-25",
+        "itemId": "QV26-SOIREE-INFORMATION-DAP-Y4-728FEE44:O1:S1",
+        "label": "Soirée information DAP Y4",
+        "ois": [
+          "DAP:Y4"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-03",
+        "itemId": "QV26-FORMATION-ANTICHUTE-4D06A7F8:O1:S1",
+        "label": "Formation antichute",
+        "ois": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DPS:B2",
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-18",
+        "itemId": "QV26-RECYCLAGE-BLS-3A2ED7C4:O2:S1",
+        "label": "Recyclage BLS",
+        "ois": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DPS:B2",
+          "DAP:Y1"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-14",
+        "itemId": "QV27:PROJ:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:2027-05-05:1800:G1-Y1",
+        "label": "Séance communication F5/6",
+        "ois": [
+          "DPS:G1",
+          "DAP:Y1"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-03",
+        "itemId": "QV27:DAPCOND:2027-05-03:Y1:1830",
+        "label": "Conduite, formation continue",
+        "ois": [
+          "DAP:Y1"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-10",
+        "itemId": "QV27:DAPCOND:2027-05-10:Y1:1830",
+        "label": "Conduite, formation continue",
+        "ois": [
+          "DAP:Y1"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      },
+      {
+        "date": "2027-05-24",
+        "itemId": "QV27:DAPCOND:2027-05-17:Y1:1830",
+        "label": "Conduite, formation continue",
+        "ois": [
+          "DAP:Y1"
+        ],
+        "reason": "Horaire individuel inconnu : journee reservee par prudence pour les OI DAP"
+      }
+    ],
+    "proposedDate": "2027-05-13",
+    "initialClassification": {
+      "date": "2027-05-06",
+      "weekday": "THURSDAY",
+      "dayClass": "INTERDIT",
+      "reasons": [
+        "Jeudi: Préférée.",
+        "Vacances scolaires: proposition interdite."
+      ],
+      "rank": 9
+    },
+    "indicativeTimePolicy": {
+      "usualEnd": "21:30",
+      "usualStart": "19:30"
+    },
+    "status": "PROPOSITION_CALENDRIER_A_CONFIRMER",
+    "limitations": [
+      "Horaire individuel non confirme",
+      "Lieu et salle non confirmes",
+      "Theme et responsable non confirmes"
+    ],
+    "dateDecision": false,
+    "timeDecision": false,
+    "venueDecision": false
+  },
+  "humanDecisionPreserved": true,
+  "noAvailableDateCase": "PASS",
+  "statComIdentical": 933,
+  "rollback": {
+    "status": "PASS",
+    "tables": 113
+  },
+  "before": {
+    "monitoring_f7_schema_migrations": {
+      "count": 54,
+      "hash": "d79acefa388b5152abeb130fa67a0f9c"
+    },
+    "scope_activity_domain_bindings": {
+      "count": 350,
+      "hash": "ac0dc00ddeeb22bea5b7ca0ed016ef0c"
+    },
+    "scope_activity_functional_profiles": {
+      "count": 2,
+      "hash": "3f5305e3273730b8fe0a702e4cb130ca"
+    },
+    "scope_activity_legacy_aliases": {
+      "count": 311,
+      "hash": "2c2f63615b129cac368fbf094476fe05"
+    },
+    "scope_activity_location_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_periodicities": {
+      "count": 302,
+      "hash": "51dea9cf2b0e80b802b56ad2f2707a9a"
+    },
+    "scope_activity_planning_constraints": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_public_bindings": {
+      "count": 886,
+      "hash": "1e3428d7068b6c3aedecb3193ad9c176"
+    },
+    "scope_activity_qualification_bindings": {
+      "count": 148,
+      "hash": "e45b3d7212f0d9b27035523107ab71ff"
+    },
+    "scope_activity_responsible_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_role_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_session_templates": {
+      "count": 307,
+      "hash": "6c36cddfc4a80f13fc5ee359f8854242"
+    },
+    "scope_activity_statistical_contributions": {
+      "count": 393,
+      "hash": "f63c4dff291ec8e5cf273aebb5ff846c"
+    },
+    "scope_activity_theme_bindings": {
+      "count": 104,
+      "hash": "99daffb78b78ef1c2f7916a6e07173bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_alertes_acquittements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_program_entries": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_requirement_theme_assignments": {
+      "count": 2,
+      "hash": "b5ad51c32d21269bf5cc5c1336886d27"
+    },
+    "scope_annual_requirements": {
+      "count": 5,
+      "hash": "c32e530c0d3852d6d06605a245b48934"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_catalog_convergence_links": {
+      "count": 14,
+      "hash": "0073a5e0f6974f41998385609dfb761d"
+    },
+    "scope_catalog_import_decisions": {
+      "count": 345,
+      "hash": "7fc510364b122c3fe05460b3f5a30f30"
+    },
+    "scope_catalog_import_runs": {
+      "count": 1,
+      "hash": "0a873f03e496508127b16e16a8b42878"
+    },
+    "scope_cibles": {
+      "count": 36,
+      "hash": "09acc9482993dcfb10308e63bea64436"
+    },
+    "scope_competence_aliases": {
+      "count": 25,
+      "hash": "4e7dc5d8f6df970efc98d32135be058b"
+    },
+    "scope_competence_definitions": {
+      "count": 17,
+      "hash": "57d380595374647031ab01f476992011"
+    },
+    "scope_competence_implications": {
+      "count": 1,
+      "hash": "aa842786d98f8a8c326d0aafc636c0bb"
+    },
+    "scope_cycle_personnes": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_cycles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_domaine_ois": {
+      "count": 11,
+      "hash": "0997e5c227226479d31f52d324db575c"
+    },
+    "scope_domaines": {
+      "count": 10,
+      "hash": "01b279aeff93a944a086d90c57a727bf"
+    },
+    "scope_evenement_cibles": {
+      "count": 340,
+      "hash": "4629b7521cdf9148510ce14fd339b50b"
+    },
+    "scope_evenement_cibles_qv": {
+      "count": 205,
+      "hash": "39ea08d7b1e938c0cd6da5c73e801958"
+    },
+    "scope_evenement_domaines": {
+      "count": 125,
+      "hash": "c83dc6af46d3288271652fa1b9683494"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_public_rule_versions": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_evenement_ressources_qv": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_roles_qv": {
+      "count": 1,
+      "hash": "aff2eb614e65c4e53a9e2ef93d87d1c2"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_event_code_sequences": {
+      "count": 28,
+      "hash": "8c0519c684d745b2ad167339c5887b9b"
+    },
+    "scope_event_definition_versions": {
+      "count": 305,
+      "hash": "e110db664e9fe1a7a5fe671771fc3d32"
+    },
+    "scope_event_definitions": {
+      "count": 305,
+      "hash": "2a872f932f5ed8a50a658dce8b3d8e96"
+    },
+    "scope_event_person_roles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_event_role_aliases": {
+      "count": 1,
+      "hash": "6ac5141919a332b688d525ed1b5072a4"
+    },
+    "scope_event_role_definitions": {
+      "count": 8,
+      "hash": "bf5caa86e0efd1ceef898e2b34f542d2"
+    },
+    "scope_exercices": {
+      "count": 2,
+      "hash": "649ff3fd6bb91906603bbcc89f3b9f45"
+    },
+    "scope_foba_niveaux": {
+      "count": 3,
+      "hash": "2201f54b1c9a9e80a2aabcc4bb416d84"
+    },
+    "scope_import_lignes": {
+      "count": 139,
+      "hash": "453eb341e1825053b58f05c65472cb0b"
+    },
+    "scope_imports": {
+      "count": 1,
+      "hash": "b8c9a9f9b0875cb65822d08686641f49"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_legacy_aggregates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_legacy_cible_competence_mappings": {
+      "count": 6,
+      "hash": "abf087209f8e40e4f855549117622ac8"
+    },
+    "scope_legacy_cible_foba_niveau_mappings": {
+      "count": 3,
+      "hash": "9e0d9efcb89528f39b59a58e0b7e8842"
+    },
+    "scope_legacy_cible_oi_mappings": {
+      "count": 15,
+      "hash": "8e01e627ae67394f4f727fec1e083a88"
+    },
+    "scope_legacy_cible_pr_parcours_mappings": {
+      "count": 6,
+      "hash": "b1b8cbf8f79e298d2946c3b04ec2e778"
+    },
+    "scope_legacy_cible_reviews": {
+      "count": 10,
+      "hash": "64d4f37d2fb3300e31cca5292905171f"
+    },
+    "scope_lieux": {
+      "count": 8,
+      "hash": "a00ca61f72768c069e89e12c3f215c98"
+    },
+    "scope_location_categories": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_multisession_v2_participations": {
+      "count": 69,
+      "hash": "d37be33f42e66567f1868bf014b37ae0"
+    },
+    "scope_multisession_v2_population": {
+      "count": 71,
+      "hash": "b7e6ddcd27cbbc314521c720993fe5d9"
+    },
+    "scope_multisession_v2_sessions": {
+      "count": 2,
+      "hash": "e8ece1be96cc34e479be220994881bcf"
+    },
+    "scope_multisessions_v2": {
+      "count": 1,
+      "hash": "ccf9f30187a7e30a689558b847c2770a"
+    },
+    "scope_objectifs": {
+      "count": 6,
+      "hash": "f5295ff222872620bf7fce0e4e3b449f"
+    },
+    "scope_ois": {
+      "count": 8,
+      "hash": "27d082edc900c4e093334967527c7eb5"
+    },
+    "scope_participation_motifs": {
+      "count": 19,
+      "hash": "b38df2c0b41910f11f18951b6717ec26"
+    },
+    "scope_participation_policies": {
+      "count": 8,
+      "hash": "4d4dad74ff2e614db50b37c9a82896eb"
+    },
+    "scope_participation_policy_versions": {
+      "count": 12,
+      "hash": "691bcfc8c06bee853a4322db815f20d8"
+    },
+    "scope_participation_statuses": {
+      "count": 5,
+      "hash": "48da7ed480a7bb00204d30a6822da819"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_permutations": {
+      "count": 9,
+      "hash": "6560f1a92012a503bd641b3017f1cc5b"
+    },
+    "scope_person_qualification_evidence": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_person_qualifications": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_personne_periodes": {
+      "count": 315,
+      "hash": "6a663666c7327a48cc9eb43c94afd3c7"
+    },
+    "scope_personnel_import_batches": {
+      "count": 14,
+      "hash": "4ed8d263f0ba57a09778b66fff841411"
+    },
+    "scope_personnel_import_lines": {
+      "count": 772,
+      "hash": "1b928388a2b82b7b27387506329005c9"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    },
+    "scope_planned_occurrence_sessions": {
+      "count": 10,
+      "hash": "6145b2d6e29abd3fefca87554e37bb0d"
+    },
+    "scope_planned_occurrences": {
+      "count": 10,
+      "hash": "ff6daf4a00b85a75aec58a324c2bf711"
+    },
+    "scope_planned_site_slots": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_pr_parcours": {
+      "count": 3,
+      "hash": "6b6ff0fb90e36065eb126a5dfd67cc06"
+    },
+    "scope_pr_parcours_aliases": {
+      "count": 6,
+      "hash": "bf760c4acb335a446bb6f9b5954f9f81"
+    },
+    "scope_public_definitions": {
+      "count": 34,
+      "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+    },
+    "scope_public_rule_versions": {
+      "count": 27,
+      "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+    },
+    "scope_quo_vadis_calendar_days": {
+      "count": 18,
+      "hash": "31449a187fd3a01780001acb6f70f9a2"
+    },
+    "scope_quo_vadis_cohortes": {
+      "count": 2,
+      "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+    },
+    "scope_quo_vadis_cursus_definitions": {
+      "count": 11,
+      "hash": "598a451891d35b8b9bbe976fdc306fb1"
+    },
+    "scope_quo_vadis_cursus_programmes": {
+      "count": 11,
+      "hash": "70856ff041a262be4d959cb4e584e972"
+    },
+    "scope_quo_vadis_cursus_step_programmes": {
+      "count": 59,
+      "hash": "768f2870adbc07ed57c6e2e4837e4204"
+    },
+    "scope_quo_vadis_cursus_steps": {
+      "count": 59,
+      "hash": "73a216591405ea28f145f52b63516076"
+    },
+    "scope_quo_vadis_cursus_versions": {
+      "count": 11,
+      "hash": "a209803843cd767593099392dad8410c"
+    },
+    "scope_quo_vadis_dps_organisation_versions": {
+      "count": 4,
+      "hash": "14ebb8fb0f13c3ed58b77e04fb9f3064"
+    },
+    "scope_quo_vadis_future_dates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_quo_vadis_planning_rules": {
+      "count": 12,
+      "hash": "18cb99c52a70580cf2c0f4bd4bb82e84"
+    },
+    "scope_quo_vadis_programme_history": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_programmes": {
+      "count": 1,
+      "hash": "180bcb3daaa42a2c62c9868a3851b548"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "8311de7912a41a8250dc802490327d65"
+    },
+    "scope_qv_publication_activities": {
+      "count": 52,
+      "hash": "8ef159fcfdffa4e3107063b3e268e79c"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_qv_publication_runs": {
+      "count": 7,
+      "hash": "825c4db1f70bb59bc0fdb8da87514436"
+    },
+    "scope_qv_session_events": {
+      "count": 125,
+      "hash": "1ac193fd08c98f83c06ffd4c94da270b"
+    },
+    "scope_qv_session_groups": {
+      "count": 125,
+      "hash": "ea4de3c8f096a796d8ec713ca930798f"
+    },
+    "scope_regles_bascule": {
+      "count": 1,
+      "hash": "1814609c6ad125d820c30dcf6ea74e16"
+    },
+    "scope_responsable_fonctions": {
+      "count": 28,
+      "hash": "00c69bec9f05d275a1013b39f87f08cf"
+    },
+    "scope_saisies_quantitatives": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_salles_theorie": {
+      "count": 11,
+      "hash": "7a1679704187bd0804dbde3e61d080e3"
+    },
+    "scope_sous_domaines": {
+      "count": 2,
+      "hash": "05462606a17fda7e495490fbc898be0b"
+    },
+    "scope_statcom_referentiel": {
+      "count": 91,
+      "hash": "3240a49db480bb4dcf635221eb1dd09f"
+    },
+    "scope_suivi_nominatif": {
+      "count": 1,
+      "hash": "ad814676b9fc711505ae64c61812ca82"
+    },
+    "scope_theme_definitions": {
+      "count": 68,
+      "hash": "9e2c1567ee5007166b0a6f12e7956e6e"
+    },
+    "scope_theme_versions": {
+      "count": 68,
+      "hash": "16199537773c5e7d47130e50b0ba08a1"
+    }
+  },
+  "after": {
+    "monitoring_f7_schema_migrations": {
+      "count": 54,
+      "hash": "d79acefa388b5152abeb130fa67a0f9c"
+    },
+    "scope_activity_domain_bindings": {
+      "count": 350,
+      "hash": "ac0dc00ddeeb22bea5b7ca0ed016ef0c"
+    },
+    "scope_activity_functional_profiles": {
+      "count": 2,
+      "hash": "3f5305e3273730b8fe0a702e4cb130ca"
+    },
+    "scope_activity_legacy_aliases": {
+      "count": 311,
+      "hash": "2c2f63615b129cac368fbf094476fe05"
+    },
+    "scope_activity_location_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_periodicities": {
+      "count": 302,
+      "hash": "51dea9cf2b0e80b802b56ad2f2707a9a"
+    },
+    "scope_activity_planning_constraints": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_public_bindings": {
+      "count": 886,
+      "hash": "1e3428d7068b6c3aedecb3193ad9c176"
+    },
+    "scope_activity_qualification_bindings": {
+      "count": 148,
+      "hash": "e45b3d7212f0d9b27035523107ab71ff"
+    },
+    "scope_activity_responsible_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_role_requirements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_activity_session_templates": {
+      "count": 307,
+      "hash": "6c36cddfc4a80f13fc5ee359f8854242"
+    },
+    "scope_activity_statistical_contributions": {
+      "count": 393,
+      "hash": "f63c4dff291ec8e5cf273aebb5ff846c"
+    },
+    "scope_activity_theme_bindings": {
+      "count": 104,
+      "hash": "99daffb78b78ef1c2f7916a6e07173bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_alertes_acquittements": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_program_entries": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_annual_requirement_theme_assignments": {
+      "count": 2,
+      "hash": "b5ad51c32d21269bf5cc5c1336886d27"
+    },
+    "scope_annual_requirements": {
+      "count": 5,
+      "hash": "c32e530c0d3852d6d06605a245b48934"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_catalog_convergence_links": {
+      "count": 14,
+      "hash": "0073a5e0f6974f41998385609dfb761d"
+    },
+    "scope_catalog_import_decisions": {
+      "count": 345,
+      "hash": "7fc510364b122c3fe05460b3f5a30f30"
+    },
+    "scope_catalog_import_runs": {
+      "count": 1,
+      "hash": "0a873f03e496508127b16e16a8b42878"
+    },
+    "scope_cibles": {
+      "count": 36,
+      "hash": "09acc9482993dcfb10308e63bea64436"
+    },
+    "scope_competence_aliases": {
+      "count": 25,
+      "hash": "4e7dc5d8f6df970efc98d32135be058b"
+    },
+    "scope_competence_definitions": {
+      "count": 17,
+      "hash": "57d380595374647031ab01f476992011"
+    },
+    "scope_competence_implications": {
+      "count": 1,
+      "hash": "aa842786d98f8a8c326d0aafc636c0bb"
+    },
+    "scope_cycle_personnes": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_cycles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_domaine_ois": {
+      "count": 11,
+      "hash": "0997e5c227226479d31f52d324db575c"
+    },
+    "scope_domaines": {
+      "count": 10,
+      "hash": "01b279aeff93a944a086d90c57a727bf"
+    },
+    "scope_evenement_cibles": {
+      "count": 340,
+      "hash": "4629b7521cdf9148510ce14fd339b50b"
+    },
+    "scope_evenement_cibles_qv": {
+      "count": 205,
+      "hash": "39ea08d7b1e938c0cd6da5c73e801958"
+    },
+    "scope_evenement_domaines": {
+      "count": 125,
+      "hash": "c83dc6af46d3288271652fa1b9683494"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_public_rule_versions": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_evenement_ressources_qv": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_evenement_roles_qv": {
+      "count": 1,
+      "hash": "aff2eb614e65c4e53a9e2ef93d87d1c2"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_event_code_sequences": {
+      "count": 28,
+      "hash": "8c0519c684d745b2ad167339c5887b9b"
+    },
+    "scope_event_definition_versions": {
+      "count": 305,
+      "hash": "e110db664e9fe1a7a5fe671771fc3d32"
+    },
+    "scope_event_definitions": {
+      "count": 305,
+      "hash": "2a872f932f5ed8a50a658dce8b3d8e96"
+    },
+    "scope_event_person_roles": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_event_role_aliases": {
+      "count": 1,
+      "hash": "6ac5141919a332b688d525ed1b5072a4"
+    },
+    "scope_event_role_definitions": {
+      "count": 8,
+      "hash": "bf5caa86e0efd1ceef898e2b34f542d2"
+    },
+    "scope_exercices": {
+      "count": 2,
+      "hash": "649ff3fd6bb91906603bbcc89f3b9f45"
+    },
+    "scope_foba_niveaux": {
+      "count": 3,
+      "hash": "2201f54b1c9a9e80a2aabcc4bb416d84"
+    },
+    "scope_import_lignes": {
+      "count": 139,
+      "hash": "453eb341e1825053b58f05c65472cb0b"
+    },
+    "scope_imports": {
+      "count": 1,
+      "hash": "b8c9a9f9b0875cb65822d08686641f49"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_legacy_aggregates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_legacy_cible_competence_mappings": {
+      "count": 6,
+      "hash": "abf087209f8e40e4f855549117622ac8"
+    },
+    "scope_legacy_cible_foba_niveau_mappings": {
+      "count": 3,
+      "hash": "9e0d9efcb89528f39b59a58e0b7e8842"
+    },
+    "scope_legacy_cible_oi_mappings": {
+      "count": 15,
+      "hash": "8e01e627ae67394f4f727fec1e083a88"
+    },
+    "scope_legacy_cible_pr_parcours_mappings": {
+      "count": 6,
+      "hash": "b1b8cbf8f79e298d2946c3b04ec2e778"
+    },
+    "scope_legacy_cible_reviews": {
+      "count": 10,
+      "hash": "64d4f37d2fb3300e31cca5292905171f"
+    },
+    "scope_lieux": {
+      "count": 8,
+      "hash": "a00ca61f72768c069e89e12c3f215c98"
+    },
+    "scope_location_categories": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_multisession_v2_participations": {
+      "count": 69,
+      "hash": "d37be33f42e66567f1868bf014b37ae0"
+    },
+    "scope_multisession_v2_population": {
+      "count": 71,
+      "hash": "b7e6ddcd27cbbc314521c720993fe5d9"
+    },
+    "scope_multisession_v2_sessions": {
+      "count": 2,
+      "hash": "e8ece1be96cc34e479be220994881bcf"
+    },
+    "scope_multisessions_v2": {
+      "count": 1,
+      "hash": "ccf9f30187a7e30a689558b847c2770a"
+    },
+    "scope_objectifs": {
+      "count": 6,
+      "hash": "f5295ff222872620bf7fce0e4e3b449f"
+    },
+    "scope_ois": {
+      "count": 8,
+      "hash": "27d082edc900c4e093334967527c7eb5"
+    },
+    "scope_participation_motifs": {
+      "count": 19,
+      "hash": "b38df2c0b41910f11f18951b6717ec26"
+    },
+    "scope_participation_policies": {
+      "count": 8,
+      "hash": "4d4dad74ff2e614db50b37c9a82896eb"
+    },
+    "scope_participation_policy_versions": {
+      "count": 12,
+      "hash": "691bcfc8c06bee853a4322db815f20d8"
+    },
+    "scope_participation_statuses": {
+      "count": 5,
+      "hash": "48da7ed480a7bb00204d30a6822da819"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_permutations": {
+      "count": 9,
+      "hash": "6560f1a92012a503bd641b3017f1cc5b"
+    },
+    "scope_person_qualification_evidence": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_person_qualifications": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_personne_periodes": {
+      "count": 315,
+      "hash": "6a663666c7327a48cc9eb43c94afd3c7"
+    },
+    "scope_personnel_import_batches": {
+      "count": 14,
+      "hash": "4ed8d263f0ba57a09778b66fff841411"
+    },
+    "scope_personnel_import_lines": {
+      "count": 772,
+      "hash": "1b928388a2b82b7b27387506329005c9"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    },
+    "scope_planned_occurrence_sessions": {
+      "count": 10,
+      "hash": "6145b2d6e29abd3fefca87554e37bb0d"
+    },
+    "scope_planned_occurrences": {
+      "count": 10,
+      "hash": "ff6daf4a00b85a75aec58a324c2bf711"
+    },
+    "scope_planned_site_slots": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_pr_parcours": {
+      "count": 3,
+      "hash": "6b6ff0fb90e36065eb126a5dfd67cc06"
+    },
+    "scope_pr_parcours_aliases": {
+      "count": 6,
+      "hash": "bf760c4acb335a446bb6f9b5954f9f81"
+    },
+    "scope_public_definitions": {
+      "count": 34,
+      "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+    },
+    "scope_public_rule_versions": {
+      "count": 27,
+      "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+    },
+    "scope_quo_vadis_calendar_days": {
+      "count": 18,
+      "hash": "31449a187fd3a01780001acb6f70f9a2"
+    },
+    "scope_quo_vadis_cohortes": {
+      "count": 2,
+      "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+    },
+    "scope_quo_vadis_cursus_definitions": {
+      "count": 11,
+      "hash": "598a451891d35b8b9bbe976fdc306fb1"
+    },
+    "scope_quo_vadis_cursus_programmes": {
+      "count": 11,
+      "hash": "70856ff041a262be4d959cb4e584e972"
+    },
+    "scope_quo_vadis_cursus_step_programmes": {
+      "count": 59,
+      "hash": "768f2870adbc07ed57c6e2e4837e4204"
+    },
+    "scope_quo_vadis_cursus_steps": {
+      "count": 59,
+      "hash": "73a216591405ea28f145f52b63516076"
+    },
+    "scope_quo_vadis_cursus_versions": {
+      "count": 11,
+      "hash": "a209803843cd767593099392dad8410c"
+    },
+    "scope_quo_vadis_dps_organisation_versions": {
+      "count": 4,
+      "hash": "14ebb8fb0f13c3ed58b77e04fb9f3064"
+    },
+    "scope_quo_vadis_future_dates": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_quo_vadis_planning_rules": {
+      "count": 12,
+      "hash": "18cb99c52a70580cf2c0f4bd4bb82e84"
+    },
+    "scope_quo_vadis_programme_history": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_quo_vadis_programmes": {
+      "count": 1,
+      "hash": "180bcb3daaa42a2c62c9868a3851b548"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "8311de7912a41a8250dc802490327d65"
+    },
+    "scope_qv_publication_activities": {
+      "count": 52,
+      "hash": "8ef159fcfdffa4e3107063b3e268e79c"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_qv_publication_runs": {
+      "count": 7,
+      "hash": "825c4db1f70bb59bc0fdb8da87514436"
+    },
+    "scope_qv_session_events": {
+      "count": 125,
+      "hash": "1ac193fd08c98f83c06ffd4c94da270b"
+    },
+    "scope_qv_session_groups": {
+      "count": 125,
+      "hash": "ea4de3c8f096a796d8ec713ca930798f"
+    },
+    "scope_regles_bascule": {
+      "count": 1,
+      "hash": "1814609c6ad125d820c30dcf6ea74e16"
+    },
+    "scope_responsable_fonctions": {
+      "count": 28,
+      "hash": "00c69bec9f05d275a1013b39f87f08cf"
+    },
+    "scope_saisies_quantitatives": {
+      "count": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "scope_salles_theorie": {
+      "count": 11,
+      "hash": "7a1679704187bd0804dbde3e61d080e3"
+    },
+    "scope_sous_domaines": {
+      "count": 2,
+      "hash": "05462606a17fda7e495490fbc898be0b"
+    },
+    "scope_statcom_referentiel": {
+      "count": 91,
+      "hash": "3240a49db480bb4dcf635221eb1dd09f"
+    },
+    "scope_suivi_nominatif": {
+      "count": 1,
+      "hash": "ad814676b9fc711505ae64c61812ca82"
+    },
+    "scope_theme_definitions": {
+      "count": 68,
+      "hash": "9e2c1567ee5007166b0a6f12e7956e6e"
+    },
+    "scope_theme_versions": {
+      "count": 68,
+      "hash": "16199537773c5e7d47130e50b0ba08a1"
+    }
+  },
+  "status": "PASS"
+}

@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "productionWrites": false,
+  "scenarios": [
+    "Production decisions replay: one row per reported case",
+    "DAP ranked proposal shown without invented date/time decision"
+  ],
+  "captures": 4,
+  "javascriptErrors": []
+}

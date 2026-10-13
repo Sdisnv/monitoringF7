@@ -464,6 +464,7 @@
       updateQuoVadisActivity(id, body) { return request('POST', `/quo-vadis/activities/${encodeURIComponent(id)}`, body || {}); },
       createQuoVadisProgrammeItem(body) { return request('POST', '/quo-vadis/programme-items', body || {}); },
       updateQuoVadisProgrammeItem(id, body) { return request('PATCH', `/quo-vadis/programme-items/${encodeURIComponent(id)}`, body || {}); },
+      quoVadisProgrammeHistory(id,annee) {return request('GET',`/quo-vadis/programme-items/${encodeURIComponent(id)}/history${queryString({annee:annee || 2027})}`);},
       createQuoVadisFutureDate(body) { return request('POST', '/quo-vadis/future-dates', body || {}); },
       quoVadisActivityReferences(id, annee) { return request('GET', `/quo-vadis/activities/${encodeURIComponent(id)}/references${queryString({ annee: annee || 2027 })}`); },
       participationReferentialUsage(kind, id) { return request('GET', `/participation/referentials/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/usages`); },

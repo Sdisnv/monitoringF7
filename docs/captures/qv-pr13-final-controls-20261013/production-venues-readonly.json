@@ -1,0 +1,530 @@
+{
+  "lieux": [
+    {
+      "npa": null,
+      "code": "QV-LIEU-1FADE300-063C-4703-98E2-758BCF5BA3B1",
+      "actif": true,
+      "lieu_id": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+      "oi_code": null,
+      "localite": null,
+      "metadata": {
+        "year": 2027,
+        "source": "QV_PROGRAMME_PREPARATION"
+      },
+      "nom_court": "La Rama",
+      "site_code": null,
+      "created_at": "2026-10-09T03:25:48.204698+00:00",
+      "updated_at": "2026-10-09T03:25:48.204698+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": null
+    },
+    {
+      "npa": null,
+      "code": "QV-LIEU-E1F7491A-7BCD-48F7-87FA-03698A7ADD0D",
+      "actif": true,
+      "lieu_id": "bace3a5f-89ec-4a20-be41-edf4b171ad43",
+      "oi_code": null,
+      "localite": null,
+      "metadata": {
+        "year": 2027,
+        "source": "QV_PROGRAMME_PREPARATION"
+      },
+      "nom_court": "La Marive, Yverdon-les-Bains",
+      "site_code": null,
+      "created_at": "2026-10-09T14:03:50.074392+00:00",
+      "updated_at": "2026-10-09T14:03:50.074392+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": null
+    },
+    {
+      "npa": null,
+      "code": "QV-LIEU-9236719A-9177-4A1F-884E-F3D89AD2715A",
+      "actif": true,
+      "lieu_id": "609a5cd5-1e5b-47f1-a775-29490d6151e7",
+      "oi_code": null,
+      "localite": null,
+      "metadata": {
+        "year": 2027,
+        "source": "QV_PROGRAMME_PREPARATION"
+      },
+      "nom_court": "À définir",
+      "site_code": null,
+      "created_at": "2026-10-12T11:55:23.49162+00:00",
+      "updated_at": "2026-10-12T11:55:23.49162+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": null
+    },
+    {
+      "npa": null,
+      "code": "QV-LIEU-97F99957-0FD3-4EBF-A26A-6259E45675F0",
+      "actif": true,
+      "lieu_id": "d73e95d1-860b-4453-a891-58aafe4224b9",
+      "oi_code": null,
+      "localite": null,
+      "metadata": {
+        "year": 2027,
+        "source": "QV_PROGRAMME_PREPARATION"
+      },
+      "nom_court": "Centre ECAP, Couvet",
+      "site_code": null,
+      "created_at": "2026-10-13T08:24:36.953061+00:00",
+      "updated_at": "2026-10-13T08:24:36.953061+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": null
+    },
+    {
+      "npa": null,
+      "code": "G1-CASERNE",
+      "actif": true,
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "oi_code": "G1",
+      "localite": "Yverdon-les-Bains",
+      "metadata": {
+        "kind": "CASERNE",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "nom_court": "Caserne G1",
+      "site_code": "G1",
+      "created_at": "2026-09-16T09:42:16.440264+00:00",
+      "updated_at": "2026-09-18T10:54:01.85025+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": "Arsenal 8"
+    },
+    {
+      "npa": null,
+      "code": "C1-CASERNE",
+      "actif": true,
+      "lieu_id": "8af6e717-1c67-439d-b411-cce5870e1722",
+      "oi_code": "C1",
+      "localite": "Grandson",
+      "metadata": {
+        "kind": "CASERNE",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "nom_court": "Caserne C1",
+      "site_code": "C1",
+      "created_at": "2026-09-16T09:42:16.463897+00:00",
+      "updated_at": "2026-09-18T10:54:01.859989+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": "Chemin du Borné-nau"
+    },
+    {
+      "npa": null,
+      "code": "B1-CASERNE",
+      "actif": true,
+      "lieu_id": "4cf1c7eb-7a31-40b1-82b4-a5d7053a1ab3",
+      "oi_code": "B1",
+      "localite": "Yvonand",
+      "metadata": {
+        "kind": "CASERNE",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "nom_court": "Caserne B1",
+      "site_code": "B1",
+      "created_at": "2026-09-16T09:42:16.449934+00:00",
+      "updated_at": "2026-09-18T10:54:01.872947+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": "Petite-Amérique 2"
+    },
+    {
+      "npa": null,
+      "code": "B2-CASERNE",
+      "actif": true,
+      "lieu_id": "febd0319-c8ac-4281-8c1e-6c0c60e47a09",
+      "oi_code": "B2",
+      "localite": "Concise",
+      "metadata": {
+        "kind": "CASERNE",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "nom_court": "Caserne B2",
+      "site_code": "B2",
+      "created_at": "2026-09-16T09:42:16.472751+00:00",
+      "updated_at": "2026-09-18T10:54:01.88466+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": "En Chenaux"
+    },
+    {
+      "npa": null,
+      "code": "Y1-LOCAL",
+      "actif": true,
+      "lieu_id": "57c9e32d-d161-4af2-9f3a-131dbcd3a7bd",
+      "oi_code": "Y1",
+      "localite": "Chavannes-le-Chêne",
+      "metadata": {
+        "kind": "LOCAL",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "nom_court": "Local Y1",
+      "site_code": "Y1",
+      "created_at": "2026-09-18T10:54:01.898528+00:00",
+      "updated_at": "2026-09-18T10:54:01.898528+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": "Chemin du Grassis 1"
+    },
+    {
+      "npa": null,
+      "code": "Y2-LOCAL",
+      "actif": true,
+      "lieu_id": "7e47fed3-fc96-4df2-b8c7-2fa660b3b704",
+      "oi_code": "Y2",
+      "localite": "Belmont-sur-Yverdon",
+      "metadata": {
+        "kind": "LOCAL",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "nom_court": "Local Y2",
+      "site_code": "Y2",
+      "created_at": "2026-09-18T10:54:01.908106+00:00",
+      "updated_at": "2026-09-18T10:54:01.908106+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": "Chemin des Pâquis 4"
+    },
+    {
+      "npa": null,
+      "code": "Y3-LOCAL",
+      "actif": true,
+      "lieu_id": "d54c3bf7-161e-4332-b51f-1b3d4748ecc1",
+      "oi_code": "Y3",
+      "localite": "Montagny-près-Yverdon",
+      "metadata": {
+        "kind": "LOCAL",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "nom_court": "Local Y3",
+      "site_code": "Y3",
+      "created_at": "2026-09-18T10:54:01.917674+00:00",
+      "updated_at": "2026-09-18T10:54:01.917674+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": "Grand'rue 1"
+    },
+    {
+      "npa": null,
+      "code": "Y4-LOCAL",
+      "actif": true,
+      "lieu_id": "39ea8b98-317e-4645-a8c0-d49b9e2870f4",
+      "oi_code": "Y4",
+      "localite": "Bonvillars",
+      "metadata": {
+        "kind": "LOCAL",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "nom_court": "Local Y4",
+      "site_code": "Y4",
+      "created_at": "2026-09-18T10:54:01.943363+00:00",
+      "updated_at": "2026-09-18T10:54:01.943363+00:00",
+      "nom_complet": null,
+      "adresse_ligne1": "Route de la Cour 2"
+    }
+  ],
+  "salles": [
+    {
+      "code": "G1-VULCAIN",
+      "actif": true,
+      "libelle": "Vulcain",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "salle_id": "237fad73-7078-44ce-ab55-0f8011b85889",
+      "created_at": "2026-09-18T10:54:02.315401+00:00",
+      "updated_at": "2026-09-18T10:54:02.315401+00:00",
+      "parent_salle_id": null
+    },
+    {
+      "code": "G1-OXYGENE",
+      "actif": true,
+      "libelle": "Oxygène",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "salle_id": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+      "created_at": "2026-09-18T10:54:02.356867+00:00",
+      "updated_at": "2026-09-18T10:54:02.356867+00:00",
+      "parent_salle_id": null
+    },
+    {
+      "code": "G1-FLASHOVER",
+      "actif": true,
+      "libelle": "Flashover",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "salle_id": "ec1f98aa-bf7f-4724-ad51-6708bef358ab",
+      "created_at": "2026-09-18T10:54:02.388441+00:00",
+      "updated_at": "2026-09-18T10:54:02.388441+00:00",
+      "parent_salle_id": null
+    },
+    {
+      "code": "G1-BACKDRAFT",
+      "actif": true,
+      "libelle": "Backdraft",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "salle_id": "0ef8e194-59dc-4581-8376-76193b8ec96a",
+      "created_at": "2026-09-18T10:54:02.397683+00:00",
+      "updated_at": "2026-09-18T10:54:02.397683+00:00",
+      "parent_salle_id": null
+    },
+    {
+      "code": "G1-ETAT-MAJOR",
+      "actif": true,
+      "libelle": "État-major",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "salle_id": "1dec6678-53f4-4e11-82bd-9d93218b32b1",
+      "created_at": "2026-09-18T10:54:02.406783+00:00",
+      "updated_at": "2026-09-18T10:54:02.406783+00:00",
+      "parent_salle_id": null
+    },
+    {
+      "code": "C1-THEORIE",
+      "actif": true,
+      "libelle": "Théorie C1",
+      "lieu_id": "8af6e717-1c67-439d-b411-cce5870e1722",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "C1-CASERNE",
+        "parentCode": null
+      },
+      "salle_id": "841262b4-ca0c-4f59-b2eb-957c50727d81",
+      "created_at": "2026-09-18T10:54:02.415813+00:00",
+      "updated_at": "2026-09-18T10:54:02.415813+00:00",
+      "parent_salle_id": null
+    },
+    {
+      "code": "B1-THEORIE",
+      "actif": true,
+      "libelle": "Théorie B1",
+      "lieu_id": "4cf1c7eb-7a31-40b1-82b4-a5d7053a1ab3",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "B1-CASERNE",
+        "parentCode": null
+      },
+      "salle_id": "875db4c2-d3a7-47dd-ba1e-157a2deceee3",
+      "created_at": "2026-09-18T10:54:02.426908+00:00",
+      "updated_at": "2026-09-18T10:54:02.426908+00:00",
+      "parent_salle_id": null
+    },
+    {
+      "code": "G1-JURA",
+      "actif": true,
+      "libelle": "Jura",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": "G1-VULCAIN"
+      },
+      "salle_id": "5561d988-468a-404a-9d50-954d548744b5",
+      "created_at": "2026-09-18T10:54:02.32717+00:00",
+      "updated_at": "2026-09-18T10:54:02.436826+00:00",
+      "parent_salle_id": "237fad73-7078-44ce-ab55-0f8011b85889"
+    },
+    {
+      "code": "G1-ALPES",
+      "actif": true,
+      "libelle": "Alpes",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": "G1-VULCAIN"
+      },
+      "salle_id": "d509349e-1fd7-48f5-8734-1d02dcee6961",
+      "created_at": "2026-09-18T10:54:02.338841+00:00",
+      "updated_at": "2026-09-18T10:54:02.447615+00:00",
+      "parent_salle_id": "237fad73-7078-44ce-ab55-0f8011b85889"
+    },
+    {
+      "code": "G1-O2",
+      "actif": true,
+      "libelle": "O2",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": "G1-OXYGENE"
+      },
+      "salle_id": "4b587afc-6665-4e54-8d7a-18d328722d29",
+      "created_at": "2026-09-18T10:54:02.36854+00:00",
+      "updated_at": "2026-09-18T10:54:02.456614+00:00",
+      "parent_salle_id": "40e43f31-34bf-439b-a960-fb56ff06ad1a"
+    },
+    {
+      "code": "G1-O3",
+      "actif": true,
+      "libelle": "O3",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": "G1-OXYGENE"
+      },
+      "salle_id": "bbee4269-3de6-45af-a925-12e699eb2919",
+      "created_at": "2026-09-18T10:54:02.37895+00:00",
+      "updated_at": "2026-09-18T10:54:02.465742+00:00",
+      "parent_salle_id": "40e43f31-34bf-439b-a960-fb56ff06ad1a"
+    }
+  ],
+  "readOnly": "on",
+  "capturedAt": "2026-10-13T09:46:23.470493+00:00",
+  "groupedHistory": [
+    {
+      "date": "2026-05-07",
+      "salle": null,
+      "statut": "REALISE",
+      "famille": null,
+      "libelle": "Formation groupée DAP 1.2",
+      "lieu_id": null,
+      "origine": "IMPORT_CSV",
+      "version": 27,
+      "cycle_id": null,
+      "date_fin": null,
+      "figee_at": "2026-08-25T17:45:36.909+00:00",
+      "priorite": null,
+      "date_fixe": false,
+      "figee_par": "thierry.grunig@sdisnv.ch",
+      "heure_fin": null,
+      "hidden_at": null,
+      "cloture_at": "2026-09-09T06:49:36.841+00:00",
+      "code_cours": "0130F7DAP.46",
+      "created_at": "2026-08-25T17:45:30.769694+00:00",
+      "hidden_par": null,
+      "mode_suivi": "NOMINATIF",
+      "updated_at": "2026-09-09T06:49:35.505618+00:00",
+      "cloture_par": "thierry.grunig@sdisnv.ch",
+      "code_source": "0130F7DAP.46",
+      "exercice_id": null,
+      "heure_debut": null,
+      "responsable": null,
+      "source_type": "CSV",
+      "domaine_code": "DAP",
+      "engine_route": null,
+      "evenement_id": "d2b9d7df-9488-4832-a6ff-bb7196826039",
+      "statcom_code": null,
+      "session_index": null,
+      "session_label": null,
+      "entree_service": null,
+      "pr_session_key": null,
+      "type_evenement": null,
+      "engine_snapshot": null,
+      "publication_key": null,
+      "exception_metier": null,
+      "heure_fin_prevue": null,
+      "heure_fin_reelle": null,
+      "journee_reservee": false,
+      "population_figee": true,
+      "salle_theorie_id": null,
+      "statcom_snapshot": null,
+      "internal_event_id": "d2b9d7df-9488-4832-a6ff-bb7196826039",
+      "policy_version_id": null,
+      "sous_domaine_code": null,
+      "heure_debut_prevue": null,
+      "heure_debut_reelle": null,
+      "population_version": 2,
+      "identifiant_externe": null,
+      "duree_reelle_minutes": null,
+      "definition_version_id": null,
+      "permutation_autorisee": false,
+      "pr_exercise_group_key": null,
+      "duree_planifiee_minutes": null,
+      "publication_fingerprint": null,
+      "exercise_equivalence_key": null,
+      "participation_policy_version": "sdis-nv-v1"
+    },
+    {
+      "date": "2026-04-23",
+      "salle": null,
+      "statut": "REALISE",
+      "famille": null,
+      "libelle": "Formation groupée DAP 1.1",
+      "lieu_id": null,
+      "origine": "IMPORT_CSV",
+      "version": 29,
+      "cycle_id": null,
+      "date_fin": null,
+      "figee_at": "2026-08-25T17:45:36.7+00:00",
+      "priorite": null,
+      "date_fixe": false,
+      "figee_par": "thierry.grunig@sdisnv.ch",
+      "heure_fin": null,
+      "hidden_at": null,
+      "cloture_at": "2026-09-09T06:47:41.258+00:00",
+      "code_cours": "0130F7DAP.38",
+      "created_at": "2026-08-25T17:45:30.769694+00:00",
+      "hidden_par": null,
+      "mode_suivi": "NOMINATIF",
+      "updated_at": "2026-09-09T06:47:39.961187+00:00",
+      "cloture_par": "thierry.grunig@sdisnv.ch",
+      "code_source": "0130F7DAP.38",
+      "exercice_id": null,
+      "heure_debut": null,
+      "responsable": null,
+      "source_type": "CSV",
+      "domaine_code": "DAP",
+      "engine_route": null,
+      "evenement_id": "46645fbf-ce18-4e50-9ac4-7ea4ecd44d28",
+      "statcom_code": null,
+      "session_index": null,
+      "session_label": null,
+      "entree_service": null,
+      "pr_session_key": null,
+      "type_evenement": null,
+      "engine_snapshot": null,
+      "publication_key": null,
+      "exception_metier": null,
+      "heure_fin_prevue": null,
+      "heure_fin_reelle": null,
+      "journee_reservee": false,
+      "population_figee": true,
+      "salle_theorie_id": null,
+      "statcom_snapshot": null,
+      "internal_event_id": "46645fbf-ce18-4e50-9ac4-7ea4ecd44d28",
+      "policy_version_id": null,
+      "sous_domaine_code": null,
+      "heure_debut_prevue": null,
+      "heure_debut_reelle": null,
+      "population_version": 2,
+      "identifiant_externe": null,
+      "duree_reelle_minutes": null,
+      "definition_version_id": null,
+      "permutation_autorisee": false,
+      "pr_exercise_group_key": null,
+      "duree_planifiee_minutes": null,
+      "publication_fingerprint": null,
+      "exercise_equivalence_key": null,
+      "participation_policy_version": "sdis-nv-v1"
+    }
+  ],
+  "project": {
+    "id": "bnfbqzqisdkysnoaeuej",
+    "name": "SCOPE"
+  },
+  "productionWrites": false
+}

@@ -3253,12 +3253,19 @@
       'c dap': 'Chef DAP',
       cdt: 'Commandant',
       'c log': 'Chef logistique',
-      'c op': 'Chef OP',
+      'c op': 'Chef opérationnel',
+      'chef op': 'Chef opérationnel',
+      'c for': 'Chef formation',
+      'c audiovisuel': 'Chef audiovisuel',
+      'c communication': 'Chef communication',
+      'of communication': 'Chef communication',
+      'c publication': 'Chef publication',
+      'c fospec': 'Chef FOSPEC',
       qm: 'Quartier-maître',
       'c pr': 'Chef PR',
       'c jsp': 'Chef JSP',
       'c site jsp': 'Chef site JSP',
-      'of auto': 'Of auto',
+      'of auto': 'Officier auto',
       'resp for jsp': 'Resp. formation JSP'
     };
     if (direct[key]) return direct[key];
@@ -3266,9 +3273,46 @@
     if ((key === 'c site' || key === 'chef site') && domain === 'DPS') return 'Chef site DPS';
     if (key === 'c sct' && domain === 'DAP') return 'Chef section DAP';
     if (key === 'c sct' && domain === 'DPS') return 'Chef section DPS';
-    if (key === 'c sct') return 'C sct';
+    if (key === 'c sct') return 'Chef section';
+    if (key === 'c site') return 'Chef site';
     const canonical = qvResponsableGroups().flat().find((label) => qvResponsableKey(label) === key);
     return canonical || raw;
+  }
+
+  function qvResponsableVisualGroup(value) {
+    const key=qvResponsableKey(value.code || value.libelle || value.label);
+    const groups=[['F0',['cdt','commandant','presidente codir','presidente ci']],
+      ['F1/8',['qm','quartier-maitre','fourrier']],['F2/3',['c op','chef op','chef operationnel']],
+      ['F4',['c log','chef logistique']],['F5/6',['c audiovisuel','c communication','of communication','c publication']],
+      ['F7',['c for','c pr','c foba','c foca','c fospec','of auto','of spec','ref sanitaire','resp abc','resp apr','resp ofsi','resp vpc']],
+      ['DPS',['c site','c scrt','c sct']],['DAP',['c dap','chef dap','chef section dap']],
+      ['JSP',['c jsp','c site jsp','resp for jsp','resp mat jsp']]];
+    const known=groups.find(([,codes])=>codes.includes(key));
+    if(known) return known[0];
+    const domain=value.domain || value.metadata?.domain;
+    return {CMDT:'F0',PR:'F7',AUTO:'F7',FOBA:'F7',FOCA:'F7',FOSPEC:'F7',F1:'F1/8',F8:'F1/8',F2:'F2/3',F3:'F2/3',F5:'F5/6',F6:'F5/6'}[domain]
+      || domain || 'Autres domaines';
+  }
+
+  function qvInternalEventCodeDisplay(value) {
+    const text=String(value || '');const legacy=text.match(/^SCOPE-0*(\d+)$/);
+    if(!legacy) return /^(?:[0-9a-f]{8}-[0-9a-f-]{27}|[0-9a-f]{32,64})$/i.test(text)?'':text;
+    const number=Number(legacy[1]);return number>=1 && number<=999 ? `HSC.${String(number).padStart(3,'0')}` : '';
+  }
+
+  function qvProgrammeParameters(...sources) {
+    const explicit=key=>sources.find(row=>typeof row?.[key]==='boolean')?.[key];
+    const source=sources[sources.length-1] || {};
+    const declared=sources.find(row=>row?.activityNature)?.activityNature;
+    const nature=declared || (source.externalActivity ? 'EXTERNAL_OCCUPATION'
+      : /crimson/i.test(source.activityLabel || source.label || source.title || '') ? 'SDIS_EXTRAORDINARY' : 'SDIS_RECURRENT');
+    const occupation=nature==='EXTERNAL_OCCUPATION';
+    const manifestation=qvProgrammeInternalManifestation(source);
+    return {activityNature:nature,externalActivity:occupation,
+      annualRecurrence:explicit('annualRecurrence') ?? (nature==='SDIS_RECURRENT'),
+      participationEvaluation:explicit('participationEvaluation') ?? !occupation,
+      sold:explicit('sold') ?? (!occupation && !manifestation),
+      ecawinExport:explicit('ecawinExport') ?? (!occupation && nature==='SDIS_RECURRENT')};
   }
 
   function qvProgrammeDescriptivePublics() {
@@ -3291,8 +3335,8 @@
       { group: 'Sections DPS', items: ['N01', 'N01a', 'N01b', 'N02', 'N02a', 'N02b', 'N03', 'N03a', 'N03b', 'N04', 'N04a', 'N04b', 'N05', 'N05a', 'N05b', 'N06'].map(code => [code, code]) },
       { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe'], ['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidat CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidat CI DAP']] },
       { group: 'Formation', items: [['FOBA:1', 'FOBA 1'], ['FOBA:2', 'FOBA 2'], ['FOBA:3', 'FOBA 3']] },
-      { group: 'PR', items: [['PR:2', 'PAPR'], ['PR:CAND-PAPR', 'Candidat PAPR'], ['PR:3', 'PABC'], ['PR:FORMATEURS', 'Formateur PR (référence historique)'], ['PR:FMF', 'Formateur maison Feu (FMF)'], ['PR:CHEF-PISTE', 'Chef piste']] },
-      { group: 'AUTO', items: [['AUTO:1', 'cond PL'], ['AUTO:CAND-PL', 'Candidat cond PL'], ['AUTO:3', 'cond VL'], ['AUTO:5', 'Machiniste EA'], ['AUTO:CAND-EA', 'Candidat machiniste EA'], ['AUTO:6', 'Pilote BAT'], ['AUTO:2', 'cond TP9'], ['AUTO:CAND-TP9', 'Candidat cond TP9'], ['AUTO:4', 'Grutier'], ['AUTO:MONITEURS', 'Moniteur conduite (référence historique)'], ['AUTO:FORM-C1', 'Formateur C1/118 (référence historique)'], ['AUTO:FORM-EA', 'Formateur EA'], ['AUTO:FORM-GRUTIER', 'Formateur grutier']] },
+      { group: 'PR', items: [['PR:2', 'PAPR'], ['PR:CAND-PAPR', 'Candidat PAPR'], ['PR:3', 'PABC'], ['PR:FORMATEURS', 'Formateur PR'], ['PR:FMF', 'Formateur maison Feu (FMF)'], ['PR:CHEF-PISTE', 'Chef piste']] },
+      { group: 'AUTO', items: [['AUTO:1', 'cond PL'], ['AUTO:CAND-PL', 'Candidat cond PL'], ['AUTO:3', 'cond VL'], ['AUTO:5', 'Machiniste EA'], ['AUTO:CAND-EA', 'Candidat machiniste EA'], ['AUTO:6', 'Pilote BAT'], ['AUTO:2', 'cond TP9'], ['AUTO:CAND-TP9', 'Candidat cond TP9'], ['AUTO:4', 'Grutier'], ['AUTO:MONITEURS', 'Moniteur conduite'], ['AUTO:FORM-C1', 'Formateur C1/118'], ['AUTO:FORM-EA', 'Formateur EA'], ['AUTO:FORM-GRUTIER', 'Formateur grutier']] },
       { group: 'FOSPEC', items: [['FOSPEC:1', 'Antichute'], ['FOSPEC:2', 'NAC'], ['FOSPEC:3', 'OFSI'], ['FOSPEC:4', 'OP VPC']] },
       { group: 'JSP', items: [['JSP:1', 'JSP']] }
     ].map(group => ({...group, items:group.items.concat(
@@ -3633,6 +3677,12 @@
   // Décalage 2026 → 2027 : 52 semaines exactes, ce qui préserve le jour de la semaine.
   // C'est la règle déjà appliquée pour produire chaque historicalProposal.proposedDate2027.
   const QV_HISTORICAL_SHIFT_DAYS = 364;
+
+  function qvProgrammeIsActive(row) {
+    return Boolean(row) && !row.external && !row.jspDirectionReconciliation
+      && row.cursusReconciliation?.status !== 'SUPERSEDED_BY_VALIDATED_MODULE'
+      && row.programmeReconciliation?.status !== 'LINKED_TO_PUBLISHED_OCCURRENCE';
+  }
 
   function qvShiftHistoricalDate(date2026, days = QV_HISTORICAL_SHIFT_DAYS) {
     const key = String(date2026 || '').slice(0, 10);
@@ -5722,8 +5772,12 @@
     orchestrateClosePresence,
     orchestrateLeaveSaisie,
     PRESENCE_SAVE_FAILED_CLOSE_MESSAGE,
+    qvProgrammeIsActive,
     qvResponsableGroups,
     qvResponsableCanonique,
+    qvResponsableVisualGroup,
+    qvInternalEventCodeDisplay,
+    qvProgrammeParameters,
     qvProgrammePublicCatalogue,
     qvProgrammeDescriptivePublics,
     qvProgrammeActivityTypes,

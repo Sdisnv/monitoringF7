@@ -1,0 +1,279 @@
+{
+  "target": "LOCAL_CLONE_READ_ONLY",
+  "transactionReadOnly": true,
+  "programme": [
+    {
+      "annee": 2027,
+      "statut": "PREPARATION",
+      "cycle": null
+    }
+  ],
+  "internalCodes": [],
+  "papr1": [
+    {
+      "publication_unit_id": "qv-source-899",
+      "evenement_id": "aa2dbc86-013d-47ee-ab11-eea763034a6c",
+      "code_cours": "011PR.001",
+      "statcom_code": "011PR",
+      "version": 1,
+      "targets": [
+        "PR"
+      ],
+      "ois": []
+    }
+  ],
+  "responsables": [
+    {
+      "code": "C audiovisuel",
+      "libelle": "C audiovisuel",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C DAP",
+      "libelle": "C DAP",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C FOBA",
+      "libelle": "C FOBA",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C for",
+      "libelle": "C for",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C FOSPEC",
+      "libelle": "C FOSPEC",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C JSP",
+      "libelle": "C JSP",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C log",
+      "libelle": "C log",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C op",
+      "libelle": "C op",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C PR",
+      "libelle": "C PR",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C scrt",
+      "libelle": "C scrt",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C site",
+      "libelle": "C site",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "C site JSP",
+      "libelle": "C site JSP",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Cdt",
+      "libelle": "Cdt",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Of auto",
+      "libelle": "Of auto",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Of spéc",
+      "libelle": "Of spéc",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Présidente CI",
+      "libelle": "Présidente CI",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Présidente Codir",
+      "libelle": "Présidente Codir",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "QM",
+      "libelle": "QM",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Réf sanitaire",
+      "libelle": "Réf sanitaire",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Répondant sport",
+      "libelle": "Répondant sport",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Resp ABC",
+      "libelle": "Resp ABC",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Resp APR",
+      "libelle": "Resp APR",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Resp for JSP",
+      "libelle": "Resp for JSP",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Resp mat",
+      "libelle": "Resp mat",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Resp mat JSP",
+      "libelle": "Resp mat JSP",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Resp OFSI",
+      "libelle": "Resp OFSI",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Resp Sports",
+      "libelle": "Resp Sports",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    },
+    {
+      "code": "Resp VPC",
+      "libelle": "Resp VPC",
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      }
+    }
+  ],
+  "crimson": [],
+  "journalCounts": [
+    {
+      "entite": "affectation",
+      "count": 28
+    },
+    {
+      "entite": "evenement",
+      "count": 1905
+    },
+    {
+      "entite": "event_definition",
+      "count": 13
+    },
+    {
+      "entite": "import",
+      "count": 1
+    },
+    {
+      "entite": "multisession_v2",
+      "count": 4
+    },
+    {
+      "entite": "objectif",
+      "count": 7
+    },
+    {
+      "entite": "participation_motif",
+      "count": 22
+    },
+    {
+      "entite": "participation_policy",
+      "count": 4
+    },
+    {
+      "entite": "personne",
+      "count": 23
+    },
+    {
+      "entite": "PERSONNE",
+      "count": 7
+    },
+    {
+      "entite": "quo-vadis",
+      "count": 9
+    },
+    {
+      "entite": "rapport",
+      "count": 263
+    },
+    {
+      "entite": "statcom",
+      "count": 4
+    }
+  ],
+  "migrations": []
+}

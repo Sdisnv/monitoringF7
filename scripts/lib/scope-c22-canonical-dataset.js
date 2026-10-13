@@ -195,7 +195,7 @@ async function buildCurrentCandidateDataset(){
   const extraction = await buildExtraction();
   const localIds = new Set(extraction.reviews.filter((row) => row.Groupe === 'INSTRUCTION_LOCALE')
     .map((row) => row.Occurrence));
-  const rows = candidate.canonicalProgramme.rows.filter((row) => !row.external);
+  const rows = candidate.canonicalProgramme.rows.filter(require('../../assets/js/scope-ui-logic').qvProgrammeIsActive);
   const programme = rows.map((row) => {
     const location = locationById.get(row.business && row.business.lieuId);
     const roomCandidate = roomById.get(row.business && row.business.salleTheorieId)

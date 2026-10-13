@@ -1,0 +1,21 @@
+{
+  "baseline": "66b38c6",
+  "results": [
+    {
+      "name": "Programme and Excel contain one item per published occurrence; direct old alias opens the preserved publication",
+      "status": "PASS"
+    },
+    {
+      "name": "restored DAP sessions show four DAP OI, evidence, unconfirmed fields and the real calendar conflict on desktop/mobile",
+      "status": "PASS"
+    },
+    {
+      "name": "manual confirmation persists on the same restored session without creating any operational event",
+      "status": "PASS"
+    }
+  ],
+  "javascriptErrors": [],
+  "fixtureAliases": 2,
+  "productionWrites": false,
+  "status": "PASS"
+}

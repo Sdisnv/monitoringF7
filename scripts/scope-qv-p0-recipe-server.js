@@ -54,7 +54,9 @@ async function fingerprint(table) {
 }
 let baseline;
 let originalPreparations;
+let originalEvents;
 const touchedReferences=new Set();
+const touchedEvents=new Set();
 let recipeFailureAfterWrite=false;
 let recipeWritten=false;
 let queue = Promise.resolve();
@@ -65,6 +67,10 @@ const query = (...args) => {
   }
   if(/^(insert into|update) scope_quo_vadis_obligations/.test(args[0].trim())){
     recipeWritten=true;touchedReferences.add(String(args[1]?.[1] || ''));
+  }
+  if(process.env.SCOPE_RECIPE_MOA13==='1' && /update scope_evenements/i.test(args[0])){
+    const match=args[0].match(/where\s+evenement_id=\$(\d+)/i);
+    if(match) touchedEvents.add(String(args[1]?.[Number(match[1])-1]));
   }
   const next = queue.then(() => client.query(...args));
   queue = next.catch(() => {});
@@ -114,15 +120,17 @@ const server = http.createServer((request,response) => {
       const cycle = url.pathname.match(/^\/api\/scope\/quo-vadis\/programmes\/(\d{4})\/cycle$/);
       const status = url.pathname.match(/^\/api\/scope\/quo-vadis\/programmes\/(\d{4})\/statut$/);
       const item = url.pathname.match(/^\/api\/scope\/quo-vadis\/programme-items\/([^/]+)$/);
+      const history=url.pathname.match(/^\/api\/scope\/quo-vadis\/programme-items\/([^/]+)\/history$/);
       await query('savepoint browser_request');
       try {
         if(programme && request.method === 'GET') return json(response,200,{ok:true,quoVadis:await service.listProgramme(Number(programme[1]))});
+        if(history && request.method==='GET') return json(response,200,{ok:true,...await service.programmeHistory(url.searchParams.get('annee') || 2027,decodeURIComponent(history[1]))});
         if(cycle && request.method === 'PUT') return json(response,200,{ok:true,...await service.setProgrammeCycle(Number(cycle[1]),body)});
         if(process.env.SCOPE_RECIPE_COMPLEMENT==='1' && status && request.method === 'POST')
           return json(response,200,{ok:true,...await service.setProgrammeStatus(Number(status[1]),{...body,actor:user.sub})});
         if(url.pathname === '/api/scope/quo-vadis/programme-items' && request.method === 'POST')
           {
-            const result=await service.createProgrammePreparation(body);
+            const result=await service.createProgrammePreparation(body,{actor:user.sub});
             return json(response,result.reason==='PROGRAMME_OCCURRENCE_EXISTS'?200:201,{ok:true,...result});
           }
         if(item && request.method === 'PATCH') {
@@ -152,17 +160,25 @@ async function stop() {
   const allowed=new Set(['scope_quo_vadis_obligations','scope_statcom_referentiel','scope_quo_vadis_calendar_days','scope_event_code_sequences']);
   if(process.env.SCOPE_RECIPE_ROADMAP==='1') for(const table of ['scope_quo_vadis_programmes','scope_quo_vadis_future_dates']) allowed.add(table);
   if(process.env.SCOPE_RECIPE_COMPLEMENT==='1') allowed.add('scope_journal_metier');
+  if(process.env.SCOPE_RECIPE_MOA13==='1') allowed.add('scope_evenements');
+  if(process.env.SCOPE_RECIPE_FINAL_CONTROLS==='1') for(const table of ['scope_lieux','scope_salles_theorie']) allowed.add(table);
   const unchanged={};
   for(const table of protectedTables.filter(table=>!allowed.has(table))) unchanged[table]=JSON.stringify(await fingerprint(table)) === JSON.stringify(baseline[table]);
   const preparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
   const othersUnchanged=JSON.stringify(preparations.filter(row=>!touchedReferences.has(row.source_ref)))
     === JSON.stringify(originalPreparations.filter(row=>!touchedReferences.has(row.source_ref)));
+  let otherEventsUnchanged=true;
+  if(process.env.SCOPE_RECIPE_MOA13==='1'){
+    const events=(await client.query('select evenement_id,md5(to_jsonb(t)::text) as hash from scope_evenements t order by evenement_id')).rows;
+    otherEventsUnchanged=JSON.stringify(events.filter(row=>!touchedEvents.has(row.evenement_id)))
+      ===JSON.stringify(originalEvents.filter(row=>!touchedEvents.has(row.evenement_id)));
+  }
   await client.query('rollback');
   const restored = {};
   for(const table of protectedTables) restored[table] = await fingerprint(table);
   const rollback=JSON.stringify(restored) === JSON.stringify(baseline);
-  const evidence={database,port:5432,nonTargetTables:unchanged,otherPreparationsUnchanged:othersUnchanged,rollback,
-    verdict:rollback && othersUnchanged && Object.values(unchanged).every(Boolean) ? 'PASS' : 'NOK'};
+  const evidence={database,port:5432,nonTargetTables:unchanged,otherPreparationsUnchanged:othersUnchanged,otherEventsUnchanged,rollback,
+    verdict:rollback && othersUnchanged && otherEventsUnchanged && Object.values(unchanged).every(Boolean) ? 'PASS' : 'NOK'};
   console.log(JSON.stringify(evidence));console.log(`ROLLBACK ${rollback ? 'PASS' : 'NOK'}`);
   if(process.env.SCOPE_RECIPE_EVIDENCE_DIR){
     const directory=path.resolve(root,process.env.SCOPE_RECIPE_EVIDENCE_DIR);
@@ -182,11 +198,23 @@ async function start() {
   baseline = {};
   for(const table of protectedTables) baseline[table] = await fingerprint(table);
   originalPreparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
+  originalEvents=(await client.query('select evenement_id,md5(to_jsonb(t)::text) as hash from scope_evenements t order by evenement_id')).rows;
   await client.query('begin');
+  if(process.env.SCOPE_RECIPE_FINAL_CONTROLS==='1'){
+    await require('./scope-qv-pr13-final-controls-clone').replay(query);
+    for(const row of require('../docs/captures/qv-pr13-final-controls-20261013/production-business-snapshot.json').preparations)
+      touchedReferences.add(row.source_ref);
+  }
   if(process.env.SCOPE_RECIPE_CORRECTIVE==='1')
     await client.query(fs.readFileSync(path.join(root,'database/migrations/20261012_scope_internal_event_identity.sql'),'utf8'));
+  if(process.env.SCOPE_RECIPE_MOA13==='1'){
+    await require('../netlify/lib/_scope-qv-moa-20261013-ddl').install(client.query.bind(client));
+    await client.query(fs.readFileSync(path.join(root,'database/migrations/20261007_scope_qv_participation_catalogue_1.sql'),'utf8'));
+  }
   await synchronizeEcawinReferential(client);
   if(process.env.SCOPE_RECIPE_FINALISATION==='1') await require('../netlify/lib/_scope-qv-moa-proposals').installAnnualReportProposal(client);
+  if(process.env.SCOPE_RECIPE_PR13_COMPLEMENT==='1')
+    await require('./lib/scope-qv-pr13-complement-recipe').seedPublishedAliases(query,await service.listProgramme(2027));
   server.listen(port,'127.0.0.1',() => console.log(`SCOPE CLONE BROWSER http://127.0.0.1:${port}/scope.html#/quo-vadis/programme`));
 }
 process.on('SIGINT',() => { stop().catch((error) => {console.error(error);process.exitCode=1;}); });

@@ -1,6 +1,7 @@
 'use strict';
 
 const coverage = require('./_scope-quo-vadis-coverage');
+const logic=require('../../assets/js/scope-ui-logic');
 
 const GENERATED_SOURCES = new Set(['HISTORIQUE', 'CYCLIQUE', 'OPTIONNELLE', 'DEFINITION', 'RECURRENT', 'DPS_RULE', 'CURSUS', 'CATALOG_C4']);
 
@@ -71,7 +72,7 @@ function activePopulation(obligations, proposals){
 const RECONDUCTIBLE_FIELDS = ['activityLabel','themes','statCom','domain','family','oiCodes','publicCodes','responsibleLabel',
   'responsableFonctionCode','locationLabel','lieuId','lieuLibre','roomLabel','salleTheorieId','sessionStructure',
   'qualificationCodes','specialisation','cursusId','cursus','ecawinActivityCode','responsibleSelections','publicFreeLabels',
-  'participationEvaluation','sold','ecawinExport'];
+  'participationEvaluation','sold','ecawinExport','activityNature','annualRecurrence'];
 
 function businessSnapshot(fields){
   return Object.fromEntries(RECONDUCTIBLE_FIELDS.filter(key => Object.prototype.hasOwnProperty.call(fields,key))
@@ -86,7 +87,9 @@ function latestValidatedReferences(rows, targetYear){
     const validation = metadata.businessValidation;
     const lineage = metadata.lineage;
     if(!lineage || !lineage.key || Number(row.annee) >= Number(targetYear)) continue;
-    if((metadata.lifecycleDecision || {}).futureGenerationDisabled) disabledLineages.add(lineage.key);
+    if((metadata.lifecycleDecision || {}).futureGenerationDisabled
+      || logic.qvProgrammeParameters(metadata.planningFields || metadata.reconductedBusiness || {},metadata.manualSource || row).annualRecurrence===false)
+      disabledLineages.add(lineage.key);
     if(!validation || !validation.validatedAt) continue;
     // Disabling production is durable; cancelling an occurrence is annual only.
     const current = byLineage.get(lineage.key);

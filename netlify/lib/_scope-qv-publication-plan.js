@@ -157,6 +157,9 @@ function businessValidation(item, referentials){
 }
 
 function readiness(item, referentials){
+  if(item.programmeReconciliation?.status === 'LINKED_TO_PUBLISHED_OCCURRENCE'
+    || item.raw?.programmeReconciliation?.status === 'LINKED_TO_PUBLISHED_OCCURRENCE')
+    return {action:ACTIONS.NOT_PUBLISHED,reason:'EXISTING_PUBLISHED_OCCURRENCE_ALIAS'};
   if(item.externalActivity === true) return {action:ACTIONS.NOT_PUBLISHED,reason:'EXTERNAL_ACTIVITY_OUTSIDE_SCOPE'};
   if(item.externalHistorical){
     const business = businessValidation(item, referentials);
