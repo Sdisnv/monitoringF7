@@ -11844,6 +11844,43 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-choice-add{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:6px;padding:8px;border-top:1px solid #d7dfe7}
 .qv-programme-choice-add input{min-width:0;width:100%;box-sizing:border-box}
 .qv-programme-choice-add button{width:38px;height:38px;padding:0;font-size:20px;line-height:1}
+
+/* Compact programme controls retain the existing four-column form grid. */
+.qv-programme-preparation .qv-programme-parameters{grid-column:1/-1;display:grid;grid-template-columns:minmax(240px,1.8fr) repeat(4,minmax(130px,1fr));gap:12px;align-items:end;padding:12px 0;border-block:1px solid #d7dfe7;min-width:0}
+.qv-programme-preparation .qv-programme-parameters>label{min-width:0;margin:0}
+.qv-programme-preparation .qv-programme-parameters .qv-programme-keep-lieu{display:flex;align-items:center;gap:8px;min-height:36px;font-weight:400}
+.qv-programme-preparation .qv-programme-parameters input[type=checkbox]{width:16px;height:16px;min-height:16px;flex:0 0 16px;padding:0;margin:0}
+.qv-programme-preparation .qv-programme-choice-menu{height:39px;box-sizing:border-box}
+.qv-programme-preparation .qv-programme-choice-menu>summary{height:37px;min-height:37px;line-height:21px;padding-block:8px}
+.qv-programme-preparation .qv-programme-time-control,.qv-programme-preparation .qv-programme-date-control{height:39px;box-sizing:border-box}
+.qv-programme-preparation fieldset.qv-programme-edit-grid input:not([type=checkbox]),.qv-programme-preparation fieldset.qv-programme-edit-grid select{height:39px;min-height:39px;box-sizing:border-box}
+.qv-programme-preparation .qv-programme-edit-grid>label.qv-programme-keep-lieu{flex-wrap:nowrap;align-items:flex-start}
+.qv-programme-preparation .qv-programme-edit-grid>label.qv-programme-keep-lieu>span{flex:1;min-width:0}
+.qv-programme-preparation .qv-programme-edit-grid>label.qv-programme-keep-lieu>input{margin-top:3px}
+.qv-programme-controls{border-left:3px solid #c98412;background:#fff8e8;padding:12px 16px}
+.qv-programme-controls h3{margin:0 0 8px;font-size:14px}
+.qv-programme-controls ul{margin:0;padding-left:18px}
+.qv-programme-controls li{margin-bottom:6px;display:grid;gap:3px;font-size:13px}
+.qv-programme-history{border-block:1px solid #cbd4dc;padding:12px 0;min-width:0}
+.qv-programme-history>summary{font-size:14px;font-weight:600;cursor:pointer}
+.qv-programme-history .scope-table-wrap{margin-top:12px;max-height:440px;overflow:auto}
+.qv-history-table{min-width:980px;table-layout:fixed;line-height:1.4}
+.qv-history-table th,.qv-history-table td{vertical-align:top;overflow-wrap:anywhere;font-size:12px}
+.qv-history-table tbody tr:nth-child(even){background:#f4f5f6}
+.qv-workflow-dialog{padding:0;border:1px solid #cbd4dc;border-radius:5px;max-height:90vh}
+.qv-workflow-dialog::backdrop{background:#15202b70}
+.qv-workflow-dialog .scope-modal-body{display:grid;gap:14px;padding:18px}
+.qv-workflow-dialog label{display:grid;gap:6px;font-size:13px}
+.qv-workflow-dialog textarea{width:100%;min-height:100px;resize:vertical;box-sizing:border-box;border:1px solid #aeb8c2;padding:8px;font:inherit}
+.qv-programme-table-wrap{overflow-x:auto}
+.qv-programme-table{min-width:1280px}
+.qv-programme-table td:nth-child(11) .scope-state-label{white-space:normal;overflow-wrap:normal}
+.qv-programme-table td:first-child{overflow-wrap:anywhere;white-space:normal}
+.qv-programme-table .scope-state{align-items:flex-start}
+.qv-programme-table .scope-state-swatch{margin-top:4px;flex:0 0 8px}
+.qv-programme-detail{padding-bottom:40px}
+@media(max-width:1100px){.qv-programme-preparation .qv-programme-parameters{grid-template-columns:repeat(2,minmax(0,1fr))}.qv-programme-parameters>label:first-child{grid-column:1/-1}}
+@media(max-width:650px){.qv-programme-preparation .qv-programme-parameters{gap:8px 12px}.qv-programme-parameters .qv-programme-keep-lieu{min-height:44px}.qv-workflow-dialog{width:calc(100% - 24px);max-width:calc(100% - 24px)}.qv-workflow-dialog .scope-modal-footer{flex-wrap:wrap}.qv-programme-table{min-width:0}}
 .qv-programme-choice-list label>span{min-width:0;overflow-wrap:anywhere}
 .qv-programme-view .qv-programme-table tr.is-permanence>td,.qv-programme-view .qv-programme-month-table tr.is-permanence>td,.qv-activities-table .qv-activites-row.is-permanence>td,.qv-programme-detail.is-permanence>.qv-programme-summary,.qv-mini-cal .qv-mini-day.is-permanence,.qv-mini-cal .qv-mini-day.is-permanence>span{background:#FFF3CD;color:#000}
 .qv-programme-view .qv-programme-table tr.is-permanence:hover>td,.qv-programme-view .qv-programme-month-table tr.is-permanence:hover>td,.qv-mini-cal .qv-mini-day.is-permanence:hover>span{background:#ffe69c;color:#000}

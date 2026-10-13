@@ -408,3 +408,36 @@ Journée des familles et Noël des familles : propositions non soldées, export 
 Responsable proposé : `C sct`, identité historique `C scrt` conservée. Les nouvelles propositions utilisent le libellé corrigé ; aucune décision historique n'est réécrite. Le préremplissage s'arrête pour les champs modifiés manuellement, y compris après enregistrement. Les descriptions libres restent descriptives, sans NIP fictif.
 
 Preuves ciblées : `scripts/scope-qv-pr12-corrective-tests.js`, `scripts/scope-qv-pr12-corrective-clone-tests.js`, `scripts/scope-qv-pr12-corrective-browser.js` et `docs/captures/qv-pr12-corrective-20261012/`. Les recettes acquises des jalons précédents ne sont pas relancées.
+
+## Lot consolidé MOA — 13.10.2026
+
+### QV-SEARCH-001 / QV-UI-007 — Réactivité et fiches
+La frappe est immédiate ; filtrage différé de 180 ms, contexte conservé. Le moteur existant, ses filtres et son ordre restent inchangés. Les textes de recherche sont mémorisés par instantané et le tri ne calcule que sa colonne active. Recette sur 911 occurrences : 909 actives du clone et deux cas MOA temporaires CRIMSON/CFF, annulés intégralement.
+Les fiches utilisent la grille existante à quatre, deux puis une colonne, contrôles de 39 px. Nature et paramètres sont dans une zone compacte, sans badges ni capsules. Les états restent carré 8 × 8 + libellé, contenus en haut. Cycle et validation annuelle sont dans Règles ; propositions PAPR dans Cursus, navigation existante conservée.
+
+### QV-WORKFLOW-003 — Aucune modification, mineure ou majeure
+Une sauvegarde publiée sans différence effectivement saisie réussit sans révision, journal artificiel ni modification de l'événement. Les différences de présentation/canonicalisation et valeurs non soumises ne déclenchent pas de modification majeure. Les OI de la publication sont affichés lorsqu'aucune révision n'est en attente ; une préparation divergente ne remplace pas leur réalité opérationnelle.
+Le mécanisme spécifique de proposition des quatre OI reste disponible uniquement lorsque les quatre OI DPS ne sont pas réellement persistés. Une révision explicite est motivée et ciblée, avec identités, Stat.Com et présences conservés. Les modifications éditoriales autorisées restent mineures.
+Motifs dans une fenêtre dédiée au retrait ou à la confirmation d'une révision majeure, pas dans un champ permanent. Annuler conserve la saisie et ne retire aucune validation. Le retrait ignore les autres brouillons non enregistrés.
+
+### QV-AUDIT-001 — Journal permanent existant
+Réutilisation de `scope_journal_metier`, avec date/heure, auteur, action, avant/après et motif requis. Les nouvelles créations, modifications, validations, publications, révisions, retraits, annulations et suppressions logiques sont journalisés. Les fiches Programme et Événements présentent Historique repliable ; aucune interface d'édition du journal. Des déclencheurs interdisent UPDATE, DELETE et TRUNCATE de ce journal. Les lignes anciennes et journaux existants restent conservés ; les opérations anciennes non journalisées ne sont jamais reconstituées artificiellement.
+
+### QV-RESP-004 / QV-PUBLIC-005 — Présentation sans migration d'associations
+Ordre des groupes de responsables : F0, F1/8, F2/3, F4, F5/6, F7, DPS, DAP, JSP, Autres domaines. Tri alphabétique dans chaque groupe. Les regroupements sont uniquement visuels, sans fusion des domaines F0 à F8 ni changement d'identifiant.
+Libellés proposés : Chef audiovisuel, Chef formation, Chef section, Chef site, Chef opérationnel, Chef FOSPEC et Officier auto, avec références historiques stables. Multisélection et saisie libre conservées. Les fonctions absentes du référentiel PostgreSQL ne sont pas créées sous un identifiant supposé.
+Les doublons visuels de Formateur PR, Moniteur conduite et Formateur C1/118 sont regroupés en un choix. Une sélection historique conserve tous ses codes enregistrés tant qu'elle n'est pas explicitement modifiée ; aucune conversion automatique d'une population historique en fonction descriptive. Libellés au singulier, valeurs libres non promues.
+
+### QV-NATURE-001 — Paramètres indépendants et occupations
+Nature : activité SDIS récurrente, activité SDIS extraordinaire ou occupation externe. Reconduction annuelle, évaluation, solde et demande d'export sont persistants et indépendants ; une activité déjà gérée dans ECAwin peut être soldée sans nouvel export.
+SDIS récurrent : reconduction, évaluation, solde et export activés par défaut, sauf décision explicite. CRIMSON opérateurs/chefs VPC : 0180F7 inchangé, non reconduit en 2028 ; suivi/solde selon décision et traitement, pas de nouvel export si déjà créé dans ECAwin. Reconduction réutilisant les lignées et décisions de désactivation existantes.
+CFF/caserne G1 : Programme et Agenda, réservation du lieu/salle existants, sans participation obligatoire SDIS, solde, export, reconduction ni événement opérationnel. Les conflits de salle ou de lieu sont détectés avec le moteur de compatibilité existant. Le contrôle disparaît après résolution ; la validation annuelle ne passe pas avec une réservation bloquante. Aucun lieu ou salle n'est modifié automatiquement.
+
+### QV-CODE-005 — HSC, sans renumérotation historique
+Décision remplaçant le format d'affichage de QV-CODE-004 : `HSC.001`, `HSC.002`, etc., compteur sur trois chiffres. HSC signifie Hors Stat.Com ; jamais une référence Stat.Com synthétique. Les nouveaux codes utilisent la séquence interne existante. Les anciennes valeurs `SCOPE-000150`, par exemple, sont conservées en stockage et présentées/exportées comme `HSC.150`, sans modification d'identifiant, de lien, de code historique ou de Stat.Com.
+Avant installation, contrôle des identités déjà présentes : collision d'alias, zéro ou valeur hors 001–999 bloque la migration pour décision MOA, sans renumérotation. Une séquence épuisée bloque l'allocation. Les occupations hors SCOPE peuvent rester sans code. Aucun format d'import ECAwin non démontré n'est inventé.
+
+### QV-CONTROL-001 — Contrôles utiles uniquement
+Un seul encadré de fiche regroupe les contrôles factuels : OI publiés incomplets, conflit PAPR, réservation, correspondance ECAwin historique non confirmée, OI ambigu ou conflit Rapport annuel. Il indique point, raison et action. Aucune boîte si aucune cause active ; disparition après résolution.
+
+Preuves du lot : `docs/captures/qv-moa-20261013/`. Acquis sept PAPR, dates/thèmes, spécialisation multiple, 0180F7, A+1, Rapport 10.02.2028 provisoire, statistiques civiles et suivi Cours ECA conservés. Aucune recette historique rejouée globalement.

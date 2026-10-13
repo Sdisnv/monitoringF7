@@ -6,17 +6,62 @@ const {createPgRepo} = require('./_scope-pg');
 const {createScopeService} = require('./_scope-service');
 const {ScopeQvPostgresStore} = require('./_scope-qv-publication-postgres-store');
 const logic = require('../../assets/js/scope-ui-logic');
+const compatibility=require('./_scope-functional-catalog');
 
 const EDITORIAL_FIELDS = new Set(['activityLabel','themes','publicFreeLabels']);
 const REVISION_FIELDS = ['activityLabel','themes','publicFreeLabels','date','startTime','endTime','statCom',
   'domain','oiCodes','publicCodes','responsibleLabel','lieuId','lieuLibre','salleTheorieId',
-  'qualificationCodes','cursusId','participationEvaluation','ecawinActivityCode','planningStatus','sold','ecawinExport'];
+  'qualificationCodes','cursusId','participationEvaluation','ecawinActivityCode','planningStatus','sold','ecawinExport','activityNature','annualRecurrence'];
 function comparable(value){
   return Array.isArray(value) ? value.slice().sort() : value == null ? '' : value;
 }
 function revisionChanges(before,after){
   const changedFields = REVISION_FIELDS.filter(key=>JSON.stringify(comparable(before[key])) !== JSON.stringify(comparable(after[key])));
   return {changedFields,kind:changedFields.some(key=>!EDITORIAL_FIELDS.has(key)) ? 'MAJOR' : 'MINOR'};
+}
+
+function fieldsFromProgrammeRow(row,qv){
+  const reference=qv.historicalAgenda2026?.references?.find(item=>item.sourceLine===row.historicalProposal?.sourceLine);
+  return {activityLabel:row.eventDisplayLabel || row.activityLabel || row.label,themes:row.themes || [],
+    publicFreeLabels:row.publicFreeLabels || [],date:String(!row.preparation && row.publishedEventDate || row.startsAt || '').slice(0,10) || null,
+    startTime:String(row.startsAt || '').slice(11,16) || null,endTime:String(row.endsAt || '').slice(11,16) || null,
+    oiCodes:row.oiSelections || [],publicCodes:row.publics || [],statCom:row.statCom || '',
+    domain:logic.qvProgrammeFunctionalDomain(row,reference),responsibleLabel:row.responsible || '',
+    lieuId:row.lieuId || row.business?.lieuId || null,lieuLibre:row.lieuLibre || '',
+    salleTheorieId:row.salleTheorieId || row.business?.salleTheorieId || null,
+    qualificationCodes:row.qualificationCodes || [],cursusId:row.cursusId || null,ecawinActivityCode:row.ecawinActivityCode || '',
+    planningStatus:row.preparation && ['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(row.status) ? row.status
+      : row.historicalProposal || row.paprProposal?.origin==='AUTOMATIC' ? 'PROPOSE' : row.startsAt ? 'PLANIFIE' : 'A_PLANIFIER',
+    ...logic.qvProgrammeParameters(row)};
+}
+
+async function history(query,year,itemId){
+  return (await query(`select j.* from scope_journal_metier j where
+    (j.entite='quo_vadis_occurrence' and j.entite_id=$2)
+    or (j.entite in ('evenement','SCOPE_EVENEMENT') and j.entite_id in (
+      select evenement_id::text from scope_qv_publication_links where source_year=$1 and publication_unit_id=$2))
+    order by j.at desc,j.journal_id`,[Number(year),String(itemId)])).rows;
+}
+
+function reservationConflicts(rows){
+  const active=rows.filter(row=>!row.external && row.startsAt && row.endsAt && !['ANNULE','NON_RETENU'].includes(row.status));
+  const conflicts=[],seen=new Set();
+  const location=row=>row.lieuId || row.business?.lieuId;
+  const room=row=>row.salleTheorieId || row.business?.salleTheorieId;
+  const slot=(row,wholeLocation)=>({date:String(row.startsAt).slice(0,10),endDate:String(row.endsAt).slice(0,10),
+    startTime:String(row.startsAt).slice(11,16),endTime:String(row.endsAt).slice(11,16),
+    roomCode:room(row) || '',resourceCodes:wholeLocation && location(row) ? [`LOCATION:${location(row)}`] : [],priority:100});
+  for(const left of active.filter(row=>row.externalActivity)) for(const right of active){
+    if(left.id===right.id) continue;
+    const key=[left.id,right.id].sort().join('|');if(seen.has(key)) continue;
+    const wholeLocation=!room(left) || right.externalActivity && !room(right);
+    const result=compatibility.compatibilityBetween(slot(left,wholeLocation),slot(right,wholeLocation));
+    if(result.causes.some(cause=>['ROOM_CONFLICT','RESOURCE_CONFLICT'].includes(cause.code))){
+      seen.add(key);conflicts.push({leftId:left.id,rightId:right.id,leftLabel:left.label,rightLabel:right.label,
+        date:String(left.startsAt).slice(0,10),causes:result.causes.filter(cause=>['ROOM_CONFLICT','RESOURCE_CONFLICT'].includes(cause.code)),blocking:true});
+    }
+  }
+  return conflicts;
 }
 
 async function journal(client,{actor,itemId,action,before,after,motif}){
@@ -43,7 +88,7 @@ async function applyPublishedRevision(client,link,fields,changedFields,{actor,mo
   if(changedFields.includes('date')) patch.date=fields.date;
   if(changedFields.includes('startTime')) patch.heureDebut=fields.startTime;
   if(changedFields.includes('endTime')) patch.heureFin=fields.endTime;
-  if(changedFields.includes('domain')) patch.domaineCode=fields.domain;
+  if(changedFields.includes('domain') && !/^F[0-8]$/.test(fields.domain)) patch.domaineCode=fields.domain;
   if(changedFields.includes('responsibleLabel')) patch.responsable=fields.responsibleLabel;
   if(changedFields.includes('salleTheorieId')) patch.salle=fields.roomLabel || null;
   let relationTarget;
@@ -68,8 +113,9 @@ async function applyPublishedRevision(client,link,fields,changedFields,{actor,mo
   if(relationTarget) await ScopeQvPostgresStore.prototype.replaceRelations.call({query:(...args)=>client.query(...args)},link.evenement_id,relationTarget,references);
   const descriptive=logic.qvProgrammeDescriptivePublics();
   const snapshot={};
-  for(const key of ['themes','publicFreeLabels','participationEvaluation','planningStatus','sold','ecawinExport','ecawinActivityCode'])
+  for(const key of ['themes','publicFreeLabels','participationEvaluation','planningStatus','sold','ecawinExport','ecawinActivityCode','activityNature','annualRecurrence'])
     if(changedFields.includes(key)) snapshot[key]=fields[key];
+  if(changedFields.includes('domain')) snapshot.programmeDomain=fields.domain;
   if(changedFields.includes('publicCodes')) snapshot.descriptivePublics=fields.publicCodes
     .filter(code=>Object.hasOwn(descriptive,code)).map(code=>({code,label:descriptive[code]}));
   await client.query(`update scope_evenements set lieu_id=case when $5 then $2 else lieu_id end,
@@ -81,4 +127,4 @@ async function applyPublishedRevision(client,link,fields,changedFields,{actor,mo
   return {eventId:link.evenement_id,version:updated.version};
 }
 
-module.exports={EDITORIAL_FIELDS,REVISION_FIELDS,revisionChanges,journal,applyPublishedRevision};
+module.exports={EDITORIAL_FIELDS,REVISION_FIELDS,revisionChanges,fieldsFromProgrammeRow,history,reservationConflicts,journal,applyPublishedRevision};

@@ -158,6 +158,7 @@ class ScopeQvPostgresStore {
   runUuid(runId){ return deterministicUuid(`RUN|${runId}`); }
 
   async startRun(input){
+    this.publicationActorId=input.actorId;
     if(this.readOnly) throw storeError('QV_POSTGRES_READ_ONLY', 'A read-only store cannot start a publication run.');
     await this.query(`insert into scope_qv_publication_runs(
       publication_run_id,plan_id,plan_fingerprint,source_year,actor_id,process_id,started_at,result,
@@ -360,6 +361,9 @@ class ScopeQvPostgresStore {
     checkpoint('AFTER_RELATIONS');
     await this.attachSession(eventId, activityId, target);
     await this.attachParticipationSeries(eventId,target);
+    await this.query(`insert into scope_journal_metier(journal_id,auteur_id,entite,entite_id,action,avant,apres)
+      values($1,$2,'evenement',$3,'PUBLIER',null,$4::jsonb)`,[deterministicUuid(`AUDIT-PUBLISH|${target.publicationKey}`),
+      this.publicationActorId || null,eventId,JSON.stringify({fields:target.event,oiCodes:target.relations.oiCodes,publicCodes:target.relations.publicCodes})]);
     checkpoint('AFTER_SESSION');
     return eventId;
   }
@@ -398,6 +402,9 @@ class ScopeQvPostgresStore {
     checkpoint('AFTER_PROVENANCE');
     await this.replaceRelations(existing.eventId, target, references);
     await this.attachParticipationSeries(existing.eventId,target);
+    await this.query(`insert into scope_journal_metier(journal_id,auteur_id,entite,entite_id,action,avant,apres)
+      values(gen_random_uuid(),$1,'evenement',$2,'REVISER_PUBLICATION',$3::jsonb,$4::jsonb)`,[
+      this.publicationActorId || null,existing.eventId,JSON.stringify(existing.desired),JSON.stringify(target)]);
     checkpoint('AFTER_RELATIONS');
     checkpoint('AFTER_SESSION');
     return existing.eventId;

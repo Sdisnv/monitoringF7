@@ -356,7 +356,7 @@ async function scopeHandler(event){
     }
     if(method === 'POST' && path === '/quo-vadis/programme-items'){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
-      const result=await quoVadis.createProgrammePreparation(body);
+      const result=await quoVadis.createProgrammePreparation(body,{actor:claims.sub || null});
       return response(result.reason === 'PROGRAMME_OCCURRENCE_EXISTS' ? 200 : 201, {ok:true,...result});
     }
     params = match(path, '/quo-vadis/programme-items/:id');
@@ -365,6 +365,9 @@ async function scopeHandler(event){
       const result = await quoVadis.updateProgrammePreparation(params.id, body,{actor:claims.sub || null});
       return response(result.updated ? 200 : 404, { ok:result.updated, ...result });
     }
+    params=match(path,'/quo-vadis/programme-items/:id/history');
+    if(method==='GET' && params)
+      return response(200,{ok:true,...await quoVadis.programmeHistory(queryOf(event).annee || 2027,params.id)});
     params = match(path, '/quo-vadis/activities/:id/references');
     if(method === 'GET' && params){
       return response(200, { ok:true, ...(await quoVadis.listActivityReferences(queryOf(event).annee || 2027, params.id)) });

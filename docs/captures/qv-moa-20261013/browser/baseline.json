@@ -1,0 +1,50 @@
+{
+  "head": "2d70837773f86e457cfbd5f570f1cf647a1b8274",
+  "activeOccurrences": 909,
+  "rawOccurrences": 929,
+  "typing": {
+    "milliseconds": 1366,
+    "handlers": [
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0
+    ],
+    "maxHandlerMs": 0.10000002384185791,
+    "charactersRetained": true
+  },
+  "forms": [
+    {
+      "domain": "PR",
+      "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S1"
+    },
+    {
+      "domain": "DPS",
+      "id": "QV26-8-KM-DU-SDIS-D2C38C47:O1:S1"
+    },
+    {
+      "domain": "DAP",
+      "id": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O1:S1"
+    },
+    {
+      "domain": "F0",
+      "id": "QV26-SEANCE-OSR-69425BF1:O1:S1"
+    }
+  ],
+  "paprNoChange": {
+    "status": 200,
+    "error": null
+  },
+  "productionWrites": false
+}

@@ -453,6 +453,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisRoadmapResponsible20261012();
   await migrateQuoVadisFinalMoaProposal20261012();
   await migrateScopeInternalIdentity20261012();
+  await migrateQuoVadisMoa20261013();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -985,12 +986,23 @@ async function migrateScopeInternalIdentity20261012(){
   });
 }
 
+async function migrateQuoVadisMoa20261013(){
+  return db.transaction(async client=>{
+    const version='scope-qv-moa-consolidated-20261013';
+    await client.query('select pg_advisory_xact_lock(hashtext($1))',[version]);
+    if((await client.query('select 1 from monitoring_f7_schema_migrations where version=$1',[version])).rows[0]) return;
+    await require('./_scope-qv-moa-20261013-ddl').install(client.query.bind(client));
+    await client.query('insert into monitoring_f7_schema_migrations(version) values($1) on conflict(version) do nothing',[version]);
+  });
+}
+
 async function migrateQuoVadisFinalIncremental20261012(){
   await migrateStatComExtrasMoa20261012();
   await migrateQuoVadisMoaResponsible20261012();
   await migrateQuoVadisRoadmapResponsible20261012();
   await migrateQuoVadisFinalMoaProposal20261012();
   await migrateScopeInternalIdentity20261012();
+  await migrateQuoVadisMoa20261013();
 }
 
 async function migrateQuoVadisFinalMoaProposal20261012(){

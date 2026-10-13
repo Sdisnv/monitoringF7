@@ -1,7 +1,7 @@
 'use strict';
 
 const CODE_PATTERN = /^([A-Z0-9]+)[.](\d{3})([a-z]?)$/;
-const INTERNAL_CODE_PATTERN = /^SCOPE-\d{6,}$/;
+const INTERNAL_CODE_PATTERN = /^(?:HSC[.]\d{3}|SCOPE-\d{6,})$/;
 const OI_ORDER = Object.freeze(['G1','C1','B1','B2','Y1','Y2','Y3','Y4']);
 
 function text(value){ return String(value == null ? '' : value).trim(); }
@@ -9,6 +9,7 @@ function upper(value){ return text(value).toUpperCase(); }
 function unique(values){ return [...new Set((values || []).map(upper).filter(Boolean))]; }
 
 function parseEventCode(value){
+  if(/^HSC[.]/.test(upper(value))) return null;
   const match = upper(value).match(/^([A-Z0-9]+)[.](\d{3})([A-Z]?)$/);
   if(!match) return null;
   return { statCom:match[1],sequence:Number(match[2]),suffix:(match[3] || '').toLowerCase() };
@@ -163,7 +164,8 @@ async function preparePersistedInitialCodes(query,candidates = [],input = {}){
 async function allocateInternalEventCode(query){
   // A separate identity namespace, never a synthetic Stat.Com or a person identifier.
   const number=(await query("select nextval('scope_internal_event_code_seq')::text as number")).rows[0].number;
-  return `SCOPE-${String(number).padStart(6,'0')}`;
+  if(Number(number)>999) throw new Error('HSC_SEQUENCE_EXHAUSTED');
+  return `HSC.${String(number).padStart(3,'0')}`;
 }
 
 module.exports={
