@@ -14,9 +14,9 @@ for(const accepted of ['gzip','br, gzip, deflate','GZIP; q=0.5','*;q=1',undefine
   assert.equal(result.headers.Vary,'Origin, Accept-Encoding');assert.equal(result.headers['Content-Length'],undefined);
   assert.ok(Buffer.byteLength(JSON.stringify(result))<6291556);
 });
-for(const accepted of ['identity','gzip;q=0, *;q=1','br, deflate','*;q=0','gzip;q=bad']) test(`respects rejected gzip: ${accepted}`,async()=>{
-  const result=await compactJsonResponse({headers:{'accept-encoding':accepted}},original());assert.equal(result.body,payload);
-  assert.equal(result.isBase64Encoded,undefined);assert.equal(result.headers.Vary,'Origin, Accept-Encoding');
+for(const accepted of ['identity','gzip;q=0, *;q=1','br, deflate','*;q=0','gzip;q=bad']) test(`proxy forwarded encoding does not disable gzip: ${accepted}`,async()=>{
+  const result=await compactJsonResponse({headers:{'accept-encoding':accepted}},original());assert.equal(gunzipSync(Buffer.from(result.body,'base64')).toString(),payload);
+  assert.equal(result.isBase64Encoded,true);assert.equal(result.headers.Vary,'Origin, Accept-Encoding');
 });
 for(const [name,changes] of [['small JSON',{body:'{"ok":true}'}],['error response',{statusCode:400}],['PDF',{headers:{'Content-Type':'application/pdf'}}],
   ['CSV',{headers:{'Content-Type':'text/csv'}}],['already base64',{isBase64Encoded:true}],['already encoded',{headers:{'Content-Type':'application/json','content-encoding':'br'}}],
@@ -33,10 +33,11 @@ test('does not duplicate Vary and handles lower-case headers',async()=>{
   const result=await compactJsonResponse({headers:{'accept-encoding':'gzip'}},input);
   assert.equal(result.headers.Vary,'Origin, accept-encoding');assert.equal(result.headers.vary,undefined);assert.equal(result.headers['content-length'],undefined);
 });
-test('oversized JSON rejected by an identity-only client stays below the platform limit',async()=>{
+test('oversized JSON is compressed despite proxy-forwarded identity header',async()=>{
   const input={...original(),body:JSON.stringify({rows:payload.repeat(60)})};
   const result=await compactJsonResponse({headers:{'accept-encoding':'identity'}},input);
-  assert.equal(result.statusCode,406);assert.equal(JSON.parse(result.body).error,'scope_response_encoding_required');
+  assert.equal(result.statusCode,200);assert.equal(result.headers['Content-Encoding'],'gzip');
+  assert.equal(gunzipSync(Buffer.from(result.body,'base64')).toString(),input.body);
   assert.ok(Buffer.byteLength(JSON.stringify(result))<6291556);assert.equal(result.headers['Content-Length'],undefined);
 });
 test('business qualification refusals are returned unchanged',async()=>{
