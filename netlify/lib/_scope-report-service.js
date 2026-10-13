@@ -257,8 +257,8 @@ async function generateQuoVadisProgrammeReport(repo, body, claims, options){
   const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
   const filename = exportMeta.mode === 'monthly'
     ? `SCOPE_QUO_VADIS_${exportMeta.monthKey}_Planning_mensuel.pdf`
-    : exportMeta.mode === 'compact' ? `SCOPE_QUO_VADIS_${exportMeta.year}_Liste_compacte.pdf`
-      : `SCOPE_QUO_VADIS_${exportMeta.year}_Planning_annuel.pdf`;
+    : exportMeta.mode === 'compact' ? `QUO VADIS ${exportMeta.year}, Liste compacte.pdf`
+      : `QUO VADIS ${exportMeta.year}, Planning annuel.pdf`;
   if(repo && typeof repo.appendJournal === 'function'){
     await repo.appendJournal({
       auteur_id: meta.authorId,

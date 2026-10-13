@@ -2050,8 +2050,8 @@ class ScopePdfRenderer {
       .text(`Filtres : ${meta.filterSummary || 'Aucun filtre'}`, MARGIN, this.doc.y, { width: this.pageW - 2 * MARGIN });
     this.doc.y += 8;
     if(meta.mode === 'monthly') return this.qvMonthlyRows(sourceRows, meta.monthKey);
-    const headers = ['Date', 'Horaire', 'Activité', 'Domaine', 'OI', 'Lieu', 'Salle', 'Responsable', 'État'];
-    const widths = [53, 53, 215, 53, 39, 105, 64, 92, 70];
+    const headers = ['Date', 'Horaire', 'Activité', 'Domaine', 'OI', 'Lieu', 'Salle', 'Responsable', 'Public cible', 'Stat.Com', 'État'];
+    const widths = [45, 49, 140, 55, 38, 62, 50, 58, 73, 44, 60];
     const counts = new Map();
     sourceRows.forEach((row) => {
       const key = row.dateIso.slice(0, 7) || row.monthKey;
@@ -2066,9 +2066,9 @@ class ScopePdfRenderer {
         lastMonth = key;
       }
       items.push({ type: 'row', cells: [row.date, row.horaire, row.activite, row.domaine,
-        row.oi, row.lieu, row.salleTheorie, row.responsable, row.etat] });
+        row.oi, row.lieu, row.salleTheorie, row.responsable, row.publicCible, row.statcom, row.etat] });
     });
-    if(!items.length) items.push({ cells: ['Aucune séance à exporter.', '', '', '', '', '', '', '', ''] });
+    if(!items.length) items.push({ cells: ['Aucune séance à exporter.', '', '', '', '', '', '', '', '', '', ''] });
     this.qvProgrammeTable(headers, items, widths);
   }
 
@@ -2262,7 +2262,7 @@ function renderStatComReferentialPdf(rows, exportMeta, meta){
 function renderQuoVadisProgrammePdf(rows, exportMeta, meta){
   const renderer = new ScopePdfRenderer({
     kind: 'QUO_VADIS',
-    title: 'QUO VADIS 2027',
+    title: `QUO VADIS ${exportMeta && exportMeta.year || 2027}`,
     subtitle: exportMeta && exportMeta.mode === 'monthly' ? 'Planning mensuel' : 'Programme annuel préparatoire',
     landscape: !(exportMeta && exportMeta.mode === 'monthly')
   }, meta || {});

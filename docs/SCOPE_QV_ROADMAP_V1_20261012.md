@@ -35,7 +35,7 @@ Build Netlify contexte production et préflight du site existant réussis. Preuv
 
 ## E. Données À Confirmer
 
-La date réelle du Rapport clôturant le cycle 2027 n'est pas démontrée par le référentiel. L'application ne la remplace pas par une date de recette ou le 31 décembre. Les bornes sont déclarables par la MOA dans le Programme ; les cycles futurs attendent leurs paramètres.
+Actualisation MOA : Rapport annuel 2027 au 23.02.2027, cycle suivant au 24.02.2027 ; clôture proposée au 10.02.2028, toujours provisoire et à valider par le Codir. Aucune date de recette ni 31 décembre ne remplace cette borne. Les cycles futurs attendent leurs paramètres confirmés.
 Les anciennes décisions restent accessibles sans reclassement ou déplacement destructif. Les dates civiles restent les seules bornes statistiques.
 
 Cours ECA : les événements nominatifs, les identifiants NIP, les présences, les Stat.Com et les rapports agrégés génériques existent et sont préservés. Un contrat spécialisé d'inscription/import des cours cantonaux, le filtrage explicite des rapports par origine ECA et la distinction formalisée inscription cantonale / obligation SDIS ne sont pas démontrés comme parcours achevé. Ces éléments restent à terminer dans le jalon opérationnel suivant, avec les mécanismes existants, sans module parallèle.
@@ -59,3 +59,36 @@ faisabilité contrôlée avant validation, accès administrateur ou permission e
 informatif dans les événements. À développer après stabilisation de la production, avec les
 moteurs existants. Aucun développement de cette exigence dans la finalisation PR #13.
 Le suivi spécialisé des Cours ECA reste inscrit au jalon opérationnel, sans module parallèle.
+
+## Actualisation Post-Recette MOA — 13.10.2026
+
+Base directement contrôlée : main et production `7e330f5`, PR #13/#14/#15 fusionnées.
+Le correctif gzip PR #15 est préservé sans modification. Les sections historiques ci-dessus
+restent des preuves de leur jalon, pas l'état courant des dates : Rapport 23.02.2027,
+début de cycle 24.02.2027, clôture 10.02.2028 provisoire / Codir.
+Le nouveau lot ne déplace aucune occurrence ou publication et n'effectue aucune recette en production.
+Référentiel et ToDo restent dans les documents existants, sans référentiel parallèle.
+
+### ToDo Consolidée
+
+| Exigence | État du lot | Preuve / prochain travail |
+|---|---|---|
+| QV-CYCLE-004 : cycle et année civile | Terminé et prouvé | Clone : ancien snapshot écarté, janvier SDIS et occupation CFF acceptés ; dates existantes identiques |
+| QV-UX-RECH-001 : focus recherche | Terminé et prouvé | Même nœud de recherche, badge ciblé ; frappe rapide et curseur conservés dans Chrome |
+| QV-UX-003 : paramètres | Terminé et prouvé | Alignement des cinq contrôles mesuré dans le navigateur ; hauteurs conservées |
+| QV-AUDIT-001 : transactions | Terminé et prouvé | Auteur autorisé, actions françaises, détail groupé ; PAPR 3 sans nouvelle validation factice, retrait/revalidation conservés |
+| QV-CONTROLE-001 : causes et dérogations | Terminé et prouvé | Règle PLANIF-DPS / vendredi 21.05.2027 ; dérogation motivée contrôlée sur clone, sans cause inventée |
+| QV-DPS-GROUP-001 : 0120F7 | Terminé et prouvé | Cinq séances automatiques qualifiées ; séance humaine 1.1 et tous les autres Stat.Com conservés |
+| QV-DAP-003 : dates proposées | Terminé et prouvé | 13.05.2027 / 20.05.2027 conservés, application à la fiche sans horaire ni validation inventés |
+| QV-PDF-001 : deux PDF | Terminé et prouvé | Onze colonnes, noms exacts, 913 lignes / 47 et 44 pages ; téléchargements filtrés et aperçus contrôlés |
+| QV-PUBLIC-004 : OPÉRATIONNEL | Terminé et prouvé | Catalogue descriptif existant, quatre références CI stables, OSR sans NIP ni obligation |
+| QV-RULES-001 : jalon majeur suivant | À développer | Un seul onglet ; règle par cursus complet, modules paramétrables, portée, jours lundi–dimanche, quatre statuts, faisabilité et permissions. Maquette validée conservée ; aucun éditeur nouveau dans ce lot |
+| Alignement spécialisations IndeX | Bloqué par décision MOA | Référentiel IndeX versionné et correspondances à confirmer, sans refonte |
+| Cours ECA individuels et statistiques | À développer | Inscription/import et origine cantonale à formaliser avec les moteurs actuels, aucun module parallèle |
+| Types suivis, affectations, exports individuels | En cours | Capacités génériques acquises ; parcours spécialisés à terminer, sans NIP fictif |
+| Observations / évaluations | À développer | Conserver le besoin opérationnel et les données existantes |
+| Reconduction annuelle contrôlée | Terminé et prouvé | Lignées, décisions humaines et rotations conservées ; extensions statistiques exclusivement civiles |
+| QV-ECA-001 : rapprochement ECAwin | Bloqué par décision MOA | Événement déjà existant conservé, pas de réexport de création ; contrat d'échange à vérifier avant intégration |
+
+Le GO de cette livraison et la recette ciblée de production restent distincts des preuves du clone.
+Preuves du lot : `docs/captures/qv-post-recette-moa-20261013/` ; rapport `docs/SCOPE_QV_POST_RECETTE_MOA_20261013.md`.

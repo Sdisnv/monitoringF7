@@ -218,6 +218,23 @@ function applyAnnualReportConstraint(rows,rule = annualReportCatalog.APPROVED_RU
   });
 }
 
+function programmePlanningDayControl(row,qv){
+  if(row.externalActivity || row.businessValidation || row.definitionId==='CTA-PERMANENCE' || !row.startsAt) return null;
+  const date=String(row.startsAt).slice(0,10),rules={};
+  for(const rule of qv.rules || []) {
+    if(rule.definitionVersionId && rule.definitionVersionId!==row.definitionVersionId) continue;
+    const key=rule.cibleCode?`${rule.domain}:${rule.cibleCode}`:rule.domain;
+    (rules[key] ||= []).push(rule);
+  }
+  if(!rules[row.domain] && !rules['*']) return null;
+  const policy=coverage.dayPolicyForActivity(row.domain,row,rules,date);
+  const assessment=coverage.classifyCandidateDate(date,policy,qv.calendarDays);
+  if(!['INTERDIT','DECONSEILLE'].includes(assessment.dayClass)) return null;
+  const rule=(rules[row.domain] || rules['*'] || []).filter(item=>(!item.validFrom || item.validFrom<=date)
+    && (!item.validTo || date<=item.validTo)).sort((a,b)=>Number(b.priority || 0)-Number(a.priority || 0))[0];
+  return {...assessment,ruleCode:rule?.code || '',derogationAllowed:rule?.derogationAllowed!==false};
+}
+
 function applyMonthlyJspDirectionAndAnnualReport(rows) {
   const monthlyExplicit = new Map(rows.filter((row) => row.label === 'Séance Direction JSP'
     && row.provenance === 'SOURCE_2027_EXPLICIT' && !row.projectionAdded && row.startsAt)
@@ -1035,7 +1052,9 @@ function createScopeQuoVadisService({ database = db } = {}){
         ?? metadata.manualSource?.annualReportClosesCycleYear
         ?? (row.source_ref === ANNUAL_REPORT_ACTIVITY.id && Number(row.annee) === 2027 ? 2026 : NaN));
       if(!Number.isInteger(closesCycleYear)) continue;
-      const actualDate = Object.prototype.hasOwnProperty.call(fields,'date') ? dateOnly(fields.date)
+      const actualDate = row.source_ref===ANNUAL_REPORT_ACTIVITY.id && Number(row.annee)===2027
+        && metadata.automatedSnapshot===true && metadata.humanDecision!==true && !metadata.businessValidation
+        ? ANNUAL_REPORT_DATE_2027 : Object.prototype.hasOwnProperty.call(fields,'date') ? dateOnly(fields.date)
         : dateOnly(row.imposed_start_at);
       reports.push({sourceType:'PROGRAMME_ITEM',itemId:row.source_ref,programmeYear:Number(row.annee),
         closesCycleYear,actualDate:programmeCycles.date(actualDate),provisional:metadata.annualReport?.provisional === true});
@@ -2193,9 +2212,10 @@ function createScopeQuoVadisService({ database = db } = {}){
         const latePreparation = Number(programme.annee) === 2027 && !row.preparation
           ? preparationByUnit.get(String(row.id)) : null;
         const closesCycleYear = annualReportCatalog.closesCycleYear(row,programme.annee);
-        return {...row,businessCycleYear:closesCycleYear ?? Number(programme.annee),
+        const admission=programmeCycles.programmeDateAdmission(cycle,row.startsAt,row);
+        return {...row,businessCycleYear:row.externalActivity?null:closesCycleYear ?? admission.businessCycleYear ?? Number(programme.annee),
           civilYear:row.startsAt ? Number(dateOnly(row.startsAt).slice(0,4)) : null,
-          cycleClassification:programmeCycles.classifyProgrammeDate(cycle,row.startsAt,row),
+          cycleClassification:admission.classification,
           ...(closesCycleYear != null ? {annualReport:{closesCycleYear,actualDate:String(row.startsAt || '').slice(0,10) || null}} : {}),
           ...(latePreparation ? {
           preparation:{ type:'OBLIGATION',id:latePreparation.obligation_id,updatedAt:latePreparation.updated_at }
@@ -2316,6 +2336,13 @@ function createScopeQuoVadisService({ database = db } = {}){
       ...(Array.isArray(row.responsibleSelections) ? {responsibleSelections:row.responsibleSelections
         .filter(value => !isUnassignedResponsible(value.code || value.label))} : {})
     }));
+    if(result.canonicalProgramme) result.canonicalProgramme.rows=result.canonicalProgramme.rows.map(row=>{
+      const grouped=row.definitionId==='QV26-FORMATION-GROUPEE-1-1-3D8CCE58'
+        && ['DPS:G1','DPS:C1','DPS:B1','DPS:B2'].every(code=>row.oiSelections?.includes(code)) && row.oiSelections.length===4;
+      const corrected=grouped && row.statCom==='0162F7' && !row.humanDecision && !row.businessValidation && !row.publishedEventId
+        ? {...row,statCom:'0120F7',ecawinActivityCode:'EXERCI',statComDecision:{rule:'QV-DPS-GROUP-001',previous:'0162F7',confirmed:'0120F7'}} : row;
+      return {...corrected,planningDayControl:programmePlanningDayControl(corrected,result)};
+    });
     const rowsById=new Map((result.canonicalProgramme?.rows || []).map(row=>[row.id,row]));
     result.reservationConflicts=programmeRevisions.reservationConflicts((result.canonicalProgramme?.rows || []).filter(uiLogic.qvProgrammeIsActive));
     for(const row of result.canonicalProgramme?.rows || []) row.reservationConflicts=result.reservationConflicts
@@ -3739,11 +3766,13 @@ function createScopeQuoVadisService({ database = db } = {}){
     const date = strictProgrammeDate(body.date);
     if((source.manualCreation || source.cycleExtension) && date && date !== inherited.date){
       const cycle = await getProgrammeCycle(year);
-      const classification = programmeCycles.classifyProgrammeDate(cycle,date,
-        {preparatoryCycle:paprRules.preparatoryCycle(source,year)});
-      if(classification === 'OUTSIDE_CYCLE')
+      const admission = programmeCycles.programmeDateAdmission(cycle,date,
+        {...source,...programmeEventFlags(body,source),preparatoryCycle:paprRules.preparatoryCycle(source,year)});
+      if(!admission.allowed && admission.classification==='EXTERNAL_CIVIL')
+        throw new HttpError(422,'programme_externe_annee_civile','Une occupation externe appartient à l’année civile du Programme.');
+      if(!admission.allowed && admission.classification === 'OUTSIDE_CYCLE')
         throw new HttpError(422,'programme_date_hors_cycle','La date réelle doit appartenir au cycle délimité par les Rapports annuels.');
-      if(classification === 'PENDING_CYCLE' && (!date.startsWith(`${year}-`) || year !== 2027))
+      if(!admission.allowed && admission.classification === 'PENDING_CYCLE')
         throw new HttpError(422,'programme_cycle_cloture_inconnue','Le Rapport annuel de clôture doit être défini avant de rattacher cette date au cycle.');
     }
     const startTime = strictProgrammeTime(body.startTime);
@@ -3754,7 +3783,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     if(date && endTime <= startTime){
       throw new HttpError(422,'programme_horaire_invalide','L’heure de fin doit suivre l’heure de début.');
     }
-    if(year >= 2027 && String(itemId) !== ANNUAL_REPORT_ACTIVITY.id && source.definitionId !== annualReportCatalog.DEFINITION_CODE && date){
+    if(year >= 2027 && !programmeEventFlags(body,source).externalActivity && String(itemId) !== ANNUAL_REPORT_ACTIVITY.id && source.definitionId !== annualReportCatalog.DEFINITION_CODE && date){
       const annualResult = await db.query(`select imposed_start_at,metadata from scope_quo_vadis_obligations
         where programme_id=$1 and source_ref=$2 order by created_at limit 1`,[programme.programme_id,ANNUAL_REPORT_ACTIVITY.id]);
       const annualSaved = annualResult.rows[0];
@@ -4002,8 +4031,8 @@ function createScopeQuoVadisService({ database = db } = {}){
     if(source.manualCreation || source.cycleExtension || paprRules.preparatoryCycle(source,year))
       metadata.programmeCycle = {year,actualDate:date,civilYear:date ? Number(date.slice(0,4)) : null,
         preparatory:paprRules.preparatoryCycle(source,year),
-        classification:programmeCycles.classifyProgrammeDate(await getProgrammeCycle(year),date,
-          {preparatoryCycle:paprRules.preparatoryCycle(source,year)})};
+        ...programmeCycles.programmeDateAdmission(await getProgrammeCycle(year),date,
+          {...source,...eventFlags,preparatoryCycle:paprRules.preparatoryCycle(source,year)})};
     if(body.validateBusiness === true){
       const baselineFields = existing && existing.metadata.businessValidation && existing.metadata.businessValidation.baselineFields || consolidation.businessSnapshot({
         activityLabel:source.eventDisplayLabel || source.activityLabel || source.label,statCom:source.statCom || '',
@@ -4037,15 +4066,26 @@ function createScopeQuoVadisService({ database = db } = {}){
         throw new HttpError(409,'programme_occurrence_deja_publiee','Cette occurrence correspond exactement à une publication existante. Modifiez la fiche publiée.',
           {existingItemId:currentView.programmeReconciliation.itemId,eventId:currentView.programmeReconciliation.eventId});
       const presented=currentView ? programmeRevisions.fieldsFromProgrammeRow(currentView,currentProgramme) : null;
-      if(presented && (link || existing?.metadata?.humanDecision===true) && saveAction==='SAVE' && body.revisePublishedOis!==true){
+      if(presented && (link || previousMetadata.humanDecision===true) && ['', 'SAVE','VALIDATE','PLAN'].includes(saveAction) && body.revisePublishedOis!==true){
         const submitted={...presented};
         for(const key of programmeRevisions.REVISION_FIELDS){
           const inputKey=key==='planningStatus'?'status':key;
           if((Object.hasOwn(body,inputKey) || key==='responsibleLabel' && (Object.hasOwn(body,'responsibleSelections')
             || Object.hasOwn(body,'responsableFonctionCode'))) && !(key==='domain' && !body.domain)) submitted[key]=planningFields[key];
         }
-        if(!programmeRevisions.revisionChanges(presented,submitted).changedFields.length)
+        if(saveAction==='PLAN') submitted.planningStatus=planningFields.planningStatus;
+        const alreadyValidated=Boolean(previousMetadata.businessValidation || currentView.businessValidation)
+          && !previousMetadata.validationWithdrawal && !['PENDING','WITHDRAWN'].includes(previousMetadata.publicationRevision?.status);
+        if(!programmeRevisions.revisionChanges(presented,submitted).changedFields.length && (body.validateBusiness!==true || alreadyValidated))
           return {updated:true,unchanged:true,quoVadis:currentProgramme};
+      }
+      const dayControl=programmePlanningDayControl({...source,...eventFlags,startsAt:date && `${date}T${startTime}`,
+        businessValidation:date===inherited.date?currentView?.businessValidation:null},currentProgramme);
+      if(body.validateBusiness===true && dayControl?.dayClass==='INTERDIT') {
+        if(!dayControl.derogationAllowed) throw new HttpError(422,'programme_jour_interdit',dayControl.reasons.join(' '));
+        if(!revisionMotif) throw new HttpError(422,'programme_motif_obligatoire','Une dérogation métier exige un motif.',
+          {kind:'DAY_DEROGATION',ruleCode:dayControl.ruleCode,reasons:dayControl.reasons});
+        writeMetadata.dayDerogation={...dayControl,motif:revisionMotif,actor:options.actor || null,at:new Date().toISOString()};
       }
       const rawBaseline = previousMetadata.publicationRevision?.status === 'PENDING'
         ? previousMetadata.publicationRevision.baselineFields : previousMetadata.planningFields || {
@@ -4124,7 +4164,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         writeMetadata.validationHistory=[...(previousMetadata.validationHistory || []),trace];
         await programmeRevisions.journal(client,{actor:options.actor,itemId,action,
           before:{validation:oldValidation,fields:baseline},after:{validation:writeMetadata.businessValidation || null,
-            fields:planningFields,revision:writeMetadata.publicationRevision || null},motif});
+            fields:planningFields,revision:writeMetadata.publicationRevision || null,
+            transaction:{source:'Programme SCOPE',workflow:saveAction || 'SAVE'}},motif});
       }
       if(source.manualCreation || source.cycleExtension || source.restoredModule || (!statCom && !eventFlags.sold && !eventFlags.externalActivity)){
         let businessCode = String(existing && existing.metadata.businessCode || '');
@@ -4199,8 +4240,8 @@ function createScopeQuoVadisService({ database = db } = {}){
     return savedPreparation;
   }
 
-  async function programmeHistory(year,itemId){
-    return {history:await programmeRevisions.history(db.query.bind(db),year,itemId)};
+  async function programmeHistory(year,itemId,options={}){
+    return {history:await programmeRevisions.history(db.query.bind(db),year,itemId,options)};
   }
   return { listProgramme, programmeHistory, getProgrammeCycle, setProgrammeCycle, generateProgramme, previewProgramme, createFutureDate, ...management, setCursusSelection, setCursusStepSelection, setCursusStepSchedule, setProgrammeStatus, retainProposal, updateActivityPlanning, createProgrammePreparation, updateProgrammePreparation, listActivityReferences };
 }

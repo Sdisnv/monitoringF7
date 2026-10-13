@@ -59,6 +59,17 @@ function classifyProgrammeDate(cycle, actualDate, row = {}){
   return 'IN_CYCLE';
 }
 
+function programmeDateAdmission(cycle, actualDate, row = {}){
+  const day=date(actualDate),classification=classifyProgrammeDate(cycle,day,row);
+  if(!day) return {allowed:true,classification,businessCycleYear:null};
+  const civilYear=Number(day.slice(0,4));
+  if(row.externalActivity) return {allowed:civilYear===cycle.year,classification:'EXTERNAL_CIVIL',businessCycleYear:null};
+  if(cycle.year===2027 && civilYear===2027) return {allowed:true,
+    classification:classification==='OUTSIDE_CYCLE' && cycle.startDate && day<cycle.startDate?'PREVIOUS_CYCLE':classification,
+    businessCycleYear:cycle.startDate && day<cycle.startDate && classification!=='PREPARATORY_CURSUS'?2026:2027};
+  return {allowed:!['OUTSIDE_CYCLE','PENDING_CYCLE'].includes(classification),classification,businessCycleYear:cycle.year};
+}
+
 function occurrenceIdentity(row){
   const fields = row.metadata?.planningFields || row.metadata?.reconductedBusiness || {};
   const source = row.metadata?.manualSource || {};
@@ -88,4 +99,4 @@ function sameOccurrence(left, right){
   return !(a.sessionIndex && b.sessionIndex && a.sessionIndex !== b.sessionIndex);
 }
 
-module.exports = {date,nextDay,resolveProgrammeCycle,classifyProgrammeDate,occurrenceIdentity,sameOccurrence};
+module.exports = {date,nextDay,resolveProgrammeCycle,classifyProgrammeDate,programmeDateAdmission,occurrenceIdentity,sameOccurrence};

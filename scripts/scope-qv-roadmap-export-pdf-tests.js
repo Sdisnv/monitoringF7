@@ -45,8 +45,8 @@ for (const mode of ['annual', 'compact', 'monthly']) {
     assert.equal(result.meta.rows, payload.rows.length);
     assert.equal(result.sha256, crypto.createHash('sha256').update(result.buffer).digest('hex'));
     assert.equal(result.filename, mode === 'monthly' ? 'SCOPE_QUO_VADIS_2027-04_Planning_mensuel.pdf'
-      : mode === 'compact' ? 'SCOPE_QUO_VADIS_2027_Liste_compacte.pdf'
-        : 'SCOPE_QUO_VADIS_2027_Planning_annuel.pdf');
+      : mode === 'compact' ? 'QUO VADIS 2027, Liste compacte.pdf'
+        : 'QUO VADIS 2027, Planning annuel.pdf');
     assert.ok(Math.abs(pages[0].view[2] - (mode === 'monthly' ? 595.28 : 841.89)) < 0.01);
     assert.ok(Math.abs(pages[0].view[3] - (mode === 'monthly' ? 841.89 : 595.28)) < 0.01);
   });

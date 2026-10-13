@@ -430,6 +430,7 @@ Motifs dans une fenêtre dédiée au retrait ou à la confirmation d'une révisi
 
 ### QV-AUDIT-001 — Journal permanent existant
 Réutilisation de `scope_journal_metier`, avec date/heure, auteur, action, avant/après et motif requis. Les nouvelles créations, modifications, validations, publications, révisions, retraits, annulations et suppressions logiques sont journalisés. Les fiches Programme et Événements présentent Historique repliable ; aucune interface d'édition du journal. Des déclencheurs interdisent UPDATE, DELETE et TRUNCATE de ce journal. Les lignes anciennes et journaux existants restent conservés ; les opérations anciennes non journalisées ne sont jamais reconstituées artificiellement.
+Complément post-recette du 13.10 : une ligne de transaction regroupe ses champs détaillables, actions lisibles en français, auteur nommé uniquement avec permission de lecture du référentiel personnel. Une ancienne valeur absente reste « Non enregistré ». Les répétitions sans différence de champs ni transition de validation ne créent pas de transaction ; retrait puis nouvelle validation restent deux décisions légitimes. Les validations historiques répétées du PAPR 3 ne sont pas supprimées. Les nouveaux enregistrements précisent l'entrée Programme et le workflow ; aucun mode ancien manquant n'est inventé.
 
 ### QV-RESP-004 / QV-PUBLIC-005 — Présentation sans migration d'associations
 Ordre des groupes de responsables : F0, F1/8, F2/3, F4, F5/6, F7, DPS, DAP, JSP, Autres domaines. Tri alphabétique dans chaque groupe. Les regroupements sont uniquement visuels, sans fusion des domaines F0 à F8 ni changement d'identifiant.
@@ -447,6 +448,25 @@ Avant installation, contrôle des identités déjà présentes : collision d'ali
 
 ### QV-CONTROL-001 — Contrôles utiles uniquement
 Un seul encadré de fiche regroupe les contrôles factuels : OI publiés incomplets, conflit PAPR, réservation, correspondance ECAwin historique non confirmée, OI ambigu ou conflit Rapport annuel. Il indique point, raison et action. Aucune boîte si aucune cause active ; disparition après résolution.
+QV-CONTROLE-001, même exigence post-recette : état de planification et contrôle métier sont distincts. `A_POSITIONNER` sans cause active signifie « À planifier », pas un contrôle inventé. Le classement des jours réutilise les règles et le calendrier existants ; une date interdite à valider exige une dérogation motivée seulement si la règle l'autorise. Une date humaine déjà validée n'est jamais déplacée automatiquement.
+
+### QV-DPS-GROUP-001 — Formation continue groupée des quatre DPS
+Décision MOA du 13.10 : les séances de formation continue groupée G1/C1/B1/B2 utilisent `0120F7` / `EXERCI`. Les cinq séances non humaines, non validées et non publiées de la définition démontrée `QV26-FORMATION-GROUPEE-1-1-3D8CCE58` sont requalifiées à la lecture, puis persistées par l'enregistrement normal. La séance 1.1 déjà validée en `0120F7` est conservée. Ni les cours de cadres, ni les autres `0162F7`, ni les publications/historiques ne sont remplacés globalement.
+
+### QV-CYCLE-004 — Programme civil et rattachement métier
+Rapport annuel 2027 confirmé au 23.02.2027 ; cycle suivant au 24.02.2027 ; clôture au 10.02.2028 toujours provisoire, à valider par le Codir. Un instantané automatique ancien du Rapport n'est pas une décision humaine et ne prévaut pas sur la règle canonique ; sa ligne historique n'est pas déplacée. Une activité du Programme 2027 peut être créée dès le 01.01.2027 : son rattachement antérieur au 24 février est le cycle 2026, sauf exception préparatoire PAPR confirmée. Les statistiques restent strictement civiles. Une occupation externe suit uniquement l'année civile choisie, sans cycle SDIS, participation, Stat.Com fictif, export ou reconduction ; réservation et calendrier sont conservés.
+
+### QV-UX-RECH-001 / QV-UX-003 — Post-recette ciblée
+La recherche Programme conserve son nœud, son focus et son curseur pendant la frappe, y compris lors du rafraîchissement asynchrone du badge. Les cinq paramètres existants sont alignés sans modifier leurs règles métier, leurs hauteurs uniformes ou créer une nouvelle interface.
+
+### QV-PDF-001 — Deux exports annuels existants
+Planning annuel et Liste compacte : A4 paysage réel, onze colonnes dans l'ordre Date, Horaire, Activité, Domaine, OI, Lieu, Salle, Responsable, Public cible, Stat.Com, État. Stat.Com contient le code seul. Filtres, thèmes, pagination, en-têtes répétés et logos conservés. Noms : `QUO VADIS AAAA, Planning annuel.pdf` et `QUO VADIS AAAA, Liste compacte.pdf`, année dynamique, sans préfixe SCOPE ni underscore. Le planning mensuel acquis n'est pas supprimé.
+
+### QV-PUBLIC-004 — Groupe OPÉRATIONNEL
+OSR, CI DPS, Candidat CI DPS, CI DAP, Candidat CI DAP, multisélection dans le catalogue descriptif existant. Les quatre codes CI `ENC:*` existants sont réutilisés ; OSR est une référence descriptive, pas un NIP ou une affectation. Aucune conversion automatique des valeurs libres ni contribution individuelle aux statistiques.
+
+### QV-ECA-001 — Activité déjà créée dans ECAwin
+Conserver l'événement SCOPE et les mécanismes d'affectation ; ne pas réexporter pour recréer une activité déjà existante. Le rapprochement du code externe avec le code métier SCOPE peut être réalisé par la MOA dans ECAwin. CRIMSON reste extraordinaire/FOSPEC, non reconduit, export désactivable. Le contrat d'échange et l'inscription spécialisée des Cours ECA restent à vérifier dans la roadmap, sans intégration non documentée ni module parallèle.
 
 Preuves du lot : `docs/captures/qv-moa-20261013/`. Acquis sept PAPR, dates/thèmes, spécialisation multiple, 0180F7, A+1, Rapport 10.02.2028 provisoire, statistiques civiles et suivi Cours ECA conservés. Aucune recette historique rejouée globalement.
 

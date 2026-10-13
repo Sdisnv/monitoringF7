@@ -368,7 +368,8 @@ async function scopeHandler(event){
     }
     params=match(path,'/quo-vadis/programme-items/:id/history');
     if(method==='GET' && params)
-      return response(200,{ok:true,...await quoVadis.programmeHistory(queryOf(event).annee || 2027,params.id)});
+      return response(200,{ok:true,...await quoVadis.programmeHistory(queryOf(event).annee || 2027,params.id,
+        {personnelRead:hasPermission(claims,'personnel:read')})});
     params = match(path, '/quo-vadis/activities/:id/references');
     if(method === 'GET' && params){
       return response(200, { ok:true, ...(await quoVadis.listActivityReferences(queryOf(event).annee || 2027, params.id)) });
