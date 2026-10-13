@@ -51,3 +51,11 @@ Aucune recette MOA demandée sur une production qui ne contient pas encore le lo
 ## G. Verdict
 
 **MOA_REQUIRED** : lot déterministe vérifié ; clôture réelle du cycle 2027 à confirmer et GO explicite requis avant fusion/publication. Aucun défaut de code signalé comme PASS sans preuve.
+
+## Prochain Jalon Validé — QV-RULES-001
+Décision MOA du 13.10.2026, maquette validée : un seul onglet Règles, une règle par cursus
+complet, fiche en huit sections, portées explicites, jours préférés/possibles/déconseillés/interdits,
+faisabilité contrôlée avant validation, accès administrateur ou permission explicite, affichage
+informatif dans les événements. À développer après stabilisation de la production, avec les
+moteurs existants. Aucun développement de cette exigence dans la finalisation PR #13.
+Le suivi spécialisé des Cours ECA reste inscrit au jalon opérationnel, sans module parallèle.

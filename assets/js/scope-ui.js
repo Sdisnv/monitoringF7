@@ -11851,14 +11851,14 @@
   function qvProgrammeDate(row) {
     if (row && row.annualReportRule) return qvDateKey(row.startsAt) || '';
     if (row && (row.definitionId === 'CTA-PERMANENCE' || row.preparation)) return qvDateKey(row.startsAt) || '';
-    return row.publishedEventDate || qvDateKey(row.startsAt) || '';
+    return row.publishedEventId && row.publishedEventDate || qvDateKey(row.startsAt) || '';
   }
 
   function qvProgrammeTime(row) {
     const preparatory = row && (row.definitionId === 'CTA-PERMANENCE' || row.preparation || row.annualReportRule);
-    const start = preparatory ? qvTime(row.startsAt) : (row.publishedEventStart || qvTime(row.startsAt));
+    const start = preparatory ? qvTime(row.startsAt) : (row.publishedEventId && row.publishedEventStart || qvTime(row.startsAt));
     if (row && row.definitionId === 'CTA-PERMANENCE') return start;
-    const end = preparatory ? qvTime(row.endsAt) : (row.publishedEventEnd || qvTime(row.endsAt));
+    const end = preparatory ? qvTime(row.endsAt) : (row.publishedEventId && row.publishedEventEnd || qvTime(row.endsAt));
     return [start, end].filter(Boolean).join(' – ');
   }
 
@@ -12716,7 +12716,7 @@
       ${qvProgrammePlacementControl(qv)}
       <p class="qv-agenda-info">Résultats : ${escapeHtml(String(rows.length))}</p>
       ${mode === 'mensuelle' ? qvProgrammeMonthlyView(qv, pagination.rows, monthlyRows.length) : `<div class="scope-table-wrap qv-programme-table-wrap"><table class="scope-table qv-programme-table"><colgroup>${Array.from({ length: 12 }, (_, index) => `<col class="qv-programme-col-${index + 1}">`).join('')}</colgroup><thead><tr><th>${qvSortHeaderLines('eventCode', ['Code', 'activité'])}</th><th>${qvSortHeader('date', 'Date')}</th><th>${qvSortHeader('time', 'Horaire')}</th><th>${qvSortHeader('activity', 'Activité')}</th><th>${qvSortHeader('statcom', 'Stat.Com')}</th><th>${qvSortHeaderLines('domain', ['Domaine', 'famille'])}</th><th>${qvSortHeader('oi', 'OI')}</th><th>${qvSortHeader('public', 'Public cible')}</th><th>${qvSortHeader('responsible', 'Responsable')}</th><th>${qvSortHeader('location', 'Lieu')}</th><th>${qvSortHeader('status', 'État')}</th><th>Action</th></tr></thead><tbody>
-        ${pagination.rows.map((row) => { const visual = qvProgrammeVisualState(row); const href = qvProgrammeFicheHref(row.id); const eventCode = qvProgrammeEventCodeLabel(row); const lock = L.qvProgrammeDragLock(row); const rowDate = String(row.publishedEventDate || row.startsAt || '').slice(0, 10);
+        ${pagination.rows.map((row) => { const visual = qvProgrammeVisualState(row); const href = qvProgrammeFicheHref(row.id); const eventCode = qvProgrammeEventCodeLabel(row); const lock = L.qvProgrammeDragLock(row); const rowDate = qvProgrammeDate(row);
           // Vue tableau : déposer une occurrence sur une autre ligne lui fait reprendre la date de cette ligne.
           const target = rowDate ? ` data-qv-drop-date="${escapeHtml(rowDate)}"` : '';
           const drag = lock
@@ -12735,6 +12735,10 @@
     if(row.dapGroupedProposal && !row.businessValidation) controls.push(['Formation groupée DAP',
       `Date proposée : ${row.dapGroupedProposal.proposedDate || 'non démontrée'}. Sources 2026 : ${row.dapGroupedProposal.sourceDate || 'à confirmer'}.`,
       [row.dapGroupedProposal.calendarConflicts?.map(day=>`${day.date} : ${day.label}`).join(' ; '),
+        row.dapGroupedProposal.replanning?.status==='NO_COMPLIANT_DATE' ? 'Aucune date conforme dans le mois projeté.' : '',
+        row.dapGroupedProposal.replanning?.candidates?.length
+          ? `Dates classées : ${row.dapGroupedProposal.replanning.candidates.slice(0,2).map(item=>`${qvFormatDate(item.date)} (${item.dayClass==='PREFERE'?'préférée':'possible'})`).join(' ; ')}.` : '',
+        row.dapGroupedProposal.replanning ? 'Lieu et salle à confirmer.' : '',
         'Horaires, thème, public et responsable à confirmer.'].filter(Boolean).join(' ')]);
     if(row.paprOiRevisionRequired) controls.push(['OI publiés','Les quatre OI DPS ne sont pas persistés dans la publication.','Confirmer une révision ciblée.']);
     if(row.paprProposal?.status==='CONFLIT') controls.push(['Cursus PAPR',row.paprProposal.conflicts?.join(' ; ') || row.reason || 'Contraintes de calendrier incompatibles.','Adapter la proposition ou arbitrer le conflit.']);

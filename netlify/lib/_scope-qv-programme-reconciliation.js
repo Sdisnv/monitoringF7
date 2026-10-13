@@ -2,6 +2,7 @@
 const cycles = require('./_scope-programme-cycle');
 const logic = require('../../assets/js/scope-ui-logic');
 const cta = require('./_scope-cta-rules');
+const coverage = require('./_scope-quo-vadis-coverage');
 
 const text = value => String(value || '').replace(/[|\u00b7\u2013\u2014]/g,' ').replace(/\s+/g,' ').trim();
 const values = array => [...new Set((array || []).map(text).filter(Boolean))].sort();
@@ -114,4 +115,47 @@ function restoreDapGroupedFormation(rows,historicalEvents,importedEvents,year=20
   }
   return {rows:result,proposals};
 }
-module.exports={sameBusinessOccurrence,reconcilePublishedOccurrences,restoreDapGroupedFormation};
+function proposeDapGroupedSecond(rows,{calendarRows,rulesByDomain}) {
+  const second=rows.find(row=>row.id==='QV27:DAP-GROUP:1.2' && logic.qvProgrammeIsActive(row));
+  const first=rows.find(row=>row.id==='QV27:DAP-GROUP:1.1' && logic.qvProgrammeIsActive(row));
+  if(!second?.dapGroupedProposal || second.humanDecision || second.businessValidation || second.publishedEventId)
+    return {rows,proposal:{status:'EXISTING_DECISION_PRESERVED'}};
+  const initial=second.dapGroupedProposal.proposedDate;
+  const anchor=String(first?.startsAt || first?.dapGroupedProposal?.proposedDate || '').slice(0,10);
+  if(!initial || !anchor) return {rows,proposal:{status:'MOA_REQUIRED',reason:'Date de la premiere seance non demontree'}};
+  const year=Number(initial.slice(0,4)),month=Number(initial.slice(5,7));
+  const blocked=new Set(),occupied=[];
+  for(const row of rows.filter(logic.qvProgrammeIsActive)) {
+    if(row.id===second.id || row.status==='ANNULE' && !row.publishedEventId) continue;
+    const ois=logic.qvNormalizeOiSelections(row,row.oiSelections || row.ois || []).codes;
+    const coversDap=ois.some(code=>/^DAP:Y[1-4]$/.test(code)) || (row.publics || []).includes('SDIS-ALL');
+    if(!coversDap) continue;
+    const dates=[...new Set([String(row.startsAt || '').slice(0,10),row.publishedEventDate].filter(Boolean))];
+    for(const date of dates) if(date.startsWith(`${year}-${String(month).padStart(2,'0')}-`)) {
+      blocked.add(date);occupied.push({date,itemId:row.id,label:row.label,ois,
+        reason:'Horaire individuel inconnu : journee reservee par prudence pour les OI DAP'});
+    }
+  }
+  for(let day=1;day<=31;day++) {
+    const date=`${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    if(date<initial || date<=anchor) blocked.add(date);
+  }
+  const candidates=[];
+  for(let attempt=0;attempt<5;attempt++) {
+    const candidate=coverage.pickProposalSlot({year,month,domain:'DAP',activity:second,calendarRows,rulesByDomain,
+      preferredWeekday:coverage.weekdayName(initial),blockedDates:blocked});
+    if(!candidate) break;candidates.push(candidate);blocked.add(candidate.date);
+  }
+  const rule=coverage.applicablePlanningRule('DAP',second,rulesByDomain,initial);
+  const proposal={rule:'QV-DAP-003',source:'EXISTING_PICK_PROPOSAL_SLOT',initialDate:initial,firstSessionDate:anchor,
+    candidates,occupied,proposedDate:candidates[0]?.date || null,
+    initialClassification:coverage.classifyCandidateDate(initial,coverage.dayPolicyForActivity('DAP',second,rulesByDomain,initial),calendarRows),
+    indicativeTimePolicy:rule?.timePolicy || {},
+    status:candidates.length?'PROPOSITION_CALENDRIER_A_CONFIRMER':'NO_COMPLIANT_DATE',
+    limitations:['Horaire individuel non confirme','Lieu et salle non confirmes','Theme et responsable non confirmes'],
+    dateDecision:false,timeDecision:false,venueDecision:false};
+  const evidence={...second.dapGroupedProposal,proposedDate:proposal.proposedDate,
+    originalProposedDate:initial,replanning:proposal,status:proposal.status,calendarConflicts:[]};
+  return {rows:rows.map(row=>row===second?{...row,dapGroupedProposal:evidence}:row),proposal};
+}
+module.exports={sameBusinessOccurrence,reconcilePublishedOccurrences,restoreDapGroupedFormation,proposeDapGroupedSecond};

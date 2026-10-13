@@ -483,3 +483,34 @@ disponibles. Les correspondances encore absentes attendent une source métier au
 Preuves complémentaires : `docs/captures/qv-pr13-complement-20261013/`.
 Les 25 contrôles précédents et leurs preuves restent conservés, sans recette globale répétée.
 Suivi spécialisé des Cours ECA maintenu dans la roadmap existante, sans module parallèle.
+
+## Derniers contrôles PR #13 — 13.10.2026
+
+### QV-PUBLICATION-004 — Dates des propositions A+1
+Les lectures SQL de production démontrent une publication unique pour instruction DAP Y2 du
+19.01.2027 et Kick-off du 27.01.2027. Les propositions distinctes de janvier 2028 héritaient
+de dates de publication 2027 lors de la copie d'un modèle humain validé : défaut d'affichage,
+pas deux réalisations identiques. Une proposition sans lien publié n'utilise jamais les dates,
+horaires, état/version ou OI de publication de son modèle. Ces métadonnées sont réinitialisées
+à la projection ; date affichée et déplacement reposent sur la date de l'occurrence réelle.
+Aucune occurrence supprimée, aucun Stat.Com/code/identifiant renuméroté, aucune publication modifiée.
+
+### QV-DAP-003 — Replanification autorisée de la séance 1.2
+La MOA autorise une proposition conforme, pas une date validée inventée. Réutiliser
+`pickProposalSlot`, les règles DAP applicables, le calendrier réel et les jours préférés/possibles.
+Recherche dans le mois projeté, sans avancer avant la proposition historique initiale ni avant
+la séance 1.1. Horaires individuels absents : toute activité des OI DAP le même jour est un
+conflit potentiel conservé par prudence. Aucun horaire générique n'est imposé à la séance.
+Propositions démontrées : 13.05.2027 puis 20.05.2027, jeudis préférés ; 06.05 interdit
+(Ascension), 27.05 occupé par un exercice DAP. Rang et raisons visibles, date/horaire
+individuels toujours non décidés. Lieu, salle, thème et responsable restent à confirmer.
+Une décision humaine ou publication arrête la proposition automatique. DAP 1.1, quatre
+exercices par section, formations DPS, Stat.Com et identifiants existants sont préservés.
+
+### QV-RULES-001 — Décision MOA validée, prochain jalon uniquement
+Un seul onglet Règles ; une seule règle pour un cursus complet, pas une règle par module.
+Fiche structurée en huit sections, portées explicites, jours préférés/possibles/déconseillés/interdits,
+contrôle de faisabilité avant validation, accès administrateur ou permission explicite.
+Affichage informatif dans les événements. Maquette validée par la MOA.
+Cette mission capitalise la décision : aucun éditeur, nouveau moteur ni nouveau module développé.
+Implémentation prévue après stabilisation de la production, avec les mécanismes existants.

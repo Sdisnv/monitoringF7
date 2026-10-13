@@ -684,6 +684,7 @@ module.exports = {
   interpretHistoricalProgramme,
   summarizeCoverage,
   dayPolicyForActivity,
+  classifyCandidateDate,
   pickProposalSlot,
   usualTime,
   organisationalLevel,

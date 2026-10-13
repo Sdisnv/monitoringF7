@@ -2142,6 +2142,8 @@ function createScopeQuoVadisService({ database = db } = {}){
           const projected = uiLogic.qvMaterializeHistoricalOccurrences([{...template,
             id:`${cyclePrefix}${template.definitionId}`,startsAt:null,endsAt:null,code:'',businessCode:'',
             status:'PROPOSE',provenance:'CYCLE_EXTENSION',publishedEventId:null,publishedEventCode:null,
+            publishedEventDate:null,publishedEventStart:null,publishedEventEnd:null,publishedEventStatus:null,
+            publishedEventVersion:null,publishedEventLabel:null,publishedEventOiSelections:[],publishedEventCodeState:null,
             preparation:null,lineage:null,businessValidation:null,humanDecision:false}],history,
           {year:cycleYear + 1,statComResolver:historicalStatComForOccurrence});
           for(const row of projected.rows){
@@ -2204,6 +2206,13 @@ function createScopeQuoVadisService({ database = db } = {}){
         result.canonicalProgramme.rows = result.canonicalProgramme.rows.filter(row => row.preparation || row.humanDecision
           || row.publishedEventId || ['IN_CYCLE','UNDATED','PREPARATORY_CURSUS'].includes(row.cycleClassification));
       }
+      const dapReplanning=programmeReconciliation.proposeDapGroupedSecond(result.canonicalProgramme.rows,
+        {calendarRows:calendar.rows,rulesByDomain:await loadRulesByDomain()});
+      result.canonicalProgramme.rows=dapReplanning.rows;
+      result.dapGroupedReplanning=dapReplanning.proposal;
+      if(Object.hasOwn(dapReplanning.proposal,'proposedDate')) result.dapGroupedProposals=(result.dapGroupedProposals || []).map(item=>
+        item.itemIds?.includes('QV27:DAP-GROUP:1.2') ? {...item,originalProposedDate:item.proposedDate,
+          proposedDate:dapReplanning.proposal.proposedDate,status:dapReplanning.proposal.status,replanning:dapReplanning.proposal} : item);
       const reconciled=programmeReconciliation.reconcilePublishedOccurrences(result.canonicalProgramme.rows.map(row=>({...row,
         ...programmeEventFlags(row),ecawinActivityCode:programmeEcawinActivityCode(row,programme.annee),
         responsible:isUnassignedResponsible(row.responsible)?'':row.responsible})));

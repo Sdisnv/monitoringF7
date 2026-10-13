@@ -1,0 +1,64 @@
+{
+  "project": {
+    "id": "bnfbqzqisdkysnoaeuej",
+    "name": "SCOPE"
+  },
+  "productionWrites": false,
+  "transactionMode": "READ ONLY / ROLLBACK",
+  "before": {
+    "readOnly": "on",
+    "integrity": {
+      "scope_evenements": {
+        "hash": "6fa82e93d15dc04ef970f17af30cade1",
+        "count": 257
+      },
+      "scope_affectations": {
+        "hash": "a25cf27b765a3ce9eb56ec739a7a90d7",
+        "count": 636
+      },
+      "scope_journal_metier": {
+        "hash": "6faf21b6d68f8b9d7695ca21deb6c1c3",
+        "count": 2366
+      },
+      "scope_participations": {
+        "hash": "5724d6cf9585198bf683282f94937dbf",
+        "count": 5967
+      },
+      "scope_quo_vadis_obligations": {
+        "hash": "fa061ead8860aa0ef7ad1414feda55fe",
+        "count": 967
+      }
+    },
+    "capturedAt": "2026-10-13T09:49:04.280897+00:00",
+    "referenceMatches": null
+  },
+  "after": {
+    "readOnly": "on",
+    "integrity": {
+      "scope_evenements": {
+        "hash": "6fa82e93d15dc04ef970f17af30cade1",
+        "count": 257
+      },
+      "scope_affectations": {
+        "hash": "a25cf27b765a3ce9eb56ec739a7a90d7",
+        "count": 636
+      },
+      "scope_journal_metier": {
+        "hash": "6faf21b6d68f8b9d7695ca21deb6c1c3",
+        "count": 2366
+      },
+      "scope_participations": {
+        "hash": "5724d6cf9585198bf683282f94937dbf",
+        "count": 5967
+      },
+      "scope_quo_vadis_obligations": {
+        "hash": "fa061ead8860aa0ef7ad1414feda55fe",
+        "count": 967
+      }
+    },
+    "capturedAt": "2026-10-13T11:23:24.527327+00:00",
+    "referenceMatches": null
+  },
+  "identicalProtectedTables": true,
+  "status": "PASS"
+}

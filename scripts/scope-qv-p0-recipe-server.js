@@ -161,6 +161,7 @@ async function stop() {
   if(process.env.SCOPE_RECIPE_ROADMAP==='1') for(const table of ['scope_quo_vadis_programmes','scope_quo_vadis_future_dates']) allowed.add(table);
   if(process.env.SCOPE_RECIPE_COMPLEMENT==='1') allowed.add('scope_journal_metier');
   if(process.env.SCOPE_RECIPE_MOA13==='1') allowed.add('scope_evenements');
+  if(process.env.SCOPE_RECIPE_FINAL_CONTROLS==='1') for(const table of ['scope_lieux','scope_salles_theorie']) allowed.add(table);
   const unchanged={};
   for(const table of protectedTables.filter(table=>!allowed.has(table))) unchanged[table]=JSON.stringify(await fingerprint(table)) === JSON.stringify(baseline[table]);
   const preparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
@@ -199,6 +200,11 @@ async function start() {
   originalPreparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
   originalEvents=(await client.query('select evenement_id,md5(to_jsonb(t)::text) as hash from scope_evenements t order by evenement_id')).rows;
   await client.query('begin');
+  if(process.env.SCOPE_RECIPE_FINAL_CONTROLS==='1'){
+    await require('./scope-qv-pr13-final-controls-clone').replay(query);
+    for(const row of require('../docs/captures/qv-pr13-final-controls-20261013/production-business-snapshot.json').preparations)
+      touchedReferences.add(row.source_ref);
+  }
   if(process.env.SCOPE_RECIPE_CORRECTIVE==='1')
     await client.query(fs.readFileSync(path.join(root,'database/migrations/20261012_scope_internal_event_identity.sql'),'utf8'));
   if(process.env.SCOPE_RECIPE_MOA13==='1'){

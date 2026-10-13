@@ -4,11 +4,11 @@ const {execFileSync}=require('node:child_process');
 const revisions=require('../../netlify/lib/_scope-qv-programme-revisions');
 const root=path.resolve(__dirname,'../..');
 const BASELINE='66b38c6f81551075dccea6f00b27333d1b76db71';
-function baselineService() {
+function baselineService(reference=BASELINE) {
   const cache=new Map();
   const load=relative=>{
     if(cache.has(relative)) return cache.get(relative).exports;
-    const source=execFileSync('git',['show',`${BASELINE}:${relative}`],{cwd:root,encoding:'utf8'});
+    const source=execFileSync('git',['show',`${reference}:${relative}`],{cwd:root,encoding:'utf8'});
     if(relative.endsWith('.json')) {const entry={exports:JSON.parse(source)};cache.set(relative,entry);return entry.exports;}
     const file=path.join(root,relative),entry=new Module(file,module);entry.filename=file;
     entry.paths=Module._nodeModulePaths(path.dirname(file));cache.set(relative,entry);const original=Module.createRequire(file);

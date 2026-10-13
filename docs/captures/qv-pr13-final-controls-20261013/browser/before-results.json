@@ -1,0 +1,8 @@
+{
+  "status": "FAIL_VISUAL_INSPECTION",
+  "codeReference": "0a4975b",
+  "productionWrites": false,
+  "finding": "Five legitimate January 2028 cycle proposals displayed an inherited January 2027 publication date despite having no publishedEventId.",
+  "initialAutomatedCheckLimitation": "Counting only the original source link did not detect the inherited presentation date. The final browser test now checks the displayed civil year of every cycle proposal.",
+  "captures": ["qv-source-870-before.png", "qv-source-888-before.png"]
+}
