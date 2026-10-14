@@ -674,12 +674,15 @@ préparatoire ne remplit jamais automatiquement le Stat.Com de cette ancienne pu
 Une révision approuvée d'une séance d'un seul jour conserve la cohérence date/date_fin ; aucune
 date humaine n'est déplacée par la lecture du Programme ou par la proposition.
 
-### QV-JSP-001 — Propositions Direction JSP, non déplacements approuvés
+### QV-JSP-001 — Dates Direction JSP approuvées par la MOA
 La projection N+364 et la priorité d'une séance explicite mensuelle restent les moteurs existants.
 Il ne s'agit pas d'un mardi obligatoire : `PLANIF-JSP` autorise le mercredi et les sources 2026
-montrent plusieurs jours de semaine. Les propositions MOA **17.02.2027** et **23.06.2027**,
+montrent plusieurs jours de semaine. Les dates MOA **17.02.2027** et **23.06.2027**,
 **18:30–20:30**, restent dans leur mois, hors vacances/fériés et sans réservation de la salle
-État-major à ces créneaux au contrôle du 14.10. Elles sont recommandées, **À VALIDER**.
+État-major à ces créneaux au contrôle du 14.10. Décision MOA du 14.10.2026 : les deux dates
+sont **APPROUVÉES**, pas encore appliquées aux publications. Conserver les événements et leurs
+identifiants ; appliquer les révisions ciblées selon le workflow existant, sans écriture directe
+en production dans cette PR ni déplacement automatique.
 Publics, OI JSP, responsable C JSP et fonctions historiques C for/C JSP/C site JSP/Resp for JSP
 restent inchangés ; Chef formation commun avec EM conformément à QV-EM-001.
 Changer de salle le 16.02 ou le 22.06 ne suffit pas à libérer une fonction commune.
@@ -697,3 +700,29 @@ les deux AUTO du 18.01 ont horaires/personnels source et publications distincts.
 déduit de l'intitulé ni de leur salle commune. Animation conjointe/distincte à arbitrer par la MOA ;
 préserver toutes les lignées, codes et décisions en attendant. Gel Y1/IndeX inchangé, suivi Cours ECA
 et éditeur de règles conservés dans la roadmap existante. Ce GO n'autorise ni fusion ni déploiement.
+
+Dossier **M2, 13.01.2027** : salle souhaitée par la MOA **VULCAIN** pour Direction JSP.
+Oxygène était une proposition technique, pas une décision MOA ; elle n'est pas retenue.
+Le conflit avec l'intégration DAP reste signalé tant que la disponibilité de Vulcain au créneau
+18:30–20:30, battement de 30 minutes compris, n'est pas démontrée. Aucune réservation modifiée
+ni déplacement automatique. Cette décision documentaire n'atteste pas une disponibilité nouvelle.
+
+### QV-CYCLE-007 — Ajouts et communication après publication annuelle
+Décision MOA du 14.10.2026, documentation métier uniquement dans cette PR : après validation
+finale et publication du Programme annuel, une nouvelle activité SDIS créée manuellement peut
+être rattachée au cycle métier publié même si sa date civile précède son début habituel
+(exemple : formation CRIMSON ajoutée manuellement). Il s'agit d'un rattachement explicite de
+l'ajout, pas d'un reclassement automatique des activités existantes ; cycles historiques préservés.
+
+Processus opérationnel à conserver : **validation annuelle → publication → création ou liaison
+des événements opérationnels → assignations du personnel → programmes individuels → communication
+initiale aux personnes concernées**. La publication annuelle déclenche cette chaîne ; cette règle
+documente le processus attendu et ne déclare pas tous ses parcours opérationnels implémentés.
+
+Après publication, les nouvelles activités sont identifiées comme **ajouts**. Le personnel concerné
+doit être informé individuellement de ces ajouts, ainsi que des modifications et annulations qui
+le concernent. Les programmes individuels initiaux ne sont ni régénérés ni renvoyés systématiquement ;
+les destinataires ajoutent manuellement les nouvelles dates à leur calendrier personnel.
+Aucun nouveau moteur de notification, reclassement, événement ou envoi n'est développé ou déclenché
+par ce complément. La préparation de ce parcours reste dans la roadmap existante ; les statistiques
+civiles de QV-STAT-001 et les mécanismes de sécurité existants restent inchangés.
