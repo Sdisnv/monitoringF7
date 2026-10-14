@@ -7,6 +7,10 @@
   publish = "dist/scope"
   functions = "netlify/functions"
 
+# MOA gate for this corrective branch only. Main remains eligible after explicit approval.
+[context."codex/scope-qv-post-recette-moa-20261014"]
+  ignore = "exit 0"
+
 [functions]
   node_bundler = "esbuild"
   included_files = [

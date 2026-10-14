@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "resolver": "Netlify official installed @netlify/config",
+  "settingsChangedRemotely": false,
+  "cases": [
+    {
+      "context": "deploy-preview",
+      "branch": "codex/scope-qv-post-recette-moa-20261014",
+      "automaticDeployBlocked": true,
+      "buildCommand": "node scripts/build-scope-static.js"
+    },
+    {
+      "context": "branch-deploy",
+      "branch": "codex/scope-qv-post-recette-moa-20261014",
+      "automaticDeployBlocked": true,
+      "buildCommand": "node scripts/build-scope-static.js"
+    },
+    {
+      "context": "production",
+      "branch": "main",
+      "automaticDeployBlocked": false,
+      "buildCommand": "node scripts/build-scope-static.js"
+    },
+    {
+      "context": "deploy-preview",
+      "branch": "unrelated-branch",
+      "automaticDeployBlocked": false,
+      "buildCommand": "node scripts/build-scope-static.js"
+    }
+  ]
+}

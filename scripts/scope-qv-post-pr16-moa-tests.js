@@ -46,10 +46,11 @@ test('explicit site exclusivity and explicit shared resources remain blocking',(
   assert.equal(coverage.reservationConflicts([row('a',null,{exclusiveLocation:true}),row('b','OXY')]).length,1);
   assert.equal(coverage.reservationConflicts([row('a',null,{resourceCodes:['EMPLACEMENT:1']}),row('b',null,{resourceCodes:['EMPLACEMENT:1']})]).length,1);
 });
-test('partial overlap, adjacent slots and modification use the actual booking',()=>{
+test('partial overlap and mandatory turnaround use the actual booking',()=>{
   const a=row('a','OXY'),b=row('b','OXY',{startsAt:'2027-02-26T16:30',endsAt:'2027-02-26T18:00'});
   assert.equal(coverage.reservationConflicts([a,b]).length,1);
-  assert.equal(coverage.reservationConflicts([a,{...b,startsAt:'2027-02-26T17:00'}]).length,0);
+  assert.equal(coverage.reservationConflicts([a,{...b,startsAt:'2027-02-26T17:00'}]).length,1);
+  assert.equal(coverage.reservationConflicts([a,{...b,startsAt:'2027-02-26T17:30'}]).length,0);
   assert.equal(coverage.reservationConflicts([a,{...b,salleTheorieId:'AUTRE'}]).length,0);
 });
 const osr={definitionId:'QV26-MISE-A-NIVEAU-ANNUELLE-OSR-9977BB10',statCom:'0171F7',domain:'DPS',

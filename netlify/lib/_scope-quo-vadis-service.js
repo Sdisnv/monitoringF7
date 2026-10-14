@@ -1842,6 +1842,7 @@ function createScopeQuoVadisService({ database = db } = {}){
             eventDisplayLabel:fields.activityLabel || preparation.title,
             eventLabel:fields.activityLabel || preparation.title,
             domain:fields.domain || source.domain,programmeDomain:fields.domain || source.domain,
+            ...(Object.hasOwn(fields,'family')?{family:fields.family}:{}),
             statCom:fields.statCom || preparation.statcom_code || '',
             businessCode:preparation.metadata.businessCode || '',
             startsAt:date && fields.startTime ? isoLocalDateTime(date,fields.startTime) : null,
@@ -1932,6 +1933,7 @@ function createScopeQuoVadisService({ database = db } = {}){
               : row.endsAt,
             ois:Array.isArray(fields.oiCodes) ? fields.oiCodes : row.ois,
             publics:Array.isArray(fields.publicCodes) ? fields.publicCodes : row.publics,
+            ...(Object.hasOwn(fields,'family')?{family:fields.family}:{}),
             responsible:Object.prototype.hasOwnProperty.call(fields,'responsibleLabel') ? fields.responsibleLabel : row.responsible,
             responsibleSelections:fields.responsibleSelections,publicFreeLabels:fields.publicFreeLabels || [],
             responsableFonctionCode:preparation.responsable_fonction_code || null,
@@ -2329,10 +2331,13 @@ function createScopeQuoVadisService({ database = db } = {}){
       return {...corrected,planningDayControl:programmePlanningDayControl(corrected,result)};
     });
     const rowsById=new Map((result.canonicalProgramme?.rows || []).map(row=>[row.id,row]));
-    result.reservationConflicts=programmeRevisions.reservationConflicts((result.canonicalProgramme?.rows || []).filter(uiLogic.qvProgrammeIsActive));
-    for(const row of result.canonicalProgramme?.rows || []) row.reservationConflicts=result.reservationConflicts
-      .filter(conflict=>conflict.leftId===row.id || conflict.rightId===row.id)
-      .map(conflict=>({otherLabel:conflict.leftId===row.id?conflict.rightLabel:conflict.leftLabel,causes:conflict.causes}));
+    result.reservations=await programmeRevisions.reservations(db.query.bind(db),result);
+    result.reservationConflicts=programmeRevisions.reservationConflicts(result.reservations);
+    result.personnelConflicts=coverage.personnelConflicts((result.canonicalProgramme?.rows || []).filter(uiLogic.qvProgrammeIsActive));
+    for(const row of result.canonicalProgramme?.rows || []){
+      row.reservationConflicts=programmeRevisions.reservationMessages(result.reservationConflicts,row.id);
+      row.personnelConflicts=result.personnelConflicts.filter(item=>item.leftId===row.id || item.rightId===row.id);
+    }
     result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || [],result.statComCodes).map(reference=>{
       const row=rowsById.get(reference.programmeItemId);
       return {...reference,scopeOccurrenceCode:uiLogic.qvInternalEventCodeDisplay(row?.businessCode || reference.scopeOccurrenceCode),
@@ -3709,7 +3714,10 @@ function createScopeQuoVadisService({ database = db } = {}){
       if(!['CANCEL_YEAR','DISABLE_PRODUCTION'].includes(lifecycleAction)){
         throw new HttpError(422,'programme_lifecycle_action_invalide','Action de gestion QUO VADIS inconnue.');
       }
-      const statut = lifecycleAction === 'CANCEL_YEAR' ? 'ANNULE' : 'A_PLANIFIER';
+      const lifecycleMotif=String(body.motif || '').trim();
+      if(!lifecycleMotif || lifecycleMotif.length>2000)
+        throw new HttpError(422,'programme_motif_obligatoire','Un motif de 1 à 2000 caractères est obligatoire.');
+      const statut = lifecycleAction === 'CANCEL_YEAR' || existing?.statut==='ANNULE' ? 'ANNULE' : 'A_PLANIFIER';
       const metadata = {
         source:'QV_PROGRAMME_PREPARATION',
         canonicalProgrammeItemId:String(itemId),
@@ -3719,21 +3727,29 @@ function createScopeQuoVadisService({ database = db } = {}){
           scope:lifecycleAction === 'CANCEL_YEAR' ? 'YEAR_ONLY' : 'FUTURE_PRODUCTION',
           keepHistory:true,
           recurrencePreserved:lifecycleAction === 'CANCEL_YEAR',
-          futureGenerationDisabled:lifecycleAction === 'DISABLE_PRODUCTION',
+          futureGenerationDisabled:lifecycleAction === 'DISABLE_PRODUCTION'
+            || existing?.metadata?.lifecycleDecision?.futureGenerationDisabled===true,
+          motif:lifecycleMotif,actor:options.actor || null,
           decidedAt:new Date().toISOString()
         }
       };
       const obligationId = await db.transaction(async (client) => {
         await client.query(`select pg_advisory_xact_lock(hashtext($1))`,[`QUO-VADIS:${year}`]);
         await client.query(`select pg_advisory_xact_lock(hashtext($1))`,[`QV_PROGRAMME_PREPARATION:${itemId}`]);
-        const current = await client.query(`select obligation_id from scope_quo_vadis_obligations
+        const current = await client.query(`select obligation_id,statut,metadata,updated_at from scope_quo_vadis_obligations
           where programme_id=$1 and source_ref=$2
-          order by created_at limit 1`,[programme.programme_id,String(itemId)]);
+          order by created_at limit 1 for update`,[programme.programme_id,String(itemId)]);
+        const locked=current.rows[0];
+        if(existing && (!locked || new Date(locked.updated_at).getTime()!==new Date(existing.updated_at).getTime()))
+          throw new HttpError(409,'programme_preparation_conflit','Cette occurrence a changé. Rouvrez sa fiche avant de poursuivre.');
+        if(locked?.metadata?.lifecycleDecision?.action===lifecycleAction || lifecycleAction==='CANCEL_YEAR' && locked?.statut==='ANNULE')
+          return locked.obligation_id;
+        const fields=locked?.metadata?.planningFields || programmeRevisions.fieldsFromProgrammeRow(source,{});
         const params = [programme.programme_id,String(itemId),source.eventDisplayLabel || source.activityLabel || source.label,qvPersistenceDomain(source.persistenceDomain || source.domain) || null,source.publics || [],source.statCom || null,JSON.stringify(metadata)];
         await programmeRevisions.journal(client,{actor:options.actor,itemId,
           action:lifecycleAction==='CANCEL_YEAR'?'ANNULER_OCCURRENCE':'SUPPRIMER_LOGIQUEMENT',
-          before:{fields:existing?.metadata?.planningFields || {},statut:existing?.statut || source.status},
-          after:{statut,lifecycleDecision:metadata.lifecycleDecision},motif:body.motif});
+          before:{fields,statut:locked?.statut || source.status,lifecycleDecision:locked?.metadata?.lifecycleDecision || null},
+          after:{fields,statut,lifecycleDecision:metadata.lifecycleDecision},motif:lifecycleMotif});
         if(current.rows[0]){
           await client.query(`update scope_quo_vadis_obligations
              set statut=$2,metadata=coalesce(metadata,'{}'::jsonb) || $3::jsonb,updated_at=now()
@@ -3748,6 +3764,8 @@ function createScopeQuoVadisService({ database = db } = {}){
       });
       return { updated:true,preparation:{ type:'OBLIGATION',id:obligationId },quoVadis:await listProgramme(programme.annee) };
     }
+    if(existing?.statut==='ANNULE' || source.status==='ANNULE')
+      throw new HttpError(422,'programme_occurrence_annulee','Cette occurrence annuelle est annulée. Ses paramètres historiques sont conservés ; un enregistrement ordinaire ne peut pas la réactiver.');
     const date = strictProgrammeDate(body.date);
     if((source.manualCreation || source.cycleExtension) && date && date !== inherited.date){
       const cycle = await getProgrammeCycle(year);
@@ -3944,7 +3962,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       date,startTime,endTime,oiCodes,publicCodes,activityLabel,statCom,themes,planningStatus,
       participationEvaluation:participationEvaluation(body,inherited,source),
       ...eventFlags,
-      domain:requestedDomain,family:uiLogic.qvProgrammeFamily(source),
+      domain:requestedDomain,family:Object.hasOwn(body,'family')?String(body.family || ''):inherited.family ?? uiLogic.qvProgrammeFamily(source),
       lieuId:lieu && lieu.lieu_id || null,salleTheorieId:salle && salle.salle_id || null,
       responsableFonctionCode:responsable && responsable.code || null,
       sessionStructure:source.sessionStructure || {sessionCount:Number(source.sessionCount || 1),sessionIndex:Number(source.sessionIndex || 1),
@@ -3958,6 +3976,9 @@ function createScopeQuoVadisService({ database = db } = {}){
           ? inherited.responsibleLabel ?? officialResponsibleLabel(responsable) : officialResponsibleLabel(responsable)) : ''),
       updatedAt:new Date().toISOString()
     };
+    if(Object.hasOwn(body,'family') && planningFields.family!==String(inherited.family ?? uiLogic.qvProgrammeFamily(source))
+      && planningFields.family && !uiLogic.qvProgrammeOrganisationalFamilies(oiCodes).includes(planningFields.family))
+      throw new HttpError(422,'programme_famille_incompatible','La famille organisationnelle doit correspondre à un OI sélectionné, ou rester transversale.');
     planningFields.ecawinActivityCode = ecawinActivityCode;
     if(responsibleSelections) planningFields.responsibleSelections = responsibleSelections;
     planningFields.publicFreeLabels = publicFreeLabels;
@@ -4034,6 +4055,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     }
     const savedPreparation = await db.transaction(async (client) => {
       await client.query(`select pg_advisory_xact_lock(hashtext($1))`,[`QUO-VADIS:${year}`]);
+      await client.query(`select pg_advisory_xact_lock(hashtext($1))`,['QV_ROOM_RESERVATIONS']);
       await client.query(`select pg_advisory_xact_lock(hashtext($1))`,[`QV_PROGRAMME_PREPARATION:${itemId}`]);
       let selectedLieu = lieu;
       let selectedLieuLibre = lieuLibre;
@@ -4043,7 +4065,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       if(existing && (!lockedPreparation || new Date(lockedPreparation.updated_at).getTime() !== new Date(existing.updated_at).getTime()))
         throw new HttpError(409,'programme_preparation_conflit','Cette occurrence a changé. Rouvrez sa fiche avant de poursuivre.');
       const previousMetadata = lockedPreparation?.metadata || {};
-      const link = (await client.query(`select evenement_id from scope_qv_publication_links
+      const link = (await client.query(`select evenement_id,source_definition_id from scope_qv_publication_links
         where source_year=$1 and publication_unit_id=$2 for share`,[year,String(itemId)])).rows[0];
       const currentProgramme = await createScopeQuoVadisService({database:{query:(...args)=>client.query(...args)}}).listProgramme(year);
       const currentView=currentProgramme.canonicalProgramme.rows.find(row=>String(row.id)===String(itemId));
@@ -4063,6 +4085,22 @@ function createScopeQuoVadisService({ database = db } = {}){
           && !previousMetadata.validationWithdrawal && !['PENDING','WITHDRAWN'].includes(previousMetadata.publicationRevision?.status);
         if(!programmeRevisions.revisionChanges(presented,submitted).changedFields.length && (body.validateBusiness!==true || alreadyValidated))
           return {updated:true,unchanged:true,quoVadis:currentProgramme};
+      }
+      const slotChanged=!presented || ['date','startTime','endTime','lieuId','salleTheorieId'].some(key=>
+        (presented[key] || '')!==(planningFields[key] || ''));
+      if(date && saveAction!=='WITHDRAW' && (slotChanged || body.validateBusiness===true || saveAction==='PLAN')){
+        const booking=currentProgramme.reservations.find(row=>row.id===String(itemId));
+        const candidate={id:String(itemId),label:activityLabel,startsAt:`${date}T${startTime}`,endsAt:`${date}T${endTime}`,
+          salleTheorieId:planningFields.salleTheorieId,lieuId:planningFields.lieuId,room:planningFields.roomLabel,
+          resourceCodes:booking?.resourceCodes || [],exclusiveLocation:booking?.exclusiveLocation===true,
+          status:planningStatus,externalActivity:eventFlags.externalActivity};
+        const others=currentProgramme.reservations.filter(row=>row.id!==String(itemId)
+          && (!link || row.publishedEventId!==link.evenement_id));
+        const conflicts=programmeRevisions.reservationMessages(programmeRevisions.reservationConflicts([candidate,...others]),String(itemId));
+        if(conflicts.length) throw new HttpError(422,'programme_salle_indisponible',conflicts.map(conflict=>
+          `${conflict.roomLabel || 'Ressource réservée'} : ${conflict.otherLabel}, ${String(conflict.otherStartsAt).slice(0,10)}, `
+          + `${String(conflict.otherStartsAt).slice(11,16)}–${String(conflict.otherEndsAt).slice(11,16)}. `
+          + (conflict.causes.some(cause=>cause.kind==='TURNAROUND')?'Battement de 30 minutes non respecté.':'Chevauchement de réservation.')).join(' '),{conflicts});
       }
       const dayControl=programmePlanningDayControl({...source,...eventFlags,domain:planningFields.domain,
         planningDomain:source.domain,

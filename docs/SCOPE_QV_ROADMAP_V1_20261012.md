@@ -148,3 +148,54 @@ Participation : types suivis, Cours ECA individuels, agrégats et présences, sa
 ECAwin : codes, exports, rapprochements, événements déjà existants sans recréation.
 Observations : sélection, forçage manuel, évaluations. Reconduction N→N+1 : versions métier validées conservées.
 Les règles de publication annuelle, RLS, permissions et données historiques restent inchangées.
+
+### Gel MOA Du 14.10.2026
+Budget DAP Y1 et transformations du référentiel IndeX gelés : aucune déduction depuis l'OI,
+aucun compte, identifiant, renommage, qualification ou affectation inventé. `070F23` / `070F23.006`
+et la séance de coordination existante restent intacts, y compris son annulation annuelle humaine.
+Rapprochement IndeX, suivi spécialisé Cours ECA et éditeur de règles restent des jalons explicites,
+sans module parallèle. Correctif salles/calendrier/annulations/familles/publics/PDF :
+[rapport et réserves du lot](SCOPE_QV_MOA_20261014.md), sans déplacement ni publication automatique.
+
+### Finalisation PR #18 — GO Limité Au Lot
+Préflight GitHub/Netlify : main et production `6666e2c`, PR #18 sur `a5cb32d` avant ce complément.
+Le [rapport existant](SCOPE_QV_MOA_20261014.md#tableau-unique-de-résolution) contient désormais
+l'unique tableau des 12 paires de salles (21 IDs), plus le conflit fonctionnel JSP de juin et la
+réconciliation EM. Après décision MOA : **neuf dossiers manuels M1–M7 et P2/P6, quatre arbitrages
+P1/P3/P4/P5, aucun déplacement exécuté**. Les repères P2/P6 restent conservés, leurs dates sont approuvées.
+Deux défauts du mécanisme de révision existant corrigés : compatibilité limitée EM historique sans
+remplir son Stat.Com NULL ; fin de date d'une séance d'un jour cohérente après révision approuvée.
+Preuve ciblée sur le même clone : 938 lignes courantes, 935 IDs acquis conservés, invariants identiques,
+confirmations JSP/EM simulées puis annulées, six refus de sécurité, rollback des 113 tables initiales.
+Les trois nouvelles occupations CFF et la modification humaine courante restent conservées.
+
+| Dossier | Suite humaine, sans nouveau développement automatique |
+|---|---|
+| M1–M6 : réservations et publications liées | Rapprochement DPS/DAP janvier, salles JSP janvier/FVSP/MAT/PR/groupe JSP ; vérifier configuration de formation de la révision PR |
+| M2 : salle JSP du 13.01 | **VULCAIN souhaitée par la MOA**, pas Oxygène ; conflit avec intégration DAP conservé tant que sa disponibilité n'est pas démontrée ; aucune réservation modifiée |
+| M7 : EM publié 24.02 / préparé 16.02 | Même événement, révision PENDING à confirmer avec motif conforme au maintien du 16.02 ; aucune nouvelle publication |
+| P2/P6 : JSP février/juin | **17.02 et 23.06.2027, 18:30–20:30 APPROUVÉS** ; appliquer selon le workflow existant, mêmes enregistrements/identifiants, aucun changement direct de publication en production |
+| P1/P3/P4/P5 : fonctions communes | AUTO, cadres DAP/EM, cours cadres DPS/DAP : arbitrer animation et participation ; autre salle insuffisante seule |
+| Rapport et cycle | 23.02.2027 définitif, début 24.02 ; 10.02.2028 provisoire / Codir |
+| Livraison PR #18 | READY_FOR_MOA n'autorise ni fusion ni publication ; garde-fou de branche conservé |
+
+Les preuves Chrome/PDF/intercycles/annulations acquises restent applicables, sans nouvelle campagne.
+QV-RULES-001, Cours ECA spécialisés et rapprochement officiel IndeX restent dans leurs jalons existants ;
+aucun module parallèle, aucune modification du budget DAP Y1 ni du référentiel IndeX.
+
+### Complément Ciblé — Processus Après Publication
+Décision MOA QV-CYCLE-007, documentation uniquement : **validation annuelle → publication →
+création/liaison des événements opérationnels → assignations du personnel → programmes individuels
+→ communication initiale → ajouts/modifications/annulations après publication**.
+Après validation finale et publication, un ajout SDIS manuel (exemple CRIMSON) peut être rattaché
+au cycle publié même avant son début civil habituel, sans reclasser automatiquement les cycles
+historiques. Les ajouts doivent être identifiés ; les personnes concernées doivent recevoir une
+information individuelle sur ajout, modification ou annulation. Les programmes individuels initiaux
+ne sont pas régénérés ni renvoyés systématiquement ; ajout manuel des nouvelles dates par les
+destinataires dans leur calendrier personnel. Ce processus reste à préparer avec les mécanismes
+existants, sans nouveau moteur de notification dans la PR #18 ni affirmation de parcours déjà livré.
+
+Recette MOA ciblée préparée dans le [rapport existant](SCOPE_QV_MOA_20261014.md) : réutilisation des
+**18 scénarios déjà réalisés (11 clone + 7 Chrome)** et de leurs preuves, aucun scénario réexécuté.
+Complément strictement documentaire : pas de code, migration, changement Okta/Netlify, écriture en
+production, fusion ou publication ; gels Y1 / `070F23` / IndeX déjà intégrés et laissés inchangés.

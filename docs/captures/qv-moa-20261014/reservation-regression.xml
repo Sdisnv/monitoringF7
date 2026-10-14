@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="same room overlaps while different rooms are independent" time="0.000986" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-post-pr16-moa-tests.js"/>
+	<testcase name="a location without a room is not an exclusive booking" time="0.000086" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-post-pr16-moa-tests.js"/>
+	<testcase name="explicit site exclusivity and explicit shared resources remain blocking" time="0.000097" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-post-pr16-moa-tests.js"/>
+	<testcase name="partial overlap and mandatory turnaround use the actual booking" time="0.000090" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-post-pr16-moa-tests.js"/>
+	<!-- tests 4 -->
+	<!-- suites 0 -->
+	<!-- pass 4 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 97.828333 -->
+</testsuites>

@@ -1,0 +1,444 @@
+{
+  "status": "PASS",
+  "productionWrites": false,
+  "snapshotPreparations": 863,
+  "rows": 935,
+  "invariants": [
+    "statCom",
+    "code",
+    "businessCode",
+    "startsAt",
+    "endsAt",
+    "definitionId",
+    "occurrenceId",
+    "sessionId",
+    "ois",
+    "publics",
+    "themes",
+    "publishedEventId",
+    "publishedEventCode",
+    "businessValidation",
+    "humanDecision",
+    "status"
+  ],
+  "statComIdenticalPercent": 100,
+  "rollbackTables": 113,
+  "tests": [
+    "100% Stat.Com/codes/dates/OI/publics/human decisions identical to main on current production snapshot",
+    "Existing coordination activity remains unique, cancelled, with frozen 070F23 / 070F23.006",
+    "16 February existing EM / JSP room and common Chef formation conflict detected, no move",
+    "22 June proposed Direction JSP conflict distinguished without moving or validating its proposal",
+    "Server rejects conflicting room save before journal or insert",
+    "Other cycle actual-date booking and 20:15 blocked; 20:30 accepted; concurrent connection excluded by transaction lock",
+    "Cancelled intercycle fixture ceases to reserve its room; all fixtures rolled back",
+    "F1 / DAP Y1 family persists separately; incompatible DPS rejected without Stat.Com change",
+    "Cancellation requires motif, one action, identical fields, recurrence preserved, idempotent; ordinary save cannot silently reactivate",
+    "Annual cancellation and future stop preserve each other in both action orders; no duplicate cancellation",
+    "All existing business values, published events, attendance, assignments and qualifications unchanged"
+  ],
+  "reservations": {
+    "before": 0,
+    "after": 12,
+    "sources": 121,
+    "otherCycles": 0
+  },
+  "roomConflicts": [
+    {
+      "leftId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:O1:S1",
+      "rightId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4",
+      "leftLabel": "Cours de cadres exercice DPS-DAP 1",
+      "rightLabel": "Cours de cadres exercice DPS-DAP 1",
+      "date": "2027-03-31",
+      "leftStartsAt": "2027-03-31T19:00",
+      "leftEndsAt": "2027-03-31T21:30",
+      "rightStartsAt": "2027-03-31T19:00",
+      "rightEndsAt": "2027-03-31T21:30",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:O1:S1",
+      "rightId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:2027-06-22:1900:Y1-Y2-Y3-Y4",
+      "leftLabel": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+      "rightLabel": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+      "date": "2027-06-22",
+      "leftStartsAt": "2027-06-22T19:00",
+      "leftEndsAt": "2027-06-22T22:00",
+      "rightStartsAt": "2027-06-22T19:00",
+      "rightEndsAt": "2027-06-22T22:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "QV26-FORMATION-CADRES-DAP-2B042598:O2:S1",
+      "rightId": "QV27:EMSEA:SESSION:03",
+      "leftLabel": "Formation cadres DAP",
+      "rightLabel": "Séance État-major",
+      "date": "2027-03-16",
+      "leftStartsAt": "2027-03-16T19:00:00",
+      "leftEndsAt": "2027-03-16T21:30:00",
+      "rightStartsAt": "2027-03-16T18:00:00",
+      "rightEndsAt": "2027-03-16T21:00:00",
+      "roomLabel": "État-major",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E:O6:S1",
+      "rightId": "QV27:PROJ:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54:2027-11-09:1700:Caserne-G1",
+      "leftLabel": "Groupe de travail JSP",
+      "rightLabel": "Table ouverte avec le Commandant",
+      "date": "2027-11-09",
+      "leftStartsAt": "2027-11-09T18:00",
+      "leftEndsAt": "2027-11-09T21:00",
+      "rightStartsAt": "2027-11-09T17:00",
+      "rightEndsAt": "2027-11-09T20:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "qv-source-852",
+      "rightId": "qv-source-861",
+      "leftLabel": "Intégration personnel DPS, phase 1",
+      "rightLabel": "Intégration personnel DAP",
+      "date": "2027-01-11",
+      "leftStartsAt": "2027-01-11T18:00:00",
+      "leftEndsAt": "2027-01-11T22:00:00",
+      "rightStartsAt": "2027-01-11T19:00",
+      "rightEndsAt": "2027-01-11T21:30",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "qv-source-863",
+      "rightId": "qv-source-864",
+      "leftLabel": "Séance cadres F5/6",
+      "rightLabel": "Séance Direction JSP",
+      "date": "2027-01-13",
+      "leftStartsAt": "2027-01-13T18:00:00",
+      "leftEndsAt": "2027-01-13T20:00:00",
+      "rightStartsAt": "2027-01-13T18:30:00",
+      "rightEndsAt": "2027-01-13T20:30:00",
+      "roomLabel": "État-major",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "qv-source-866",
+      "rightId": "qv-source-867",
+      "leftLabel": "Séance de préparation concours de la FVSP",
+      "rightLabel": "Cours de cadres moniteurs AUTO",
+      "date": "2027-01-18",
+      "leftStartsAt": "2027-01-18T18:00",
+      "leftEndsAt": "2027-01-18T19:00",
+      "rightStartsAt": "2027-01-18T18:30",
+      "rightEndsAt": "2027-01-18T20:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "qv-source-866",
+      "rightId": "qv-source-868",
+      "leftLabel": "Séance de préparation concours de la FVSP",
+      "rightLabel": "Cours de cadres moniteurs AUTO",
+      "date": "2027-01-18",
+      "leftStartsAt": "2027-01-18T18:00",
+      "leftEndsAt": "2027-01-18T19:00",
+      "rightStartsAt": "2027-01-18T19:00",
+      "rightEndsAt": "2027-01-18T21:30",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "TURNAROUND",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "qv-source-867",
+      "rightId": "qv-source-868",
+      "leftLabel": "Cours de cadres moniteurs AUTO",
+      "rightLabel": "Cours de cadres moniteurs AUTO",
+      "date": "2027-01-18",
+      "leftStartsAt": "2027-01-18T18:30",
+      "leftEndsAt": "2027-01-18T20:00",
+      "rightStartsAt": "2027-01-18T19:00",
+      "rightEndsAt": "2027-01-18T21:30",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "qv-source-877",
+      "rightId": "qv-source-879",
+      "leftLabel": "Cours de cadres Formateurs cursus MEA",
+      "rightLabel": "Séance responsables MAT SDIS",
+      "date": "2027-01-25",
+      "leftStartsAt": "2027-01-25T17:00",
+      "leftEndsAt": "2027-01-25T19:00",
+      "rightStartsAt": "2027-01-25T18:30",
+      "rightEndsAt": "2027-01-25T21:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "qv-source-896",
+      "rightId": "qv-source-905",
+      "leftLabel": "Cours de cadres Formateurs MEA 1",
+      "rightLabel": "Cours de cadres PR",
+      "date": "2027-02-01",
+      "leftStartsAt": "2027-02-01T17:30",
+      "leftEndsAt": "2027-02-01T20:00",
+      "rightStartsAt": "2027-02-01T18:30:00",
+      "rightEndsAt": "2027-02-01T21:00:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    },
+    {
+      "leftId": "qv-source-918",
+      "rightId": "qv-source-921",
+      "leftLabel": "Séance Direction JSP",
+      "rightLabel": "Séance État-major",
+      "date": "2027-02-16",
+      "leftStartsAt": "2027-02-16T18:30:00",
+      "leftEndsAt": "2027-02-16T20:30:00",
+      "rightStartsAt": "2027-02-16T18:00:00",
+      "rightEndsAt": "2027-02-16T21:00:00",
+      "roomLabel": "État-major",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true
+    }
+  ],
+  "em": [
+    {
+      "leftId": "qv-source-918",
+      "rightId": "qv-source-921",
+      "leftLabel": "Séance Direction JSP",
+      "rightLabel": "Séance État-major",
+      "date": "2027-02-16",
+      "sharedFunctions": [
+        "CMDT:C-FOR"
+      ],
+      "echelonIV": false,
+      "evidence": "MOA_FUNCTION_PARTICIPATION",
+      "priorityId": "qv-source-921",
+      "repositionId": "qv-source-918",
+      "repositionLabel": "Séance Direction JSP",
+      "automaticMove": false
+    },
+    {
+      "leftId": "QV27:EMSEA:SESSION:06",
+      "rightId": "QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-06-22:1830:Caserne-G1",
+      "leftLabel": "Séance État-major",
+      "rightLabel": "Séance Direction JSP",
+      "date": "2027-06-22",
+      "sharedFunctions": [
+        "CMDT:C-FOR"
+      ],
+      "echelonIV": false,
+      "evidence": "MOA_FUNCTION_PARTICIPATION",
+      "priorityId": "QV27:EMSEA:SESSION:06",
+      "repositionId": "QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-06-22:1830:Caserne-G1",
+      "repositionLabel": "Séance Direction JSP",
+      "automaticMove": false
+    }
+  ],
+  "cancellation": {
+    "action": "ANNULER_OCCURRENCE",
+    "before": {
+      "fields": {
+        "date": "2027-08-26",
+        "sold": true,
+        "cursus": "",
+        "domain": "F1",
+        "family": "DAP",
+        "lieuId": null,
+        "themes": [],
+        "endTime": "21:00",
+        "oiCodes": [
+          "DAP:Y1"
+        ],
+        "statCom": "070F23",
+        "cursusId": null,
+        "lieuLibre": "",
+        "roomLabel": "",
+        "startTime": "19:00",
+        "updatedAt": "2026-10-14T09:53:59.582Z",
+        "publicCodes": [
+          "ECH:II",
+          "ECH:III"
+        ],
+        "ecawinExport": true,
+        "activityLabel": "Recette famille et annulation",
+        "locationLabel": "",
+        "activityNature": "SDIS_RECURRENT",
+        "planningStatus": "PROPOSE",
+        "salleTheorieId": null,
+        "specialisation": "",
+        "annualRecurrence": true,
+        "externalActivity": false,
+        "publicFreeLabels": [],
+        "responsibleLabel": "",
+        "sessionStructure": {
+          "definitionId": null,
+          "sessionCount": 1,
+          "sessionIndex": 1,
+          "sessionLabel": "",
+          "occurrenceCount": 1
+        },
+        "ecawinActivityCode": "EXERCI",
+        "qualificationCodes": [],
+        "participationEvaluation": true,
+        "responsableFonctionCode": null
+      },
+      "statut": "PROPOSE",
+      "lifecycleDecision": null
+    },
+    "after": {
+      "fields": {
+        "date": "2027-08-26",
+        "sold": true,
+        "cursus": "",
+        "domain": "F1",
+        "family": "DAP",
+        "lieuId": null,
+        "themes": [],
+        "endTime": "21:00",
+        "oiCodes": [
+          "DAP:Y1"
+        ],
+        "statCom": "070F23",
+        "cursusId": null,
+        "lieuLibre": "",
+        "roomLabel": "",
+        "startTime": "19:00",
+        "updatedAt": "2026-10-14T09:53:59.582Z",
+        "publicCodes": [
+          "ECH:II",
+          "ECH:III"
+        ],
+        "ecawinExport": true,
+        "activityLabel": "Recette famille et annulation",
+        "locationLabel": "",
+        "activityNature": "SDIS_RECURRENT",
+        "planningStatus": "PROPOSE",
+        "salleTheorieId": null,
+        "specialisation": "",
+        "annualRecurrence": true,
+        "externalActivity": false,
+        "publicFreeLabels": [],
+        "responsibleLabel": "",
+        "sessionStructure": {
+          "definitionId": null,
+          "sessionCount": 1,
+          "sessionIndex": 1,
+          "sessionLabel": "",
+          "occurrenceCount": 1
+        },
+        "ecawinActivityCode": "EXERCI",
+        "qualificationCodes": [],
+        "participationEvaluation": true,
+        "responsableFonctionCode": null
+      },
+      "statut": "ANNULE",
+      "lifecycleDecision": {
+        "actor": "recipe.p0",
+        "motif": "Recette annulation annuelle avec rollback.",
+        "scope": "YEAR_ONLY",
+        "action": "CANCEL_YEAR",
+        "decidedAt": "2026-10-14T09:54:00.461Z",
+        "keepHistory": true,
+        "recurrencePreserved": true,
+        "futureGenerationDisabled": false
+      }
+    },
+    "motif": "Recette annulation annuelle avec rollback."
+  }
+}

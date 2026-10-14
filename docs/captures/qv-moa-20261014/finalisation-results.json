@@ -1,0 +1,3086 @@
+{
+  "status": "PASS",
+  "scope": "Targeted finalisation and two proven revision defects only; no production data decision",
+  "productionReadAt": "2026-10-14T10:18:00.499658+00:00",
+  "productionWrites": false,
+  "base": "a5cb32db73471e4a5bca50be4dee7bf98f41986c",
+  "sourcePairs": 12,
+  "sourceDistinctItems": 21,
+  "rows": 938,
+  "originalRowsRetained": 935,
+  "comparedRows": 938,
+  "statComIdenticalPercent": 100,
+  "invariants": [
+    "id",
+    "statCom",
+    "code",
+    "businessCode",
+    "startsAt",
+    "endsAt",
+    "definitionId",
+    "occurrenceId",
+    "sessionId",
+    "ois",
+    "oiSelections",
+    "publics",
+    "publicFreeLabels",
+    "themes",
+    "publishedEventId",
+    "publishedEventCode",
+    "businessValidation",
+    "humanDecision",
+    "status",
+    "publicationRevision",
+    "lineage"
+  ],
+  "protectedTables": [
+    "scope_evenements",
+    "scope_qv_publication_links",
+    "scope_participations",
+    "scope_attendus",
+    "scope_affectations",
+    "scope_person_qualifications",
+    "scope_event_person_roles",
+    "scope_journal_metier"
+  ],
+  "reservations": 122,
+  "otherCycleReservations": 0,
+  "currentHumanAdditions": [
+    "QV27:MANUAL:6265ba17-4fce-44fd-8a8d-1feda242b828",
+    "QV27:MANUAL:d613d337-c6e0-4b2a-bd2a-fd8cfaa7b881",
+    "QV27:MANUAL:629ee483-43fd-42c3-ac00-c37e21916d15"
+  ],
+  "currentHumanUpdate": [
+    "QV27:MANUAL:dc8ea3aa-3131-476f-b4f0-36ad139c98d9"
+  ],
+  "conflicts": [
+    {
+      "pair": 1,
+      "leftId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:O1:S1",
+      "rightId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4",
+      "leftLabel": "Cours de cadres exercice DPS-DAP 1",
+      "rightLabel": "Cours de cadres exercice DPS-DAP 1",
+      "date": "2027-03-31",
+      "leftStartsAt": "2027-03-31T19:00",
+      "leftEndsAt": "2027-03-31T21:30",
+      "rightStartsAt": "2027-03-31T19:00",
+      "rightEndsAt": "2027-03-31T21:30",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:O1:S1",
+          "definitionId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67",
+          "occurrenceId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:O1",
+          "sessionId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:O1:S1",
+          "label": "Cours de cadres exercice DPS-DAP 1",
+          "eventLabel": "Cours de cadres exercice DPS-DAP 1",
+          "startsAt": "2027-03-31T19:00",
+          "endsAt": "2027-03-31T21:30",
+          "statCom": "0120F7",
+          "code": "0120F7.001",
+          "domain": "DPS",
+          "ois": [
+            "C1",
+            "B1",
+            "B2"
+          ],
+          "oiSelections": [
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "publics": [],
+          "responsible": "C for",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 214,
+            "title2026": "Cours de cadres exercice DPS-DAP 1",
+            "date2026": "2026-04-01",
+            "proposedDate2027": "2027-03-31",
+            "start": "19:00",
+            "end": "21:30",
+            "confidence": "Correspondance forte"
+          },
+          "projectionEvidence": {
+            "date2026": "2026-04-01",
+            "shiftDays": 364,
+            "ois": [
+              "C1",
+              "B1",
+              "B2"
+            ],
+            "location": "Caserne G1",
+            "theme": "",
+            "sourceLines": [
+              214
+            ]
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "A_POSITIONNER",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "0180fa3f-e16b-4b19-a9c2-e5c54a6182ee",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          }
+        },
+        {
+          "id": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4",
+          "definitionId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67",
+          "occurrenceId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4",
+          "sessionId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4:S1",
+          "label": "Cours de cadres exercice DPS-DAP 1",
+          "eventLabel": "Cours de cadres exercice DPS-DAP 1",
+          "startsAt": "2027-03-31T19:00",
+          "endsAt": "2027-03-31T21:30",
+          "statCom": "0130F7",
+          "code": "0130F7.001",
+          "domain": "DPS",
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [],
+          "responsible": "C for",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 215,
+            "title2026": "Cours de cadres exercice DPS-DAP 1",
+            "date2026": "2026-04-01",
+            "proposedDate2027": "2027-03-31",
+            "start": "19:00",
+            "end": "21:30",
+            "confidence": "Correspondance forte"
+          },
+          "projectionEvidence": {
+            "date2026": "2026-04-01",
+            "shiftDays": 364,
+            "ois": [
+              "Y1",
+              "Y2",
+              "Y3",
+              "Y4"
+            ],
+            "location": "Caserne G1",
+            "theme": "",
+            "sourceLines": [
+              215
+            ]
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "A_POSITIONNER",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "78b2b20e-578f-49be-ac9e-8fc5f95d77bf",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": null
+        }
+      ],
+      "roomProposal": {
+        "id": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4",
+        "date": "2027-03-31",
+        "startsAt": "2027-03-31T19:00",
+        "endsAt": "2027-03-31T21:30",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4",
+        "date": "2027-03-31",
+        "startsAt": "2027-03-31T19:00",
+        "endsAt": "2027-03-31T21:30",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 2,
+      "leftId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:O1:S1",
+      "rightId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:2027-06-22:1900:Y1-Y2-Y3-Y4",
+      "leftLabel": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+      "rightLabel": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+      "date": "2027-06-22",
+      "leftStartsAt": "2027-06-22T19:00",
+      "leftEndsAt": "2027-06-22T22:00",
+      "rightStartsAt": "2027-06-22T19:00",
+      "rightEndsAt": "2027-06-22T22:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:O1:S1",
+          "definitionId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E",
+          "occurrenceId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:O1",
+          "sessionId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:O1:S1",
+          "label": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+          "eventLabel": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+          "startsAt": "2027-06-22T19:00",
+          "endsAt": "2027-06-22T22:00",
+          "statCom": "0120F7",
+          "code": "0120F7.002",
+          "domain": "DPS",
+          "ois": [
+            "C1",
+            "B1",
+            "B2"
+          ],
+          "oiSelections": [
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "publics": [],
+          "responsible": "C for",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 454,
+            "title2026": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+            "date2026": "2026-06-23",
+            "proposedDate2027": "2027-06-22",
+            "start": "19:00",
+            "end": "22:00",
+            "confidence": "Correspondance forte"
+          },
+          "projectionEvidence": {
+            "date2026": "2026-06-23",
+            "shiftDays": 364,
+            "ois": [
+              "C1",
+              "B1",
+              "B2"
+            ],
+            "location": "Caserne G1",
+            "theme": "",
+            "sourceLines": [
+              454
+            ]
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "A_POSITIONNER",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "8e071e63-7de6-470b-a934-e28b71bf2369",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          }
+        },
+        {
+          "id": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:2027-06-22:1900:Y1-Y2-Y3-Y4",
+          "definitionId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E",
+          "occurrenceId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:2027-06-22:1900:Y1-Y2-Y3-Y4",
+          "sessionId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:2027-06-22:1900:Y1-Y2-Y3-Y4:S1",
+          "label": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+          "eventLabel": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+          "startsAt": "2027-06-22T19:00",
+          "endsAt": "2027-06-22T22:00",
+          "statCom": "0130F7",
+          "code": "0130F7.002",
+          "domain": "DPS",
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [],
+          "responsible": "C for",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 455,
+            "title2026": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+            "date2026": "2026-06-23",
+            "proposedDate2027": "2027-06-22",
+            "start": "19:00",
+            "end": "22:00",
+            "confidence": "Correspondance forte"
+          },
+          "projectionEvidence": {
+            "date2026": "2026-06-23",
+            "shiftDays": 364,
+            "ois": [
+              "Y1",
+              "Y2",
+              "Y3",
+              "Y4"
+            ],
+            "location": "Caserne G1",
+            "theme": "",
+            "sourceLines": [
+              455
+            ]
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "A_POSITIONNER",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "b30a69e4-d252-44e0-ae78-0e9023f2662d",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": null
+        }
+      ],
+      "roomProposal": {
+        "id": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:2027-06-22:1900:Y1-Y2-Y3-Y4",
+        "date": "2027-06-22",
+        "startsAt": "2027-06-22T19:00",
+        "endsAt": "2027-06-22T22:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:2027-06-22:1900:Y1-Y2-Y3-Y4",
+        "date": "2027-06-22",
+        "startsAt": "2027-06-22T19:00",
+        "endsAt": "2027-06-22T22:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 3,
+      "leftId": "QV26-FORMATION-CADRES-DAP-2B042598:O2:S1",
+      "rightId": "QV27:EMSEA:SESSION:03",
+      "leftLabel": "Formation cadres DAP",
+      "rightLabel": "Séance État-major",
+      "date": "2027-03-16",
+      "leftStartsAt": "2027-03-16T19:00:00",
+      "leftEndsAt": "2027-03-16T21:30:00",
+      "rightStartsAt": "2027-03-16T18:00:00",
+      "rightEndsAt": "2027-03-16T21:00:00",
+      "roomLabel": "État-major",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "QV26-FORMATION-CADRES-DAP-2B042598:O2:S1",
+          "definitionId": "QV26-FORMATION-CADRES-DAP-2B042598",
+          "occurrenceId": "QV26-FORMATION-CADRES-DAP-2B042598:O2",
+          "sessionId": "QV26-FORMATION-CADRES-DAP-2B042598:O2:S1",
+          "label": "Formation cadres DAP",
+          "eventLabel": "Formation cadres DAP",
+          "themes": [],
+          "startsAt": "2027-03-16T19:00:00",
+          "endsAt": "2027-03-16T21:30:00",
+          "statCom": "0172F7",
+          "code": "0172F7.006",
+          "domain": "DAP",
+          "ois": [
+            "Y1",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y1",
+            "DAP:Y4"
+          ],
+          "publics": [],
+          "publicFreeLabels": [],
+          "responsible": "C DAP",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 152,
+            "title2026": "Formation cadres DAP",
+            "date2026": "2026-03-17",
+            "proposedDate2027": "2027-03-16",
+            "start": "19:00",
+            "end": "21:30",
+            "confidence": "Correspondance exacte activité, Stat.Com et OI"
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "80322ef1-8366-42bf-adc6-1d7a7386d8e3",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          }
+        },
+        {
+          "id": "QV27:EMSEA:SESSION:03",
+          "definitionId": "QV26-SEANCE-EM-ED042EBD",
+          "occurrenceId": "QV27:EMSEA:O03",
+          "sessionId": "QV27:EMSEA:S03",
+          "label": "Séance État-major",
+          "eventLabel": "Séance État-major",
+          "themes": [],
+          "startsAt": "2027-03-16T18:00:00",
+          "endsAt": "2027-03-16T21:00:00",
+          "statCom": "EMSEA",
+          "code": "",
+          "domain": "F0",
+          "ois": [
+            "SDIS"
+          ],
+          "oiSelections": [
+            "SDIS"
+          ],
+          "publics": [
+            "ECH:IV"
+          ],
+          "publicFreeLabels": [],
+          "responsible": "Cdt",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceLine": 51,
+            "date2026": "2026-02-26",
+            "proposedDate2027": "2027-02-25",
+            "start": "18:00",
+            "end": "21:00"
+          },
+          "projectionEvidence": {
+            "date2026": "2026-02-26",
+            "shiftDays": 364,
+            "ois": [],
+            "location": "Caserne G1",
+            "theme": "",
+            "sourceLines": [
+              51
+            ]
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "29dc3b40-8388-45d3-ab26-fb4b16a5e82a",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          }
+        }
+      ],
+      "roomProposal": {
+        "id": "QV26-FORMATION-CADRES-DAP-2B042598:O2:S1",
+        "date": "2027-03-16",
+        "startsAt": "2027-03-16T19:00:00",
+        "endsAt": "2027-03-16T21:30:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "QV26-FORMATION-CADRES-DAP-2B042598:O2:S1",
+        "date": "2027-03-16",
+        "startsAt": "2027-03-16T19:00:00",
+        "endsAt": "2027-03-16T21:30:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 4,
+      "leftId": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E:O6:S1",
+      "rightId": "QV27:PROJ:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54:2027-11-09:1700:Caserne-G1",
+      "leftLabel": "Groupe de travail JSP",
+      "rightLabel": "Table ouverte avec le Commandant",
+      "date": "2027-11-09",
+      "leftStartsAt": "2027-11-09T18:00",
+      "leftEndsAt": "2027-11-09T21:00",
+      "rightStartsAt": "2027-11-09T17:00",
+      "rightEndsAt": "2027-11-09T20:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E:O6:S1",
+          "definitionId": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E",
+          "occurrenceId": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E:O6",
+          "sessionId": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E:O6:S1",
+          "label": "Groupe de travail JSP",
+          "eventLabel": "Groupe de travail JSP G1",
+          "startsAt": "2027-11-09T18:00",
+          "endsAt": "2027-11-09T21:00",
+          "statCom": "010JSP",
+          "code": "010JSP.019",
+          "domain": "JSP",
+          "ois": [
+            "G1"
+          ],
+          "oiSelections": [
+            "JSP:G1"
+          ],
+          "publics": [
+            "JSP:1"
+          ],
+          "responsible": "C JSP",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 789,
+            "title2026": "Groupe de travail JSP",
+            "date2026": "2026-11-10",
+            "proposedDate2027": "2027-11-09",
+            "start": "18:00",
+            "end": "21:00",
+            "confidence": "Correspondance probable"
+          },
+          "projectionEvidence": {
+            "date2026": "2026-11-10",
+            "shiftDays": 364,
+            "ois": [
+              "G1"
+            ],
+            "location": "Caserne G1",
+            "theme": "",
+            "sourceLines": [
+              789
+            ]
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "A_POSITIONNER",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "bed211cd-43bc-47d8-ab5f-0217d6a03884",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          }
+        },
+        {
+          "id": "QV27:PROJ:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54:2027-11-09:1700:Caserne-G1",
+          "definitionId": "QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54",
+          "occurrenceId": "QV27:PROJ:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54:2027-11-09:1700:Caserne-G1",
+          "sessionId": "QV27:PROJ:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54:2027-11-09:1700:Caserne-G1:S1",
+          "label": "Table ouverte avec le Commandant",
+          "eventLabel": "Table ouverte avec le Commandant",
+          "startsAt": "2027-11-09T17:00",
+          "endsAt": "2027-11-09T20:00",
+          "statCom": "070F1",
+          "code": "070F1.001",
+          "domain": "F0",
+          "ois": [
+            "SDIS"
+          ],
+          "oiSelections": [
+            "SDIS"
+          ],
+          "publics": [],
+          "responsible": "Cdt",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 787,
+            "title2026": "Table ouverte avec le Commandant",
+            "date2026": "2026-11-10",
+            "proposedDate2027": "2027-11-09",
+            "start": "17:00",
+            "end": "20:00",
+            "confidence": "Correspondance forte"
+          },
+          "projectionEvidence": {
+            "date2026": "2026-11-10",
+            "shiftDays": 364,
+            "ois": [],
+            "location": "Caserne G1",
+            "theme": "",
+            "sourceLines": [
+              787
+            ]
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "A_POSITIONNER",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "1850c3ae-e80f-4bbd-a318-276fc5caa5a5",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": null
+        }
+      ],
+      "roomProposal": {
+        "id": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E:O6:S1",
+        "date": "2027-11-09",
+        "startsAt": "2027-11-09T18:00",
+        "endsAt": "2027-11-09T21:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E:O6:S1",
+        "date": "2027-11-09",
+        "startsAt": "2027-11-09T18:00",
+        "endsAt": "2027-11-09T21:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 5,
+      "leftId": "qv-source-852",
+      "rightId": "qv-source-861",
+      "leftLabel": "Intégration personnel DPS, phase 1",
+      "rightLabel": "Intégration personnel DAP",
+      "date": "2027-01-11",
+      "leftStartsAt": "2027-01-11T18:00:00",
+      "leftEndsAt": "2027-01-11T22:00:00",
+      "rightStartsAt": "2027-01-11T19:00",
+      "rightEndsAt": "2027-01-11T21:30",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "qv-source-852",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+          "occurrenceId": "qv-source-852:O1",
+          "sessionId": "qv-source-852:S1",
+          "label": "Intégration personnel DPS, phase 1",
+          "eventLabel": "Intégration personnel DPS, phase 1",
+          "themes": [],
+          "startsAt": "2027-01-11T18:00:00",
+          "endsAt": "2027-01-11T22:00:00",
+          "statCom": "070F1",
+          "code": "070F1.004",
+          "domain": "F1",
+          "ois": [
+            "G1",
+            "C1",
+            "B1",
+            "B2"
+          ],
+          "oiSelections": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "publics": [
+            "FOBA:2"
+          ],
+          "publicFreeLabels": [],
+          "responsible": "Chef FOBA",
+          "provenance": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "8ec9e362-36cb-4ad8-a569-5746a7742a70",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "a9d9c2c4-e7a9-400b-ab5f-57086cfa5497",
+          "publishedEventCode": "070F1.007",
+          "publishedEventDate": "2027-01-05",
+          "publishedEventStart": "18:00",
+          "publishedEventEnd": "22:00",
+          "publishedEventOiSelections": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ]
+        },
+        {
+          "id": "qv-source-861",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD",
+          "occurrenceId": "qv-source-861:O1",
+          "sessionId": "qv-source-861:S1",
+          "label": "Intégration personnel DAP",
+          "eventLabel": "Intégration personnel DAP",
+          "themes": [],
+          "startsAt": "2027-01-13T19:00:00",
+          "endsAt": "2027-01-13T21:30:00",
+          "statCom": "070F1",
+          "code": "070F1.011",
+          "domain": "F1",
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [
+            "GEN:SAPEUR-DAP",
+            "FOBA:2"
+          ],
+          "publicFreeLabels": [],
+          "responsible": "Chef DAP",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "5fa234b0-7b55-4c9e-a9d8-bdd4c503a15e",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "fa9e849f-2a34-4e91-ad78-e76460afd088",
+          "publishedEventCode": "070F1.004",
+          "publishedEventDate": "2027-01-11",
+          "publishedEventStart": "19:00",
+          "publishedEventEnd": "21:30",
+          "publishedEventOiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ]
+        }
+      ],
+      "roomProposal": {
+        "id": "qv-source-861",
+        "date": "2027-01-11",
+        "startsAt": "2027-01-11T19:00",
+        "endsAt": "2027-01-11T21:30",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "qv-source-861",
+        "date": "2027-01-11",
+        "startsAt": "2027-01-11T19:00",
+        "endsAt": "2027-01-11T21:30",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 6,
+      "leftId": "qv-source-863",
+      "rightId": "qv-source-864",
+      "leftLabel": "Séance cadres F5/6",
+      "rightLabel": "Séance Direction JSP",
+      "date": "2027-01-13",
+      "leftStartsAt": "2027-01-13T18:00:00",
+      "leftEndsAt": "2027-01-13T20:00:00",
+      "rightStartsAt": "2027-01-13T18:30:00",
+      "rightEndsAt": "2027-01-13T20:30:00",
+      "roomLabel": "État-major",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "qv-source-863",
+          "definitionId": "QV26-SEANCE-CADRES-F5-6-A6B9A14F",
+          "occurrenceId": "qv-source-863:O1",
+          "sessionId": "qv-source-863:S1",
+          "label": "Séance cadres F5/6",
+          "eventLabel": "Séance cadres F5/6",
+          "themes": [],
+          "startsAt": "2027-01-13T18:00:00",
+          "endsAt": "2027-01-13T20:00:00",
+          "statCom": "070F56",
+          "code": "070F56.003",
+          "domain": "F6",
+          "ois": [
+            "SDIS"
+          ],
+          "oiSelections": [
+            "SDIS"
+          ],
+          "publics": [],
+          "publicFreeLabels": [],
+          "responsible": "Of communication",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "da6048a7-b229-454f-a0db-3a87cc201384",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "7e6d9c59-4d07-4a4b-a1dc-617c2b2bbdda",
+          "publishedEventCode": "070F56.002",
+          "publishedEventDate": "2027-01-13",
+          "publishedEventStart": "18:00",
+          "publishedEventEnd": "20:00",
+          "publishedEventOiSelections": [
+            "DPS:G1",
+            "DPS:B1"
+          ]
+        },
+        {
+          "id": "qv-source-864",
+          "definitionId": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+          "occurrenceId": "qv-source-864:O1",
+          "sessionId": "qv-source-864:S1",
+          "label": "Séance Direction JSP",
+          "eventLabel": "Séance Direction JSP",
+          "themes": [],
+          "startsAt": "2027-01-13T18:30:00",
+          "endsAt": "2027-01-13T20:30:00",
+          "statCom": "010JSP",
+          "code": "010JSP.021",
+          "domain": "JSP",
+          "ois": [
+            "G1",
+            "C1",
+            "B1"
+          ],
+          "oiSelections": [
+            "JSP:G1",
+            "JSP:C1",
+            "JSP:B1"
+          ],
+          "publics": [
+            "JSP:1"
+          ],
+          "publicFreeLabels": [],
+          "responsible": "Chef JSP",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "cc4e8080-1f8b-4167-adf0-97f31383377f",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "854cc5b3-ae5b-4ec4-a875-64d79722405d",
+          "publishedEventCode": "010JSP.003",
+          "publishedEventDate": "2027-01-13",
+          "publishedEventStart": "18:30",
+          "publishedEventEnd": "20:30",
+          "publishedEventOiSelections": [
+            "JSP:G1",
+            "JSP:C1",
+            "JSP:B1"
+          ]
+        }
+      ],
+      "roomProposal": {
+        "id": "qv-source-864",
+        "date": "2027-01-13",
+        "startsAt": "2027-01-13T18:30:00",
+        "endsAt": "2027-01-13T20:30:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "qv-source-864",
+        "date": "2027-01-13",
+        "startsAt": "2027-01-13T18:30:00",
+        "endsAt": "2027-01-13T20:30:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 7,
+      "leftId": "qv-source-866",
+      "rightId": "qv-source-867",
+      "leftLabel": "Séance de préparation concours de la FVSP",
+      "rightLabel": "Cours de cadres moniteurs AUTO",
+      "date": "2027-01-18",
+      "leftStartsAt": "2027-01-18T18:00",
+      "leftEndsAt": "2027-01-18T19:00",
+      "rightStartsAt": "2027-01-18T18:30",
+      "rightEndsAt": "2027-01-18T20:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "qv-source-866",
+          "definitionId": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+          "occurrenceId": "qv-source-866:O1",
+          "sessionId": "qv-source-866:S1",
+          "label": "Séance de préparation concours de la FVSP",
+          "eventLabel": "Séance de préparation concours de la FVSP",
+          "startsAt": "2027-01-18T18:00",
+          "endsAt": "2027-01-18T19:00",
+          "statCom": "CONCOUR",
+          "code": "CONCOUR.003",
+          "domain": "F3",
+          "ois": [
+            "B1",
+            "B2",
+            "C1",
+            "G1",
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DPS:B1",
+            "DPS:B2",
+            "DPS:C1",
+            "DPS:G1",
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [
+            "FOBA:2",
+            "JSP:1"
+          ],
+          "responsible": "C op",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "67883312-4005-4e25-aa39-3bf98f48d7cc",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "354cffbc-218f-4d7d-ade5-d14e760a95dc",
+          "publishedEventCode": "CONCOUR.001",
+          "publishedEventDate": "2027-01-18",
+          "publishedEventStart": "18:00",
+          "publishedEventEnd": "19:00",
+          "publishedEventOiSelections": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2",
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ]
+        },
+        {
+          "id": "qv-source-867",
+          "definitionId": "QV26-COURS-DE-CADRES-MONITEURS-AUTO-B76239E8",
+          "occurrenceId": "qv-source-867:O1",
+          "sessionId": "qv-source-867:S1",
+          "label": "Cours de cadres moniteurs AUTO",
+          "eventLabel": "Cours de cadres moniteurs AUTO",
+          "startsAt": "2027-01-18T18:30",
+          "endsAt": "2027-01-18T20:00",
+          "statCom": "0152F7",
+          "code": "0152F7.001",
+          "domain": "AUTO",
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [
+            "AUTO:1"
+          ],
+          "responsible": "Of auto",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "63dffc9a-f645-4be3-a469-de4f819627aa",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "f04f50b5-ed70-44e3-a35f-239cdb22ddb5",
+          "publishedEventCode": "0152F7.001",
+          "publishedEventDate": "2027-01-18",
+          "publishedEventStart": "18:30",
+          "publishedEventEnd": "20:00",
+          "publishedEventOiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ]
+        }
+      ],
+      "roomProposal": {
+        "id": "qv-source-866",
+        "date": "2027-01-18",
+        "startsAt": "2027-01-18T18:00",
+        "endsAt": "2027-01-18T19:00",
+        "roomId": "ec1f98aa-bf7f-4724-ad51-6708bef358ab",
+        "room": "Flashover",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "qv-source-866",
+        "date": "2027-01-18",
+        "startsAt": "2027-01-18T18:00",
+        "endsAt": "2027-01-18T19:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [
+          {
+            "leftId": "TRIAL:qv-source-866",
+            "rightId": "QV27:MANUAL:b5281e20-3296-4199-9b9c-1f3e1b6e26f0",
+            "leftLabel": "Séance de préparation concours de la FVSP",
+            "rightLabel": "Formation CRIMSON opérateurs et chefs VPC",
+            "date": "2027-01-18",
+            "leftStartsAt": "2027-01-18T18:00",
+            "leftEndsAt": "2027-01-18T19:00",
+            "rightStartsAt": "2027-01-18T18:00:00",
+            "rightEndsAt": "2027-01-18T21:00:00",
+            "roomLabel": "Oxygène",
+            "causes": [
+              {
+                "code": "ROOM_CONFLICT",
+                "level": "BLOCKING",
+                "kind": "OVERLAP",
+                "minimumGapMinutes": 30
+              }
+            ],
+            "blocking": true
+          }
+        ],
+        "available": false,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 8,
+      "leftId": "qv-source-866",
+      "rightId": "qv-source-868",
+      "leftLabel": "Séance de préparation concours de la FVSP",
+      "rightLabel": "Cours de cadres moniteurs AUTO",
+      "date": "2027-01-18",
+      "leftStartsAt": "2027-01-18T18:00",
+      "leftEndsAt": "2027-01-18T19:00",
+      "rightStartsAt": "2027-01-18T19:00",
+      "rightEndsAt": "2027-01-18T21:30",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "TURNAROUND",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "qv-source-866",
+          "definitionId": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+          "occurrenceId": "qv-source-866:O1",
+          "sessionId": "qv-source-866:S1",
+          "label": "Séance de préparation concours de la FVSP",
+          "eventLabel": "Séance de préparation concours de la FVSP",
+          "startsAt": "2027-01-18T18:00",
+          "endsAt": "2027-01-18T19:00",
+          "statCom": "CONCOUR",
+          "code": "CONCOUR.003",
+          "domain": "F3",
+          "ois": [
+            "B1",
+            "B2",
+            "C1",
+            "G1",
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DPS:B1",
+            "DPS:B2",
+            "DPS:C1",
+            "DPS:G1",
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [
+            "FOBA:2",
+            "JSP:1"
+          ],
+          "responsible": "C op",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "67883312-4005-4e25-aa39-3bf98f48d7cc",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "354cffbc-218f-4d7d-ade5-d14e760a95dc",
+          "publishedEventCode": "CONCOUR.001",
+          "publishedEventDate": "2027-01-18",
+          "publishedEventStart": "18:00",
+          "publishedEventEnd": "19:00",
+          "publishedEventOiSelections": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2",
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ]
+        },
+        {
+          "id": "qv-source-868",
+          "definitionId": "QV26-COURS-DE-CADRES-MONITEURS-AUTO-B76239E8",
+          "occurrenceId": "qv-source-868:O1",
+          "sessionId": "qv-source-868:S1",
+          "label": "Cours de cadres moniteurs AUTO",
+          "eventLabel": "Cours de cadres moniteurs AUTO",
+          "startsAt": "2027-01-18T19:00",
+          "endsAt": "2027-01-18T21:30",
+          "statCom": "0152F7",
+          "code": "0152F7.001",
+          "domain": "AUTO",
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [
+            "AUTO:1"
+          ],
+          "responsible": "Of auto",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "cb76b034-dbd0-4f95-a00c-8636f08769bd",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "0b354df4-733a-4852-a83d-09b266f79d41",
+          "publishedEventCode": "0152F7.002",
+          "publishedEventDate": "2027-01-18",
+          "publishedEventStart": "19:00",
+          "publishedEventEnd": "21:30",
+          "publishedEventOiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ]
+        }
+      ],
+      "roomProposal": {
+        "id": "qv-source-866",
+        "date": "2027-01-18",
+        "startsAt": "2027-01-18T18:00",
+        "endsAt": "2027-01-18T19:00",
+        "roomId": "ec1f98aa-bf7f-4724-ad51-6708bef358ab",
+        "room": "Flashover",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "qv-source-866",
+        "date": "2027-01-18",
+        "startsAt": "2027-01-18T18:00",
+        "endsAt": "2027-01-18T19:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [
+          {
+            "leftId": "TRIAL:qv-source-866",
+            "rightId": "QV27:MANUAL:b5281e20-3296-4199-9b9c-1f3e1b6e26f0",
+            "leftLabel": "Séance de préparation concours de la FVSP",
+            "rightLabel": "Formation CRIMSON opérateurs et chefs VPC",
+            "date": "2027-01-18",
+            "leftStartsAt": "2027-01-18T18:00",
+            "leftEndsAt": "2027-01-18T19:00",
+            "rightStartsAt": "2027-01-18T18:00:00",
+            "rightEndsAt": "2027-01-18T21:00:00",
+            "roomLabel": "Oxygène",
+            "causes": [
+              {
+                "code": "ROOM_CONFLICT",
+                "level": "BLOCKING",
+                "kind": "OVERLAP",
+                "minimumGapMinutes": 30
+              }
+            ],
+            "blocking": true
+          }
+        ],
+        "available": false,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 9,
+      "leftId": "qv-source-867",
+      "rightId": "qv-source-868",
+      "leftLabel": "Cours de cadres moniteurs AUTO",
+      "rightLabel": "Cours de cadres moniteurs AUTO",
+      "date": "2027-01-18",
+      "leftStartsAt": "2027-01-18T18:30",
+      "leftEndsAt": "2027-01-18T20:00",
+      "rightStartsAt": "2027-01-18T19:00",
+      "rightEndsAt": "2027-01-18T21:30",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "qv-source-867",
+          "definitionId": "QV26-COURS-DE-CADRES-MONITEURS-AUTO-B76239E8",
+          "occurrenceId": "qv-source-867:O1",
+          "sessionId": "qv-source-867:S1",
+          "label": "Cours de cadres moniteurs AUTO",
+          "eventLabel": "Cours de cadres moniteurs AUTO",
+          "startsAt": "2027-01-18T18:30",
+          "endsAt": "2027-01-18T20:00",
+          "statCom": "0152F7",
+          "code": "0152F7.001",
+          "domain": "AUTO",
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [
+            "AUTO:1"
+          ],
+          "responsible": "Of auto",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "63dffc9a-f645-4be3-a469-de4f819627aa",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "f04f50b5-ed70-44e3-a35f-239cdb22ddb5",
+          "publishedEventCode": "0152F7.001",
+          "publishedEventDate": "2027-01-18",
+          "publishedEventStart": "18:30",
+          "publishedEventEnd": "20:00",
+          "publishedEventOiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ]
+        },
+        {
+          "id": "qv-source-868",
+          "definitionId": "QV26-COURS-DE-CADRES-MONITEURS-AUTO-B76239E8",
+          "occurrenceId": "qv-source-868:O1",
+          "sessionId": "qv-source-868:S1",
+          "label": "Cours de cadres moniteurs AUTO",
+          "eventLabel": "Cours de cadres moniteurs AUTO",
+          "startsAt": "2027-01-18T19:00",
+          "endsAt": "2027-01-18T21:30",
+          "statCom": "0152F7",
+          "code": "0152F7.001",
+          "domain": "AUTO",
+          "ois": [
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [
+            "AUTO:1"
+          ],
+          "responsible": "Of auto",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "cb76b034-dbd0-4f95-a00c-8636f08769bd",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "0b354df4-733a-4852-a83d-09b266f79d41",
+          "publishedEventCode": "0152F7.002",
+          "publishedEventDate": "2027-01-18",
+          "publishedEventStart": "19:00",
+          "publishedEventEnd": "21:30",
+          "publishedEventOiSelections": [
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ]
+        }
+      ],
+      "roomProposal": {
+        "id": "qv-source-868",
+        "date": "2027-01-18",
+        "startsAt": "2027-01-18T19:00",
+        "endsAt": "2027-01-18T21:30",
+        "roomId": "0ef8e194-59dc-4581-8376-76193b8ec96a",
+        "room": "Backdraft",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "qv-source-868",
+        "date": "2027-01-18",
+        "startsAt": "2027-01-18T19:00",
+        "endsAt": "2027-01-18T21:30",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [
+          {
+            "leftId": "TRIAL:qv-source-868",
+            "rightId": "QV27:MANUAL:b5281e20-3296-4199-9b9c-1f3e1b6e26f0",
+            "leftLabel": "Cours de cadres moniteurs AUTO",
+            "rightLabel": "Formation CRIMSON opérateurs et chefs VPC",
+            "date": "2027-01-18",
+            "leftStartsAt": "2027-01-18T19:00",
+            "leftEndsAt": "2027-01-18T21:30",
+            "rightStartsAt": "2027-01-18T18:00:00",
+            "rightEndsAt": "2027-01-18T21:00:00",
+            "roomLabel": "Oxygène",
+            "causes": [
+              {
+                "code": "ROOM_CONFLICT",
+                "level": "BLOCKING",
+                "kind": "OVERLAP",
+                "minimumGapMinutes": 30
+              }
+            ],
+            "blocking": true
+          }
+        ],
+        "available": false,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 10,
+      "leftId": "qv-source-877",
+      "rightId": "qv-source-879",
+      "leftLabel": "Cours de cadres Formateurs cursus MEA",
+      "rightLabel": "Séance responsables MAT SDIS",
+      "date": "2027-01-25",
+      "leftStartsAt": "2027-01-25T17:00",
+      "leftEndsAt": "2027-01-25T19:00",
+      "rightStartsAt": "2027-01-25T18:30",
+      "rightEndsAt": "2027-01-25T21:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "qv-source-877",
+          "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361",
+          "occurrenceId": "qv-source-877:O1",
+          "sessionId": "qv-source-877:S1",
+          "label": "Cours de cadres Formateurs cursus MEA",
+          "eventLabel": "Cours de cadres Formateurs cursus MEA",
+          "startsAt": "2027-01-25T17:00",
+          "endsAt": "2027-01-25T19:00",
+          "statCom": "0151F7",
+          "code": "0151F7.001",
+          "domain": "AUTO",
+          "ois": [],
+          "oiSelections": [],
+          "publics": [
+            "AUTO:1",
+            "AUTO:5"
+          ],
+          "responsible": "Of auto",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "2de46fd8-0ad2-433c-a109-7cc7a7f52d50",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "25cb492d-ae67-4186-ae4d-e3e864d2431d",
+          "publishedEventCode": "0151F7.001",
+          "publishedEventDate": "2027-01-25",
+          "publishedEventStart": "17:00",
+          "publishedEventEnd": "19:00",
+          "publishedEventOiSelections": []
+        },
+        {
+          "id": "qv-source-879",
+          "definitionId": "QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6",
+          "occurrenceId": "qv-source-879:O1",
+          "sessionId": "qv-source-879:S1",
+          "label": "Séance responsables MAT SDIS",
+          "eventLabel": "Séance responsables MAT SDIS",
+          "startsAt": "2027-01-25T18:30",
+          "endsAt": "2027-01-25T21:00",
+          "statCom": "070F4",
+          "code": "070F4.002",
+          "domain": "F4",
+          "ois": [
+            "B1",
+            "B2",
+            "C1",
+            "G1",
+            "Y1",
+            "Y2",
+            "Y3",
+            "Y4"
+          ],
+          "oiSelections": [
+            "DPS:B1",
+            "DPS:B2",
+            "DPS:C1",
+            "DPS:G1",
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ],
+          "publics": [],
+          "responsible": "C log",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "8882dcd8-d399-4091-abed-893f3bedcf75",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "881c7c57-1c06-4e16-a69f-479309312a19",
+          "publishedEventCode": "070F4.001",
+          "publishedEventDate": "2027-01-25",
+          "publishedEventStart": "18:30",
+          "publishedEventEnd": "21:00",
+          "publishedEventOiSelections": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2",
+            "DAP:Y1",
+            "DAP:Y2",
+            "DAP:Y3",
+            "DAP:Y4"
+          ]
+        }
+      ],
+      "roomProposal": {
+        "id": "qv-source-879",
+        "date": "2027-01-25",
+        "startsAt": "2027-01-25T18:30",
+        "endsAt": "2027-01-25T21:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "qv-source-879",
+        "date": "2027-01-25",
+        "startsAt": "2027-01-25T18:30",
+        "endsAt": "2027-01-25T21:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 11,
+      "leftId": "qv-source-896",
+      "rightId": "qv-source-905",
+      "leftLabel": "Cours de cadres Formateurs MEA 1",
+      "rightLabel": "Cours de cadres PR",
+      "date": "2027-02-01",
+      "leftStartsAt": "2027-02-01T17:30",
+      "leftEndsAt": "2027-02-01T20:00",
+      "rightStartsAt": "2027-02-01T18:30:00",
+      "rightEndsAt": "2027-02-01T21:00:00",
+      "roomLabel": "Vulcain",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "qv-source-896",
+          "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684",
+          "occurrenceId": "qv-source-896:O1",
+          "sessionId": "qv-source-896:S1",
+          "label": "Cours de cadres Formateurs MEA 1",
+          "eventLabel": "Cours de cadres Formateurs MEA 1",
+          "startsAt": "2027-02-01T17:30",
+          "endsAt": "2027-02-01T20:00",
+          "statCom": "0151F7",
+          "code": "0151F7.002",
+          "domain": "AUTO",
+          "ois": [],
+          "oiSelections": [],
+          "publics": [
+            "AUTO:1",
+            "AUTO:5"
+          ],
+          "responsible": "Of auto",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "6d7329d9-e390-4afe-a0f3-d92654db806f",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "279111b9-184c-4ae7-ab39-a082e1d559d8",
+          "publishedEventCode": "0151F7.003",
+          "publishedEventDate": "2027-02-01",
+          "publishedEventStart": "17:30",
+          "publishedEventEnd": "20:00",
+          "publishedEventOiSelections": []
+        },
+        {
+          "id": "qv-source-905",
+          "definitionId": "QV26-COURS-DE-CADRES-PR-3817D3C2",
+          "occurrenceId": "qv-source-905:O1",
+          "sessionId": "qv-source-905:S1",
+          "label": "Cours de cadres PR",
+          "eventLabel": "Cours de cadres PR",
+          "themes": [
+            "Kick-off"
+          ],
+          "startsAt": "2027-02-01T18:30:00",
+          "endsAt": "2027-02-01T21:00:00",
+          "statCom": "011PR",
+          "code": "011PR.001",
+          "domain": "PR",
+          "ois": [
+            "G1",
+            "C1",
+            "B1",
+            "B2"
+          ],
+          "oiSelections": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "publics": [
+            "PR:FORMATEUR-PR"
+          ],
+          "publicFreeLabels": [],
+          "responsible": "C PR",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "4e77b520-9353-44cb-a9b2-febf6d87202b",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "c59190d8-412a-4566-a30d-7b4ea4d6b4b1",
+          "publishedEventCode": "011PR.002",
+          "publishedEventDate": "2027-02-03",
+          "publishedEventStart": "18:30",
+          "publishedEventEnd": "21:00",
+          "publishedEventOiSelections": []
+        }
+      ],
+      "roomProposal": {
+        "id": "qv-source-905",
+        "date": "2027-02-01",
+        "startsAt": "2027-02-01T18:30:00",
+        "endsAt": "2027-02-01T21:00:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "qv-source-905",
+        "date": "2027-02-01",
+        "startsAt": "2027-02-01T18:30:00",
+        "endsAt": "2027-02-01T21:00:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    },
+    {
+      "pair": 12,
+      "leftId": "qv-source-918",
+      "rightId": "qv-source-921",
+      "leftLabel": "Séance Direction JSP",
+      "rightLabel": "Séance État-major",
+      "date": "2027-02-16",
+      "leftStartsAt": "2027-02-16T18:30:00",
+      "leftEndsAt": "2027-02-16T20:30:00",
+      "rightStartsAt": "2027-02-16T18:00:00",
+      "rightEndsAt": "2027-02-16T21:00:00",
+      "roomLabel": "État-major",
+      "causes": [
+        {
+          "code": "ROOM_CONFLICT",
+          "level": "BLOCKING",
+          "kind": "OVERLAP",
+          "minimumGapMinutes": 30
+        }
+      ],
+      "blocking": true,
+      "items": [
+        {
+          "id": "qv-source-918",
+          "definitionId": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+          "occurrenceId": "qv-source-918:O1",
+          "sessionId": "qv-source-918:S1",
+          "label": "Séance Direction JSP",
+          "eventLabel": "Séance Direction JSP",
+          "themes": [],
+          "startsAt": "2027-02-16T18:30:00",
+          "endsAt": "2027-02-16T20:30:00",
+          "statCom": "010JSP",
+          "code": "010JSP.021",
+          "domain": "JSP",
+          "ois": [
+            "G1",
+            "C1",
+            "B1"
+          ],
+          "oiSelections": [
+            "JSP:G1",
+            "JSP:C1",
+            "JSP:B1"
+          ],
+          "publics": [
+            "JSP:1"
+          ],
+          "publicFreeLabels": [],
+          "responsible": "Chef JSP",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "f021e811-bcb1-4184-ab8e-9322b6c6229b",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "25513aff-3f71-4870-a51c-3a4513b8b408",
+          "publishedEventCode": "010JSP.006",
+          "publishedEventDate": "2027-02-16",
+          "publishedEventStart": "18:30",
+          "publishedEventEnd": "20:30",
+          "publishedEventOiSelections": [
+            "JSP:G1",
+            "JSP:C1",
+            "JSP:B1"
+          ]
+        },
+        {
+          "id": "qv-source-921",
+          "definitionId": "QV26-SEANCE-EM-ED042EBD",
+          "occurrenceId": "QV27:EMSEA:O02",
+          "sessionId": "QV27:EMSEA:S02",
+          "label": "Séance État-major",
+          "eventLabel": "Séance État-major",
+          "themes": [],
+          "startsAt": "2027-02-16T18:00:00",
+          "endsAt": "2027-02-16T21:00:00",
+          "statCom": "EMSEA",
+          "code": "",
+          "domain": "F0",
+          "ois": [
+            "SDIS"
+          ],
+          "oiSelections": [
+            "SDIS"
+          ],
+          "publics": [
+            "ECH:IV"
+          ],
+          "publicFreeLabels": [],
+          "responsible": "Cdt",
+          "provenance": "SOURCE_2027_EXPLICIT+MOA_CANONICAL_EMSEA",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "1f6552f4-0393-492e-a18e-0f8b884d2813",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+          "publishedEventCode": null,
+          "publishedEventDate": "2027-02-24",
+          "publishedEventStart": "18:00",
+          "publishedEventEnd": "21:00",
+          "publishedEventOiSelections": []
+        }
+      ],
+      "roomProposal": {
+        "id": "qv-source-918",
+        "date": "2027-02-16",
+        "startsAt": "2027-02-16T18:30:00",
+        "endsAt": "2027-02-16T20:30:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "oxygenTrial": {
+        "id": "qv-source-918",
+        "date": "2027-02-16",
+        "startsAt": "2027-02-16T18:30:00",
+        "endsAt": "2027-02-16T20:30:00",
+        "roomId": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+        "room": "Oxygène",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      }
+    }
+  ],
+  "jsp": [
+    {
+      "id": "qv-source-918",
+      "date": "2027-02-17",
+      "time": "18:30–20:30",
+      "status": "PROPOSITION À VALIDER",
+      "assessment": {
+        "date": "2027-02-17",
+        "weekday": "WEDNESDAY",
+        "dayClass": "AUTORISE",
+        "reasons": [
+          "Mercredi: Possible."
+        ],
+        "rank": 1
+      },
+      "availability": {
+        "id": "qv-source-918",
+        "date": "2027-02-17",
+        "startsAt": "2027-02-17T18:30",
+        "endsAt": "2027-02-17T20:30",
+        "roomId": "1dec6678-53f4-4e11-82bd-9d93218b32b1",
+        "room": "État-major",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "rule": "PLANIF-JSP",
+      "recurrence": "QV-PROJ-001 + monthly explicit session supersedes projection, same month preserved",
+      "monthPeers": [],
+      "personnelConflicts": [],
+      "dayActivities": [
+        {
+          "id": "qv-source-919",
+          "definitionId": "QV26-COURS-DE-CADRES-FORMATION-ANNUELLE-GRUTIERS-5152ABB1",
+          "occurrenceId": "qv-source-919:O1",
+          "sessionId": "qv-source-919:S1",
+          "label": "Cours de cadres formation annuelle Grutiers",
+          "eventLabel": "Cours de cadres formation annuelle Grutiers",
+          "startsAt": "2027-02-17T17:30",
+          "endsAt": "2027-02-17T20:00",
+          "statCom": "0154F7",
+          "code": "0154F7.001",
+          "domain": "AUTO",
+          "ois": [],
+          "oiSelections": [],
+          "publics": [
+            "AUTO:1"
+          ],
+          "responsible": "Of auto",
+          "provenance": "SOURCE_2027_EXPLICIT",
+          "status": "VALIDATED",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "4e90ef65-cb35-41fe-a0e8-570a3f9381eb",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          },
+          "publishedEventId": "6e4cb21b-0758-4b0b-a448-321225e19c18",
+          "publishedEventCode": "0154F7.001",
+          "publishedEventDate": "2027-02-17",
+          "publishedEventStart": "17:30",
+          "publishedEventEnd": "20:00",
+          "publishedEventOiSelections": []
+        }
+      ],
+      "limitations": [
+        "Fonctions démontrées uniquement, aucune affectation nominative inventée",
+        "Disponibilité à recontrôler lors de la saisie"
+      ],
+      "automaticMove": false
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-06-22:1830:Caserne-G1",
+      "date": "2027-06-23",
+      "time": "18:30–20:30",
+      "status": "PROPOSITION À VALIDER",
+      "assessment": {
+        "date": "2027-06-23",
+        "weekday": "WEDNESDAY",
+        "dayClass": "AUTORISE",
+        "reasons": [
+          "Mercredi: Possible."
+        ],
+        "rank": 1
+      },
+      "availability": {
+        "id": "QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-06-22:1830:Caserne-G1",
+        "date": "2027-06-23",
+        "startsAt": "2027-06-23T18:30",
+        "endsAt": "2027-06-23T20:30",
+        "roomId": "1dec6678-53f4-4e11-82bd-9d93218b32b1",
+        "room": "État-major",
+        "conflicts": [],
+        "available": true,
+        "minimumGapMinutes": 30,
+        "sourceCount": 122
+      },
+      "rule": "PLANIF-JSP",
+      "recurrence": "QV-PROJ-001 + monthly explicit session supersedes projection, same month preserved",
+      "monthPeers": [],
+      "personnelConflicts": [],
+      "dayActivities": [
+        {
+          "id": "QV26-EXERCICE-FOBA-5-63606E72:O1:S1",
+          "definitionId": "QV26-EXERCICE-FOBA-5-63606E72",
+          "occurrenceId": "QV26-EXERCICE-FOBA-5-63606E72:O1",
+          "sessionId": "QV26-EXERCICE-FOBA-5-63606E72:O1:S1",
+          "label": "Exercice FOBA 5",
+          "eventLabel": "Exercice FOBA 5",
+          "themes": [],
+          "startsAt": "2027-06-23T18:30",
+          "endsAt": "2027-06-23T21:30",
+          "statCom": "010FOBA",
+          "code": "010FOBA.009",
+          "domain": "FOBA",
+          "ois": [],
+          "oiSelections": [],
+          "publics": [
+            "FOBA:1",
+            "FOBA:2"
+          ],
+          "responsible": "C FOBA",
+          "historicalProposal": {
+            "source": "HISTORICAL_2026",
+            "sourceWorkbook": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+            "sourceSheet": "QUO VADIS '26",
+            "sourceLine": 456,
+            "title2026": "Exercice FOBA 5",
+            "date2026": "2026-06-24",
+            "proposedDate2027": "2027-06-23",
+            "start": "18:30",
+            "end": "21:30",
+            "confidence": "Correspondance forte"
+          },
+          "provenance": "RECURRENCE_RULE+HISTORICAL_2026",
+          "status": "A_POSITIONNER",
+          "external": false,
+          "humanDecision": false,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "52bbbae5-65b1-40de-a295-58e8fe390a50",
+            "updatedAt": "2026-10-06T05:00:36.865Z"
+          }
+        },
+        {
+          "id": "QV27:MANUAL:629ee483-43fd-42c3-ac00-c37e21916d15",
+          "definitionId": null,
+          "label": "Formation CFF",
+          "eventLabel": "Formation CFF",
+          "themes": [
+            "Sensibilisation et moyens d'extinction"
+          ],
+          "startsAt": "2027-06-23T13:00:00",
+          "endsAt": "2027-06-23T17:00:00",
+          "statCom": "",
+          "businessCode": "",
+          "domain": "F5",
+          "ois": [],
+          "oiSelections": [],
+          "publics": [],
+          "publicFreeLabels": [
+            "Collaborateur CFF"
+          ],
+          "responsible": "Centre de formation AfS",
+          "provenance": "MANUAL_2027",
+          "status": "PLANIFIE",
+          "external": false,
+          "humanDecision": true,
+          "preparation": {
+            "type": "OBLIGATION",
+            "id": "23d5ad2e-a73c-4fd9-9933-ab2963a66289",
+            "updatedAt": "2026-10-14T10:29:40.646Z"
+          }
+        }
+      ],
+      "limitations": [
+        "Fonctions démontrées uniquement, aucune affectation nominative inventée",
+        "Disponibilité à recontrôler lors de la saisie"
+      ],
+      "automaticMove": false
+    }
+  ],
+  "sources": [
+    {
+      "sourceLine": 43,
+      "date": "2026-02-24",
+      "start": "18:30",
+      "end": "20:30",
+      "code": "010JSP.43",
+      "title": "Séance Direction JSP",
+      "personnel": "C for | C JSP | C site JSP | Resp for JSP",
+      "location": "Caserne G1",
+      "domain": "",
+      "domainF7": "F7",
+      "subDomain": "JSP",
+      "qui": "",
+      "responsible": "C JSP",
+      "room": "Salle EM",
+      "statCom": "010JSP",
+      "ois": []
+    },
+    {
+      "sourceLine": 152,
+      "date": "2026-03-17",
+      "start": "19:00",
+      "end": "21:30",
+      "code": "0172F7DAP.152",
+      "title": "Formation cadres DAP",
+      "personnel": "Cdt | C for | C DAP | Échelons I à III  Y1, Y4",
+      "location": "Caserne G1",
+      "domain": "DAP",
+      "domainF7": "F7",
+      "subDomain": "FOCA",
+      "qui": "DAP",
+      "responsible": "C DAP",
+      "room": "Salle Vulcain",
+      "statCom": "0172F7",
+      "ois": [
+        "Y1",
+        "Y4"
+      ]
+    },
+    {
+      "sourceLine": 214,
+      "date": "2026-04-01",
+      "start": "19:00",
+      "end": "21:30",
+      "code": "0120F7DPS.214",
+      "title": "Cours de cadres exercice DPS-DAP 1",
+      "personnel": "C for | C site | C sct | R C sct",
+      "location": "Caserne G1",
+      "domain": "DPS",
+      "domainF7": "F7",
+      "subDomain": "FOCO",
+      "qui": "DPS",
+      "responsible": "C for",
+      "room": "Salle Vulcain",
+      "statCom": "0120F7",
+      "ois": [
+        "C1",
+        "B1",
+        "B2"
+      ]
+    },
+    {
+      "sourceLine": 215,
+      "date": "2026-04-01",
+      "start": "19:00",
+      "end": "21:30",
+      "code": "0130F7DAP.215",
+      "title": "Cours de cadres exercice DPS-DAP 1",
+      "personnel": "C for | C site | C sct | R C sct",
+      "location": "Caserne G1",
+      "domain": "DAP",
+      "domainF7": "F7",
+      "subDomain": "FOCO",
+      "qui": "DAP",
+      "responsible": "C for",
+      "room": "Salle Vulcain",
+      "statCom": "0130F7",
+      "ois": [
+        "Y1",
+        "Y2",
+        "Y3",
+        "Y4"
+      ]
+    },
+    {
+      "sourceLine": 453,
+      "date": "2026-06-23",
+      "start": "18:30",
+      "end": "20:30",
+      "code": "010JSP.453",
+      "title": "Séance Direction JSP",
+      "personnel": "C for | C JSP | C site JSP | Resp for JSP",
+      "location": "Caserne G1",
+      "domain": "",
+      "domainF7": "F7",
+      "subDomain": "JSP",
+      "qui": "",
+      "responsible": "C JSP",
+      "room": "Salle EM",
+      "statCom": "010JSP",
+      "ois": []
+    },
+    {
+      "sourceLine": 454,
+      "date": "2026-06-23",
+      "start": "19:00",
+      "end": "22:00",
+      "code": "0120F7DPS.454",
+      "title": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+      "personnel": "C for | C site | C sct | R C sct",
+      "location": "Caserne G1",
+      "domain": "DPS",
+      "domainF7": "F7",
+      "subDomain": "FOCO",
+      "qui": "DPS",
+      "responsible": "C for",
+      "room": "Salle Vulcain",
+      "statCom": "0120F7",
+      "ois": [
+        "C1",
+        "B1",
+        "B2"
+      ]
+    },
+    {
+      "sourceLine": 455,
+      "date": "2026-06-23",
+      "start": "19:00",
+      "end": "22:00",
+      "code": "0130F7DAP.455",
+      "title": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+      "personnel": "C DAP | C sct",
+      "location": "Caserne G1",
+      "domain": "DAP",
+      "domainF7": "F7",
+      "subDomain": "FOCO",
+      "qui": "DAP",
+      "responsible": "C for",
+      "room": "Salle Vulcain",
+      "statCom": "0130F7",
+      "ois": [
+        "Y1",
+        "Y2",
+        "Y3",
+        "Y4"
+      ]
+    },
+    {
+      "sourceLine": 456,
+      "date": "2026-06-24",
+      "start": "18:30",
+      "end": "21:30",
+      "code": "010FOBA.456",
+      "title": "Exercice FOBA 5",
+      "personnel": "C FOBA | cadres FOBA | FOBA 1 | FOBA 2",
+      "location": "Caserne G1",
+      "domain": "",
+      "domainF7": "F7",
+      "subDomain": "FOBA",
+      "qui": "",
+      "responsible": "C FOBA",
+      "room": "",
+      "statCom": "010FOBA",
+      "ois": []
+    },
+    {
+      "sourceLine": 864,
+      "date": "2027-01-13",
+      "start": "18:30",
+      "end": "20:30",
+      "code": "010JSP.864",
+      "title": "Séance Direction JSP",
+      "personnel": "C for | C JSP | C site JSP | Resp for JSP",
+      "location": "Caserne G1",
+      "domain": "",
+      "domainF7": "F7",
+      "subDomain": "JSP",
+      "qui": "",
+      "responsible": "C JSP",
+      "room": "Salle EM",
+      "statCom": "010JSP",
+      "ois": []
+    },
+    {
+      "sourceLine": 867,
+      "date": "2027-01-18",
+      "start": "18:30",
+      "end": "20:00",
+      "code": "0152F7PL/VL.867",
+      "title": "Cours de cadres moniteurs AUTO",
+      "personnel": "Of auto | Moniteurs conduite DAP",
+      "location": "Caserne G1",
+      "domain": "PL/VL",
+      "domainF7": "F7",
+      "subDomain": "AUTO",
+      "qui": "PL/VL",
+      "responsible": "Of auto",
+      "room": "Salle Vulcain",
+      "statCom": "0152F7",
+      "ois": [
+        "Y1",
+        "Y2",
+        "Y3",
+        "Y4"
+      ]
+    },
+    {
+      "sourceLine": 868,
+      "date": "2027-01-18",
+      "start": "19:00",
+      "end": "21:30",
+      "code": "0152F7PL/VL.868",
+      "title": "Cours de cadres moniteurs AUTO",
+      "personnel": "Of auto | Moniteurs conduite DPS, C1/118",
+      "location": "Caserne G1",
+      "domain": "PL/VL",
+      "domainF7": "F7",
+      "subDomain": "AUTO",
+      "qui": "PL/VL",
+      "responsible": "Of auto",
+      "room": "Salle Vulcain",
+      "statCom": "0152F7",
+      "ois": [
+        "Y1",
+        "Y2",
+        "Y3",
+        "Y4"
+      ]
+    },
+    {
+      "sourceLine": 918,
+      "date": "2027-02-16",
+      "start": "18:30",
+      "end": "20:30",
+      "code": "010JSP.918",
+      "title": "Séance Direction JSP",
+      "personnel": "C for | C JSP | C site JSP | Resp for JSP",
+      "location": "Caserne G1",
+      "domain": "",
+      "domainF7": "F7",
+      "subDomain": "JSP",
+      "qui": "",
+      "responsible": "C JSP",
+      "room": "Salle EM",
+      "statCom": "010JSP",
+      "ois": []
+    }
+  ],
+  "report": {
+    "id": "qv-source-923",
+    "definitionId": "QV26-RAPPORT-ANNUEL-FF60DF89",
+    "occurrenceId": "qv-source-923:O1",
+    "sessionId": "qv-source-923:S1",
+    "label": "Rapport annuel",
+    "eventLabel": "Rapport annuel",
+    "startsAt": "2027-02-23T18:45",
+    "endsAt": "2027-02-23T21:30",
+    "statCom": "071F3",
+    "code": "071F3.001",
+    "domain": "F3",
+    "ois": [
+      "B1",
+      "B2",
+      "C1",
+      "G1",
+      "Y1",
+      "Y2",
+      "Y3",
+      "Y4"
+    ],
+    "oiSelections": [
+      "DPS:B1",
+      "DPS:B2",
+      "DPS:C1",
+      "DPS:G1",
+      "DAP:Y1",
+      "DAP:Y2",
+      "DAP:Y3",
+      "DAP:Y4"
+    ],
+    "publics": [],
+    "responsible": "Cdt",
+    "provenance": "SOURCE_2027_EXPLICIT",
+    "status": "VALIDATED",
+    "external": false,
+    "humanDecision": false,
+    "preparation": {
+      "type": "OBLIGATION",
+      "id": "6bb4d099-6717-4c20-af57-17650a98654b",
+      "updatedAt": "2026-10-06T05:00:36.865Z"
+    },
+    "publishedEventId": "55a8007b-a82f-49c1-a90f-e85c46426b34",
+    "publishedEventCode": "071F3.001",
+    "publishedEventDate": "2027-02-23",
+    "publishedEventStart": "18:45",
+    "publishedEventEnd": "21:30",
+    "publishedEventOiSelections": [
+      "DPS:G1",
+      "JSP:G1",
+      "DPS:C1",
+      "JSP:C1",
+      "DPS:B1",
+      "JSP:B1",
+      "DPS:B2",
+      "DAP:Y1",
+      "DAP:Y2",
+      "DAP:Y3",
+      "DAP:Y4"
+    ]
+  },
+  "cycle": {
+    "year": 2027,
+    "startDate": "2027-02-24",
+    "endDate": "2028-02-10",
+    "status": "PROVISIONAL",
+    "parametersDefined": true,
+    "provisional": true,
+    "approvalRequired": "CODIR",
+    "generationAllowed": true,
+    "openingReport": {
+      "sourceType": "PROGRAMME_ITEM",
+      "itemId": "qv-source-923",
+      "programmeYear": 2027,
+      "closesCycleYear": 2026,
+      "actualDate": "2027-02-23",
+      "provisional": false
+    },
+    "closingReport": {
+      "sourceType": "MOA_PROPOSAL",
+      "itemId": "MOA-20261012-RAPPORT-CYCLE-2027",
+      "programmeYear": 2027,
+      "closesCycleYear": 2027,
+      "actualDate": "2028-02-10",
+      "provisional": true,
+      "approvalStatus": "PROVISOIRE",
+      "approvalRequired": "CODIR",
+      "source": "MISSION FINALISATION MOA 12.10.2026"
+    },
+    "missing": [],
+    "reportOptions": [
+      {
+        "sourceType": "PROGRAMME_ITEM",
+        "itemId": "qv-source-923",
+        "programmeYear": 2027,
+        "closesCycleYear": 2026,
+        "actualDate": "2027-02-23",
+        "provisional": false,
+        "label": "Rapport annuel"
+      },
+      {
+        "sourceType": "MOA_PROPOSAL",
+        "itemId": "MOA-20261012-RAPPORT-CYCLE-2027",
+        "programmeYear": 2027,
+        "closesCycleYear": 2027,
+        "actualDate": "2028-02-10",
+        "provisional": true,
+        "approvalStatus": "PROVISOIRE",
+        "approvalRequired": "CODIR",
+        "source": "MISSION FINALISATION MOA 12.10.2026",
+        "label": "Rapport annuel"
+      }
+    ],
+    "statisticsBasis": "CIVIL_EVENT_DATE",
+    "automaticExtension": {
+      "status": "DEMONSTRATED",
+      "cta": true,
+      "historicalExplicitNextYear": [
+        {
+          "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E:852",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+          "label": "Intégration personnel DPS, phase I",
+          "date": "2028-01-04",
+          "sourceLine": 852,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:853",
+          "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+          "label": "Échange tenue",
+          "date": "2028-01-05",
+          "sourceLine": 853,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-ECHANGE-TENUE-3AD66FD0:858",
+          "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+          "label": "Échange tenue",
+          "date": "2028-01-06",
+          "sourceLine": 858,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:854",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+          "label": "Intégration personnel DPS, phase II",
+          "date": "2028-01-05",
+          "sourceLine": 854,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:855",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+          "label": "Intégration personnel DPS, phase II",
+          "date": "2028-01-05",
+          "sourceLine": 855,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:856",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+          "label": "Intégration personnel DPS, phase II",
+          "date": "2028-01-05",
+          "sourceLine": 856,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5:857",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+          "label": "Intégration personnel DPS, phase II",
+          "date": "2028-01-05",
+          "sourceLine": 857,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF:859",
+          "definitionId": "QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF",
+          "label": "Répétition garde drapeau RA'25",
+          "date": "2028-01-06",
+          "sourceLine": 859,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:860",
+          "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+          "label": "Exercice JSP 1",
+          "date": "2028-01-10",
+          "sourceLine": 860,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-1-7F24A973:882",
+          "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+          "label": "Exercice JSP 1",
+          "date": "2028-01-25",
+          "sourceLine": 882,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD:861",
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD",
+          "label": "Intégration personnel DAP",
+          "date": "2028-01-10",
+          "sourceLine": 861,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-EM-ED042EBD:862",
+          "definitionId": "QV26-SEANCE-EM-ED042EBD",
+          "label": "Séance État-major",
+          "date": "2028-01-11",
+          "sourceLine": 862,
+          "status": "EXISTING_OCCURRENCE_PRESERVED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-CADRES-F5-6-A6B9A14F:863",
+          "definitionId": "QV26-SEANCE-CADRES-F5-6-A6B9A14F",
+          "label": "Séance cadres F5/6",
+          "date": "2028-01-12",
+          "sourceLine": 863,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:864",
+          "definitionId": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+          "label": "Séance Direction JSP",
+          "date": "2028-01-12",
+          "sourceLine": 864,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB:865",
+          "definitionId": "QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB",
+          "label": "Séance échelons II, III et IV",
+          "date": "2028-01-13",
+          "sourceLine": 865,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4:866",
+          "definitionId": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+          "label": "Séance de préparation concours de la FVSP",
+          "date": "2028-01-17",
+          "sourceLine": 866,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0:869",
+          "definitionId": "QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0",
+          "label": "Séance audiovisuel et communication F5/6",
+          "date": "2028-01-18",
+          "sourceLine": 869,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:870",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+          "label": "Séance instruction DAP",
+          "date": "2028-01-18",
+          "sourceLine": 870,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:875",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+          "label": "Séance instruction DAP",
+          "date": "2028-01-19",
+          "sourceLine": 875,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:891",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+          "label": "Séance instruction DAP",
+          "date": "2028-01-27",
+          "sourceLine": 891,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DAP-7B5FA127:892",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+          "label": "Séance instruction DAP",
+          "date": "2028-01-27",
+          "sourceLine": 892,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:874",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+          "label": "Séance personnel DPS",
+          "date": "2028-01-19",
+          "sourceLine": 874,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:871",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+          "label": "Séance personnel DPS",
+          "date": "2028-01-19",
+          "sourceLine": 871,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:872",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+          "label": "Séance personnel DPS",
+          "date": "2028-01-19",
+          "sourceLine": 872,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DPS-9D512A49:873",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+          "label": "Séance personnel DPS",
+          "date": "2028-01-19",
+          "sourceLine": 873,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-CADRES-JSP-1591AA8A:876",
+          "definitionId": "QV26-SEANCE-CADRES-JSP-1591AA8A",
+          "label": "Séance cadres JSP",
+          "date": "2028-01-20",
+          "sourceLine": 876,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361:877",
+          "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361",
+          "label": "Cours de cadres Formateurs cursus MEA",
+          "date": "2028-01-24",
+          "sourceLine": 877,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-FOURRIERS-DPS-A39F1CE0:878",
+          "definitionId": "QV26-SEANCE-FOURRIERS-DPS-A39F1CE0",
+          "label": "Séance Fourriers DPS",
+          "date": "2028-01-24",
+          "sourceLine": 878,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6:879",
+          "definitionId": "QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6",
+          "label": "Séance responsables MAT SDIS",
+          "date": "2028-01-24",
+          "sourceLine": 879,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-FOURRIERS-DAP-997F4819:880",
+          "definitionId": "QV26-SEANCE-FOURRIERS-DAP-997F4819",
+          "label": "Séance Fourriers DAP",
+          "date": "2028-01-24",
+          "sourceLine": 880,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:884",
+          "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+          "label": "Séance chefs de section DPS",
+          "date": "2028-01-25",
+          "sourceLine": 884,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB:881",
+          "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+          "label": "Séance chefs de section DPS",
+          "date": "2028-01-25",
+          "sourceLine": 881,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:885",
+          "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+          "label": "Séance chefs de section DPS C1",
+          "date": "2028-01-25",
+          "sourceLine": 885,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:883",
+          "definitionId": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+          "label": "Séance chefs de section DPS C1",
+          "date": "2028-01-25",
+          "sourceLine": 883,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:901",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+          "label": "Séance instruction DPS",
+          "date": "2028-02-01",
+          "sourceLine": 901,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:887",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+          "label": "Séance instruction DPS",
+          "date": "2028-01-26",
+          "sourceLine": 887,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:889",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+          "label": "Séance instruction DPS",
+          "date": "2028-01-26",
+          "sourceLine": 889,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-INSTRUCTION-DPS-DF85402C:900",
+          "definitionId": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+          "label": "Séance instruction DPS",
+          "date": "2028-02-01",
+          "sourceLine": 900,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PERSONNEL-DAP-CCA3AF32:888",
+          "definitionId": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+          "label": "Séance personnel DAP",
+          "date": "2028-01-26",
+          "sourceLine": 888,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-CODIR-92921E7C:893",
+          "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+          "label": "Séance Codir",
+          "date": "2028-01-28",
+          "sourceLine": 893,
+          "status": "EXISTING_OCCURRENCE_PRESERVED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0:894",
+          "definitionId": "QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0",
+          "label": "Équipement des recrues FOBA 1",
+          "date": "2028-01-29",
+          "sourceLine": 894,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FOBA-FD15AA5A:895",
+          "definitionId": "QV26-COURS-DE-CADRES-FOBA-FD15AA5A",
+          "label": "Cours de cadres FOBA",
+          "date": "2028-01-29",
+          "sourceLine": 895,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684:896",
+          "definitionId": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684",
+          "label": "Cours de cadres Formateurs MEA 1",
+          "date": "2028-01-31",
+          "sourceLine": 896,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-EXERCICE-JSP-2-0DDB59DA:897",
+          "definitionId": "QV26-EXERCICE-JSP-2-0DDB59DA",
+          "label": "Exercice JSP 2",
+          "date": "2028-01-31",
+          "sourceLine": 897,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE:898",
+          "definitionId": "QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE",
+          "label": "Séance des chefs de section DAP",
+          "date": "2028-01-31",
+          "sourceLine": 898,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:904",
+          "definitionId": "QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC",
+          "label": "Séance communication F5/6",
+          "date": "2028-02-02",
+          "sourceLine": 904,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-COURS-DE-CADRES-PR-3817D3C2:905",
+          "definitionId": "QV26-COURS-DE-CADRES-PR-3817D3C2",
+          "label": "Cours de cadres PR",
+          "date": "2028-02-01",
+          "sourceLine": 905,
+          "status": "EXISTING_OCCURRENCE_PRESERVED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:909",
+          "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+          "label": "Séance Préposés mat DPS",
+          "date": "2028-02-03",
+          "sourceLine": 909,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:906",
+          "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+          "label": "Séance Préposés mat DPS",
+          "date": "2028-02-03",
+          "sourceLine": 906,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:907",
+          "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+          "label": "Séance Préposés mat DPS",
+          "date": "2028-02-03",
+          "sourceLine": 907,
+          "status": "PROPOSED"
+        },
+        {
+          "itemId": "QV27:CYCLE:QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829:908",
+          "definitionId": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+          "label": "Séance Préposés mat DPS",
+          "date": "2028-02-03",
+          "sourceLine": 908,
+          "status": "PROPOSED"
+        }
+      ],
+      "missingCadence": []
+    }
+  },
+  "targetedRevision": {
+    "before": {
+      "emError": "programme_statcom_publie_immutable",
+      "jspDateEnd": {
+        "date": "2027-02-17",
+        "date_fin": "2027-02-16"
+      }
+    },
+    "after": [
+      {
+        "eventId": "25513aff-3f71-4870-a51c-3a4513b8b408",
+        "date": "2027-02-17",
+        "dateFin": "2027-02-17",
+        "version": 2,
+        "statComBefore": "010JSP",
+        "statComAfter": "010JSP",
+        "codeBefore": "010JSP.006",
+        "codeAfter": "010JSP.006"
+      },
+      {
+        "eventId": "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+        "date": "2027-02-16",
+        "dateFin": "2027-02-16",
+        "version": 2,
+        "statComBefore": null,
+        "statComAfter": null,
+        "codeBefore": null,
+        "codeAfter": null
+      }
+    ],
+    "negativeCases": 6,
+    "workflow": "PENDING then explicit approval on same event",
+    "audit": [
+      {
+        "action": "OUVRIR_REVISION_CIBLEE",
+        "commentaire": "Simulation de révision ciblée, clone avec rollback uniquement."
+      },
+      {
+        "action": "VALIDER_REVISION_CIBLEE",
+        "commentaire": "Simulation de révision ciblée, clone avec rollback uniquement."
+      },
+      {
+        "action": "VALIDER_REVISION_CIBLEE",
+        "commentaire": "Simulation de révision ciblée, clone avec rollback uniquement."
+      }
+    ],
+    "protectedTablesIdentical": [
+      "scope_qv_publication_links",
+      "scope_participations",
+      "scope_attendus",
+      "scope_affectations",
+      "scope_person_qualifications",
+      "scope_event_person_roles"
+    ],
+    "simulationRolledBack": true
+  },
+  "em": {
+    "item": {
+      "id": "qv-source-921",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "occurrenceId": "QV27:EMSEA:O02",
+      "sessionId": "QV27:EMSEA:S02",
+      "label": "Séance État-major",
+      "eventLabel": "Séance État-major",
+      "themes": [],
+      "startsAt": "2027-02-16T18:00:00",
+      "endsAt": "2027-02-16T21:00:00",
+      "statCom": "EMSEA",
+      "code": "",
+      "domain": "F0",
+      "ois": [
+        "SDIS"
+      ],
+      "oiSelections": [
+        "SDIS"
+      ],
+      "publics": [
+        "ECH:IV"
+      ],
+      "publicFreeLabels": [],
+      "responsible": "Cdt",
+      "provenance": "SOURCE_2027_EXPLICIT+MOA_CANONICAL_EMSEA",
+      "status": "PLANIFIE",
+      "external": false,
+      "humanDecision": true,
+      "preparation": {
+        "type": "OBLIGATION",
+        "id": "1f6552f4-0393-492e-a18e-0f8b884d2813",
+        "updatedAt": "2026-10-06T05:00:36.865Z"
+      },
+      "publishedEventId": "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+      "publishedEventCode": null,
+      "publishedEventDate": "2027-02-24",
+      "publishedEventStart": "18:00",
+      "publishedEventEnd": "21:00",
+      "publishedEventOiSelections": []
+    },
+    "revision": {
+      "at": "2026-10-13T17:24:08.287Z",
+      "kind": "MAJOR",
+      "actor": "7647",
+      "motif": "Séance planifiée le lendemain du Rapport annuel.",
+      "status": "PENDING",
+      "eventId": "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+      "eventVersion": 1,
+      "changedFields": [
+        "date",
+        "publicCodes",
+        "salleTheorieId"
+      ],
+      "baselineFields": {
+        "date": "2027-02-24",
+        "sold": true,
+        "domain": "F0",
+        "lieuId": "1aeebc04-d594-47e1-aa89-944423e00b03",
+        "themes": [],
+        "endTime": "21:00",
+        "oiCodes": [
+          "SDIS"
+        ],
+        "statCom": "EMSEA",
+        "cursusId": null,
+        "lieuLibre": "",
+        "startTime": "18:00",
+        "publicCodes": [],
+        "ecawinExport": true,
+        "activityLabel": "Séance État-major",
+        "activityNature": "SDIS_RECURRENT",
+        "planningStatus": "PLANIFIE",
+        "salleTheorieId": null,
+        "annualRecurrence": true,
+        "externalActivity": false,
+        "publicFreeLabels": [],
+        "responsibleLabel": "Cdt",
+        "ecawinActivityCode": "",
+        "qualificationCodes": [],
+        "participationEvaluation": true
+      }
+    },
+    "publication": {
+      "evenement_id": "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+      "date": "2027-02-24",
+      "date_fin": "2027-02-24",
+      "version": 1,
+      "created_at": "2026-09-29T15:38:57.246+00:00",
+      "updated_at": "2026-09-29T15:38:57.246+00:00",
+      "statut": "PLANIFIE",
+      "statcom_code": null,
+      "code_cours": null
+    },
+    "links": [
+      {
+        "publicationUnitId": "qv-source-921",
+        "sourceDefinitionId": "QV26-SEANCE-EM-ED042EBD",
+        "sourceOccurrenceId": "QV27:EMSEA:O02",
+        "sourceSessionId": "QV27:EMSEA:S02",
+        "sourceRecordIds": [
+          "qv-source-921"
+        ]
+      }
+    ],
+    "audit": [
+      {
+        "action": "OUVRIR_REVISION_CIBLEE",
+        "at": "2026-10-13T17:22:55.222318+00:00",
+        "motif": "Séance planifiée le lendemain du Rapport annuel."
+      },
+      {
+        "action": "OUVRIR_REVISION_CIBLEE",
+        "at": "2026-10-13T17:24:05.403836+00:00",
+        "motif": "Séance planifiée le lendemain du Rapport annuel."
+      }
+    ],
+    "counts": {
+      "roles": 0,
+      "attendus": 0,
+      "evenement_id": "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+      "participations": 0
+    },
+    "automaticMove": false
+  },
+  "existingEvidenceReused": [
+    "clone-results.json",
+    "browser/recipe.json",
+    "browser/postgres-integrity.json",
+    "pdf/manifest.json",
+    "delivery-gate.json"
+  ],
+  "rollbackTables": 113,
+  "rollbackVerified": true
+}

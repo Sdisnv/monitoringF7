@@ -584,3 +584,145 @@ Préparer Organisation, Cadres, Candidats par domaine, Spécialisation, Fonction
 Spécialisations par domaine puis ordre alphabétique ; propositions contextuelles par Stat.Com (`011PR` : PR/candidatures/fonctions pertinentes).
 Libellés officiels IndeX à conserver après rapprochement démontré ; aucun identifiant IndeX supposé ni migration.
 Inventaire, écarts, correspondances et questions dans la ROADMAP/ToDo existante. QV-RULES-001 reste un jalon futur, maquette validée inchangée.
+
+## Correctif post-recette MOA du 14.10.2026
+
+Source : mission « Correctif consolidé post-recette MOA — 14.10.2026 ». Ces décisions
+complètent les acquis PR #17 ; aucune réécriture des données historiques.
+
+### QV-RESERVATION-003 — Date réelle, tous cycles et battement
+Disponibilité selon date et horaires réels, salle ou ressource explicitement réservée,
+indépendamment du cycle affiché. Lire ensemble les préparations du Programme, les réservations
+persistées des autres cycles et les événements opérationnels/publiés. Les références rapprochées
+d'une même publication ne créent pas une seconde réservation ; ses créneaux effectivement différents
+restent visibles. Une ancienne obligation remplacée par sa préparation canonique n'écrase pas la décision humaine.
+Exclure les annulations ; une réservation distincte encore explicitement active reste indépendante.
+Un lieu seul n'est jamais exclusif. Deux salles différentes restent indépendantes, notamment
+Oxygène et État-major ; aucune salle déduite de la seule caserne, aucun conflit fictif pour CFF sans salle.
+Même salle : chevauchement ou battement strictement inférieur à 30 minutes = conflit, dans les deux sens.
+18:00–20:00 puis 20:00 ou 20:15 : conflit ; 20:30 : compatible. Les horaires sources ne changent pas.
+Contrôles immédiats sur date/début/fin/lieu/salle et nouvelle lecture serveur sous verrou transactionnel
+commun aux écritures de préparation, tous cycles. Une collision bloque le nouveau créneau ; elle ne
+déplace aucune décision existante et n'empêche pas une modification éditoriale sans nouveau créneau.
+Le filtre Salle dépend du Lieu ; les autres réservations effectives apparaissent en lecture seule,
+avec leur date réelle et leur cycle, sans ajout aux occurrences ni aux exports métier ECAwin.
+
+### QV-EM-001 — Priorité État-major
+État-major est prioritaire sur les activités nécessitant l'échelon IV : Commandant, chefs opérationnel,
+logistique et formation, quartier-maître, officier communication, chefs de site DPS et chef DAP.
+Chef formation participe également à la Direction JSP. Les fonctions/publics explicitement démontrés
+permettent un contrôle de participation commune ; ils ne créent ni NIP ni affectation individuelle.
+Cas MOA : 16.02.2027, État-major 18:00–21:00 / Direction JSP 18:30–20:30, salle État-major G1 ;
+22.06.2027 à contrôler également. Proposer le repositionnement de l'autre activité, soumis à validation MOA,
+sans inventer une nouvelle date ni déplacer un événement publié ou une décision humaine.
+La participation commune fonctionnelle reste distinguée d'une intersection nominative non démontrée.
+Les règles de jour, dérogations et autres contraintes canoniques existantes restent applicables.
+
+### QV-CALENDAR-003 — Calendrier validé, stable
+Composant existant : six semaines fixes, dimensions et position conservées pendant la navigation,
+y compris lorsqu'il s'ouvre au-dessus du champ ; rester dans la fenêtre. Clic direct, jj.mm.aaaa,
+aucun bouton supplémentaire. Vacances/fériés : mêmes référentiels et couleurs que l'Agenda annuel ;
+week-ends légèrement grisés, aucune légende ajoutée. Alerte rouge claire distincte sous « À contrôler »,
+date explicite et distinction date interdite/déconseillée/disponibilité/dérogation. Disparition à conformité,
+sans remplacement automatique d'une date humaine.
+
+### QV-AUDIT-003 — Annulation motivée, valeurs conservées
+Confirmation préalable avec activité, date, horaire, OI, année et conséquences ; motif obligatoire.
+Boutons « Conserver l'activité » / « Confirmer l'annulation ». Une action d'annulation identifiable,
+auteur/horodatage/ancienne valeur/nouvelle valeur/motif ; les champs inchangés restent identiques dans
+les deux instantanés. Les anciens journaux partiels sont présentés comme l'action de cycle réellement
+enregistrée, jamais comme une suppression de leurs champs ; leurs données sources restent intactes.
+Occurrence annulée : paramètres de planification historiques clairement expliqués, pas de réactivation
+implicite par un enregistrement ordinaire. Annulation annuelle et arrêt de reconduction restent distincts.
+Suppression logique existante : confirmation et motif obligatoires, arrêt des productions futures,
+fiche annuelle/historique conservés. Aucun DELETE ni élargissement silencieux de cette sémantique ;
+un retrait de l'année courante reste l'action d'annulation annuelle, non une suppression d'historique.
+
+### QV-FAMILY-002 / QV-PUBLIC-007 — Organisation et présentation
+Famille organisationnelle indépendante du domaine fonctionnel : OI qualifiés DAP Y1–Y4 permettent DAP,
+DPS G1/C1/B1/B2 permettent DPS, OI JSP permettent JSP. Choix humain compatible ou transversal/non qualifié,
+jamais une déduction budgétaire ni une famille imposée aux activités multi-OI. Réutiliser les champs et
+la reconduction existants, sans changer Stat.Com, publics ou spécialisations.
+Publics : virgules ; échelons contigus contractés « Échelon I et II », « Échelon I à III »,
+« Échelon II et III », « Échelon II à IV », « Échelon IV ». Mêmes sélections internes, affichage uniforme
+fiche/tableau/historique/PDF. OSR prioritaire dans l'affichage ; FOBA 1, 2 et 3 inchangés.
+
+### QV-FREEZE-20261014 — Budget et IndeX gelés
+Séance de coordination du 25.08.2027, 19:00–21:00, DAP Y1, Local Y1 : enregistrement existant uniquement.
+Conserver `070F23` et `070F23.006`, son annulation humaine actuelle, son historique et sa lignée.
+Ne pas recréer ni dupliquer cette séance. Aucun compte Y1 ni ventilation ou correction similaire déduite.
+IndeX : aucun identifiant, fonction, spécialisation, qualification, renommage, correspondance ou affectation
+inventé/modifié dans ce lot. Rapprochement documentaire maintenu dans la roadmap, exécution gelée.
+
+### QV-PDF-003 — Impression à 100 %
+Trois formats existants : annuel/compact A4 paysage, mensuel A4 portrait ; marge imprimable minimale
+10 mm autour de tous les éléments, bandeau/logos/pied de page compris. Aucun facteur de réduction imposé.
+Conserver Responsable, Public cible, Stat.Com, État et les thèmes ; blocs non coupés et ordre chronologique.
+Noms dynamiques : `QUO VADIS AAAA, Planning annuel.pdf`, `QUO VADIS AAAA, Liste compacte.pdf`,
+`QUO VADIS AAAA, Planning mensuel - Mois.pdf`. Sources métier inchangées ; accents et points médians conservés.
+
+## Finalisation Consolidée PR #18 — 14.10.2026
+
+### QV-CYCLE-006 — Dates confirmées et ancienne publication EM
+Rapport annuel définitivement **23.02.2027**, cycle suivant **24.02.2027**, clôture proposée
+**10.02.2028 provisoire / Codir**. La publication du Rapport et son occurrence concordent au 23.02.
+EM **16.02.2027 18:00–21:00** maintenu. Sa publication historique au 24.02 est le même événement
+lié, révision ciblée déjà en attente, pas une seconde séance ni une date de report validée.
+Confirmation humaine motivée sur cet événement existant uniquement, après résolution JSP ;
+identifiant, Stat.Com publié NULL, code NULL, lignée et historique conservés. Le repère EMSEA
+préparatoire ne remplit jamais automatiquement le Stat.Com de cette ancienne publication.
+Une révision approuvée d'une séance d'un seul jour conserve la cohérence date/date_fin ; aucune
+date humaine n'est déplacée par la lecture du Programme ou par la proposition.
+
+### QV-JSP-001 — Dates Direction JSP approuvées par la MOA
+La projection N+364 et la priorité d'une séance explicite mensuelle restent les moteurs existants.
+Il ne s'agit pas d'un mardi obligatoire : `PLANIF-JSP` autorise le mercredi et les sources 2026
+montrent plusieurs jours de semaine. Les dates MOA **17.02.2027** et **23.06.2027**,
+**18:30–20:30**, restent dans leur mois, hors vacances/fériés et sans réservation de la salle
+État-major à ces créneaux au contrôle du 14.10. Décision MOA du 14.10.2026 : les deux dates
+sont **APPROUVÉES**, pas encore appliquées aux publications. Conserver les événements et leurs
+identifiants ; appliquer les révisions ciblées selon le workflow existant, sans écriture directe
+en production dans cette PR ni déplacement automatique.
+Publics, OI JSP, responsable C JSP et fonctions historiques C for/C JSP/C site JSP/Resp for JSP
+restent inchangés ; Chef formation commun avec EM conformément à QV-EM-001.
+Changer de salle le 16.02 ou le 22.06 ne suffit pas à libérer une fonction commune.
+Aucun enregistrement automatique, aucune affectation nominative inventée, recontrôle avant saisie.
+
+### QV-RESERVATION-004 — Résolution manuelle et preuves d'identité
+Décision MOA : conflits ordinaires réglés **manuellement dans SCOPE**, par les procédures existantes,
+sans moteur de résolution automatique ni création de salle/événement. Le tableau de résolution unique
+est intégré au [rapport de la PR #18](../SCOPE_QV_MOA_20261014.md), avec disponibilités datées,
+battement >=30 minutes, publications et tous cycles, fonctions communes et décisions restantes.
+Une salle libre ne démontre ni capacité/équipement ni disponibilité nominative exhaustive.
+Une publication ancienne et sa préparation doivent être réconciliées, pas supprimées ou fusionnées.
+Les références des cours cadres DPS/DAP des 31.03 et 22.06 ont Stat.Com, OI et sources 2026 distincts ;
+les deux AUTO du 18.01 ont horaires/personnels source et publications distincts. Aucun doublon n'est
+déduit de l'intitulé ni de leur salle commune. Animation conjointe/distincte à arbitrer par la MOA ;
+préserver toutes les lignées, codes et décisions en attendant. Gel Y1/IndeX inchangé, suivi Cours ECA
+et éditeur de règles conservés dans la roadmap existante. Ce GO n'autorise ni fusion ni déploiement.
+
+Dossier **M2, 13.01.2027** : salle souhaitée par la MOA **VULCAIN** pour Direction JSP.
+Oxygène était une proposition technique, pas une décision MOA ; elle n'est pas retenue.
+Le conflit avec l'intégration DAP reste signalé tant que la disponibilité de Vulcain au créneau
+18:30–20:30, battement de 30 minutes compris, n'est pas démontrée. Aucune réservation modifiée
+ni déplacement automatique. Cette décision documentaire n'atteste pas une disponibilité nouvelle.
+
+### QV-CYCLE-007 — Ajouts et communication après publication annuelle
+Décision MOA du 14.10.2026, documentation métier uniquement dans cette PR : après validation
+finale et publication du Programme annuel, une nouvelle activité SDIS créée manuellement peut
+être rattachée au cycle métier publié même si sa date civile précède son début habituel
+(exemple : formation CRIMSON ajoutée manuellement). Il s'agit d'un rattachement explicite de
+l'ajout, pas d'un reclassement automatique des activités existantes ; cycles historiques préservés.
+
+Processus opérationnel à conserver : **validation annuelle → publication → création ou liaison
+des événements opérationnels → assignations du personnel → programmes individuels → communication
+initiale aux personnes concernées**. La publication annuelle déclenche cette chaîne ; cette règle
+documente le processus attendu et ne déclare pas tous ses parcours opérationnels implémentés.
+
+Après publication, les nouvelles activités sont identifiées comme **ajouts**. Le personnel concerné
+doit être informé individuellement de ces ajouts, ainsi que des modifications et annulations qui
+le concernent. Les programmes individuels initiaux ne sont ni régénérés ni renvoyés systématiquement ;
+les destinataires ajoutent manuellement les nouvelles dates à leur calendrier personnel.
+Aucun nouveau moteur de notification, reclassement, événement ou envoi n'est développé ou déclenché
+par ce complément. La préparation de ce parcours reste dans la roadmap existante ; les statistiques
+civiles de QV-STAT-001 et les mécanismes de sécurité existants restent inchangés.

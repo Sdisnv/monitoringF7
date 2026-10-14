@@ -44,7 +44,7 @@ for (const mode of ['annual', 'compact', 'monthly']) {
     assert.equal(result.pages, pages.length);
     assert.equal(result.meta.rows, payload.rows.length);
     assert.equal(result.sha256, crypto.createHash('sha256').update(result.buffer).digest('hex'));
-    assert.equal(result.filename, mode === 'monthly' ? 'SCOPE_QUO_VADIS_2027-04_Planning_mensuel.pdf'
+    assert.equal(result.filename, mode === 'monthly' ? 'QUO VADIS 2027, Planning mensuel - Avril.pdf'
       : mode === 'compact' ? 'QUO VADIS 2027, Liste compacte.pdf'
         : 'QUO VADIS 2027, Planning annuel.pdf');
     assert.ok(Math.abs(pages[0].view[2] - (mode === 'monthly' ? 595.28 : 841.89)) < 0.01);
@@ -61,7 +61,10 @@ for (const mode of ['annual', 'compact', 'monthly']) {
     const second = itemFor(pages[0], 'Exercice PR 1.2');
     assert.equal(first.transform[4], second.transform[4]);
     const rowGap = first.transform[5] - second.transform[5];
-    assert.ok(rowGap > 0 && rowGap <= (mode === 'monthly' ? 35.01 : 17.01), `Unexpected blank theme line (${rowGap})`);
+    // Monthly retains the four required business detail lines, without adding an empty theme line.
+    assert.ok(rowGap > 0 && rowGap <= (mode === 'monthly' ? 60.01 : 17.01), `Unexpected blank theme line (${rowGap})`);
+    if(mode==='monthly') for(const label of ['Responsable :','Public cible :','Stat.Com :','État :'])
+      assert.ok(pages[0].items.some(item=>item.str.includes(label)),label);
     assert.ok(!pages[0].items.some((item) => item.str === 'Base' || /^Exercice PR 1\.[12]\s+[-·]/.test(item.str)));
     assert.equal(result.meta.rows, 2);
   });

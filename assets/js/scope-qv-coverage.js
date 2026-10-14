@@ -621,36 +621,65 @@ function programmeDayControl(row,qv){
 // A location is descriptive unless its exclusive occupation is explicitly recorded.
 function reservationConflicts(rows,assess){
   const active=rows.filter(row=>!row.external && row.startsAt && row.endsAt && !['ANNULE','NON_RETENU'].includes(row.status));
-  const location=row=>row.lieuId || row.business?.lieuId;
-  const room=row=>row.salleTheorieId || row.business?.salleTheorieId;
+  const location=row=>Object.hasOwn(row,'lieuId')?row.lieuId:row.business?.lieuId;
+  const room=row=>Object.hasOwn(row,'salleTheorieId')?row.salleTheorieId:row.business?.salleTheorieId;
   const exclusive=row=>row.exclusiveLocation===true || row.business?.exclusiveLocation===true;
   const resources=row=>row.resourceCodes || row.resources || row.business?.resourceCodes || [];
   const conflicts=[];
   for(let i=0;i<active.length;i++) for(let j=i+1;j<active.length;j++) {
     const left=active[i],right=active[j];
-    if(left.id===right.id) continue;
-    // Keep the existing occupation check scoped; SDIS compatibility is handled by its own motor.
-    if(!left.externalActivity && !right.externalActivity && !exclusive(left) && !exclusive(right)
-      && !resources(left).length && !resources(right).length) continue;
+    if(left.id===right.id || left.reservationOwner && left.reservationOwner===right.reservationOwner) continue;
     const start=row=>String(row.startsAt).slice(0,16),end=row=>String(row.endsAt).slice(0,16);
-    if(start(left)>=end(right) || start(right)>=end(left)) continue;
+    const overlap=start(left)<end(right) && start(right)<end(left);
+    const minutes=value=>Date.parse(`${value}:00Z`)/60000;
+    const gap=Math.max(minutes(start(left))-minutes(end(right)),minutes(start(right))-minutes(end(left)));
     const causes=[];
-    if(room(left) && room(left)===room(right)) causes.push({code:'ROOM_CONFLICT',level:'BLOCKING'});
-    if(location(left) && location(left)===location(right) && (exclusive(left) || exclusive(right)))
+    if(room(left) && room(left)===room(right) && (overlap || gap<30))
+      causes.push({code:'ROOM_CONFLICT',level:'BLOCKING',kind:overlap?'OVERLAP':'TURNAROUND',minimumGapMinutes:30});
+    if(overlap && location(left) && location(left)===location(right) && (exclusive(left) || exclusive(right)))
       causes.push({code:'RESOURCE_CONFLICT',level:'BLOCKING',resourceCodes:[`LOCATION:${location(left)}`]});
     const shared=resources(left).filter(code=>resources(right).includes(code));
-    if(shared.length) causes.push({code:'RESOURCE_CONFLICT',level:'BLOCKING',resourceCodes:shared});
+    if(overlap && shared.length) causes.push({code:'RESOURCE_CONFLICT',level:'BLOCKING',resourceCodes:shared});
     let actual=causes;
     if(assess && causes.length){
       const slot=row=>({date:dateOnly(row.startsAt),endDate:dateOnly(row.endsAt),startTime:String(row.startsAt).slice(11,16),
         endTime:String(row.endsAt).slice(11,16),roomCode:room(row) || '',resourceCodes:[...resources(row),
           ...(location(row) && (exclusive(left) || exclusive(right))?[`LOCATION:${location(row)}`]:[])],priority:100});
-      actual=assess(slot(left),slot(right)).causes.filter(cause=>['ROOM_CONFLICT','RESOURCE_CONFLICT'].includes(cause.code));
+      actual=causes.filter(cause=>cause.code==='ROOM_CONFLICT').concat(
+        assess(slot(left),slot(right)).causes.filter(cause=>cause.code==='RESOURCE_CONFLICT'));
     }
     if(actual.length) conflicts.push({leftId:left.id,rightId:right.id,leftLabel:left.label || left.activityLabel,
-      rightLabel:right.label || right.activityLabel,date:dateOnly(left.startsAt),causes:actual,blocking:true});
+      rightLabel:right.label || right.activityLabel,date:dateOnly(left.startsAt),
+      leftStartsAt:left.startsAt,leftEndsAt:left.endsAt,rightStartsAt:right.startsAt,rightEndsAt:right.endsAt,
+      roomLabel:left.room || left.roomLabel || right.room || right.roomLabel || '',causes:actual,blocking:true});
   }
   return conflicts;
+}
+
+function personnelConflicts(rows){
+  const active=rows.filter(row=>!row.external && row.startsAt && row.endsAt && !['ANNULE','NON_RETENU'].includes(row.status));
+  const em=row=>row.statCom==='EMSEA' || row.definitionId==='QV26-SEANCE-EM-ED042EBD';
+  const publics=row=>row.publics || row.publicCodes || [];
+  const emFunctions=['CMDT:CDT','CMDT:C-OP','CMDT:C-LOG','CMDT:C-FOR','CMDT:QM'];
+  const roles=row=>[...publics(row).filter(code=>code.startsWith('CMDT:')),
+    ...(em(row)?emFunctions:[]),
+    ...(row.definitionId==='QV26-SEANCE-DIRECTION-JSP-32B2ACA4'?['CMDT:C-FOR']:[])];
+  const result=[];
+  for(let i=0;i<active.length;i++) for(let j=i+1;j<active.length;j++){
+    const a=active[i],b=active[j];
+    if(a.id===b.id || a.reservationOwner && a.reservationOwner===b.reservationOwner
+      || String(a.startsAt).slice(0,16)>=String(b.endsAt).slice(0,16)
+      || String(b.startsAt).slice(0,16)>=String(a.endsAt).slice(0,16)) continue;
+    const shared=[...new Set(roles(a).filter(role=>roles(b).includes(role)))];
+    const echelon=(em(a) && publics(b).includes('ECH:IV')) || (em(b) && publics(a).includes('ECH:IV'));
+    if(!shared.length && !echelon) continue;
+    const priority=em(a)!==em(b)?(em(a)?a:b):null,other=priority && (priority===a?b:a);
+    result.push({leftId:a.id,rightId:b.id,leftLabel:a.label || a.activityLabel,rightLabel:b.label || b.activityLabel,
+      date:dateOnly(a.startsAt),sharedFunctions:shared,echelonIV:echelon,
+      evidence:'MOA_FUNCTION_PARTICIPATION',priorityId:priority?.id || null,repositionId:other?.id || null,
+      repositionLabel:other?.label || other?.activityLabel || '',automaticMove:false});
+  }
+  return result;
 }
 
 function classifyCandidateDate(date, policy, calendarRows){
@@ -749,6 +778,7 @@ return {
   isOsrTraining,
   programmeDayControl,
   reservationConflicts,
+  personnelConflicts,
   classifyCandidateDate,
   pickProposalSlot,
   usualTime,

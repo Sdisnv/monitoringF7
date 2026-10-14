@@ -1,0 +1,102 @@
+{
+  "status": "PASS",
+  "productionWrites": false,
+  "auth": "LOCAL",
+  "scenarios": [
+    "Existing cancelled coordination preserved; legacy partial cancellation displays one real action; public II/III combined",
+    "Same room conflict updates immediately; Oxygen independent; no room creates no booking; personnel alert retained",
+    "Six-week calendar stable desktop/mobile; exact annual Agenda holiday/vacation colors; lighter weekends; direct European date selection",
+    "Separate light-red date warning clears on a conforming day without saving or changing a human date",
+    "Room filter limited by location, effective other-cycle clone reservation visible; location change resets only room filter",
+    "F1 + DAP Y1 family saved and reopened; cancellation can be declined, requires reason, records exactly one actual action",
+    "Programme search remains reactive; three nonblank PDF previews download with exact dynamic names"
+  ],
+  "calendars": [
+    {
+      "width": 360,
+      "month": "2027-03",
+      "x": 88,
+      "y": 377.53125,
+      "height": 376,
+      "placement": "above",
+      "cells": 49,
+      "visible": true
+    },
+    {
+      "width": 360,
+      "month": "2027-04",
+      "x": 88,
+      "y": 377.53125,
+      "height": 376,
+      "placement": "above",
+      "cells": 49,
+      "visible": true
+    },
+    {
+      "width": 360,
+      "month": "2027-05",
+      "x": 88,
+      "y": 377.53125,
+      "height": 376,
+      "placement": "above",
+      "cells": 49,
+      "visible": true
+    },
+    {
+      "width": 1440,
+      "colors": {
+        "vacation": "rgb(236, 234, 246)",
+        "holiday": "rgb(220, 227, 247)",
+        "annualVacation": "rgb(236, 234, 246)",
+        "annualHoliday": "rgb(220, 227, 247)",
+        "weekend": "rgb(247, 248, 250)"
+      }
+    },
+    {
+      "width": 360,
+      "month": "2027-03",
+      "x": 18,
+      "y": 378.3125,
+      "height": 376,
+      "placement": "above",
+      "cells": 49,
+      "visible": true
+    },
+    {
+      "width": 360,
+      "month": "2027-04",
+      "x": 18,
+      "y": 378.3125,
+      "height": 376,
+      "placement": "above",
+      "cells": 49,
+      "visible": true
+    },
+    {
+      "width": 360,
+      "month": "2027-05",
+      "x": 18,
+      "y": 378.3125,
+      "height": 376,
+      "placement": "above",
+      "cells": 49,
+      "visible": true
+    },
+    {
+      "width": 390,
+      "colors": {
+        "vacation": "rgb(236, 234, 246)",
+        "holiday": "rgb(220, 227, 247)",
+        "annualVacation": "rgb(236, 234, 246)",
+        "annualHoliday": "rgb(220, 227, 247)",
+        "weekend": "rgb(247, 248, 250)"
+      }
+    }
+  ],
+  "downloads": [
+    "QUO VADIS 2027, Planning annuel.pdf",
+    "QUO VADIS 2027, Liste compacte.pdf",
+    "QUO VADIS 2027, Planning mensuel - Janvier.pdf"
+  ],
+  "errors": []
+}

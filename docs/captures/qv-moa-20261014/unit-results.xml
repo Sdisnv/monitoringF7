@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="same room 18:00-21:00 conflicts in both directions" time="0.000997" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="same room 17:00-18:15 conflicts in both directions" time="0.000081" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="same room 20:00-21:00 conflicts in both directions" time="0.000055" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="same room 20:15-21:00 conflicts in both directions" time="0.000055" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="exact 30 minute gap is allowed without rewriting slots" time="0.000069" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="no invented room booking {&amp;quot;status&amp;quot;:&amp;quot;ANNULE&amp;quot;}" time="0.000054" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="no invented room booking {&amp;quot;salleTheorieId&amp;quot;:null}" time="0.000046" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="no invented room booking {&amp;quot;salleTheorieId&amp;quot;:null,&amp;quot;business&amp;quot;:{&amp;quot;salleTheorieId&amp;quot;:&amp;quot;EM&amp;quot;}}" time="0.000040" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="no invented room booking {&amp;quot;salleTheorieId&amp;quot;:&amp;quot;OXY&amp;quot;}" time="0.000049" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="other cycle is checked, same publication owner is not duplicated" time="0.000108" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="EM priority has a demonstrated common function, not an invented individual assignment" time="0.000830" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="Échelon I et II" time="0.000498" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="Échelon I à III" time="0.000119" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="Échelon II et III" time="0.000144" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="Échelon II à IV" time="0.000091" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="Échelon IV" time="0.000050" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="public display preserves internal codes, OSR priority, FOBA and free labels" time="0.000113" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="qualified organisational families are independent of functional domain" time="0.000091" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="legacy partial cancellation is one genuine action; source audit is immutable" time="0.014976" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="legacy operational room text is matched to its existing reference" time="0.027797" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="legacy operational room text is not inferred when ambiguous" time="0.000077" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-moa-20261014-tests.js"/>
+	<testcase name="QV-EXPORT-001 annual: exact occurrence title then theme on the next line" time="0.094942" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-roadmap-export-pdf-tests.js"/>
+	<testcase name="QV-EXPORT-001 annual: blank or absent themes keep a single title line" time="0.030235" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-roadmap-export-pdf-tests.js"/>
+	<testcase name="QV-EXPORT-001 compact: exact occurrence title then theme on the next line" time="0.021072" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-roadmap-export-pdf-tests.js"/>
+	<testcase name="QV-EXPORT-001 compact: blank or absent themes keep a single title line" time="0.035883" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-roadmap-export-pdf-tests.js"/>
+	<testcase name="QV-EXPORT-001 monthly: exact occurrence title then theme on the next line" time="0.021147" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-roadmap-export-pdf-tests.js"/>
+	<testcase name="QV-EXPORT-001 monthly: blank or absent themes keep a single title line" time="0.021047" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-roadmap-export-pdf-tests.js"/>
+	<testcase name="QV-EXPORT-001: explicit themes preserve session suffixes and separators already in the title" time="0.021156" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-roadmap-export-pdf-tests.js"/>
+	<testcase name="QV-EXPORT-001: the existing pagination keeps each title and theme together" time="0.041958" classname="test" file="/private/tmp/scope-qv-roadmap-v1-20261012/scripts/scope-qv-roadmap-export-pdf-tests.js"/>
+	<!-- tests 29 -->
+	<!-- suites 0 -->
+	<!-- pass 29 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 507.043375 -->
+</testsuites>

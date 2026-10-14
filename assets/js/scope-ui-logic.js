@@ -3478,6 +3478,7 @@
   }
 
   function qvProgrammeFamily(row) {
+    if(['DPS','DAP','JSP'].includes(row?.family)) return row.family;
     const domain = String(row && row.domain || '').toUpperCase();
     if(domain === 'CMDT') return '';
     if(['PR','AUTO','FOBA','FOCO','FOCA','FOSPEC'].includes(domain)) return domain;
@@ -3485,8 +3486,13 @@
   }
 
   function qvProgrammeFilterFamily(row) {
+    if(['DPS','DAP','JSP'].includes(row?.family)) return row.family;
     const code = String(row && row.domain || '').toUpperCase();
     return ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'].includes(code) ? code : '';
+  }
+
+  function qvProgrammeOrganisationalFamilies(codes) {
+    return ['DPS','DAP','JSP'].filter(family=>(codes || []).some(code=>String(code).startsWith(`${family}:`)));
   }
 
   function qvProgrammeFilterType(row) {
@@ -5460,8 +5466,9 @@
     return `Échelon ${runs.map(phrase).join(' et ')}`;
   }
 
-  function qvFormatPublicLabels(codes) {
-    const labels = [...new Set((codes || []).map((code) => qvProgrammePublicLabel(code)).filter((label) => label && label !== 'À définir'))];
+  function qvFormatPublicLabels(codes,freeLabels=[]) {
+    const labels = [...new Set([...(codes || []).map((code) => qvProgrammePublicLabel(code)),...freeLabels]
+      .filter((label) => label && label !== 'À définir'))].sort((a,b)=>(a==='OSR'?-1:b==='OSR'?1:0));
     const contraction = qvFormatEchelons(labels.filter((label) => /^Échelon\s+/.test(label)));
     let placed = false;
     const rendered = [];
@@ -5473,7 +5480,7 @@
       }
       rendered.push(label);
     });
-    return rendered.join(', ');
+    return rendered.map(label=>label.replace(/\s*;\s*/g,', ')).join(', ');
   }
 
   return {
@@ -5796,6 +5803,7 @@
     qvProgrammeHasMultipleSessions,
     qvProgrammeOiCatalogue,
     qvProgrammeFamily,
+    qvProgrammeOrganisationalFamilies,
     qvProgrammeDomainMatches,
     qvNormalizeOiSelections,
     qvOiSites,

@@ -1,0 +1,164 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 1410.9663329999894,
+    "envelopeBytes": 175387,
+    "wireBytes": 131221,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 4891.841291999997,
+    "envelopeBytes": 845055,
+    "wireBytes": 633474,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 22078.987792,
+    "envelopeBytes": 32865,
+    "wireBytes": 24328,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A7cad2053-a78e-4299-bb7d-8e2bdeae2aa0/history",
+    "status": 200,
+    "durationMs": 19.082916000013938,
+    "envelopeBytes": 15256,
+    "wireBytes": 13187,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 1239.148749999993,
+    "envelopeBytes": 175387,
+    "wireBytes": 131221,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 4579.192458000005,
+    "envelopeBytes": 845019,
+    "wireBytes": 633446,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 24658.360667,
+    "envelopeBytes": 32865,
+    "wireBytes": 24328,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A7cad2053-a78e-4299-bb7d-8e2bdeae2aa0/history",
+    "status": 200,
+    "durationMs": 11.988167000003159,
+    "envelopeBytes": 15256,
+    "wireBytes": 13187,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 4550.278292000003,
+    "envelopeBytes": 845039,
+    "wireBytes": 633462,
+    "encoding": "gzip"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/quo-vadis/programme-items",
+    "status": 201,
+    "durationMs": 10942.225292000017,
+    "envelopeBytes": 846613,
+    "wireBytes": 634641,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 497.1947499999951,
+    "envelopeBytes": 846497,
+    "wireBytes": 634555,
+    "encoding": "gzip"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A080bc3e5-4a7f-4070-8fa3-a1fc25995ef0",
+    "status": 200,
+    "durationMs": 492.85470799999894,
+    "envelopeBytes": 846441,
+    "wireBytes": 634515,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 471.17370899999514,
+    "envelopeBytes": 846353,
+    "wireBytes": 634449,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 532.0442080000066,
+    "envelopeBytes": 32861,
+    "wireBytes": 24328,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A080bc3e5-4a7f-4070-8fa3-a1fc25995ef0/history",
+    "status": 200,
+    "durationMs": 2.9541669999889564,
+    "envelopeBytes": 5187,
+    "wireBytes": 4286,
+    "encoding": "identity"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/reports/quo-vadis",
+    "status": 200,
+    "durationMs": 61.352166000026045,
+    "envelopeBytes": 97850,
+    "wireBytes": 72955,
+    "encoding": "identity"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/reports/quo-vadis",
+    "status": 200,
+    "durationMs": 28.25979099998949,
+    "envelopeBytes": 76735,
+    "wireBytes": 57122,
+    "encoding": "identity"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/reports/quo-vadis",
+    "status": 200,
+    "durationMs": 22.790500000002794,
+    "envelopeBytes": 44775,
+    "wireBytes": 33122,
+    "encoding": "identity"
+  }
+]
