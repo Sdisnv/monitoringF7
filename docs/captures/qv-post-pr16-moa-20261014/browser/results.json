@@ -1,0 +1,250 @@
+{
+  "status": "PASS",
+  "productionWrites": false,
+  "auth": "LOCAL",
+  "sourceBaseline": "160eb54",
+  "volume": 934,
+  "scenarios": [
+    "Regular form grid: 1440/1100/768/390px, controls retain functionality and no text overlap",
+    "Existing PAPR history directly readable in seven columns, no change dropdown",
+    "Forbidden projected DPS date detected while editing and cleared without saving after correction",
+    "Actual OSR daytime Friday accepted; exact operational group and OSR-first selected display",
+    "CFF no room/no exclusive site; actual same Codir room conflicts, Oxygen clears the conflict before save",
+    "DAP proposal remains a modifiable suggestion in dd.mm.yyyy, no replacement of decisions",
+    "Actual clone manual creation journals exactly one creation row",
+    "All three existing PDF previews and downloads preserve filters"
+  ],
+  "layouts": [
+    {
+      "width": 1440,
+      "box": {
+        "x": 87,
+        "right": 1353,
+        "width": 1266
+      },
+      "select": {
+        "center": 1352.671875
+      },
+      "items": [
+        {
+          "x": 342.59375,
+          "y": 1344.671875,
+          "w": 16,
+          "h": 16,
+          "labelX": 366.59375,
+          "labelRight": 498.875,
+          "labelBottom": 1362.734375,
+          "center": 1352.671875
+        },
+        {
+          "x": 598.1875,
+          "y": 1344.671875,
+          "w": 16,
+          "h": 16,
+          "labelX": 622.1875,
+          "labelRight": 766.71875,
+          "labelBottom": 1362.734375,
+          "center": 1352.671875
+        },
+        {
+          "x": 853.796875,
+          "y": 1344.671875,
+          "w": 16,
+          "h": 16,
+          "labelX": 877.796875,
+          "labelRight": 961.625,
+          "labelBottom": 1362.734375,
+          "center": 1352.671875
+        },
+        {
+          "x": 1109.390625,
+          "y": 1344.671875,
+          "w": 16,
+          "h": 16,
+          "labelX": 1133.390625,
+          "labelRight": 1220.578125,
+          "labelBottom": 1362.734375,
+          "center": 1352.671875
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "width": 1100,
+      "box": {
+        "x": 37,
+        "right": 1063,
+        "width": 1026
+      },
+      "select": {
+        "center": 713.671875
+      },
+      "items": [
+        {
+          "x": 37,
+          "y": 756.671875,
+          "w": 16,
+          "h": 16,
+          "labelX": 61,
+          "labelRight": 193.28125,
+          "labelBottom": 774.734375,
+          "center": 764.671875
+        },
+        {
+          "x": 556,
+          "y": 756.671875,
+          "w": 16,
+          "h": 16,
+          "labelX": 580,
+          "labelRight": 724.53125,
+          "labelBottom": 774.734375,
+          "center": 764.671875
+        },
+        {
+          "x": 37,
+          "y": 807.671875,
+          "w": 16,
+          "h": 16,
+          "labelX": 61,
+          "labelRight": 144.828125,
+          "labelBottom": 825.734375,
+          "center": 815.671875
+        },
+        {
+          "x": 556,
+          "y": 807.671875,
+          "w": 16,
+          "h": 16,
+          "labelX": 580,
+          "labelRight": 667.1875,
+          "labelBottom": 825.734375,
+          "center": 815.671875
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "box": {
+        "x": 37,
+        "right": 920.34375,
+        "width": 883.34375
+      },
+      "select": {
+        "center": 811.15625
+      },
+      "items": [
+        {
+          "x": 37,
+          "y": 854.15625,
+          "w": 16,
+          "h": 16,
+          "labelX": 61,
+          "labelRight": 193.28125,
+          "labelBottom": 872.21875,
+          "center": 862.15625
+        },
+        {
+          "x": 484.671875,
+          "y": 854.15625,
+          "w": 16,
+          "h": 16,
+          "labelX": 508.671875,
+          "labelRight": 653.203125,
+          "labelBottom": 872.21875,
+          "center": 862.15625
+        },
+        {
+          "x": 37,
+          "y": 905.15625,
+          "w": 16,
+          "h": 16,
+          "labelX": 61,
+          "labelRight": 144.828125,
+          "labelBottom": 923.21875,
+          "center": 913.15625
+        },
+        {
+          "x": 484.671875,
+          "y": 905.15625,
+          "w": 16,
+          "h": 16,
+          "labelX": 508.671875,
+          "labelRight": 595.859375,
+          "labelBottom": 923.21875,
+          "center": 913.15625
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "box": {
+        "x": 37,
+        "right": 353,
+        "width": 316
+      },
+      "select": {
+        "center": 1466.3125
+      },
+      "items": [
+        {
+          "x": 37,
+          "y": 1505.953125,
+          "w": 16,
+          "h": 16,
+          "labelX": 61,
+          "labelRight": 189,
+          "labelBottom": 1534.09375,
+          "center": 1513.953125
+        },
+        {
+          "x": 201,
+          "y": 1505.953125,
+          "w": 16,
+          "h": 16,
+          "labelX": 225,
+          "labelRight": 353,
+          "labelBottom": 1534.09375,
+          "center": 1513.953125
+        },
+        {
+          "x": 37,
+          "y": 1553.59375,
+          "w": 16,
+          "h": 16,
+          "labelX": 61,
+          "labelRight": 144.828125,
+          "labelBottom": 1571.65625,
+          "center": 1561.59375
+        },
+        {
+          "x": 201,
+          "y": 1553.59375,
+          "w": 16,
+          "h": 16,
+          "labelX": 225,
+          "labelRight": 312.1875,
+          "labelBottom": 1571.65625,
+          "center": 1561.59375
+        }
+      ],
+      "overflow": false
+    }
+  ],
+  "downloads": [
+    {
+      "mode": "annual",
+      "filename": "QUO VADIS 2027, Planning annuel.pdf"
+    },
+    {
+      "mode": "compact",
+      "filename": "QUO VADIS 2027, Liste compacte.pdf"
+    },
+    {
+      "mode": "monthly",
+      "filename": "SCOPE_QUO_VADIS_2027-02_Planning_mensuel.pdf"
+    }
+  ],
+  "javascriptErrors": []
+}

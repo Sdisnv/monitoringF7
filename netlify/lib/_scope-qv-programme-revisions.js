@@ -6,7 +6,6 @@ const {createPgRepo} = require('./_scope-pg');
 const {createScopeService} = require('./_scope-service');
 const {ScopeQvPostgresStore} = require('./_scope-qv-publication-postgres-store');
 const logic = require('../../assets/js/scope-ui-logic');
-const compatibility=require('./_scope-functional-catalog');
 
 const EDITORIAL_FIELDS = new Set(['activityLabel','themes','publicFreeLabels']);
 const REVISION_FIELDS = ['activityLabel','themes','publicFreeLabels','date','startTime','endTime','statCom',
@@ -59,26 +58,8 @@ async function history(query,year,itemId,{personnelRead=false}={}){
   });
 }
 
-function reservationConflicts(rows){
-  const active=rows.filter(row=>!row.external && row.startsAt && row.endsAt && !['ANNULE','NON_RETENU'].includes(row.status));
-  const conflicts=[],seen=new Set();
-  const location=row=>row.lieuId || row.business?.lieuId;
-  const room=row=>row.salleTheorieId || row.business?.salleTheorieId;
-  const slot=(row,wholeLocation)=>({date:String(row.startsAt).slice(0,10),endDate:String(row.endsAt).slice(0,10),
-    startTime:String(row.startsAt).slice(11,16),endTime:String(row.endsAt).slice(11,16),
-    roomCode:room(row) || '',resourceCodes:wholeLocation && location(row) ? [`LOCATION:${location(row)}`] : [],priority:100});
-  for(const left of active.filter(row=>row.externalActivity)) for(const right of active){
-    if(left.id===right.id) continue;
-    const key=[left.id,right.id].sort().join('|');if(seen.has(key)) continue;
-    const wholeLocation=!room(left) || right.externalActivity && !room(right);
-    const result=compatibility.compatibilityBetween(slot(left,wholeLocation),slot(right,wholeLocation));
-    if(result.causes.some(cause=>['ROOM_CONFLICT','RESOURCE_CONFLICT'].includes(cause.code))){
-      seen.add(key);conflicts.push({leftId:left.id,rightId:right.id,leftLabel:left.label,rightLabel:right.label,
-        date:String(left.startsAt).slice(0,10),causes:result.causes.filter(cause=>['ROOM_CONFLICT','RESOURCE_CONFLICT'].includes(cause.code)),blocking:true});
-    }
-  }
-  return conflicts;
-}
+const reservationConflicts=rows=>require('./_scope-quo-vadis-coverage').reservationConflicts(rows,
+  require('./_scope-functional-catalog').compatibilityBetween);
 
 async function journal(client,{actor,itemId,action,before,after,motif}){
   await client.query(`insert into scope_journal_metier(journal_id,auteur_id,entite,entite_id,action,avant,apres,commentaire)

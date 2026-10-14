@@ -2032,7 +2032,9 @@ class ScopePdfRenderer {
 
   renderQuoVadisProgramme(rows, exportMeta){
     const meta = exportMeta || {};
-    const sourceRows = Array.isArray(rows) ? rows.slice() : [];
+    // Historical titles contain a Katakana separator, absent from Helvetica's WinAnsi font.
+    const sourceRows = Array.isArray(rows) ? rows.map(row=>Object.fromEntries(Object.entries(row).map(([key,value])=>
+      [key,typeof value==='string'?value.replace(/[ \t]*\u30fb[ \t]*/g,' \u00b7 '):value]))) : [];
     if(meta.mode === 'compact') sourceRows.sort((a,b) => String(a.dateIso).localeCompare(String(b.dateIso))
       || String(a.horaire).localeCompare(String(b.horaire)) || String(a.activite).localeCompare(String(b.activite),'fr'));
     this.doc.y = HEADER_H + 12;
@@ -2263,7 +2265,8 @@ function renderQuoVadisProgrammePdf(rows, exportMeta, meta){
   const renderer = new ScopePdfRenderer({
     kind: 'QUO_VADIS',
     title: `QUO VADIS ${exportMeta && exportMeta.year || 2027}`,
-    subtitle: exportMeta && exportMeta.mode === 'monthly' ? 'Planning mensuel' : 'Programme annuel préparatoire',
+    subtitle: exportMeta && exportMeta.mode === 'monthly' ? 'Planning mensuel'
+      : exportMeta && exportMeta.mode === 'compact' ? 'Liste compacte' : 'Planning annuel',
     landscape: !(exportMeta && exportMeta.mode === 'monthly')
   }, meta || {});
   return renderer.finalizeQuoVadisProgramme(rows, exportMeta);

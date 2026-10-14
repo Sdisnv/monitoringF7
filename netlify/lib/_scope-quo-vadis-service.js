@@ -218,22 +218,7 @@ function applyAnnualReportConstraint(rows,rule = annualReportCatalog.APPROVED_RU
   });
 }
 
-function programmePlanningDayControl(row,qv){
-  if(row.externalActivity || row.businessValidation || row.definitionId==='CTA-PERMANENCE' || !row.startsAt) return null;
-  const date=String(row.startsAt).slice(0,10),rules={};
-  for(const rule of qv.rules || []) {
-    if(rule.definitionVersionId && rule.definitionVersionId!==row.definitionVersionId) continue;
-    const key=rule.cibleCode?`${rule.domain}:${rule.cibleCode}`:rule.domain;
-    (rules[key] ||= []).push(rule);
-  }
-  if(!rules[row.domain] && !rules['*']) return null;
-  const policy=coverage.dayPolicyForActivity(row.domain,row,rules,date);
-  const assessment=coverage.classifyCandidateDate(date,policy,qv.calendarDays);
-  if(!['INTERDIT','DECONSEILLE'].includes(assessment.dayClass)) return null;
-  const rule=(rules[row.domain] || rules['*'] || []).filter(item=>(!item.validFrom || item.validFrom<=date)
-    && (!item.validTo || date<=item.validTo)).sort((a,b)=>Number(b.priority || 0)-Number(a.priority || 0))[0];
-  return {...assessment,ruleCode:rule?.code || '',derogationAllowed:rule?.derogationAllowed!==false};
-}
+const programmePlanningDayControl=coverage.programmeDayControl;
 
 function applyMonthlyJspDirectionAndAnnualReport(rows) {
   const monthlyExplicit = new Map(rows.filter((row) => row.label === 'Séance Direction JSP'
@@ -4079,8 +4064,12 @@ function createScopeQuoVadisService({ database = db } = {}){
         if(!programmeRevisions.revisionChanges(presented,submitted).changedFields.length && (body.validateBusiness!==true || alreadyValidated))
           return {updated:true,unchanged:true,quoVadis:currentProgramme};
       }
-      const dayControl=programmePlanningDayControl({...source,...eventFlags,startsAt:date && `${date}T${startTime}`,
-        businessValidation:date===inherited.date?currentView?.businessValidation:null},currentProgramme);
+      const dayControl=programmePlanningDayControl({...source,...eventFlags,domain:planningFields.domain,
+        planningDomain:source.domain,
+        statCom:planningFields.statCom,publics:planningFields.publicCodes,publicFreeLabels:planningFields.publicFreeLabels,
+        startsAt:date && `${date}T${startTime}`,businessValidation:date===inherited.date && source.domain===planningFields.domain
+          && JSON.stringify([...(source.publics || [])].sort())===JSON.stringify([...planningFields.publicCodes].sort())
+          ? currentView?.businessValidation:null},currentProgramme);
       if(body.validateBusiness===true && dayControl?.dayClass==='INTERDIT') {
         if(!dayControl.derogationAllowed) throw new HttpError(422,'programme_jour_interdit',dayControl.reasons.join(' '));
         if(!revisionMotif) throw new HttpError(422,'programme_motif_obligatoire','Une dérogation métier exige un motif.',
@@ -4157,15 +4146,19 @@ function createScopeQuoVadisService({ database = db } = {}){
         action='MODIFIER_PUBLICATION_MINEURE';
       }
       if(!major && saveAction !== 'WITHDRAW' && body.validateBusiness === true) writeMetadata.validationWithdrawal=null;
-      if(!action) action=existing ? body.validateBusiness===true ? 'VALIDER_OCCURRENCE' : 'MODIFIER_OCCURRENCE' : 'CREER_OCCURRENCE';
+      if(!action) action=!existing && source.manualCreation ? 'CREER_OCCURRENCE'
+        : body.validateBusiness===true ? 'VALIDER_OCCURRENCE' : 'MODIFIER_OCCURRENCE';
       if(action){
         const trace={action,motif:motif || null,actor:options.actor || null,at:new Date().toISOString(),
           validation:oldValidation,revision:writeMetadata.publicationRevision || null};
         writeMetadata.validationHistory=[...(previousMetadata.validationHistory || []),trace];
         await programmeRevisions.journal(client,{actor:options.actor,itemId,action,
-          before:{validation:oldValidation,fields:baseline},after:{validation:writeMetadata.businessValidation || null,
+          before:{validation:oldValidation,fields:previousMetadata.planningFields || (lockedPreparation ? {} : baseline)},after:{validation:writeMetadata.businessValidation || null,
             fields:planningFields,revision:writeMetadata.publicationRevision || null,
-            transaction:{source:'Programme SCOPE',workflow:saveAction || 'SAVE'}},motif});
+            automaticChanges:currentView?.statComDecision && lockedPreparation && lockedPreparation.statcom_code!==planningFields.statCom
+              && planningFields.statCom===currentView.statCom ? {statCom:{before:lockedPreparation.statcom_code,after:planningFields.statCom,
+                rule:currentView.statComDecision.rule || 'QV-DPS-GROUP-001'}} : {},
+            transaction:{source:'Programme SCOPE',workflow:saveAction || 'SAVE',manualCreation:source.manualCreation===true}},motif});
       }
       if(source.manualCreation || source.cycleExtension || source.restoredModule || (!statCom && !eventFlags.sold && !eventFlags.externalActivity)){
         let businessCode = String(existing && existing.metadata.businessCode || '');
