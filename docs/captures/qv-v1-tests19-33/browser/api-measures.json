@@ -1,0 +1,164 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 709.2601670000004,
+    "envelopeBytes": 851085,
+    "wireBytes": 637997,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 73.76970799999253,
+    "envelopeBytes": 175391,
+    "wireBytes": 131228,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 485.5327079999988,
+    "envelopeBytes": 851105,
+    "wireBytes": 638012,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 563.8819999999978,
+    "envelopeBytes": 32861,
+    "wireBytes": 24328,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 525.7699589999975,
+    "envelopeBytes": 851121,
+    "wireBytes": 638023,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 57.86433299999044,
+    "envelopeBytes": 175391,
+    "wireBytes": 131228,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 457.1712499999994,
+    "envelopeBytes": 851125,
+    "wireBytes": 638026,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 561.5958749999991,
+    "envelopeBytes": 32861,
+    "wireBytes": 24328,
+    "encoding": "gzip"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/quo-vadis/programme-items",
+    "status": 201,
+    "durationMs": 1455.952833000003,
+    "envelopeBytes": 853075,
+    "wireBytes": 639487,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 545.7949590000208,
+    "envelopeBytes": 852933,
+    "wireBytes": 639382,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 548.7406669999473,
+    "envelopeBytes": 852929,
+    "wireBytes": 639380,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 60.4460830000462,
+    "envelopeBytes": 175391,
+    "wireBytes": 131228,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 487.14000000001397,
+    "envelopeBytes": 852965,
+    "wireBytes": 639406,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 569.9704170000041,
+    "envelopeBytes": 32861,
+    "wireBytes": 24328,
+    "encoding": "gzip"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/quo-vadis/programme-items",
+    "status": 200,
+    "durationMs": 499.12295799999265,
+    "envelopeBytes": 853085,
+    "wireBytes": 639496,
+    "encoding": "gzip"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A56b62036-e8ba-46e2-af60-b5b28f6b784e",
+    "status": 200,
+    "durationMs": 487.1919169999892,
+    "envelopeBytes": 852873,
+    "wireBytes": 639337,
+    "encoding": "gzip"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A56b62036-e8ba-46e2-af60-b5b28f6b784e",
+    "status": 200,
+    "durationMs": 1051.4109999999637,
+    "envelopeBytes": 852957,
+    "wireBytes": 639401,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A56b62036-e8ba-46e2-af60-b5b28f6b784e/history",
+    "status": 200,
+    "durationMs": 6.698625000019092,
+    "envelopeBytes": 8045,
+    "wireBytes": 6826,
+    "encoding": "identity"
+  }
+]

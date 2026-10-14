@@ -613,7 +613,27 @@ function programmeDayControl(row,qv){
   }
   const domain=isOsrTraining(row)?'DPS':row.planningDomain || row.domain;
   const rule=applicablePlanningRule(domain,row,rules,date);
-  const assessment=classifyCandidateDate(date,dayPolicyForActivity(domain,row,rules,date),qv.calendarDays);
+  const policy=dayPolicyForActivity(domain,row,rules,date);
+  const label=String(row.activityLabel || row.label || '');
+  const kind=/instr(?:uction)?\s+demi[-\s]*(?:sct|section)/i.test(label)?'demi-section'
+    :/instr(?:uction)?\s+(?:sct|section)/i.test(label)?'section':'';
+  const sites=[...new Set((row.oiSelections || row.ois || []).map(code=>String(code).replace(/^DPS:/,'')))];
+  const target=new Date(`${date}T00:00:00Z`),offset=(target.getUTCDay()+2)%7;
+  target.setUTCDate(target.getUTCDate()-offset);
+  if(kind==='section' && sites[0]==='G1' && /PIONNIER.*CSU|CSU.*PIONNIER/i.test(label)) target.setUTCDate(target.getUTCDate()-7);
+  const reference=qv.ctaParameters?.instructionWeeks?.find(item=>item.friday===target.toISOString().slice(0,10));
+  const assignment=reference?.assignments.find(item=>item.oi===sites[0]);
+  const expected=kind==='demi-section'?assignment?.halfSection:assignment?.section;
+  const activeHalves=qv.ctaParameters?.demiSectionsOperationnelles?.[sites[0]] || [];
+  const activePublic=kind==='demi-section'?activeHalves.includes(expected):activeHalves.some(code=>code.slice(0,3)===expected);
+  const ctaInstruction=Boolean(domain==='DPS' && kind && sites.length===1 && expected && (row.publics || []).includes(expected)
+    && activePublic);
+  let calendar=qv.calendarDays;
+  if(ctaInstruction){
+    if(weekdayName(date)==='SATURDAY') policy.SATURDAY='AUTORISE';
+    calendar=(calendar || []).filter(item=>calendarType(item)!=='VACANCES_SCOLAIRES');
+  }
+  const assessment=classifyCandidateDate(date,policy,calendar);
   if(!['INTERDIT','DECONSEILLE'].includes(assessment.dayClass)) return null;
   return {...assessment,ruleCode:rule?.code || '',derogationAllowed:rule?.derogationAllowed!==false};
 }

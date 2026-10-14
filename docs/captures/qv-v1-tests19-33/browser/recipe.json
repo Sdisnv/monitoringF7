@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "tests": [
+    "Shared family options present, SDIS first, no artificial empty-family label",
+    "Extended calendar panel complete desktop/mobile, long selected date, three legends and fixed geometry across months",
+    "MOA CTA examples no longer display false generic date warnings",
+    "F1/DAP persists; explicit reactivation has mandatory motif, same ID, human-readable history"
+  ],
+  "geometry": [
+    {
+      "viewport": 1440,
+      "month": "2027-03",
+      "x": 88,
+      "y": 136.953125,
+      "width": 700,
+      "height": 372,
+      "asideInside": true,
+      "cells": 49
+    },
+    {
+      "viewport": 1440,
+      "month": "2027-04",
+      "x": 88,
+      "y": 136.953125,
+      "width": 700,
+      "height": 372,
+      "asideInside": true,
+      "cells": 49
+    },
+    {
+      "viewport": 390,
+      "month": "2027-03",
+      "x": 12,
+      "y": 251,
+      "width": 366,
+      "height": 587,
+      "asideInside": true,
+      "cells": 49
+    },
+    {
+      "viewport": 390,
+      "month": "2027-04",
+      "x": 12,
+      "y": 251,
+      "width": 366,
+      "height": 587,
+      "asideInside": true,
+      "cells": 49
+    }
+  ],
+  "errors": [],
+  "productionWrites": false
+}

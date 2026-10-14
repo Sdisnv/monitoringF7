@@ -198,6 +198,7 @@ function sanitizeQuoVadisRows(rows){
     monthLabel: String(row && row.monthLabel || ''),
     horaire: String(row && row.horaire || ''),
     domaine: String(row && row.domaine || ''),
+    famille: String(row && row.famille || ''),
     oi: String(row && row.oi || ''),
     publicCible: String(row && (row.publicCible || row.cible) || ''),
     activite: activity(row),

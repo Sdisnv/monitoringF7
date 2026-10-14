@@ -11,15 +11,17 @@ const { generateQuoVadisProgrammeReport } = require('../netlify/lib/_scope-repor
 
 const performanceMode=process.argv.find(arg=>/^--performance-(before|after)$/.test(arg));
 const postPr16Mode=process.argv.includes('--post-pr16-moa');
-const moa14Mode=process.argv.includes('--moa-20261014');
+const v1Mode=process.argv.includes('--v1-tests19-33');
+const moa14Mode=process.argv.includes('--moa-20261014') || v1Mode;
 const postRecetteMode=process.argv.includes('--post-recette-moa') || postPr16Mode || moa14Mode;
 if(moa14Mode) process.env.SCOPE_RECIPE_MOA_20261014='1';
+if(v1Mode) process.env.SCOPE_RECIPE_V1='1';
 if(postPr16Mode) process.env.SCOPE_RECIPE_POST_PR16='1';
 if(performanceMode || postRecetteMode) {
   for(const mode of ['ROADMAP','COMPLEMENT','FINALISATION','CORRECTIVE','MOA13','FINAL_CONTROLS','PERFORMANCE'])
     process.env[`SCOPE_RECIPE_${mode}`]='1';
   process.env.SCOPE_RECIPE_PERFORMANCE_BEFORE=performanceMode==='--performance-before'?'1':'0';
-  process.env.SCOPE_RECIPE_EVIDENCE_DIR=moa14Mode?'docs/captures/qv-moa-20261014/browser':postPr16Mode?'docs/captures/qv-post-pr16-moa-20261014/browser':postRecetteMode?'docs/captures/qv-post-recette-moa-20261013/browser'
+  process.env.SCOPE_RECIPE_EVIDENCE_DIR=v1Mode?'docs/captures/qv-v1-tests19-33/browser':moa14Mode?'docs/captures/qv-moa-20261014/browser':postPr16Mode?'docs/captures/qv-post-pr16-moa-20261014/browser':postRecetteMode?'docs/captures/qv-post-recette-moa-20261013/browser'
     :`docs/captures/qv-response-performance-20261013/browser-${performanceMode.slice(14)}`;
 }
 

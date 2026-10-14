@@ -1,0 +1,320 @@
+{
+  "status": "PASS",
+  "filename": "QUO VADIS 2027, Planning annuel.pdf",
+  "rows": 918,
+  "pages": 50,
+  "geometry": [
+    {
+      "page": 1,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 2,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 3,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 4,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 5,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 6,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 7,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 8,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 9,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 10,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 11,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 12,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 13,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 14,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 15,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 16,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 17,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 18,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 19,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 20,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 21,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 22,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 23,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 24,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 25,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 26,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 27,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 28,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 29,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 30,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 31,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 32,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 33,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 34,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 35,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 36,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 37,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 38,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 39,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 40,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 41,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 42,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 43,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 44,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 45,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 46,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 47,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 48,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 49,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    },
+    {
+      "page": 50,
+      "A4Landscape": true,
+      "allColumns": true,
+      "minimumMarginMm": 10
+    }
+  ],
+  "raster": [
+    {
+      "page": 1,
+      "outsideInk": 0
+    },
+    {
+      "page": 50,
+      "outsideInk": 0
+    }
+  ],
+  "monthlyStructureUnchanged": true,
+  "sourceUnchanged": true
+}
