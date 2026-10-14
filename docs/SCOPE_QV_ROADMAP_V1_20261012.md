@@ -199,3 +199,24 @@ Recette MOA ciblée préparée dans le [rapport existant](SCOPE_QV_MOA_20261014.
 **18 scénarios déjà réalisés (11 clone + 7 Chrome)** et de leurs preuves, aucun scénario réexécuté.
 Complément strictement documentaire : pas de code, migration, changement Okta/Netlify, écriture en
 production, fusion ou publication ; gels Y1 / `070F23` / IndeX déjà intégrés et laissés inchangés.
+
+## Finalisation V1 — Tests MOA 19 À 33
+PR #18 désormais fusionnée : main et production contrôlés directement sur `7033e3e`.
+Le rapport historique PR #18 et ses preuves restent ceux de ce jalon. Nouveau lot correctif unique,
+sans reprise générale : [rapport V1 et preuves ciblées](SCOPE_QV_V1_TESTS19_33_20261014.md).
+
+| Besoin | État / suite |
+|---|---|
+| Calendrier de fiche | Composant acquis complété par panneau contextuel, date longue, trois légendes ; stabilité ordinateur/mobile vérifiée |
+| Instructions DPS / CTA | Faux avertissements samedi/vacances corrigés uniquement si type/OI/public actif correspondent au CTA canonique ; fériés et cycle continu conservés |
+| Familles | Catalogue commun, SDIS premier, valeurs enregistrées conservées ; 92 internes / 4 externes sans famille recensés, attribution à confirmer par la MOA |
+| Publics | Catalogue sections/demi-sections/échelons/qualifications/fonctions conservé ; aucune section calculée pour séance préparatoire du 27.01 |
+| PDF / CSV / domaines | Planning annuel paysage sans troncature à 100 %, Public après OI, Famille en CSV, domaines courts ; structure mensuelle inchangée |
+| Réactivation | Action explicite et motif, trace, même ID, disponibilité et état antérieur ; publication annulée traitée dans son workflow opérationnel existant |
+| Messages | Causes métier lisibles ; détails techniques conservés hors affichage MOA |
+| ProgJour — prochain besoin, pas ce lot | Futur chemin SCOPE > QUO VADIS > ProgJour pour programmation hebdomadaire des permanents. Préserver ID d'événement, activité/thème, date/heures, lieu/salle, OI/public/responsable, état, modifications/annulations. Futures affectations nominatives reliées aux personnes SCOPE par NIP. Sélection des activités et règles détaillées à définir par la MOA ; aucun écran, table, synchronisation ou duplication créé |
+| GELORE2 — en attente fournisseur | Export futur des réservations de salles G1 ; demande technique indiquée envoyée par la MOA, format d'import attendu. Aucun développement, API ou format CSV supposé |
+
+QV-RULES-001, suivi spécialisé Cours ECA, processus post-publication QV-CYCLE-007 restent préservés,
+sans module parallèle. Budget DAP Y1, `070F23`, correspondances IndeX, EM du 16.02 et décisions JSP
+approuvées inchangés. Aucun Programme annuel validé automatiquement ; fusion/publication sous GO distinct.

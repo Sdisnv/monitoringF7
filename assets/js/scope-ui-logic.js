@@ -2624,6 +2624,8 @@
     const message = String(error && error.message || '');
     const payloadMessage = String(error && error.payload && error.payload.message || '');
     const raw = `${message} ${payloadMessage}`;
+    if(code==='HUMAN_REVIEW_REQUIRED' || /HUMAN_REVIEW_REQUIRED|\bundefined\b/.test(raw))
+      return {tone:'warning',title:'Décision métier nécessaire',message:'Cette activité doit être contrôlée avant de poursuivre. Les données et décisions existantes restent conservées.'};
     if (/<html[\s>]/i.test(raw) || /inactivity timeout|timed?\s*out|timeout/i.test(raw)) {
       return {
         tone: 'error',
@@ -3478,17 +3480,18 @@
   }
 
   function qvProgrammeFamily(row) {
-    if(['DPS','DAP','JSP'].includes(row?.family)) return row.family;
-    const domain = String(row && row.domain || '').toUpperCase();
-    if(domain === 'CMDT') return '';
-    if(['PR','AUTO','FOBA','FOCO','FOCA','FOSPEC'].includes(domain)) return domain;
-    return row && row.family || '';
+    const value=String(row?.family || '').trim();
+    return ['Transversale / non qualifiée','Autre','Sans famille spécifique'].includes(value)?'':value;
   }
 
   function qvProgrammeFilterFamily(row) {
-    if(['DPS','DAP','JSP'].includes(row?.family)) return row.family;
-    const code = String(row && row.domain || '').toUpperCase();
-    return ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'].includes(code) ? code : '';
+    return qvProgrammeFamily(row);
+  }
+
+  function qvProgrammeFamilyCatalogue(rows=[]) {
+    const confirmed=['SDIS','DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'];
+    const retained=[...new Set(rows.map(qvProgrammeFamily).filter(value=>value && !confirmed.includes(value)))];
+    return confirmed.concat(retained.sort((a,b)=>a.localeCompare(b,'fr')));
   }
 
   function qvProgrammeOrganisationalFamilies(codes) {
@@ -5803,6 +5806,7 @@
     qvProgrammeHasMultipleSessions,
     qvProgrammeOiCatalogue,
     qvProgrammeFamily,
+    qvProgrammeFamilyCatalogue,
     qvProgrammeOrganisationalFamilies,
     qvProgrammeDomainMatches,
     qvNormalizeOiSelections,

@@ -11783,6 +11783,16 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-calendar[hidden]{display:none}
 .qv-programme-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;text-transform:capitalize}
 .qv-programme-calendar-head button{width:36px;height:36px;border:1px solid #c4d4e8;border-radius:3px;background:#fff;color:#174c89;font-size:23px;cursor:pointer}
+.qv-programme-calendar-layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:20px;height:340px}
+.qv-programme-calendar-context{min-width:0;display:flex;flex-direction:column;gap:8px;border-left:1px solid #d8dee5;padding-left:16px;font-size:13px}
+.qv-programme-calendar-selected{text-transform:capitalize;font-size:15px;line-height:1.4}
+.qv-programme-calendar-context p{margin:0;line-height:1.4}
+.qv-programme-calendar-legend{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.qv-programme-calendar-legend li{display:flex;align-items:center;gap:8px}
+.qv-programme-calendar-legend .is-weekend{background:#f7f8fa;border:1px solid #bbc2cb}
+.qv-programme-calendar-month-info{overflow:auto;min-height:0;flex:1;line-height:1.4}
+.qv-programme-calendar-month-info ul{padding-left:18px;margin:6px 0}
+@media(max-width:560px){.qv-programme-calendar-layout{grid-template-columns:minmax(0,1fr);height:555px;gap:12px}.qv-programme-calendar-context{border-left:0;border-top:1px solid #d8dee5;padding:12px 0 0}.qv-programme-calendar-context p{font-size:12px}.qv-programme-calendar-legend{gap:5px}}
 .qv-programme-calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
 .qv-programme-calendar-days>span,.qv-programme-calendar-days>button{display:grid;place-items:center;min-width:0;height:min(40px,max(16px,calc((100dvh - 130px)/7)))}
 .qv-programme-calendar-days>span{color:#61738e;font-size:12px}

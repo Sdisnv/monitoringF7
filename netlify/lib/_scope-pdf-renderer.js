@@ -2055,8 +2055,8 @@ class ScopePdfRenderer {
       .text(`Filtres : ${meta.filterSummary || 'Aucun filtre'}`, MARGIN, this.doc.y, { width: this.pageW - 2 * MARGIN });
     this.doc.y += 8;
     if(meta.mode === 'monthly') return this.qvMonthlyRows(sourceRows, meta.monthKey);
-    const headers = ['Date', 'Horaire', 'Activité', 'Domaine', 'OI', 'Lieu', 'Salle', 'Responsable', 'Public cible', 'Stat.Com', 'État'];
-    const widths = [45, 49, 140, 55, 38, 62, 50, 58, 73, 44, 60];
+    const headers = ['Date', 'Horaire', 'Activité', 'Domaine', 'Famille', 'OI', 'Public cible', 'Lieu', 'Salle', 'Responsable', 'Stat.Com', 'État'];
+    const widths = [45,49,132,30,48,38,90,62,50,58,44,60];
     const counts = new Map();
     sourceRows.forEach((row) => {
       const key = row.dateIso.slice(0, 7) || row.monthKey;
@@ -2070,10 +2070,11 @@ class ScopePdfRenderer {
         items.push({ type: 'month', monthKey: key, count: counts.get(key) });
         lastMonth = key;
       }
-      items.push({ type: 'row', cells: [row.date, row.horaire, row.activite, row.domaine,
-        row.oi, row.lieu, row.salleTheorie, row.responsable, row.publicCible, row.statcom, row.etat] });
+      const domain=String(row.domaine || '').replace(/^(F[0-8])\s+.*$/,'$1');
+      items.push({ type: 'row', cells: [row.date, row.horaire, row.activite, domain,row.famille || '',
+        row.oi,row.publicCible,row.lieu,row.salleTheorie,row.responsable,row.statcom,row.etat] });
     });
-    if(!items.length) items.push({ cells: ['Aucune séance à exporter.', '', '', '', '', '', '', '', '', '', ''] });
+    if(!items.length) items.push({ cells: ['Aucune séance à exporter.', ...Array(headers.length-1).fill('')] });
     this.qvProgrammeTable(headers, items, widths);
   }
 
@@ -2175,7 +2176,8 @@ class ScopePdfRenderer {
   }
 
   qvProgrammeTable(headers, items, widths){
-    const width = this.pageW - 2 * MARGIN;
+    const inset=this.printInset || MARGIN;
+    const width = this.pageW - 2 * inset;
     const raw = widths;
     const sum = raw.reduce((total, value) => total + value, 0) || 1;
     const cols = raw.map((value, index) => (index === raw.length - 1 ? 0 : Math.floor((width * value) / sum)));
@@ -2186,8 +2188,8 @@ class ScopePdfRenderer {
     const headerFontSize = 6.8;
     const paintHeader = () => {
       const y = this.doc.y;
-      this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
-      let x = MARGIN;
+      this.doc.rect(inset, y, width, headerH).fill(rgb('#f4f5f8'));
+      let x = inset;
       headers.forEach((cell, i) => {
         this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(headerFontSize)
           .text(cell, x + 2, y + 4, { width: cols[i] - 4, height: headerH - 6, lineBreak: true });
@@ -2226,8 +2228,8 @@ class ScopePdfRenderer {
         paintHeader();
       }
       const y = this.doc.y;
-      if(dataIndex % 2 === 1) this.doc.rect(MARGIN, y, width, rowH).fill(rgb('#f7f8fa'));
-      let x = MARGIN;
+      if(dataIndex % 2 === 1) this.doc.rect(inset, y, width, rowH).fill(rgb('#f7f8fa'));
+      let x = inset;
       item.cells.forEach((cell, i) => {
         this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(rowFontSize)
           .text(String(cell || ''), x + 2, y + 3, { width: cols[i] - 4, lineBreak: true });

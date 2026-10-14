@@ -10331,14 +10331,7 @@
   }
 
   function qvFamilyOf(row) {
-    const domain = String((row && row.domain) || '').toUpperCase();
-    if (domain === 'PR' || domain === 'AUTO') return domain;
-    if (row && row.family) return row.family;
-    if (['DPS', 'DAP', 'JSP'].includes(domain)) return 'FOCO';
-    if (domain === 'FOBA') return 'FOBA';
-    if (domain === 'FOCA') return 'FOCA';
-    if (['FOSPEC', 'VPC', 'NAC', 'OFSI'].includes(domain)) return 'FOSPEC';
-    return '';
+    return L.qvProgrammeFamily(row);
   }
 
   function qvIsMultiSession(row) {
@@ -10739,7 +10732,7 @@
       const haystack = [row.title, row.domain, row.domainLabel, (row.cibleCodes || []).join(' '), qvCibleLabel(row), qvOiCode(qv, row), row.specialisation, row.cursus, row.lieu, qvConvocationAddress(qv, row), row.salleTheorie, row.responsable, row.statcomCode, row.family, qvFamilyOf(row), row.activityKind, qvStatusLabel(row.status), qvAgendaState(row).label].join(' ').toLowerCase();
       if (query && !haystack.includes(query)) return false;
       if (!L.qvProgrammeDomainMatches(row, filters.domain)) return false;
-      if (filters.family && filters.family !== 'tous' && qvFamilyOf(row) !== filters.family) return false;
+      if (filters.family && filters.family !== 'tous' && (filters.family==='__EMPTY__'?Boolean(qvFamilyOf(row)):qvFamilyOf(row) !== filters.family)) return false;
       if (filters.sessions === 'oui' && !qvIsMultiSession(row)) return false;
       if (filters.cible && filters.cible !== 'tous' && !(row.cibleCodes || []).includes(filters.cible)) return false;
       if (filters.specialisation && filters.specialisation !== 'tous' && row.specialisation !== filters.specialisation) return false;
@@ -10818,6 +10811,7 @@
     const all = qvActivities(qv);
     const domains = qvFilterOptions(all, (row) => row.domain);
     const cibles = qvFilterOptions(all.flatMap((row) => row.cibleCodes || []), (row) => row);
+    const families = L.qvProgrammeFamilyCatalogue(all);
     const specs = qvFilterOptions(all, (row) => row.specialisation);
     const cursus = qvFilterOptions(all, (row) => row.cursus);
     const states = qvFilterOptions(all, (row) => row.status);
@@ -10825,7 +10819,7 @@
     return `<div class="scope-toolbar qv-toolbar">
       <div class="scope-field"><label for="qv-filter-q">Recherche</label><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Activité, domaine, lieu…"></div>
       <div class="scope-field"><label for="qv-filter-domain">Domaine</label><select id="qv-filter-domain"><option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
-      <div class="scope-field"><label for="qv-filter-family">Famille</label><select id="qv-filter-family"><option value="tous">Toutes</option>${['FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'].map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
+      <div class="scope-field"><label for="qv-filter-family">Famille</label><select id="qv-filter-family"><option value="tous">Toutes</option><option value="__EMPTY__" ${filters.family==='__EMPTY__'?'selected':''}>—</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-cible">OI</label><select id="qv-filter-cible"><option value="tous">Tous</option>${cibles.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-specialisation">Spécialisation</label><select id="qv-filter-specialisation"><option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-cursus">Cursus</label><select id="qv-filter-cursus"><option value="tous">Tous</option>${cursus.map((v) => `<option value="${escapeHtml(v)}" ${filters.cursus === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
@@ -10842,7 +10836,7 @@
     const filters = state.quoVadisFilters || {};
     const all = qvActivities(qv);
     const domains = qvFilterOptions(all, (row) => row.domain);
-    const families = ['FOBA', 'FOCO', 'FOCA', 'FOSPEC'];
+    const families = L.qvProgrammeFamilyCatalogue(all);
     const ois = qvFilterOptions(all, (row) => qvOiCode(qv, row));
     const specs = qvFilterOptions(all, (row) => row.specialisation);
     const cibles = qvFilterOptions(all.flatMap((row) => row.cibleCodes || []), (row) => row);
@@ -10854,7 +10848,7 @@
     return `<div class="qv-agenda-filters">
       <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control">${qvCockpitIcon('search')}<input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher un événement, un domaine, un public cible, un lieu…"></div></div>
       ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option><option value="__EMPTY__" ${filters.family==='__EMPTY__'?'selected':''}>—</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-specialisation', 'Spécialisation', `<option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-cible', 'Public cible', `<option value="tous">Tous</option>${cibles.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
@@ -10871,7 +10865,7 @@
     const filters = state.quoVadisFilters || {};
     const all = qvActivities(qv);
     const domains = qvFilterOptions(all, (row) => row.domain);
-    const families = ['FOBA', 'FOCO', 'FOCA', 'FOSPEC'];
+    const families = L.qvProgrammeFamilyCatalogue(all);
     const ois = qvFilterOptions(all, (row) => qvOiCode(qv, row));
     const specs = qvFilterOptions(all, (row) => row.specialisation);
     const cibles = qvFilterOptions(all.flatMap((row) => row.cibleCodes || []), (row) => row);
@@ -10899,7 +10893,7 @@
       <div class="qv-activites-filters-primary">
         <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher une activité, un domaine, un lieu…"></div></div>
         ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-        ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+        ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option><option value="__EMPTY__" ${filters.family==='__EMPTY__'?'selected':''}>—</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
         ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
         ${field('qv-filter-specialisation', 'Spécialisation', `<option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
         ${field('qv-filter-cible', 'Public cible', `<option value="tous">Tous</option>${cibles.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
@@ -11015,7 +11009,8 @@
         endDateIso: qvDateKey(row.endsAt) || dateIso,
         monthKey: dateIso.slice(0, 7),
         horaire: qvProgrammeTime(row) || 'À définir',
-        domaine: qvProgrammeDomainDisplay(qvProgrammeDomain(row)),
+        domaine: qvProgrammeDomain(row),
+        famille: L.qvProgrammeFamily(row),
         oi: L.qvProgrammeOiLabel(row) || '—',
         publicCible: qvProgrammePublicLabel(row),
         activite:qvProgrammeActivityLabel(row),
@@ -11033,9 +11028,9 @@
   }
 
   function qvProgrammeCsvText(rows) {
-    const headers = ['Code cours', 'Date', 'Horaire', 'Domaine', 'OI', 'Public cible', 'Activité', 'Spécialisation · cursus', 'Stat.Com', 'Lieu', 'Salle théorie', 'Responsable', 'État'];
+    const headers = ['Code cours', 'Date', 'Horaire', 'Domaine', 'Famille', 'OI', 'Public cible', 'Activité', 'Spécialisation · cursus', 'Stat.Com', 'Lieu', 'Salle théorie', 'Responsable', 'État'];
     const cell = (value) => `"${String(value == null ? '' : value).replace(/^([=+\-@])/, "'$1").replace(/"/g, '""')}"`;
-    const lines = [headers.map(cell).join(';')].concat(rows.map((row) => [row.code, row.date, row.horaire, row.domaine, row.oi, row.publicCible, L.qvProgrammeExportActivity(row,'excel'), row.specCursus, row.statcom, row.lieu, row.salleTheorie, row.responsable, row.etat].map(cell).join(';')));
+    const lines = [headers.map(cell).join(';')].concat(rows.map((row) => [row.code, row.date, row.horaire, row.domaine, row.famille, row.oi, row.publicCible, L.qvProgrammeExportActivity(row,'excel'), row.specCursus, row.statcom, row.lieu, row.salleTheorie, row.responsable, row.etat].map(cell).join(';')));
     return '\uFEFF' + lines.join('\r\n');
   }
 
@@ -12066,7 +12061,7 @@
       if (query && !haystack.includes(query)) return false;
       if (filters.domain && filters.domain !== 'tous' && domain !== filters.domain
         && !(/^F[1-8]\/[1-8]$/.test(filters.domain) && row.domain === filters.domain)) return false;
-      if (filters.family && filters.family !== 'tous' && family !== filters.family) return false;
+      if (filters.family && filters.family !== 'tous' && (filters.family==='__EMPTY__'?Boolean(family):family !== filters.family)) return false;
       if (filters.oi && !L.qvProgrammeOiMatches(row, filters.oi)) return false;
       if (filters.statcom && filters.statcom !== 'tous' && row.statCom !== filters.statcom) return false;
       if (filters.status && filters.status !== 'tous' && visual.label !== filters.status) return false;
@@ -12123,8 +12118,8 @@
     const all = ((qv.canonicalProgramme || {}).rows || []).filter(L.qvProgrammeIsActive);
     const filters = state.quoVadisFilters || {};
     const domainLabels = { F0:'Gouvernance',F1:'Personnel',F2:'Renseignements',F3:'Opérationnel',F4:'Logistique',F5:'Partenaires',F6:'SIC',F7:'Formation',F8:'Finances' };
-    const familyGroups = [['DPS','DAP','JSP'],['FOBA','FOCO','FOCA','FOSPEC'],['AUTO','PR']];
-    const familyOptions = familyGroups.map((group) => group.map((code, index) => `<option value="${code}" ${index === 0 ? 'class="qv-option-group-start"' : ''} ${filters.family === code ? 'selected' : ''}>${code}</option>`).join('')).join('');
+    const familyGroups = [L.qvProgrammeFamilyCatalogue(all)];
+    const familyOptions = familyGroups.map((group) => group.map((code, index) => `<option value="${escapeHtml(code)}" ${index === 0 ? 'class="qv-option-group-start"' : ''} ${filters.family === code ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('')).join('');
     const oiGroups = L.qvProgrammeOiCatalogue();
     const oiOptions = ['DPS','DAP','JSP'].map((parent) => {
       const group = oiGroups.find((item) => item.group === parent);
@@ -12161,7 +12156,7 @@
       <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Code, activité, Stat.Com, public…"></div></div>
       ${field('qv-filter-year', 'Année', qvProgrammeYearChoices().map((year) => `<option value="${year}" ${qvProgrammeYear() === year ? 'selected' : ''}>${year}</option>`).join(''))}
       ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${Object.entries(domainLabels).map(([code, label]) => `<option value="${code}" ${filters.domain === code ? 'selected' : ''}>${code} ${escapeHtml(label)}</option>`).join('')}`)}
-      ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${familyOptions}`)}
+      ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option><option value="__EMPTY__" ${filters.family==='__EMPTY__'?'selected':''}>—</option>${familyOptions}`)}
       ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${oiOptions}`)}
       ${statcomOptions}
       ${field('qv-filter-cible', 'Public cible', `<option value="tous">Tous</option>${qvProgrammePublicFilterOptions(publics, filters.cible)}`)}
@@ -12468,7 +12463,10 @@
       const kind=marks.holiday?'is-holiday':marks.vacation?'is-vacation':index%7>=5?'is-weekend':'';
       return `<button type="button" class="${kind}" data-qv-calendar-date="${date}" ${date===selected?'aria-current="date"':''} aria-label="${escapeHtml(qvFormatDate(date))}">${day}</button>`;
     }).join('');
-    return `<div class="qv-programme-calendar-head"><button type="button" data-qv-calendar-month="${shift(-1)}" aria-label="Mois précédent">‹</button><strong>${escapeHtml(title)}</strong><button type="button" data-qv-calendar-month="${shift(1)}" aria-label="Mois suivant">›</button></div><div class="qv-programme-calendar-days">${['Lu','Ma','Me','Je','Ve','Sa','Di'].map((day)=>`<span>${day}</span>`).join('')}${cells}</div>`;
+    const dateTitle=selected?new Intl.DateTimeFormat('fr-CH',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${selected}T00:00:00Z`)):'Date non sélectionnée';
+    const selectedMarks=selected?L.qvCalendarMarksForDate(calendar,selected):{labels:[]};
+    const details=[...new Set(Object.entries(calendar).filter(([date])=>date.startsWith(month)).flatMap(([,items])=>items.map(item=>item.libelle)).filter(Boolean))];
+    return `<div class="qv-programme-calendar-layout"><section><div class="qv-programme-calendar-head"><button type="button" data-qv-calendar-month="${shift(-1)}" aria-label="Mois précédent">‹</button><strong>${escapeHtml(title)}</strong><button type="button" data-qv-calendar-month="${shift(1)}" aria-label="Mois suivant">›</button></div><div class="qv-programme-calendar-days">${['Lu','Ma','Me','Je','Ve','Sa','Di'].map((day)=>`<span>${day}</span>`).join('')}${cells}</div></section><aside class="qv-programme-calendar-context"><strong class="qv-programme-calendar-selected">${escapeHtml(dateTitle)}</strong><p>${escapeHtml(selectedMarks.labels.join(' · ') || 'Aucune particularité calendaire enregistrée.')}</p><ul class="qv-programme-calendar-legend"><li><span class="qv-legend-swatch is-holiday"></span>Jours fériés</li><li><span class="qv-legend-swatch is-vacation"></span>Vacances scolaires vaudoises</li><li><span class="qv-legend-swatch is-weekend"></span>Week-ends</li></ul><div class="qv-programme-calendar-month-info"><strong>${escapeHtml(title)}</strong>${details.length?`<ul>${details.map(label=>`<li>${escapeHtml(label)}</li>`).join('')}</ul>`:'<p>Aucun jour férié ni vacances scolaires enregistrés ce mois.</p>'}</div></aside></div>`;
   }
 
   function qvProgrammeAppliedRule(row) {
@@ -12499,7 +12497,7 @@
     }
     if (row.historicalProposal) {
       const ref = row.historicalProposal;
-      return `Proposition calculée depuis QUO VADIS 2026, ligne ${ref.sourceLine}: ${ref.title2026}, ${qvFormatDate(ref.date2026, '—')} ${ref.start || ''}${ref.end ? `-${ref.end}` : ''}. Cette proposition reste à valider humainement.`;
+      return `Proposition calculée depuis QUO VADIS 2026${ref.sourceLine?`, ligne ${ref.sourceLine}`:''}: ${ref.title2026 || activity}, ${qvFormatDate(ref.date2026, '—')} ${ref.start || ''}${ref.end ? `-${ref.end}` : ''}. Cette proposition reste à valider humainement.`;
     }
     if (/Intégration personnel DPS/i.test(activity) && (row.publics || []).some((value) => /^FOBA:/.test(value))) {
       return `Intégration DPS issue du programme FOBA. Public cible ${publicLabel} selon le référentiel de formation.`;
@@ -12748,9 +12746,9 @@
   }
 
   function qvProgrammeFamilyOptions(row){
-    const selected=L.qvProgrammeFamily(row),values=[...new Set(['',selected,
-      ...L.qvProgrammeOrganisationalFamilies(row.oiSelections || row.ois || [])])];
-    return values.map(value=>`<option value="${escapeHtml(value)}" ${value===selected?'selected':''}>${escapeHtml(value || 'Transversale / non qualifiée')}</option>`).join('');
+    const selected=L.qvProgrammeFamily(row),rows=quoVadisProgrammeData().canonicalProgramme?.rows || [];
+    const values=['',...L.qvProgrammeFamilyCatalogue([...rows,row])];
+    return values.map(value=>`<option value="${escapeHtml(value)}" ${value===selected?'selected':''}>${escapeHtml(value || '—')}</option>`).join('');
   }
 
   function qvProgrammeOtherReservations(qv){
@@ -12803,7 +12801,10 @@
     if(!controls.length) return '';
     const proposalDates=row.dapGroupedProposal && !row.businessValidation && hasScopePermission('references:manage')
       ? [...new Set([row.dapGroupedProposal.proposedDate,...(row.dapGroupedProposal.replanning?.candidates || []).slice(0,2).map(item=>item.date)].filter(Boolean))] : [];
-    const message=value=>String(value || '').replace(/\b(?:QV-[A-Z0-9-]+|PLANIF-[A-Z0-9-]+)\b/g,'règle métier');
+    const message=value=>String(value || '').replace(/\bHUMAN_REVIEW_REQUIRED\b/g,'Une décision métier est nécessaire.')
+      .replace(/\bundefined\b/g,'Non renseigné').replace(/\b(?:QV-[A-Z0-9-]+|PLANIF-[A-Z0-9-]+)\b/g,'règle métier')
+      .replace(/\b(?:QV\d{2}:[A-Z0-9:_-]+|QV\d{2}-[A-Z0-9:_-]+|qv-source-\d+)\b/gi,'activité liée')
+      .replace(/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi,'référence conservée');
     const day=row.planningDayControl && !row.businessValidation?row.planningDayControl:null;
     const dateNotice=day?`<aside class="qv-programme-date-alert" role="status"><strong>Date de planification à contrôler</strong><span>${escapeHtml(new Intl.DateTimeFormat('fr-CH',{weekday:'long',timeZone:'UTC'}).format(new Date(`${day.date}T12:00:00Z`))+' '+qvFormatDate(day.date))} · ${day.dayClass==='INTERDIT'?'Date interdite':'Jour déconseillé'}. ${day.derogationAllowed?'Dérogation motivée possible.':'Dérogation interdite.'}</span></aside>`:'';
     return `<section class="qv-programme-controls" aria-label="À contrôler"><h3>À contrôler</h3><ul>${controls.map(([point,reason,action])=>`<li><strong>${escapeHtml(point)}</strong><span>${escapeHtml(message(reason))}</span><span>${escapeHtml(message(action))}</span></li>`).join('')}</ul>
@@ -12822,7 +12823,7 @@
       statcom_code:'Stat.Com',domaine_code:'Domaine',lieu_id:'Lieu',salle_theorie_id:'Salle',responsable_fonction_code:'Responsable'});
     const actions={VALIDER_OCCURRENCE:'Validation',RETIRER_VALIDATION:'Retrait de validation',MODIFIER_OCCURRENCE:'Modification',
       CREER_OCCURRENCE:'Création',PUBLIER:'Publication',PUBLIER_EVENEMENT:'Publication',ANNULER_OCCURRENCE:'Annulation',
-      ANNULER:'Annulation',SUPPRIMER_LOGIQUEMENT:'Suppression logique',OUVRIR_REVISION_CIBLEE:'Révision',
+      ANNULER:'Annulation',REACTIVER_OCCURRENCE:'Réactivation',SUPPRIMER_LOGIQUEMENT:'Suppression logique',OUVRIR_REVISION_CIBLEE:'Révision',
       VALIDER_REVISION_CIBLEE:'Validation de révision',MODIFIER_PUBLICATION_MINEURE:'Modification de publication',
       MODIFIER_EVENEMENT:'Modification',MODIFIER:'Modification',CREER:'Création',PLANIFIER:'Planification',
       EXPORTER_QUO_VADIS_PDF:'Export PDF',GENERER_RAPPORT:'Génération de rapport'};
@@ -12863,10 +12864,11 @@
       const raw=String(entry.action || '').replace(/_/g,' ').toLocaleLowerCase('fr-CH');
       const action=actions[entry.action] || raw.charAt(0).toLocaleUpperCase('fr-CH')+raw.slice(1);
       const items=[];
-      if(['ANNULER_OCCURRENCE','SUPPRIMER_LOGIQUEMENT'].includes(entry.action) && entry.apres?.lifecycleDecision)
-        items.push({action,field:entry.action==='ANNULER_OCCURRENCE'?'Occurrence annuelle':'Production future',
+      if(['ANNULER_OCCURRENCE','REACTIVER_OCCURRENCE','SUPPRIMER_LOGIQUEMENT'].includes(entry.action) && entry.apres?.lifecycleDecision)
+        items.push({action,field:entry.action==='SUPPRIMER_LOGIQUEMENT'?'Production future':'Occurrence annuelle',
           before:entry.avant?.statut?value('statut',entry.avant.statut):'État antérieur non enregistré',
-          after:entry.action==='ANNULER_OCCURRENCE'?'Annulé pour cette année ; reconduction conservée':'Retirée des productions futures ; reconduction arrêtée ; historique conservé'});
+          after:entry.action==='REACTIVER_OCCURRENCE'?`${value('statut',entry.apres.statut)} ; reconduction future inchangée`
+            :entry.action==='ANNULER_OCCURRENCE'?'Annulé pour cette année ; reconduction conservée':'Retirée des productions futures ; reconduction arrêtée ; historique conservé'});
       else if(['CREER_OCCURRENCE','CREER'].includes(entry.action)) items.push({action:entry.apres?.transaction?.manualCreation
         ? 'Création manuelle de l’événement' : 'Création de l’événement',field:'—',before:'—',after:'—'});
       else {
@@ -12976,7 +12978,7 @@
         <label id="qv-programme-lieu-keep-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Référentiel</span><span class="qv-programme-keep-lieu"><input id="qv-programme-lieu-keep" type="checkbox">Conserver ce lieu dans le référentiel</span></label>
       </fieldset>
       ${row.paprOiRevisionRequired && canPrepare ? '<button type="button" class="scope-btn" id="qv-papr-propose-ois">Proposer la révision des quatre OI DPS</button>' : ''}
-      ${canPrepare && !creating && !row.publishedEventId ? `<div class="qv-programme-lifecycle"><span class="qv-programme-lifecycle-icon">${qvCockpitIcon('gear')}</span><div><strong>Gestion de l’événement dans le planning</strong><p>Annuler ou supprimer cet événement. Ces actions modifient le planning et doivent être utilisées avec précaution.</p></div><div class="qv-programme-lifecycle-actions"><button type="button" class="scope-btn" id="qv-programme-cancel-year">Annuler l’événement pour l’année</button><button type="button" class="scope-btn qv-programme-production-delete" id="qv-programme-delete-production">Supprimer l’événement</button></div></div>` : ''}
+      ${canPrepare && !creating && (!row.publishedEventId || row.status==='ANNULE') ? `<div class="qv-programme-lifecycle"><span class="qv-programme-lifecycle-icon">${qvCockpitIcon('gear')}</span><div><strong>Gestion de l’événement dans le planning</strong></div><div class="qv-programme-lifecycle-actions">${row.status==='ANNULE'?'<button type="button" class="scope-btn" id="qv-programme-reactivate">Réactiver l’occurrence</button>':'<button type="button" class="scope-btn" id="qv-programme-cancel-year">Annuler l’événement pour l’année</button>'}${!row.publishedEventId?'<button type="button" class="scope-btn qv-programme-production-delete" id="qv-programme-delete-production">Supprimer l’événement</button>':''}</div></div>` : ''}
     </section>`;
     return `<div class="qv-programme-detail${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}">
       <section class="scope-card qv-programme-summary">
@@ -13173,13 +13175,13 @@
     const domains = L.sortByScopeDomainOrder(qvFilterOptions(rows, (row) => row.domain), (value) => value);
     const ois = qvFilterOptions(rows, (row) => qvOiCode(qv, row));
     const states = qvFilterOptions(rows, (row) => row.status);
-    const families = ['FOBA', 'FOCO', 'FOCA', 'FOSPEC'];
+    const families = L.qvProgrammeFamilyCatalogue(rows);
     const current = mode === 'detaillee' ? 'detaillee' : 'groupes';
     const field = (id, label, optionsHtml) => `<div class="scope-field"><label for="${id}">${escapeHtml(label)}</label><select id="${id}">${optionsHtml}</select></div>`;
     return `<div class="qv-agenda-filters qv-arbitrer-filters">
       <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher une activité, un code cours, un lieu…"></div></div>
       ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option><option value="__EMPTY__" ${filters.family==='__EMPTY__'?'selected':''}>—</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-status', 'État', `<option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(qvAgendaState({ status: v }).label)}</option>`).join('')}`)}
       <button type="button" class="qv-arbitrer-reset scope-text-action" id="qv-filter-reset">Réinitialiser</button>
@@ -13232,7 +13234,7 @@
     const query = String((filters && filters.q) || '').trim().toLowerCase();
     if (query && !qvArbitrerGroupHaystack(qv, group).includes(query)) return false;
     if (!L.qvProgrammeDomainMatches(group, filters.domain)) return false;
-    if (filters.family && filters.family !== 'tous' && !(group.rows || []).some((row) => qvFamilyOf(row) === filters.family)) return false;
+    if (filters.family && filters.family !== 'tous' && !(group.rows || []).some((row) => filters.family==='__EMPTY__'?!qvFamilyOf(row):qvFamilyOf(row) === filters.family)) return false;
     if (filters.oi && filters.oi !== 'tous' && !(group.rows || []).some((row) => qvOiCode(qv, row) === filters.oi)) return false;
     if (filters.type === 'unique' && group.multi) return false;
     if (filters.type === 'multi' && !group.multi) return false;
@@ -14996,7 +14998,7 @@
       const margin = 12;
       const bounds = anchor.getBoundingClientRect();
       popup.style.position = 'fixed';
-      popup.style.width = `${Math.min(360, window.innerWidth - margin * 2)}px`;
+      popup.style.width = `${Math.min(popup===calendar?700:360, window.innerWidth - margin * 2)}px`;
       popup.style.maxHeight = `${window.innerHeight - margin * 2}px`;
       popup.style.left = `${Math.max(margin, Math.min(bounds.left, window.innerWidth - popup.offsetWidth - margin))}px`;
       const height = popup.offsetHeight;
@@ -15282,7 +15284,7 @@
         invalidateCache(['quoVadis']);
         state.quoVadis = data.quoVadis || state.quoVadis;
         delete state.quoVadisHistoryCache?.[`${qvProgrammeYear()}:${id}`];
-        toast('success', 'Programme', action==='CANCEL_YEAR'?'Occurrence annulée pour cette année. Décision de reconduction préservée.':'Définition désactivée pour les productions futures.');
+        toast('success', 'Programme', action==='REACTIVATE'?'Occurrence réactivée. Historique conservé.':action==='CANCEL_YEAR'?'Occurrence annulée pour cette année. Décision de reconduction préservée.':'Définition désactivée pour les productions futures.');
       } catch (error) {
         toast('error', 'Programme', L.friendlyError(error).message || 'L’action a échoué.');
       } finally {
@@ -15297,6 +15299,10 @@
         motif=>applyProgrammeLifecycle('CANCEL_YEAR',motif),'',
         {cancelText:'Conserver l’activité',description:lifecycleDescription('CANCEL_YEAR')});
     });
+    document.getElementById('qv-programme-reactivate')?.addEventListener('click',()=>
+      qvWorkflowDialog('Réactiver l’occurrence',qvProgrammeActivityLabel(preparedProgrammeRow),'Confirmer la réactivation',
+        motif=>applyProgrammeLifecycle('REACTIVATE',motif),'',
+        {cancelText:'Conserver l’annulation',description:'Réactivation explicite de cette occurrence, avec contrôle de disponibilité. Identifiant et historique conservés ; reconduction future inchangée.'}));
     document.getElementById('qv-programme-delete-production')?.addEventListener('click',()=>{
       qvWorkflowDialog('Supprimer',qvProgrammeActivityLabel(preparedProgrammeRow),'Supprimer',
         motif=>applyProgrammeLifecycle('DISABLE_PRODUCTION',motif),'',

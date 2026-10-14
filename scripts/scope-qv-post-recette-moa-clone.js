@@ -8,12 +8,12 @@ const {createScopeQuoVadisService}=require('../netlify/lib/_scope-quo-vadis-serv
 const revisions=require('../netlify/lib/_scope-qv-programme-revisions');
 const root=path.resolve(__dirname,'..'),directory=path.join(root,'docs/captures/qv-post-recette-moa-20261013');
 async function replayCurrent(query) {
-  const file=path.join(root,process.env.SCOPE_RECIPE_MOA_20261014==='1'?'output/qv-moa-20261014/production-business-snapshot.json':process.env.SCOPE_RECIPE_POST_PR16==='1'
+  const file=path.join(root,process.env.SCOPE_RECIPE_V1==='1'?'output/qv-v1-tests19-33/production-business-snapshot.json':process.env.SCOPE_RECIPE_MOA_20261014==='1'?'output/qv-moa-20261014/production-business-snapshot.json':process.env.SCOPE_RECIPE_POST_PR16==='1'
     ? 'output/qv-post-pr16/production-business-snapshot.json' : 'output/qv-post-recette/production-business-snapshot.json');
   if(!fs.existsSync(file)) throw new Error('Authorized read-only production business snapshot required in output/qv-post-recette/production-business-snapshot.json. No historical fallback is used.');
   const snapshot=JSON.parse(fs.readFileSync(file,'utf8'));
-  if(process.env.SCOPE_RECIPE_POST_PR16==='1' || process.env.SCOPE_RECIPE_MOA_20261014==='1'){
-    const refs=process.env.SCOPE_RECIPE_MOA_20261014==='1'?snapshot:JSON.parse(fs.readFileSync(path.join(root,'output/qv-post-pr16/production-referentials.json'),'utf8'));
+  if(process.env.SCOPE_RECIPE_POST_PR16==='1' || process.env.SCOPE_RECIPE_MOA_20261014==='1' || process.env.SCOPE_RECIPE_V1==='1'){
+    const refs=process.env.SCOPE_RECIPE_MOA_20261014==='1' || process.env.SCOPE_RECIPE_V1==='1'?snapshot:JSON.parse(fs.readFileSync(path.join(root,'output/qv-post-pr16/production-referentials.json'),'utf8'));
     assert.equal(snapshot.readOnly,'on');
     await query(`insert into scope_lieux(lieu_id,code,nom_court,nom_complet,oi_code,site_code,actif,metadata)
       select lieu_id,code,nom_court,nom_complet,oi_code,site_code,actif,metadata from jsonb_populate_recordset(null::scope_lieux,$1::jsonb)
@@ -22,7 +22,7 @@ async function replayCurrent(query) {
       select salle_id,code,libelle,lieu_id,parent_salle_id,actif,metadata from jsonb_populate_recordset(null::scope_salles_theorie,$1::jsonb)
       on conflict(salle_id) do nothing`,[JSON.stringify(refs.salles)]);
   }
-  if(process.env.SCOPE_RECIPE_MOA_20261014==='1'){
+  if(process.env.SCOPE_RECIPE_MOA_20261014==='1' || process.env.SCOPE_RECIPE_V1==='1'){
     assert.equal(snapshot.readOnly,'on');
     assert.equal(snapshot.project.id,'bnfbqzqisdkysnoaeuej');
     const columns=(await query("select column_name from information_schema.columns where table_schema='public' and table_name='scope_evenements' order by ordinal_position")).rows.map(row=>row.column_name);

@@ -726,3 +726,63 @@ les destinataires ajoutent manuellement les nouvelles dates à leur calendrier p
 Aucun nouveau moteur de notification, reclassement, événement ou envoi n'est développé ou déclenché
 par ce complément. La préparation de ce parcours reste dans la roadmap existante ; les statistiques
 civiles de QV-STAT-001 et les mécanismes de sécurité existants restent inchangés.
+
+## Finalisation V1 — Recette MOA Tests 19 À 33, 14.10.2026
+Base contrôlée : PR #18 fusionnée, main et production `7033e3e`. Les décisions suivantes
+complètent les acquis, sans changement des dates humaines, Stat.Com, codes, populations ou budgets.
+
+### QV-CALENDAR-004 — Panneau complet de la maquette
+Compléter le calendrier existant, sans remplacement : six semaines fixes, position stable entre
+les mois, date sélectionnée en toutes lettres et panneau contextuel. La nouvelle décision MOA
+remplace l'absence antérieure de légende de QV-CALENDAR-003 : jours fériés, vacances scolaires
+vaudoises et week-ends sont identifiés et légendés, avec les informations du référentiel Agenda.
+Panneau droit complet sur ordinateur, disposition verticale sur mobile, sans changement de date
+lors de la navigation. Aucune date, réservation ou décision enregistrée n'est modifiée.
+
+### QV-CTA-007 — Alerte selon la règle d'instruction, pas la règle générique
+Une instruction DPS de section/demi-section est reconnue par son type, son domaine de planification,
+son OI unique et un public actif correspondant au moteur CTA canonique. Le serveur expose les semaines
+et affectations calculées par ce moteur ; aucune deuxième rotation n'est créée dans le navigateur.
+Lorsque cette correspondance est démontrée, le samedi et les vacances ne constituent pas à eux seuls
+une alerte générique. Les fériés, veilles/week-ends fériés et contraintes internes restent contrôlés,
+et les adaptations CTA existantes restent inchangées. Exception PIONNIER CSU-nvb G1 de section :
+référence précédente du moteur existant, pas une dérogation générale. Aucun déplacement automatique.
+Cas MOA démontrés : G1 06.02.2027 N04a et B1 13.02.2027 N03a ; correction commune, pas deux patches d'IDs.
+G1 N01–N05 / réserve N06 ; autres sites N01–N03 / réserve N04 ; demi-sections a/b, cycle perpétuel,
+sans remise à zéro au 1er janvier. Une réserve, un public différent ou une séance préparatoire ne
+bénéficie pas de cette qualification ; séance instruction DPS du 27.01 sans section CTA déduite.
+
+### QV-FAMILY-003 — Catalogue commun et valeur absente neutre
+Famille indépendante du domaine, de l'OI et du Stat.Com. Choix MOA : SDIS avant DPS, puis DAP, JSP,
+FOBA, FOCO, FOCA, FOSPEC, AUTO et PR. Cette liste n'est pas déclarée exhaustive : les valeurs déjà
+enregistrées Conduite/Événement/Exercice/Formation/Instruction/Permanence restent conservées et recensées,
+sans les renommer ni les attribuer automatiquement. Les valeurs présentes dans le référentiel/source
+restent accessibles ; une nouvelle famille non référencée est refusée par le serveur.
+Pas de famille déduite automatiquement d'un domaine ; une valeur explicite prime, notamment F1/DAP/Y1
+sans changement de `070F23` ni imputation budgétaire. Aucune correspondance IndeX inventée.
+Libellés artificiels Transversale / non qualifiée, Autre et Sans famille spécifique retirés des nouveaux
+choix ; absence affichée « — » et recherchable par le filtre neutre, sans nouveau code métier.
+Les historiques ne sont pas réécrits. Recensement daté de la source courante : 92 activités internes
+et 4 externes sans famille, à distinguer, aucune qualification automatique.
+
+### QV-EXPORT-002 — Domaine court et ordre cohérent
+Tableaux compacts et exports : code du domaine seulement ; libellé complet conservé dans la fiche.
+Planning annuel : Public cible immédiatement après OI. CSV Excel : Famille ajoutée après Domaine,
+OI/Public voisins, cellules protégées contre l'interprétation comme formule. PDF annuel A4 paysage
+à 100 %, marges latérales de sécurité >=10 mm, colonnes mesurées sans troncature, textes/en-têtes/
+pieds conservés. Structure mensuelle acquise inchangée ; aucun Stat.Com ou code SCOPE réécrit.
+
+### QV-AUDIT-004 — Réactivation annuelle explicite
+Réactivation d'une occurrence annulée par l'action dédiée, permission existante `references:manage`,
+motif obligatoire, journal avant/après et identifiant stable. Reprendre l'état enregistré, sans nouvelle
+validation inventée, sans effacement d'historique ni changement de reconduction future. Lire les salles
+au créneau réel, tous cycles, sous le même verrou et avec battement de 30 minutes ; conflit refusé.
+Enregistrement ordinaire ne réactive toujours pas une annulation. Une publication opérationnelle
+annulée doit d'abord suivre la réactivation existante dans sa fiche, avec ses droits ; le Programme
+ne contourne pas cette procédure et ne recrée aucun événement. Suppression logique reste distincte.
+Messages destinés à la MOA : causes métier lisibles ; informations techniques conservées dans les
+sources/journaux, pas de undefined, HUMAN_REVIEW_REQUIRED ou identifiant interne dans les alertes.
+
+### Perspectives ProgJour Et GELORE2
+ProgJour et export des réservations G1 vers GELORE2 : exigences conservées dans la roadmap existante.
+Aucun écran, table, synchronisation, événement dupliqué, API ou format d'import inventé dans ce lot.

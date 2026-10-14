@@ -1,0 +1,784 @@
+{
+  "status": "PASS",
+  "productionWrites": false,
+  "sourceReadAt": "2026-10-14T13:46:39.958253+00:00",
+  "base": "7033e3e",
+  "rows": 938,
+  "invariants": [
+    "id",
+    "statCom",
+    "code",
+    "businessCode",
+    "startsAt",
+    "endsAt",
+    "publics",
+    "oiSelections",
+    "themes",
+    "family",
+    "domain",
+    "humanDecision",
+    "businessValidation",
+    "publicationRevision",
+    "publishedEventId",
+    "publishedEventCode"
+  ],
+  "statComIdenticalPercent": 100,
+  "tests": [
+    "All business values and protected decisions identical to production main on fresh readonly snapshot",
+    "Both MOA examples use canonical CTA, no generic vacation/Saturday warning; preparatory DPS gets no section",
+    "Explicit reactivation requires motif, retains identity and fields, records one trace, idempotent",
+    "Reactivation refuses room turnaround conflict against effective intercycle booking motor",
+    "Cancelled operational publication is never silently reactivated from Programme; future stop preserved"
+  ],
+  "ctaExamples": [
+    {
+      "id": "qv-source-910",
+      "site": "G1",
+      "date": "2027-02-06",
+      "publicCode": "N04a",
+      "prior": {
+        "date": "2027-02-06",
+        "weekday": "SATURDAY",
+        "dayClass": "INTERDIT",
+        "reasons": [
+          "Samedi: Possible.",
+          "Vacances scolaires: proposition interdite."
+        ],
+        "rank": 9,
+        "ruleCode": "PLANIF-DPS",
+        "derogationAllowed": true
+      },
+      "current": null
+    },
+    {
+      "id": "QV27:COVERAGE:B1:KICK-OFF:demi-section:N03a",
+      "site": "B1",
+      "date": "2027-02-13",
+      "publicCode": "N03a",
+      "prior": {
+        "date": "2027-02-13",
+        "weekday": "SATURDAY",
+        "dayClass": "INTERDIT",
+        "reasons": [
+          "Samedi: Possible.",
+          "Vacances scolaires: proposition interdite."
+        ],
+        "rank": 9,
+        "ruleCode": "PLANIF-DPS",
+        "derogationAllowed": true
+      },
+      "current": null
+    }
+  ],
+  "preparatory": {
+    "id": "qv-source-887",
+    "publics": []
+  },
+  "families": [
+    "SDIS",
+    "DPS",
+    "DAP",
+    "JSP",
+    "FOBA",
+    "FOCO",
+    "FOCA",
+    "FOSPEC",
+    "AUTO",
+    "PR",
+    "Conduite",
+    "Événement",
+    "Exercice",
+    "Formation",
+    "Instruction",
+    "Permanence"
+  ],
+  "missingFamilies": [
+    {
+      "id": "qv-source-862",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "qv-source-893",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "qv-source-921",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "CTA-PERM-2027-01-01",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-01-08",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-01-15",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-01-22",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-01-29",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-02-05",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-02-12",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-02-19",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-02-26",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-03-05",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-03-12",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-03-19",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-03-26",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-04-02",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-04-09",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-04-16",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-04-23",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-04-30",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-05-07",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-05-14",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-05-21",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-05-28",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-06-04",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-06-11",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-06-18",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-06-25",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-07-02",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-07-09",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-07-16",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-07-23",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-07-30",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-08-06",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-08-13",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-08-20",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-08-27",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-09-03",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-09-10",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-09-17",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-09-24",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-10-01",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-10-08",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-10-15",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-10-22",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-10-29",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-11-05",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-11-12",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-11-19",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-11-26",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-12-03",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-12-10",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-12-17",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-12-24",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "CTA-PERM-2027-12-31",
+      "label": "Permanence",
+      "external": false,
+      "statCom": "",
+      "domain": "DPS"
+    },
+    {
+      "id": "FINAL:MOA_ARBITRATION:QV26-ASSEMBLEE-CI-FCF435B1",
+      "label": "Assemblée CI",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-CONFERENCE-DES-COMMANDANTS-A2DEA769",
+      "label": "Conférence des Commandants",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-CODIR-REPAS-81897EA7",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-COSEC-B710F41E",
+      "label": "Séance COSEC",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-CRDIS-B8654449",
+      "label": "Séance CRDIS",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-INTERSDIS-4B877B98",
+      "label": "Séance interSDIS",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54",
+      "label": "Table ouverte avec le Commandant",
+      "external": false,
+      "statCom": "070F1",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:03",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:04",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:05",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:06",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:07",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:08",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:09",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:10",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:11",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-02-26:0800:Caserne-G1",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-03-19:0800:Caserne-G1",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-04-23:0800:Caserne-G1",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-05-26:1800:Belmont-sur-Yverdon",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-08-27:0800:Caserne-G1",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-09-16:1800:Ursins",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-10-29:0800:Caserne-G1",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-ASSEMBLEE-CI-FCF435B1:2027-09-16:1930:-d-finir",
+      "label": "Assemblée CI",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-REPAS-81897EA7:2027-12-10:1030:Caserne-G1",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-03-23:1830:SSP",
+      "label": "Séance COSEC",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-05-20:1830:Caserne-G1",
+      "label": "Séance COSEC",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-09-14:1830:SSP",
+      "label": "Séance COSEC",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-11-23:1830:Caserne-G1",
+      "label": "Séance COSEC",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CRDIS-B8654449:2027-09-22:0930:Caserne-G1",
+      "label": "Séance CRDIS",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:PROJ:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54:2027-11-09:1700:Caserne-G1",
+      "label": "Table ouverte avec le Commandant",
+      "external": false,
+      "statCom": "070F1",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:CYCLE:QV26-SEANCE-CODIR-92921E7C:893",
+      "label": "Séance Codir",
+      "external": false,
+      "statCom": "070F0",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:CYCLE:QV26-SEANCE-EM-ED042EBD:862",
+      "label": "Séance État-major",
+      "external": false,
+      "statCom": "EMSEA",
+      "domain": "F0"
+    },
+    {
+      "id": "QV27:MANUAL:6265ba17-4fce-44fd-8a8d-1feda242b828",
+      "label": "Formation CFF",
+      "external": true,
+      "statCom": "",
+      "domain": "F5"
+    },
+    {
+      "id": "QV27:MANUAL:629ee483-43fd-42c3-ac00-c37e21916d15",
+      "label": "Formation CFF",
+      "external": true,
+      "statCom": "",
+      "domain": "F5"
+    },
+    {
+      "id": "QV27:MANUAL:7cad2053-a78e-4299-bb7d-8e2bdeae2aa0",
+      "label": "Séance organisation et coordination",
+      "external": false,
+      "statCom": "070F23",
+      "domain": "F1"
+    },
+    {
+      "id": "QV27:MANUAL:99d2e646-7608-4dbc-a4c1-15d9545ac40d",
+      "label": "Formation CRIMSON opérateurs et chefs VPC",
+      "external": false,
+      "statCom": "0180F7",
+      "domain": "F7"
+    },
+    {
+      "id": "QV27:MANUAL:b5281e20-3296-4199-9b9c-1f3e1b6e26f0",
+      "label": "Formation CRIMSON opérateurs et chefs VPC",
+      "external": false,
+      "statCom": "0180F7",
+      "domain": "F7"
+    },
+    {
+      "id": "QV27:MANUAL:d613d337-c6e0-4b2a-bd2a-fd8cfaa7b881",
+      "label": "Formation CFF",
+      "external": true,
+      "statCom": "",
+      "domain": "F5"
+    },
+    {
+      "id": "QV27:MANUAL:dc8ea3aa-3131-476f-b4f0-36ad139c98d9",
+      "label": "Formation CFF",
+      "external": true,
+      "statCom": "",
+      "domain": "F5"
+    }
+  ],
+  "missingFamilyCounts": {
+    "internal": 92,
+    "external": 4
+  },
+  "protectedTables": [
+    "scope_evenements",
+    "scope_qv_publication_links",
+    "scope_participations",
+    "scope_attendus",
+    "scope_affectations",
+    "scope_person_qualifications",
+    "scope_event_person_roles"
+  ],
+  "rollbackTables": 113,
+  "rollbackVerified": true
+}
