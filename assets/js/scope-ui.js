@@ -2026,6 +2026,8 @@
   }
 
   function clearLocalAuthState() {
+    state.quoVadisHistoryCache={};
+    state.quoVadisOpenHistory=null;
     state.session = null;
     state.authChecking = false;
     state.authError = null;
@@ -11056,7 +11058,8 @@
 
   function qvProgrammePdfControl() {
     const monthly = qvView() !== 'agenda-annuel' && state.quoVadisProgrammeMode === 'mensuelle';
-    return `<select id="qv-export-programme-variant" class="qv-pdf-variant" aria-label="Format PDF"><option value="annual" ${monthly ? '' : 'selected'}>Planning annuel</option><option value="compact">Liste compacte</option><option value="monthly" ${monthly ? 'selected' : ''}>Planning mensuel</option></select>`;
+    const variant=state.quoVadisPdfVariant || (monthly?'monthly':'annual');
+    return `<select id="qv-export-programme-variant" class="qv-pdf-variant" aria-label="Format PDF">${[['annual','Planning annuel'],['compact','Liste compacte'],['monthly','Planning mensuel']].map(([code,label])=>`<option value="${code}" ${variant===code?'selected':''}>${label}</option>`).join('')}</select>`;
   }
 
   function renderQuoVadisNav(qv) {
@@ -11954,7 +11957,7 @@
   }
 
   function qvProgrammePublicLabel(row) {
-    return [...new Set([...qvProgrammePublicLabels(row || {}),...(row?.publicFreeLabels || [])])].filter(Boolean).join(' ; ')
+    return [...new Set([...qvProgrammePublicLabels(row || {}),...(row?.publicFreeLabels || [])])].filter(Boolean).sort((a,b)=>(a==='OSR'?-1:b==='OSR'?1:0)).join(' ; ')
       || (row && row.target === 'SDIS-ALL' ? 'SDIS (tous)' : 'À définir');
   }
 
@@ -12461,6 +12464,7 @@
   }
 
   function qvProgrammeAppliedRule(row) {
+    if(row.externalActivity) return 'Occupation externe — Sans cycle métier SDIS. Activité non reconduite automatiquement.';
     if(row.manualCreation && !String(row.activityLabel || row.label || '').trim()) return 'Création manuelle 2027.';
     if(row.lineage){
       const referenceYear = row.businessValidation && row.businessValidation.year || row.lineage.parentYear;
@@ -12737,8 +12741,8 @@
   function qvProgrammeControls(row){
     const controls=[];
     if(row.dapGroupedProposal && !row.businessValidation) controls.push(['Formation groupée DAP',
-      `Date proposée : ${row.dapGroupedProposal.proposedDate || 'non démontrée'}. Sources 2026 : ${row.dapGroupedProposal.sourceDate || 'à confirmer'}.`,
-      [row.dapGroupedProposal.calendarConflicts?.map(day=>`${day.date} : ${day.label}`).join(' ; '),
+      `Date proposée : ${qvFormatDate(row.dapGroupedProposal.proposedDate,'non démontrée')}. Sources 2026 : ${qvFormatDate(row.dapGroupedProposal.sourceDate,'à confirmer')}.`,
+      [row.dapGroupedProposal.calendarConflicts?.map(day=>`${qvFormatDate(day.date)} : ${day.label}`).join(' ; '),
         row.dapGroupedProposal.replanning?.status==='NO_COMPLIANT_DATE' ? 'Aucune date conforme dans le mois projeté.' : '',
         row.dapGroupedProposal.replanning?.candidates?.length
           ? `Dates classées : ${row.dapGroupedProposal.replanning.candidates.slice(0,2).map(item=>`${qvFormatDate(item.date)} (${item.dayClass==='PREFERE'?'préférée':'possible'})`).join(' ; ')}.` : '',
@@ -12747,32 +12751,31 @@
     if(row.paprOiRevisionRequired) controls.push(['OI publiés','Les quatre OI DPS ne sont pas persistés dans la publication.','Confirmer une révision ciblée.']);
     if(row.paprProposal?.status==='CONFLIT') controls.push(['Cursus PAPR',row.paprProposal.conflicts?.join(' ; ') || row.reason || 'Contraintes de calendrier incompatibles.','Adapter la proposition ou arbitrer le conflit.']);
     if(row.reservationConflicts?.length) controls.push(['Réservation',
-      `${qvFormatDate(row.startsAt)} · ${qvProgrammeTime(row)} · ${qvProgrammeLocationLabel(row)} : ${row.reservationConflicts.map(item=>item.otherLabel).join(' ; ')}.`,
-      'QV-NATURE-001 : modifier la date, le lieu ou la salle pour résoudre le conflit de disponibilité.']);
+      `${qvFormatDate(row.startsAt)} · ${qvProgrammeTime(row)} · ${qvProgrammeLocationLabel(row)}${row.room?` · Salle ${qvProgrammeRoomLabel(row)}`:''} : ${row.reservationConflicts.map(item=>item.otherLabel).join(' ; ')}.`,
+      'Une ressource réservée est déjà occupée sur ce créneau. Choisir une autre salle, ressource ou plage horaire avant validation.']);
     const ecawin=qvProgrammeEcawinStatus(row.ecawinActivityCode,row.statCom);
     if(ecawin) controls.push(['ECAwin',ecawin,'Contrôler la correspondance sans modifier le Stat.Com historique.']);
     if(row.oiQualification==='AMBIGUOUS' && !row.externalActivity) controls.push(['OI','Le domaine de certains OI n’est pas qualifié.','Choisir les OI dans leur domaine.']);
     if(row.annualReportConstraint?.status==='BLOCKED_BY_ANNUAL_REPORT') controls.push(['Rapport annuel',row.reason || 'Le créneau est réservé au Rapport annuel.','Repositionner l’activité.']);
     if(row.annualReportConstraint?.status==='PUBLICATION_UPDATE_REQUIRED') controls.push(['Rapport annuel publié',
       `Date publiée : ${qvFormatDate(row.publishedEventDate)}. Date du Programme : ${qvFormatDate(row.startsAt)}.`,
-      'QV-CYCLE-001 : coordonner une révision ciblée de la publication ; aucune date publiée n’est déplacée automatiquement.']);
+      'Coordonner une révision ciblée de la publication ; aucune date publiée n’est déplacée automatiquement.']);
     if(row.planningDayControl && !row.businessValidation) controls.push(['Jour de planification',
       `${qvFormatDate(row.planningDayControl.date)} : ${row.planningDayControl.reasons.join(' ')}`,
-      `Règle : ${row.planningDayControl.ruleCode || 'Calendrier du Programme'}. ${row.planningDayControl.derogationAllowed
-        ? 'Repositionner ou soumettre une dérogation motivée.' : 'Repositionner ; la dérogation est interdite.'}`]);
+      row.planningDayControl.derogationAllowed
+        ? 'Cette date nécessite un contrôle avant validation. Repositionner ou soumettre une dérogation motivée.' : 'La validation est impossible à cette date. Repositionner ; la dérogation est interdite.']);
     if((row.review || row.publicReviewRequired || ['MOA_ARBITRATION','INSUFFICIENT_INFORMATION','MOA_REQUIRED'].includes(row.status)) && !row.businessValidation) {
       const reason=row.reason || row.historicalProposal?.reason;
       if(reason && !controls.some(item=>item[1]===reason)) controls.push(['Contrôle métier',reason,
-        [row.projectionRule || row.historicalProposal?.rule,row.dayClassLabel || row.historicalProposal?.dayClass].filter(Boolean).join(' · ')
-          ? `Règle : ${[row.projectionRule || row.historicalProposal?.rule,row.dayClassLabel || row.historicalProposal?.dayClass].filter(Boolean).join(' · ')}. Contrôler la date et la qualification.`
-          : 'Contrôler la date et la qualification selon la règle métier affichée.']);
+        'Contrôler la date et la qualification avant validation.']);
       if(!reason && !controls.length) controls.push(['Contrôle métier','Le marqueur de contrôle existe, mais sa cause n’est pas enregistrée.',
         'Faire qualifier ce contrôle ; aucune cause ne peut être déduite automatiquement.']);
     }
     if(!controls.length) return '';
     const proposalDates=row.dapGroupedProposal && !row.businessValidation && hasScopePermission('references:manage')
       ? [...new Set([row.dapGroupedProposal.proposedDate,...(row.dapGroupedProposal.replanning?.candidates || []).slice(0,2).map(item=>item.date)].filter(Boolean))] : [];
-    return `<section class="qv-programme-controls" aria-label="À contrôler"><h3>À contrôler</h3><ul>${controls.map(([point,reason,action])=>`<li><strong>${escapeHtml(point)}</strong><span>${escapeHtml(reason)}</span><span>${escapeHtml(action)}</span></li>`).join('')}</ul>
+    const message=value=>String(value || '').replace(/\b(?:QV-[A-Z0-9-]+|PLANIF-[A-Z0-9-]+)\b/g,'règle métier');
+    return `<section class="qv-programme-controls" aria-label="À contrôler"><h3>À contrôler</h3><ul>${controls.map(([point,reason,action])=>`<li><strong>${escapeHtml(point)}</strong><span>${escapeHtml(message(reason))}</span><span>${escapeHtml(message(action))}</span></li>`).join('')}</ul>
       ${proposalDates.length?`<div class="scope-actions">${proposalDates.map(date=>`<button type="button" class="scope-btn scope-btn-secondary" data-qv-proposed-date="${escapeHtml(date)}">Appliquer le ${escapeHtml(qvFormatDate(date))}</button>`).join('')}</div>`:''}</section>`;
   }
 
@@ -12782,6 +12785,7 @@
       participationEvaluation:'Participation',sold:'Solde',ecawinExport:'Export ECAwin',annualRecurrence:'Reconduction annuelle',activityNature:'Nature',
       lieuId:'Lieu',locationLabel:'Lieu',salleTheorieId:'Salle',roomLabel:'Salle',qualificationCodes:'Spécialisation',publicFreeLabels:'Public libre'};
     Object.assign(labels,{responsableFonctionCode:'Fonction responsable',sessionStructure:'Séances',cursusId:'Cursus de formation',
+      ecawinActivityCode:'Code activité ECAwin',
       cursus:'Cursus de formation',specialisation:'Spécialisation',family:'Famille',externalActivity:'Occupation externe',
       libelle:'Activité',date_fin:'Date de fin',heure_debut:'Début',heure_fin:'Fin',heure_debut_prevue:'Début prévu',heure_fin_prevue:'Fin prévue',
       statcom_code:'Stat.Com',domaine_code:'Domaine',lieu_id:'Lieu',salle_theorie_id:'Salle',responsable_fonction_code:'Responsable'});
@@ -12794,6 +12798,8 @@
     const value=(key,item)=>{
       if(item==null || item==='') return '—';
       if(typeof item==='boolean') return item?'Oui':'Non';
+      if(['date','date_fin'].includes(key) && /^\d{4}-\d{2}-\d{2}/.test(String(item))) return qvFormatDate(item);
+      if(['planningStatus','statut'].includes(key)) return ({A_PLANIFIER:'À planifier',PROPOSE:'Activité proposée',PLANIFIE:'Planifiée',VALIDATED:'Validé',ANNULE:'Annulé'})[item] || String(item);
       if(Array.isArray(item)) return item.map(entry=>typeof entry==='object'?entry.label || entry.code || 'Référence':
         key==='publicCodes'?qvProgrammePublicCodeLabel(entry):entry).join(' ; ') || '—';
       if(key==='lieuId') return qv.lieux?.find(row=>row.lieuId===item)?.nomCourt || 'Lieu référencé';
@@ -12803,23 +12809,44 @@
       return String(item);
     };
     if(!history.length) return '<p class="scope-muted">Aucune transaction enregistrée.</p>';
-    return `<div class="scope-table-wrap"><table class="scope-table qv-history-table"><thead><tr><th>Date et heure</th><th>Auteur</th><th>Action</th><th>Motif</th><th>Détail de la transaction</th></tr></thead><tbody>${history.map(entry=>{
+    const same=(key,a,b)=>{
+      const unordered=['oiCodes','publicCodes','qualificationCodes','responsibleSelections','publicFreeLabels'];
+      const normalize=item=>Array.isArray(item) && unordered.includes(key)
+        ? [...new Set(item.map(entry=>typeof entry==='object'?JSON.stringify(entry):entry))].sort() : item;
+      return JSON.stringify(normalize(a))===JSON.stringify(normalize(b));
+    };
+    const rows=history.flatMap(entry=>{
       const before=entry.avant?.fields || entry.avant || {},after=entry.apres?.fields || entry.apres || {};
-      const changes=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(key=>!['updatedAt','updated_at','version'].includes(key)
-        && JSON.stringify(before[key])!==JSON.stringify(after[key]));
-      const author=entry.authorLabel || (entry.auteur_id?'Auteur référencé':'Auteur non renseigné');
+      let changes=[...new Set([...Object.keys(before),...Object.keys(after)])]
+        .filter(key=>Object.hasOwn(labels,key) && !same(key,before[key],after[key]));
+      for(const [primary,derived] of [['lieuId','locationLabel'],['salleTheorieId','roomLabel'],['responsibleLabel','responsibleSelections'],
+        ['responsibleLabel','responsableFonctionCode'],['activityNature','externalActivity'],['cursusId','cursus'],['domain','family']])
+        if(changes.includes(primary)) changes=changes.filter(key=>key!==derived);
+      const automatic=entry.apres?.automaticChanges || {};
+      const validationChanged=entry.avant && entry.apres && Object.hasOwn(entry.avant,'validation')
+        && Object.hasOwn(entry.apres,'validation') && Boolean(entry.avant.validation)!==Boolean(entry.apres.validation);
+      if(!changes.length && !Object.keys(automatic).length && !validationChanged && Object.keys(before).some(key=>Object.hasOwn(labels,key))
+        && ['MODIFIER','MODIFIER_OCCURRENCE','MODIFIER_EVENEMENT'].includes(entry.action)) return [];
       const raw=String(entry.action || '').replace(/_/g,' ').toLocaleLowerCase('fr-CH');
       const action=actions[entry.action] || raw.charAt(0).toLocaleUpperCase('fr-CH')+raw.slice(1);
-      const fields=changes.map(key=>({label:labels[key] || (/id$/i.test(key)?'Référence':key.replace(/_/g,' ')),before:Object.hasOwn(before,key)?value(key,before[key]):'Non enregistré',
-        after:Object.hasOwn(after,key)?value(key,after[key]):'Non enregistré'}));
-      if(entry.avant && entry.apres && Object.hasOwn(entry.avant,'validation') && Object.hasOwn(entry.apres,'validation')
-        && Boolean(entry.avant.validation)!==Boolean(entry.apres.validation)) fields.push({label:'Validation',
-          before:entry.avant.validation?'Validé':'Non validé',after:entry.apres.validation?'Validé':'Non validé'});
-      const workflow={SAVE:'Enregistrement',PLAN:'Validation et planification',VALIDATE:'Validation',WITHDRAW:'Retrait motivé'};
-      const method=entry.apres?.transaction?`${entry.apres.transaction.source} · ${workflow[entry.apres.transaction.workflow] || entry.apres.transaction.workflow}`:'';
-      const detail=(method?`<p>${escapeHtml(method)}</p>`:'')+(fields.length?`<details class="qv-history-changes"><summary>${fields.length} changement${fields.length>1?'s':''}</summary><table class="scope-table"><thead><tr><th>Champ</th><th>Ancienne valeur</th><th>Nouvelle valeur</th></tr></thead><tbody>${fields.map(field=>`<tr><td>${escapeHtml(field.label)}</td><td>${escapeHtml(field.before)}</td><td>${escapeHtml(field.after)}</td></tr>`).join('')}</tbody></table></details>`:'Aucun changement de champ enregistré.');
-      return `<tr data-qv-transaction="${escapeHtml(entry.journal_id || '')}"><td>${escapeHtml(new Date(entry.at).toLocaleString('fr-CH',{timeZone:'Europe/Zurich'}))}</td><td>${escapeHtml(author)}</td><td>${escapeHtml(action)}</td><td>${escapeHtml(entry.commentaire || '—')}</td><td>${detail}</td></tr>`;
-    }).join('')}</tbody></table></div>`;
+      const items=[];
+      if(['CREER_OCCURRENCE','CREER'].includes(entry.action)) items.push({action:entry.apres?.transaction?.manualCreation
+        ? 'Création manuelle de l’événement' : 'Création de l’événement',field:'—',before:'—',after:'—'});
+      else {
+        for(const key of changes.filter(key=>!Object.hasOwn(automatic,key))) items.push({action:['VALIDER_OCCURRENCE','RETIRER_VALIDATION'].includes(entry.action)?'Modification':action,field:labels[key],
+          before:Object.hasOwn(before,key)?value(key,before[key]):'Non enregistré',
+          after:Object.hasOwn(after,key)?value(key,after[key]):'Non enregistré'});
+        for(const [key,change] of Object.entries(automatic)) if(Object.hasOwn(labels,key)) items.push({
+          action:'Correction automatique',field:labels[key],before:value(key,change.before),after:value(key,change.after),automatic:true});
+        if(validationChanged) items.push({
+            action:entry.apres.validation?'Validation':'Retrait de validation',field:'Validation',
+            before:entry.avant.validation?'Validé':'Non validé',after:entry.apres.validation?'Validé':'Non validé'});
+        if(!items.length && !changes.length) items.push({action:'Enregistrement historique',field:action,
+          before:Object.keys(before).length?'—':'Non enregistré',after:'Aucun changement métier enregistré'});
+      }
+      return items.map(item=>`<tr data-qv-transaction="${escapeHtml(entry.journal_id || '')}"><td>${escapeHtml(new Date(entry.at).toLocaleString('fr-CH',{timeZone:'Europe/Zurich'}))}</td><td>${escapeHtml(item.automatic || entry.apres?.transaction?.origin==='AUTOMATIC'?'SCOPE — automatique':entry.authorLabel || (entry.auteur_id?'Auteur référencé':'Auteur non renseigné'))}</td><td>${escapeHtml(item.action)}</td><td>${escapeHtml(item.field)}</td><td>${escapeHtml(item.before)}</td><td>${escapeHtml(item.after)}</td><td>${escapeHtml(entry.commentaire || '—')}</td></tr>`);
+    });
+    return `<div class="scope-table-wrap"><table class="scope-table qv-history-table"><thead><tr><th>Date et heure</th><th>Auteur</th><th>Action</th><th>Champ</th><th>Ancienne valeur</th><th>Nouvelle valeur</th><th>Motif</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
   }
 
   function qvWorkflowDialog(title,eventLabel,confirmText,confirm,initialMotif=''){
@@ -12923,9 +12950,9 @@
         ${Array.isArray(row.conduiteSlots) && row.conduiteSlots.length ? `<section class="scope-form-section"><h3>Conducteurs VL</h3><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Place</th><th>Présence</th><th>Conduite</th><th>Connaissance véhicule</th></tr></thead><tbody>${row.conduiteSlots.map((slot) => `<tr><td>${escapeHtml(String(slot.position))}</td><td>${escapeHtml(qvTime(slot.startsAt))}–${escapeHtml(qvTime(slot.endsAt))}</td><td>${escapeHtml(qvTime(slot.conduiteStartsAt))}–${escapeHtml(qvTime(slot.conduiteEndsAt))}</td><td>${escapeHtml(qvTime(slot.connaissanceVehiculeStartsAt))}–${escapeHtml(qvTime(slot.connaissanceVehiculeEndsAt))}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
         ${(row.reason && row.reason !== 'Proposition historique 2026 à valider.' || row.publishedEventId || arbitrationActivity && (arbitrationActivity.proposals || []).length) ? `<div class="qv-programme-workflow">${row.reason && row.reason !== 'Proposition historique 2026 à valider.' ? `<p>${escapeHtml(row.reason)}</p>` : ''}${row.publishedEventId ? `<p>L’occurrence est publiée et reliée à son événement SCOPE.</p><a class="scope-btn" href="#/exercices/${escapeHtml(row.publishedEventId)}">Ouvrir l'événement</a>` : arbitrationActivity && (arbitrationActivity.proposals || []).length ? `<a class="scope-btn" href="${qvHref('activites',{id:arbitrationActivity.activityId,from:'programme'})}">Arbitrage</a>` : ''}</div>` : ''}
       </section>
-      ${qvProgrammeControls(row)}
+      <div id="qv-programme-live-controls" aria-live="polite">${qvProgrammeControls(row)}</div>
       ${preparationForm}
-      ${!creating ? '<details class="qv-programme-history" id="qv-programme-history"><summary>Historique</summary><div data-qv-history-content></div></details>' : ''}
+      ${!creating ? `<details class="qv-programme-history" id="qv-programme-history" data-history-key="${escapeHtml(`${qvProgrammeYear()}:${row.id}`)}" ${state.quoVadisOpenHistory===`${qvProgrammeYear()}:${row.id}`?'open':''} ${state.quoVadisHistoryCache?.[`${qvProgrammeYear()}:${row.id}`]?'data-loaded="true"':''}><summary>Historique</summary><div data-qv-history-content>${state.quoVadisHistoryCache?.[`${qvProgrammeYear()}:${row.id}`]?qvHistoryHtml(state.quoVadisHistoryCache[`${qvProgrammeYear()}:${row.id}`],qv):''}</div></details>` : ''}
     </div>`;
   }
 
@@ -14719,25 +14746,67 @@
       });
     });
     const preparedProgrammeRow=quoVadisProgrammeData()?.canonicalProgramme?.rows?.find(row=>String(row.id)===String(route().qvProgrammeItemId));
-    document.querySelectorAll('[data-qv-proposed-date]').forEach(button=>button.addEventListener('click',()=>{
+    document.getElementById('qv-programme-live-controls')?.addEventListener('click',event=>{
+      const button=event.target.closest('[data-qv-proposed-date]');if(!button) return;
       const field=document.getElementById('qv-programme-date');
       if(!field || field.disabled || !hasScopePermission('references:manage')) return;
       field.value=qvProgrammeDateInputValue({startsAt:button.dataset.qvProposedDate});
       field.dispatchEvent(new Event('input',{bubbles:true}));field.dispatchEvent(new Event('change',{bubbles:true}));
       field.focus({preventScroll:true});
-    }));
+    });
+    const refreshProgrammeControls=()=>{
+      const host=document.getElementById('qv-programme-live-controls'),engine=window.ScopeQvCoverage;
+      if(!host || !engine) return;
+      const qv=quoVadisProgrammeData(),base=preparedProgrammeRow || {id:'nouveau',label:''};
+      const raw=document.getElementById('qv-programme-date')?.value || '',date=qvProgrammeDatePayload(raw);
+      const selected=id=>[...(document.getElementById(id)?.querySelectorAll('input:checked:not([data-qv-oi-group])') || [])]
+        .filter(input=>input.dataset.choiceKind!=='FREE').flatMap(input=>input.dataset.preservedCodes?JSON.parse(input.dataset.preservedCodes):[input.value]);
+      const draft={...base,label:document.getElementById('qv-programme-activity')?.value || base.label,
+        planningDomain:base.planningDomain || base.domain,
+        domain:document.getElementById('qv-programme-domain')?.value || base.domain,
+        statCom:document.getElementById('qv-programme-statcom')?.value || '',publics:selected('qv-programme-public'),
+        publicFreeLabels:[...(document.getElementById('qv-programme-public')?.querySelectorAll('input[data-choice-kind="FREE"]:checked') || [])].map(input=>input.value),
+        startsAt:date && `${date}T${document.getElementById('qv-programme-start')?.value || '00:00'}`,
+        endsAt:date && `${date}T${document.getElementById('qv-programme-end')?.value || '00:00'}`,
+        lieuId:document.getElementById('qv-programme-lieu')?.value==='autre'
+          ? document.getElementById('qv-programme-autre')?.value || null : document.getElementById('qv-programme-lieu')?.value || null,
+        salleTheorieId:document.getElementById('qv-programme-salle')?.value || null,
+        externalActivity:document.getElementById('qv-programme-nature')?.value==='EXTERNAL_OCCUPATION'};
+      draft.room=qv.sallesTheorie?.find(room=>room.salleId===draft.salleTheorieId)?.libelle || '';
+      draft.location=qv.lieux?.find(lieu=>lieu.lieuId===draft.lieuId)?.nomCourt || base.location;
+      if(String(base.startsAt || '').slice(0,10)!==date || base.domain!==draft.domain || base.statCom!==draft.statCom
+        || JSON.stringify([...(base.publics || [])].sort())!==JSON.stringify([...draft.publics].sort())) draft.businessValidation=null;
+      draft.planningDayControl=/^\d{4}-\d{2}-\d{2}$/.test(date) ? engine.programmeDayControl(draft,qv) : null;
+      draft.reservationConflicts=engine.reservationConflicts([draft,...(qv.canonicalProgramme?.rows || [])
+        .filter(row=>L.qvProgrammeIsActive(row) && row.id!==draft.id)]).filter(item=>item.leftId===draft.id || item.rightId===draft.id)
+        .map(item=>({otherLabel:item.leftId===draft.id?item.rightLabel:item.leftLabel,causes:item.causes}));
+      host.innerHTML=qvProgrammeControls(draft);
+      return draft;
+    };
+    document.querySelector('.qv-programme-preparation')?.addEventListener('input',refreshProgrammeControls);
+    document.querySelector('.qv-programme-preparation')?.addEventListener('change',refreshProgrammeControls);
     if(preparedProgrammeRow && (preparedProgrammeRow.humanDecision || preparedProgrammeRow.businessValidation || preparedProgrammeRow.publishedEventId))
       for(const id of ['qv-programme-public','qv-programme-responsable','qv-programme-sold','qv-programme-ecawin-export']){
         const field=document.getElementById(id);if(field) field.dataset.manual='true';
       }
     document.getElementById('qv-programme-history')?.addEventListener('toggle',async event=>{
       const panel=event.currentTarget;
+      const key=panel.dataset.historyKey;
+      if(panel.open) state.quoVadisOpenHistory=key;
+      else if(state.quoVadisOpenHistory===key) state.quoVadisOpenHistory=null;
       if(!panel.open || panel.dataset.loaded==='true' || typeof client.quoVadisProgrammeHistory!=='function') return;
+      const session=state.session;
       try{
         const data=await client.quoVadisProgrammeHistory(route().qvProgrammeItemId,qvProgrammeYear());
-        panel.querySelector('[data-qv-history-content]').innerHTML=qvHistoryHtml(data.history || [],quoVadisProgrammeData());
-        panel.dataset.loaded='true';
-      }catch(error){panel.querySelector('[data-qv-history-content]').textContent=L.friendlyError(error).message;}
+        if(state.session!==session) return;
+        state.quoVadisHistoryCache={...state.quoVadisHistoryCache,[key]:data.history || []};
+        const current=document.getElementById('qv-programme-history');
+        if(current?.dataset.historyKey===key){
+          current.querySelector('[data-qv-history-content]').innerHTML=qvHistoryHtml(data.history || [],quoVadisProgrammeData());
+          current.dataset.loaded='true';
+        }
+      }catch(error){const current=document.getElementById('qv-programme-history');
+        if(current?.dataset.historyKey===key) current.querySelector('[data-qv-history-content]').textContent=L.friendlyError(error).message;}
     });
     const applyProgrammeNature = () => {
       const field=document.getElementById('qv-programme-nature');
@@ -15032,6 +15101,7 @@
       if (salle) salle.innerHTML = qvSalleOptions(quoVadisData(), value === '__free' ? '' : value, '');
     });
     const saveProgrammePreparation = async (saveAction,extra={}) => {
+      if(saveAction!=='WITHDRAW') refreshProgrammeControls();
       const id = route().qvProgrammeItemId;
       const creating = id === 'nouveau';
       if (!id || state.loading || state.quoVadisBusy || (creating
@@ -15105,6 +15175,7 @@
         invalidateCache(['quoVadis']);
         if(payload.year === 2027) state.quoVadis = data.quoVadis || state.quoVadis;
         else if(data.quoVadis) state.quoVadisYears={...state.quoVadisYears,[payload.year]:data.quoVadis};
+        if(state.quoVadisHistoryCache) delete state.quoVadisHistoryCache[`${payload.year}:${id}`];
         saved = true;
         state.quoVadisProgrammeContextActive = true;
         window.location.hash = qvHref('programme', {annee:payload.year});
@@ -15543,6 +15614,9 @@
       }) : rows;
       return { rows: qvProgrammeExportRows(exported), meta: {...qvProgrammeExportMeta(monthly, monthKey, fullYear),mode:variant || (monthly ? 'monthly' : 'annual')} };
     };
+    document.getElementById('qv-export-programme-variant')?.addEventListener('change',event=>{
+      state.quoVadisPdfVariant=event.currentTarget.value;
+    });
     document.getElementById('qv-export-programme-excel')?.addEventListener('click', () => {
       const { rows, meta } = programmeExport();
       downloadQuoVadisCsv(rows, `SCOPE_QUO_VADIS_${meta.monthKey || meta.year}_Programme.csv`);

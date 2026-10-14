@@ -92,3 +92,59 @@ Référentiel et ToDo restent dans les documents existants, sans référentiel p
 
 Le GO de cette livraison et la recette ciblée de production restent distincts des preuves du clone.
 Preuves du lot : `docs/captures/qv-post-recette-moa-20261013/` ; rapport `docs/SCOPE_QV_POST_RECETTE_MOA_20261013.md`.
+
+## Actualisation Post-PR #16 — 14.10.2026
+
+Main et production contrôlés directement : `160eb54`, PR #16 fusionnée, aucun autre lot ouvert au préflight.
+Les présentations du jalon antérieur restent historiques : détail déroulant remplacé par le tableau à sept colonnes ;
+groupe public désormais « Opérationnel ». Aucune fusion, publication ou migration de ce nouveau lot.
+
+### ToDo Du Jalon Ciblé
+| Exigence | Travail du lot | Suite |
+|---|---|---|
+| QV-AUDIT-002 | Tableau, vrais changements, ordre OI ignoré, décisions, corrections automatiques distinctes | Journal existant et anciennes valeurs conservés |
+| QV-RESERVATION-002 | Ressource réelle, pas d'exclusivité déduite du lieu sans salle | Qualification explicite des occupations exclusives à confirmer si absente ; aucun nouveau sélecteur |
+| QV-PLANIF-005 | N+364 conservé ; contrôle dès proposition/modification, puis enregistrement/validation | Aucun repositionnement de date humaine ou publiée ; DAP/CTA/PR conservés |
+| QV-OSR-001 | Exception vendredi limitée au type OSR confirmé et au public démontré | Publics mixtes supplémentaires à arbitrer ; pas de permission générale DPS |
+| QV-UX-004 | Grille existante régulière à plusieurs largeurs ; nature externe explicite | Composants et cases conservés |
+| QV-PDF-002 | Trois formats existants, présentation commune, séparateur rendu sans modifier la source | Incohérences de données séparées de la mise en page |
+| QV-PUBLIC-006 | Ordre exact Opérationnel et OSR prioritaire, FOBA 1/2/3 stables | Aucun changement d'identifiant ou de population |
+| QV-INDEX-001 | Inventaire/correspondances ci-dessous uniquement | Catalogue officiel IndeX et arbitrages MOA requis avant réorganisation |
+
+### Inventaire Et Correspondances IndeX À Valider
+Lecture seule SCOPE du 14.10 : 17 compétences, 8 fonctions événementielles, 36 publics canoniques,
+25 alias de compétences, 6 anciennes correspondances cibles/compétences. Source structurée :
+`docs/captures/qv-post-pr16-moa-20261014/index-referentials-readonly.json`.
+Les métadonnées sont des sources SCOPE C1/C3, pas une preuve d'exhaustivité officielle IndeX.
+Aucun export officiel IndeX versionné trouvé ; les libellés observés ne sont donc pas déclarés officiels par supposition.
+
+| Dimension | Existant / correspondance observée | Écart / décision attendue |
+|---|---|---|
+| PR, spécialisation | PAPR, PABC ; publics PR-PAPR/PR-PABC, choix PR:2/PR:3 | Correspondance IndeX officielle, candidatures et dates de qualification à confirmer |
+| PR, fonctions | FORMATEUR_PR, FORMATEUR_MAISON_FEU, CHEF_PISTE ; choix Formateur PR/FMF/Chef piste | Rôle événementiel distinct de PAPR ; aucune implication automatique |
+| AUTO, qualifications | COND_PL, COND_TP9, COND_VL, GRUTIER, MEA, PILOTE_BAT, MACHINISTE_EA, GRUTIER_A, GRUTIER_C, CARISTE | MEA/Machiniste EA et Grutier A/C restent distincts jusqu'à décision, sans fusion |
+| AUTO, fonctions | MONITEUR_CONDUITE, FORMATEUR_C1_118, FORMATEUR_EA | Formation qualifiante ≠ fonction de formateur ; alignement IndeX requis |
+| FOSPEC | ANTICHUTE, NAC, OFSI, VPC, SANITAIRE | VPC/Sanitaire dans FOSPEC ; public Sanitaire à confirmer, sans identifiant inventé |
+| FOBA | FOBA-1/2/3 canoniques ; FOBA:1/2/3 en sélection | Libellés conservés ; populations Recrues / Sapeurs DPS+DAP / Sapeurs DPS |
+| DPS/DAP/JSP, organisation | DPS-G1/C1/B1/B2 ; DAP-Y1/Y2/Y3/Y4 ; JSP-GEN/JSP-CAD, MONITEUR_JSP/AIDE_MONITEUR_JSP | Organisation, spécialisation et fonction séparées ; groupes IndeX à confirmer |
+| Candidatures | Candidat PAPR/CI DPS/CI DAP/cond PL/machiniste EA/TP9 déjà descriptifs | Candidat non automatiquement qualifié ni affecté ; domaines supplémentaires à valider |
+| Grades | 21 grades SDIS, 4 JSP et Civil dans `scope-personnel-referentials.js`, alias existants | Aucun catalogue IndeX externe démontré ; conserver codes/libellés actuels |
+| Échelons | ECH:I à ECH:IV dans le catalogue SCOPE | Valider leurs correspondances IndeX, ne pas confondre avec les grades |
+| Gouvernance | Codir, CDT, C op/log/for, QM descriptifs ; responsables permanents séparés | Inventaire des fonctions officielles IndeX à fournir/rapprocher ; pas de NIP fictif |
+| Affectations/qualifications datées | `scope_affectations`, `scope_person_qualifications` valid_from/valid_to, rôles événementiels séparés | Éligibilité à la date réelle, aucune promotion automatique des descriptions libres |
+
+Proposition de structure future, non implémentée : Organisation ; Cadres ; Candidats par domaine ;
+Spécialisation ; Fonctions particulières ; Gouvernance. Domaines PR, AUTO, FOSPEC, FOBA, DPS, DAP, JSP.
+Spécialisations triées alphabétiquement dans chaque domaine, libellés IndeX officiels conservés une fois démontrés.
+Suggestions contextuelles `011PR` : spécialisations PR, candidats PR et fonctions PR pertinentes, jamais qualification accordée.
+Questions MOA : catalogue officiel IndeX ; sens exact MEA/Machiniste EA/Grutier ; fonctions vs qualifications ;
+publics mixtes OSR non démontrés ; portée explicite des réservations de site/emplacement.
+
+### Suites Conservées
+QV-RULES-001 : onglet unique, portées, cursus multi-modules, contraintes, responsables, publics,
+faisabilité, workflow de validation, accès autorisés uniquement ; maquette MOA validée, aucun développement de l'éditeur ici.
+Assignations manuelles/assistées/automatiques selon règles validées, éligibilité datée.
+Participation : types suivis, Cours ECA individuels, agrégats et présences, sans module parallèle.
+ECAwin : codes, exports, rapprochements, événements déjà existants sans recréation.
+Observations : sélection, forçage manuel, évaluations. Reconduction N→N+1 : versions métier validées conservées.
+Les règles de publication annuelle, RLS, permissions et données historiques restent inchangées.

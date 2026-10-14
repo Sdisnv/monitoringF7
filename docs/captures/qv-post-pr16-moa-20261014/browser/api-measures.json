@@ -1,0 +1,155 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 327.96574999999984,
+    "envelopeBytes": 175381,
+    "wireBytes": 131218,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 659.9563330000001,
+    "envelopeBytes": 820917,
+    "wireBytes": 615372,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 751.634333,
+    "envelopeBytes": 32861,
+    "wireBytes": 24328,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3APAPR%3AM03/history",
+    "status": 200,
+    "durationMs": 4.650333000000046,
+    "envelopeBytes": 30601,
+    "wireBytes": 26578,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/referentiels",
+    "status": 200,
+    "durationMs": 65.1108750000003,
+    "envelopeBytes": 175379,
+    "wireBytes": 131218,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 449.8954590000003,
+    "envelopeBytes": 820901,
+    "wireBytes": 615358,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/alerts",
+    "status": 200,
+    "durationMs": 534.1395000000002,
+    "envelopeBytes": 32861,
+    "wireBytes": 24328,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3APAPR%3AM03/history",
+    "status": 200,
+    "durationMs": 2.6361669999996593,
+    "envelopeBytes": 30601,
+    "wireBytes": 26578,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 460.2467909999996,
+    "envelopeBytes": 820873,
+    "wireBytes": 615339,
+    "encoding": "gzip"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/quo-vadis/programme-items",
+    "status": 201,
+    "durationMs": 1521.4168329999993,
+    "envelopeBytes": 822143,
+    "wireBytes": 616290,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 517.0395000000008,
+    "envelopeBytes": 821981,
+    "wireBytes": 616168,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programmes/2027",
+    "status": 200,
+    "durationMs": 506.1110000000008,
+    "envelopeBytes": 822061,
+    "wireBytes": 616230,
+    "encoding": "gzip"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A659536c1-2e59-4e6f-820f-82053766f142/history",
+    "status": 200,
+    "durationMs": 3.5321249999997235,
+    "envelopeBytes": 2414,
+    "wireBytes": 1835,
+    "encoding": "identity"
+  },
+  {
+    "method": "GET",
+    "path": "/api/scope/quo-vadis/programme-items/QV27%3AMANUAL%3A659536c1-2e59-4e6f-820f-82053766f142/history",
+    "status": 200,
+    "durationMs": 2.841791999999259,
+    "envelopeBytes": 2414,
+    "wireBytes": 1835,
+    "encoding": "identity"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/reports/quo-vadis",
+    "status": 200,
+    "durationMs": 32.14091700000063,
+    "envelopeBytes": 47650,
+    "wireBytes": 35305,
+    "encoding": "identity"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/reports/quo-vadis",
+    "status": 200,
+    "durationMs": 23.77666700000009,
+    "envelopeBytes": 46703,
+    "wireBytes": 34598,
+    "encoding": "identity"
+  },
+  {
+    "method": "POST",
+    "path": "/api/scope/reports/quo-vadis",
+    "status": 200,
+    "durationMs": 21.528707999999824,
+    "envelopeBytes": 43687,
+    "wireBytes": 32320,
+    "encoding": "identity"
+  }
+]

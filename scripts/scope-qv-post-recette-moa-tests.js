@@ -27,17 +27,17 @@ test('PAPR preparatory exception and provisional report remain intact',()=>{
   assert.equal(cycle.approvalRequired,'CODIR');assert.equal(cycle.statisticsBasis,'CIVIL_EVENT_DATE');
 });
 test('operational public choices reuse the four existing CI reference codes',()=>{
-  const group=logic.qvProgrammePublicCatalogue().find(row=>row.group==='OPÉRATIONNEL');
+  const group=logic.qvProgrammePublicCatalogue().find(row=>row.group==='Opérationnel');
   assert.deepEqual(group.items.map(row=>row[1]).sort(),['OSR','CI DPS','Candidat CI DPS','CI DAP','Candidat CI DAP'].sort());
   for(const code of ['ENC:CI-DPS','ENC:CAND-CI-DPS','ENC:CI-DAP','ENC:CAND-CI-DAP']) assert.equal(logic.qvProgrammePublicCatalogue().flatMap(row=>row.items).filter(row=>row[0]===code).length,1);
   assert.equal(logic.qvProgrammePublicLabel('ENC:OSR'),'OSR');
 });
-test('history groups fields in one transaction and never fabricates missing historical values',()=>{
+test('history shows business fields directly and never fabricates missing historical values',()=>{
   const {hooks}=createCatalogUiHarness();
   const html=hooks.renderQuoVadisHistoryHtml([{journal_id:'existing-transaction',at:'2026-10-13T12:00:00Z',authorLabel:'Auteur autorisé',
     action:'MODIFIER_OCCURRENCE',avant:{fields:{date:'2027-05-13'}},apres:{fields:{date:'2027-05-20',statCom:'0130F7'}},commentaire:'Motif de recette'}],{});
-  assert.equal((html.match(/data-qv-transaction=/g) || []).length,1);assert.match(html,/Modification/);
-  assert.match(html,/2 changements/);assert.match(html,/Non enregistré/);assert.match(html,/Auteur autorisé/);assert.doesNotMatch(html,/MODIFIER OCCURRENCE/);
+  assert.equal((html.match(/data-qv-transaction=/g) || []).length,2);assert.match(html,/Modification/);
+  assert.doesNotMatch(html,/<details/);assert.match(html,/Non enregistré/);assert.match(html,/Auteur autorisé/);assert.doesNotMatch(html,/MODIFIER OCCURRENCE/);
 });
 test('author names only use the authorized directory path',async()=>{
   let calls=0;const query=async()=>({rows:++calls===1?[{auteur_id:'7647'}]:[{nip:'7647',nom:'Auteur',prenom:'Référencé'}]});
@@ -50,7 +50,7 @@ test('DPS day controls show the rule and no invented reason for an unplanned ite
     startsAt:'2027-05-21T18:30',endsAt:'2027-05-21T22:00',status:'A_POSITIONNER',ois:['G1','C1','B1','B2'],statCom:'0120F7',
     planningDayControl:{date:'2027-05-21',dayClass:'INTERDIT',reasons:['Vendredi: Interdit.'],ruleCode:'PLANIF-DPS',derogationAllowed:true}};
   const data={programme:{annee:2027},canonicalProgramme:{rows:[row]},rules:[]};
-  const html=hooks.renderQuoVadisProgrammeFicheHtml(data,row.id);assert.match(html,/PLANIF-DPS/);assert.match(html,/Vendredi: Interdit/);assert.match(html,/dérogation motivée/);
+  const html=hooks.renderQuoVadisProgrammeFicheHtml(data,row.id);assert.doesNotMatch(html,/PLANIF-DPS/);assert.match(html,/Vendredi: Interdit/);assert.match(html,/dérogation motivée/);
   const clean=hooks.renderQuoVadisProgrammeFicheHtml({...data,canonicalProgramme:{rows:[{...row,planningDayControl:null}]}},row.id);
   assert.doesNotMatch(clean,/class="qv-programme-controls"/);
 });

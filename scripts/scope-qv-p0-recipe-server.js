@@ -10,12 +10,14 @@ const { permissionsForRoles } = require('../netlify/lib/_rbac');
 const { generateQuoVadisProgrammeReport } = require('../netlify/lib/_scope-report-service');
 
 const performanceMode=process.argv.find(arg=>/^--performance-(before|after)$/.test(arg));
-const postRecetteMode=process.argv.includes('--post-recette-moa');
+const postPr16Mode=process.argv.includes('--post-pr16-moa');
+const postRecetteMode=process.argv.includes('--post-recette-moa') || postPr16Mode;
+if(postPr16Mode) process.env.SCOPE_RECIPE_POST_PR16='1';
 if(performanceMode || postRecetteMode) {
   for(const mode of ['ROADMAP','COMPLEMENT','FINALISATION','CORRECTIVE','MOA13','FINAL_CONTROLS','PERFORMANCE'])
     process.env[`SCOPE_RECIPE_${mode}`]='1';
   process.env.SCOPE_RECIPE_PERFORMANCE_BEFORE=performanceMode==='--performance-before'?'1':'0';
-  process.env.SCOPE_RECIPE_EVIDENCE_DIR=postRecetteMode?'docs/captures/qv-post-recette-moa-20261013/browser'
+  process.env.SCOPE_RECIPE_EVIDENCE_DIR=postPr16Mode?'docs/captures/qv-post-pr16-moa-20261014/browser':postRecetteMode?'docs/captures/qv-post-recette-moa-20261013/browser'
     :`docs/captures/qv-response-performance-20261013/browser-${performanceMode.slice(14)}`;
 }
 

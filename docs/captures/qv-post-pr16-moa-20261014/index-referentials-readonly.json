@@ -1,0 +1,452 @@
+{
+  "project": "SCOPE",
+  "readOnly": true,
+  "productionWrites": false,
+  "competences": [
+    {
+      "competence_id": "749852a5-27df-40e3-b037-40285bddbbc9",
+      "code": "COND_PL",
+      "libelle": "cond PL",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "c3a459c2-c1f4-4e06-9da2-66dce2b7ad3b",
+      "code": "COND_TP9",
+      "libelle": "cond TP9",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "efffe5c4-b7f4-405a-9f87-6c5de01ff7e4",
+      "code": "COND_VL",
+      "libelle": "cond VL",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "fc14f1d9-d2ae-4048-b748-466f4984c7c4",
+      "code": "GRUTIER",
+      "libelle": "Grutier",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "1fc64e99-b4e0-4d94-b90d-fcc7bd659182",
+      "code": "MEA",
+      "libelle": "MEA",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "e9968b16-b515-4f8c-9d33-56441a3e99f4",
+      "code": "PILOTE_BAT",
+      "libelle": "Pilote BAT",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "a4eec3be-e475-4604-9688-188f410ae2ea",
+      "code": "ANTICHUTE",
+      "libelle": "Antichute",
+      "domaine_code": "FOSPEC",
+      "type": "SPECIALITE",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "5b95c3f2-1373-4bb9-959f-4461cb40bfac",
+      "code": "NAC",
+      "libelle": "NAC",
+      "domaine_code": "FOSPEC",
+      "type": "SPECIALITE",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "1b2f30f3-0d0e-4d57-92d9-e132284d066a",
+      "code": "OFSI",
+      "libelle": "OFSI",
+      "domaine_code": "FOSPEC",
+      "type": "SPECIALITE",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "15013cd8-272b-4832-ab8c-ec22ef8e252a",
+      "code": "VPC",
+      "libelle": "VPC",
+      "domaine_code": "FOSPEC",
+      "type": "SPECIALITE",
+      "source": "CANONICAL_FOUNDATIONS_C1"
+    },
+    {
+      "competence_id": "b988ce3b-5a96-43f3-855c-9d4375ad9580",
+      "code": "PAPR",
+      "libelle": "PAPR",
+      "domaine_code": "PR",
+      "type": "QUALIFICATION",
+      "source": "PERSON_QUALIFICATIONS_C3_B"
+    },
+    {
+      "competence_id": "9b73cf43-2960-4073-a133-5c55114ece10",
+      "code": "PABC",
+      "libelle": "PABC",
+      "domaine_code": "PR",
+      "type": "SPECIALITE",
+      "source": "PERSON_QUALIFICATIONS_C3_B"
+    },
+    {
+      "competence_id": "bbd27e97-124a-47e9-a1a6-13cf2b7803c2",
+      "code": "MACHINISTE_EA",
+      "libelle": "Machiniste EA",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "PERSON_QUALIFICATIONS_C3_B"
+    },
+    {
+      "competence_id": "9646fcd5-dbba-4884-a46e-61c6ea95b7ea",
+      "code": "GRUTIER_A",
+      "libelle": "Grutier A",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "PERSON_QUALIFICATIONS_C3_B"
+    },
+    {
+      "competence_id": "94a0d417-5ec1-41ae-a2f8-24fae120594f",
+      "code": "GRUTIER_C",
+      "libelle": "Grutier C",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "PERSON_QUALIFICATIONS_C3_B"
+    },
+    {
+      "competence_id": "498ed439-1269-4d26-8463-3ef7d697730e",
+      "code": "CARISTE",
+      "libelle": "Cariste",
+      "domaine_code": "AUTO",
+      "type": "QUALIFICATION",
+      "source": "PERSON_QUALIFICATIONS_C3_B"
+    },
+    {
+      "competence_id": "cf417765-3f9d-459c-92fc-1af3882953d0",
+      "code": "SANITAIRE",
+      "libelle": "Sanitaire",
+      "domaine_code": "FOSPEC",
+      "type": "SPECIALITE",
+      "source": "PERSON_QUALIFICATIONS_C3_B"
+    }
+  ],
+  "roles": [
+    {
+      "event_role_definition_id": "0c789128-8476-4e73-8990-dc305775ac2f",
+      "code": "FORMATEUR_PR",
+      "label": "Formateur PR",
+      "domain_code": "PR"
+    },
+    {
+      "event_role_definition_id": "538fc919-a9de-4c10-8a2d-b55c9d9785ec",
+      "code": "FORMATEUR_MAISON_FEU",
+      "label": "Formateur maison feu",
+      "domain_code": "PR"
+    },
+    {
+      "event_role_definition_id": "5789e409-5c71-4c64-904c-066ab5878cff",
+      "code": "CHEF_PISTE",
+      "label": "Chef de piste",
+      "domain_code": "PR"
+    },
+    {
+      "event_role_definition_id": "30be5510-40b4-4e21-94c4-67e7f315247f",
+      "code": "MONITEUR_JSP",
+      "label": "Moniteur JSP",
+      "domain_code": "JSP"
+    },
+    {
+      "event_role_definition_id": "c5dc5614-c533-4d6e-b059-a91eae58d7b6",
+      "code": "AIDE_MONITEUR_JSP",
+      "label": "Aide-moniteur JSP",
+      "domain_code": "JSP"
+    },
+    {
+      "event_role_definition_id": "aaabca9b-481c-4d31-b281-715cb402a9f4",
+      "code": "MONITEUR_CONDUITE",
+      "label": "Moniteur de conduite",
+      "domain_code": "AUTO"
+    },
+    {
+      "event_role_definition_id": "0caaf251-a1f9-44db-ac15-b7a8ef35a19e",
+      "code": "FORMATEUR_C1_118",
+      "label": "Formateur C1/118",
+      "domain_code": "AUTO"
+    },
+    {
+      "event_role_definition_id": "00f42971-0650-4020-8d7a-d008e3bf8852",
+      "code": "FORMATEUR_EA",
+      "label": "Formateur EA",
+      "domain_code": "AUTO"
+    }
+  ],
+  "publics": [
+    {
+      "public_definition_id": "b2da4353-6a89-4481-9eb5-b901c4311864",
+      "code": "DPS-G1",
+      "label": "DPS G1",
+      "owner_type": "DOMAIN",
+      "owner_code": "DPS"
+    },
+    {
+      "public_definition_id": "4337e4a9-614a-48d8-96de-255dcdba9793",
+      "code": "DPS-C1",
+      "label": "DPS C1",
+      "owner_type": "DOMAIN",
+      "owner_code": "DPS"
+    },
+    {
+      "public_definition_id": "2371019b-66b0-49bf-8bcc-e8fc6691783c",
+      "code": "DPS-B1",
+      "label": "DPS B1",
+      "owner_type": "DOMAIN",
+      "owner_code": "DPS"
+    },
+    {
+      "public_definition_id": "85a9332d-dacc-4622-b557-949a5645b2d0",
+      "code": "DPS-B2",
+      "label": "DPS B2",
+      "owner_type": "DOMAIN",
+      "owner_code": "DPS"
+    },
+    {
+      "public_definition_id": "81ff287d-9eb0-4f15-bd55-26b7ffefc2bc",
+      "code": "DAP-Y1",
+      "label": "DAP Y1",
+      "owner_type": "DOMAIN",
+      "owner_code": "DAP"
+    },
+    {
+      "public_definition_id": "9911c74c-4622-447a-a804-a39bb695b669",
+      "code": "DAP-Y2",
+      "label": "DAP Y2",
+      "owner_type": "DOMAIN",
+      "owner_code": "DAP"
+    },
+    {
+      "public_definition_id": "f5959944-5c8e-4fe3-bf0b-9890088aa2b4",
+      "code": "DAP-Y3",
+      "label": "DAP Y3",
+      "owner_type": "DOMAIN",
+      "owner_code": "DAP"
+    },
+    {
+      "public_definition_id": "0d12e55e-cae8-4802-a4bb-95471c43ee6f",
+      "code": "DAP-Y4",
+      "label": "DAP Y4",
+      "owner_type": "DOMAIN",
+      "owner_code": "DAP"
+    },
+    {
+      "public_definition_id": "12e0baa9-4460-4805-86fc-868fd45abd18",
+      "code": "FOBA-1",
+      "label": "FOBA 1",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOBA"
+    },
+    {
+      "public_definition_id": "48fdd049-e1c9-406b-bebc-b8c411b2255b",
+      "code": "FOBA-2",
+      "label": "FOBA 2",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOBA"
+    },
+    {
+      "public_definition_id": "d25c9399-8cc1-4bc2-aece-878f6c343ada",
+      "code": "FOBA-3",
+      "label": "FOBA 3",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOBA"
+    },
+    {
+      "public_definition_id": "97b78258-83f9-484f-b2da-3605ada634bd",
+      "code": "AUTO-COND-PL",
+      "label": "AUTO COND_PL",
+      "owner_type": "DOMAIN",
+      "owner_code": "AUTO"
+    },
+    {
+      "public_definition_id": "458de3dc-385f-42bf-a91a-92403821a541",
+      "code": "AUTO-COND-VL",
+      "label": "AUTO COND_VL",
+      "owner_type": "DOMAIN",
+      "owner_code": "AUTO"
+    },
+    {
+      "public_definition_id": "7d6ea198-7717-42f5-82bf-a39f5476d529",
+      "code": "AUTO-COND-TP9",
+      "label": "AUTO COND_TP9",
+      "owner_type": "DOMAIN",
+      "owner_code": "AUTO"
+    },
+    {
+      "public_definition_id": "5e876250-08e9-47d3-a164-dd4497eda582",
+      "code": "AUTO-GRUTIER",
+      "label": "AUTO GRUTIER",
+      "owner_type": "DOMAIN",
+      "owner_code": "AUTO"
+    },
+    {
+      "public_definition_id": "a7bacd6c-edeb-4fd5-ac57-3fd41147492c",
+      "code": "AUTO-MEA",
+      "label": "AUTO MEA",
+      "owner_type": "DOMAIN",
+      "owner_code": "AUTO"
+    },
+    {
+      "public_definition_id": "c0d6acdc-ecd5-453e-a848-f48b7100eb70",
+      "code": "AUTO-PILOTE-BAT",
+      "label": "AUTO PILOTE_BAT",
+      "owner_type": "DOMAIN",
+      "owner_code": "AUTO"
+    },
+    {
+      "public_definition_id": "ece74ab4-2968-40db-ab35-db54e75d78a5",
+      "code": "FOSPEC-OFSI",
+      "label": "FOSPEC OFSI",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOSPEC"
+    },
+    {
+      "public_definition_id": "a5d84d60-98a9-4419-ad5c-97939658330a",
+      "code": "FOSPEC-NAC",
+      "label": "FOSPEC NAC",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOSPEC"
+    },
+    {
+      "public_definition_id": "e341a4ce-f589-48a2-a0dd-8ecc79b3ba97",
+      "code": "FOSPEC-ANTICHUTE",
+      "label": "FOSPEC ANTICHUTE",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOSPEC"
+    },
+    {
+      "public_definition_id": "238d266c-4794-416b-bca8-cf7e58e3148e",
+      "code": "FOSPEC-OP-VPC",
+      "label": "FOSPEC OP_VPC",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOSPEC"
+    },
+    {
+      "public_definition_id": "0829d317-eb4d-431f-a0d1-cea963acc272",
+      "code": "DPS-GEN",
+      "label": "DPS général",
+      "owner_type": "DOMAIN",
+      "owner_code": "DPS"
+    },
+    {
+      "public_definition_id": "b3082d4f-147c-4583-bc53-431e0997ad34",
+      "code": "DAP-GEN",
+      "label": "DAP général",
+      "owner_type": "DOMAIN",
+      "owner_code": "DAP"
+    },
+    {
+      "public_definition_id": "efc09b3a-1d7d-41d3-a906-4cc0e809d2eb",
+      "code": "JSP-GEN",
+      "label": "Jeunes JSP",
+      "owner_type": "DOMAIN",
+      "owner_code": "JSP"
+    },
+    {
+      "public_definition_id": "72c21c41-ea4b-4c45-8a93-ba480bc20a6a",
+      "code": "PR-PAPR",
+      "label": "PR PAPR",
+      "owner_type": "DOMAIN",
+      "owner_code": "PR"
+    },
+    {
+      "public_definition_id": "c163a2fa-48cf-4310-ad1e-b510de062dd0",
+      "code": "PR-PABC",
+      "label": "PR PABC",
+      "owner_type": "DOMAIN",
+      "owner_code": "PR"
+    },
+    {
+      "public_definition_id": "83b9cc1d-cec4-4666-a7d5-bd51758ba8df",
+      "code": "FOSPEC-VPC",
+      "label": "FOSPEC VPC",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOSPEC"
+    },
+    {
+      "public_definition_id": "2156ac97-25ec-45f8-a2b2-1144d2a6a510",
+      "code": "JSP-CAD",
+      "label": "JSP cadets",
+      "owner_type": "DOMAIN",
+      "owner_code": "JSP"
+    },
+    {
+      "public_definition_id": "44febd85-5e18-4e9d-a3a8-4f06859b445d",
+      "code": "PR-GEN",
+      "label": "PR général",
+      "owner_type": "DOMAIN",
+      "owner_code": "PR"
+    },
+    {
+      "public_definition_id": "8129dba8-ca45-4e72-925a-12de8f5a4255",
+      "code": "FOCA-GEN",
+      "label": "FOCA général",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOCA"
+    },
+    {
+      "public_definition_id": "37c47f02-87d3-49fb-9919-fc8ba8c53677",
+      "code": "FOSPEC-GEN",
+      "label": "FOSPEC général",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOSPEC"
+    },
+    {
+      "public_definition_id": "8ce1f5c7-5999-47bb-8451-39abd6b105e1",
+      "code": "FOCO-DPS",
+      "label": "FOCO DPS",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOCO"
+    },
+    {
+      "public_definition_id": "f52bf361-ec20-40e8-9d81-07029ef04700",
+      "code": "FOCO-DAP",
+      "label": "FOCO DAP",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOCO"
+    },
+    {
+      "public_definition_id": "d755efd3-3e04-4445-97e1-b90a6e8b39a7",
+      "code": "FOCO-JSP",
+      "label": "FOCO JSP",
+      "owner_type": "DOMAIN",
+      "owner_code": "FOCO"
+    },
+    {
+      "public_definition_id": "354b76ac-61fa-4b86-8594-0b2b32b28a4d",
+      "code": "SDIS-TOUS",
+      "label": "Tout le SDIS",
+      "owner_type": "DOMAIN",
+      "owner_code": "SDIS"
+    },
+    {
+      "public_definition_id": "e66948c1-fa6c-4805-84a2-fcf4c7ac0e37",
+      "code": "DPS-CHEFS-SECTION-REMPLACANTS",
+      "label": "Chefs de section DPS et remplaçants",
+      "owner_type": "DOMAIN",
+      "owner_code": "DPS"
+    }
+  ],
+  "mappingCounts": {
+    "aliases": 25,
+    "legacyMappings": 6
+  },
+  "officialIndexCatalogueAvailable": false
+}

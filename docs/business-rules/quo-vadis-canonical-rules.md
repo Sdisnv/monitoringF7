@@ -430,7 +430,7 @@ Motifs dans une fenêtre dédiée au retrait ou à la confirmation d'une révisi
 
 ### QV-AUDIT-001 — Journal permanent existant
 Réutilisation de `scope_journal_metier`, avec date/heure, auteur, action, avant/après et motif requis. Les nouvelles créations, modifications, validations, publications, révisions, retraits, annulations et suppressions logiques sont journalisés. Les fiches Programme et Événements présentent Historique repliable ; aucune interface d'édition du journal. Des déclencheurs interdisent UPDATE, DELETE et TRUNCATE de ce journal. Les lignes anciennes et journaux existants restent conservés ; les opérations anciennes non journalisées ne sont jamais reconstituées artificiellement.
-Complément post-recette du 13.10 : une ligne de transaction regroupe ses champs détaillables, actions lisibles en français, auteur nommé uniquement avec permission de lecture du référentiel personnel. Une ancienne valeur absente reste « Non enregistré ». Les répétitions sans différence de champs ni transition de validation ne créent pas de transaction ; retrait puis nouvelle validation restent deux décisions légitimes. Les validations historiques répétées du PAPR 3 ne sont pas supprimées. Les nouveaux enregistrements précisent l'entrée Programme et le workflow ; aucun mode ancien manquant n'est inventé.
+Présentation du 13.10, remplacée par la décision MOA du 14.10 ci-dessous : une ligne de transaction regroupe ses champs détaillables, actions lisibles en français, auteur nommé uniquement avec permission de lecture du référentiel personnel. Une ancienne valeur absente reste « Non enregistré ». Les répétitions sans différence de champs ni transition de validation ne créent pas de transaction ; retrait puis nouvelle validation restent deux décisions légitimes. Les validations historiques répétées du PAPR 3 ne sont pas supprimées. Les nouveaux enregistrements précisent l'entrée Programme et le workflow ; aucun mode ancien manquant n'est inventé.
 
 ### QV-RESP-004 / QV-PUBLIC-005 — Présentation sans migration d'associations
 Ordre des groupes de responsables : F0, F1/8, F2/3, F4, F5/6, F7, DPS, DAP, JSP, Autres domaines. Tri alphabétique dans chaque groupe. Les regroupements sont uniquement visuels, sans fusion des domaines F0 à F8 ni changement d'identifiant.
@@ -534,3 +534,53 @@ contrôle de faisabilité avant validation, accès administrateur ou permission 
 Affichage informatif dans les événements. Maquette validée par la MOA.
 Cette mission capitalise la décision : aucun éditeur, nouveau moteur ni nouveau module développé.
 Implémentation prévue après stabilisation de la production, avec les mécanismes existants.
+
+## Décisions MOA post-PR #16 — 14.10.2026
+
+Ces décisions remplacent les présentations contradictoires du 13.10, sans réécrire les historiques.
+
+### QV-AUDIT-002 — Tableau directement lisible
+Sept colonnes : Date et heure, Auteur, Action, Champ, Ancienne valeur, Nouvelle valeur, Motif.
+Aucun menu de changements. Création manuelle : une seule ligne « Création manuelle de l'événement ».
+Modification : une ligne par champ métier réellement modifié ; validation : une décision par transition réelle.
+Retrait : motif obligatoire, workflow existant. Les listes OI sont comparées comme des ensembles.
+Champs dérivés et techniques sans incidence exclus ; valeurs anciennes absentes « Non enregistré ».
+Les corrections automatiques effectivement persistées sont distinguées de l'auteur humain, avec valeur stockée avant/après.
+Les anciennes transactions sans transition restent explicitement historiques, sans valeur inventée ni suppression en base.
+Le journal permanent, les permissions de lecture des auteurs et les protections append-only sont conservés.
+
+### QV-RESERVATION-002 — Ressource explicite
+Une salle réservée se compare à la même salle et au créneau réel. Un emplacement se compare à son code de ressource.
+Un site n'est exclusif que si cette décision est explicitement enregistrée ; un lieu seul ne l'est jamais.
+Une occupation CFF sans salle ne crée donc aucun conflit fictif de salle ou de caserne.
+Les salles différentes restent indépendantes ; chevauchements partiels et exclusivités explicites restent contrôlés.
+Moteur de compatibilité serveur existant conservé ; le contrôle ciblé des occupations ne remplace pas les contrôles SDIS.
+En l'absence de ressource ou de portée enregistrée, aucune exclusivité n'est déduite. Aucun lieu ni salle réécrit.
+
+### QV-PLANIF-005 / QV-OSR-001 — Proposition contrôlée
+Principe accepté : date N + 364 jours, puis contrôles des fériés, vacances, périodes particulières, règles de domaine/cursus,
+disponibilité, exceptions et programmation existante. Les règles spécifiques priment ; CTA et cursus PR restent leurs moteurs existants.
+Une proposition interdite porte un contrôle visible, jamais une conformité automatique. Saisie et actions d'enregistrement actualisent les contrôles.
+Dates humaines validées/publiées inchangées ; DAP 1.1 et 1.2 conservent leurs propositions et décisions, affichées en jj.mm.aaaa.
+Mise à niveau annuelle OSR, type canonique démontré `QV26-MISE-A-NIVEAU-ANNUELLE-OSR-9977BB10`, `0171F7` : vendredi possible, y compris en journée.
+Portée certaine : OSR, éventuellement CI DPS dans cette même formation ; public supplémentaire ou libre = aucune levée automatique.
+La seule présence d'OSR dans une autre activité ne déroge pas à DPS. Fériés, vacances et neutralisations restent applicables.
+Cas confirmé conservé : 08.10.2027, 08:00–16:00. Aucun vendredi DPS globalement autorisé.
+Les alertes expliquent problème, données, conséquence et action, sans identifiants techniques. Planification, contrôle, validation et publication restent distincts.
+
+### QV-UX-004 / QV-PDF-002 / QV-PUBLIC-006
+Nature et quatre cases : grille existante régulière, alignée, responsive, mêmes fonctions et hauteurs.
+Occupation externe : « Occupation externe — Sans cycle métier SDIS. Activité non reconduite automatiquement. »
+Trois exports conservés : mensuel A4 portrait ; annuel et compact A4 paysage, même bandeau/logos/titres/pieds de page.
+Séparateur historique U+30FB rendu comme U+00B7, uniquement en PDF, sans modifier la source. Public cible après Responsable, Stat.Com avant État.
+Noms annuels `QUO VADIS AAAA, Planning annuel.pdf` et `QUO VADIS AAAA, Liste compacte.pdf`, année dynamique, dates jj.mm.aaaa.
+Groupe « Opérationnel » : OSR, CI DPS, Candidat CI DPS, CI DAP, Candidat CI DAP, ordre exact ; OSR en premier dans les sélections affichées.
+FOBA 1/2/3 conservés : respectivement Recrues, Sapeurs DPS et DAP, Sapeurs DPS, sans remplacer les libellés par les populations.
+
+### QV-INDEX-001 — Correspondances documentaires, pas de réorganisation
+Fonction ≠ spécialisation ; candidat ≠ qualifié ; Formateur PR ne confère jamais Porteur APR.
+Qualifications et affectations évaluées à la date réelle de l'événement. VPC et Sanitaire appartiennent à FOSPEC.
+Préparer Organisation, Cadres, Candidats par domaine, Spécialisation, Fonctions particulières, Gouvernance ; domaines PR/AUTO/FOSPEC/FOBA/DPS/DAP/JSP.
+Spécialisations par domaine puis ordre alphabétique ; propositions contextuelles par Stat.Com (`011PR` : PR/candidatures/fonctions pertinentes).
+Libellés officiels IndeX à conserver après rapprochement démontré ; aucun identifiant IndeX supposé ni migration.
+Inventaire, écarts, correspondances et questions dans la ROADMAP/ToDo existante. QV-RULES-001 reste un jalon futur, maquette validée inchangée.

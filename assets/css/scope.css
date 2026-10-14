@@ -11846,7 +11846,7 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-choice-add button{width:38px;height:38px;padding:0;font-size:20px;line-height:1}
 
 /* Compact programme controls retain the existing four-column form grid. */
-.qv-programme-preparation .qv-programme-parameters{grid-column:1/-1;display:grid;grid-template-columns:minmax(240px,1.8fr) repeat(4,minmax(130px,1fr));gap:12px;align-items:end;padding:12px 0;border-block:1px solid #d7dfe7;min-width:0}
+.qv-programme-preparation .qv-programme-parameters{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:end;padding:12px 0;border-block:1px solid #d7dfe7;min-width:0}
 .qv-programme-preparation .qv-programme-parameters>label{min-width:0;margin:0}
 .qv-programme-preparation .qv-programme-parameters .qv-programme-keep-lieu{display:flex;flex-direction:row;align-items:center;align-self:end;gap:8px;min-height:39px;font-weight:400}
 .qv-programme-preparation .qv-programme-parameters input[type=checkbox]{width:16px;height:16px;min-height:16px;flex:0 0 16px;padding:0;margin:0}
@@ -11864,9 +11864,11 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-history{border-block:1px solid #cbd4dc;padding:12px 0;min-width:0}
 .qv-programme-history>summary{font-size:14px;font-weight:600;cursor:pointer}
 .qv-programme-history .scope-table-wrap{margin-top:12px;max-height:440px;overflow:auto}
-.qv-history-table{min-width:980px;table-layout:fixed;line-height:1.4}
+.qv-history-table{width:100%;min-width:880px;table-layout:fixed;line-height:1.4}
+.qv-history-table th:nth-child(1){width:13%}.qv-history-table th:nth-child(2){width:10%}.qv-history-table th:nth-child(3){width:15%}.qv-history-table th:nth-child(4){width:12%}.qv-history-table th:nth-child(5),.qv-history-table th:nth-child(6){width:17%}.qv-history-table th:nth-child(7){width:16%}
 .qv-history-table th,.qv-history-table td{vertical-align:top;overflow-wrap:anywhere;font-size:12px}
 .qv-history-table tbody tr:nth-child(even){background:#f4f5f6}
+@media(max-width:800px){.qv-history-table{display:table}.qv-history-table thead{display:table-header-group}.qv-history-table tbody{display:table-row-group}.qv-history-table tr{display:table-row;width:auto;margin:0;padding:0;border:0;border-radius:0;background:transparent}.qv-history-table th,.qv-history-table td{display:table-cell}.qv-history-table td::before{display:none;content:none}}
 .qv-workflow-dialog{padding:0;border:1px solid #cbd4dc;border-radius:5px;max-height:90vh}
 .qv-workflow-dialog::backdrop{background:#15202b70}
 .qv-workflow-dialog .scope-modal-body{display:grid;gap:14px;padding:18px}

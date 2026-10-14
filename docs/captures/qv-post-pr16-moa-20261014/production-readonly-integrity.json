@@ -1,0 +1,63 @@
+{
+  "before": {
+    "at": "2026-10-14T05:30:09.001767+00:00",
+    "tables": {
+      "scope_evenements": {
+        "hash": "1252dfc66172d3189c120d18f4fd2134",
+        "rows": 257
+      },
+      "scope_affectations": {
+        "hash": "c0dbfbae5699ae3647ba34aec13af39f",
+        "rows": 636
+      },
+      "scope_journal_metier": {
+        "hash": "05b34f21182161ffe97903ae06bbb530",
+        "rows": 2475
+      },
+      "scope_participations": {
+        "hash": "029d7829a093703f965f86a4227c9ba1",
+        "rows": 5967
+      },
+      "scope_qv_publication_links": {
+        "hash": "6eea2bf393b5ec5e7ee71470e0229928",
+        "rows": 125
+      },
+      "scope_quo_vadis_obligations": {
+        "hash": "9a7fb1d8ba518a517ff1be838d98899c",
+        "rows": 971
+      }
+    },
+    "readOnly": "on"
+  },
+  "after": {
+    "at": "2026-10-14T05:46:49.760233+00:00",
+    "tables": {
+      "scope_evenements": {
+        "hash": "1252dfc66172d3189c120d18f4fd2134",
+        "rows": 257
+      },
+      "scope_affectations": {
+        "hash": "c0dbfbae5699ae3647ba34aec13af39f",
+        "rows": 636
+      },
+      "scope_journal_metier": {
+        "hash": "05b34f21182161ffe97903ae06bbb530",
+        "rows": 2475
+      },
+      "scope_participations": {
+        "hash": "029d7829a093703f965f86a4227c9ba1",
+        "rows": 5967
+      },
+      "scope_qv_publication_links": {
+        "hash": "6eea2bf393b5ec5e7ee71470e0229928",
+        "rows": 125
+      },
+      "scope_quo_vadis_obligations": {
+        "hash": "9a7fb1d8ba518a517ff1be838d98899c",
+        "rows": 971
+      }
+    },
+    "readOnly": "on"
+  },
+  "identical": true
+}

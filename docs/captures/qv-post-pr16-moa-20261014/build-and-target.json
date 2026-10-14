@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "main": "160eb54ccca078d313703e8f24fd64c0d4a81149",
+  "productionDeploy": "6ace6fb85a62f357cfd85aa8",
+  "productionCommit": "160eb54ccca078d313703e8f24fd64c0d4a81149",
+  "productionWrites": false,
+  "merge": false,
+  "deployment": false,
+  "migrations": [],
+  "authMethods": ["local"],
+  "unitChecks": 25,
+  "cloneChecks": 6,
+  "pdfDependencyChecks": 5,
+  "browserScenarios": 8,
+  "pdfExports": 3,
+  "netlifyBuild": {"context":"production", "functions":25, "durationSeconds":6.3},
+  "excludedObsoleteCheck": {"script":"scripts/scope-quo-vadis-coverage-1-tests.js", "result":"FAIL", "cause":"Pre-existing schema version assertion expects C2; main already has C8", "scriptAndSchemaUnchanged":true}
+}

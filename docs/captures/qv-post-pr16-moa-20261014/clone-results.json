@@ -1,0 +1,676 @@
+{
+  "status": "PASS",
+  "productionWrites": false,
+  "snapshotPreparations": 862,
+  "rows": 934,
+  "activeRows": 914,
+  "invariants": [
+    "statCom",
+    "code",
+    "businessCode",
+    "startsAt",
+    "endsAt",
+    "definitionId",
+    "occurrenceId",
+    "sessionId",
+    "ois",
+    "publics",
+    "themes",
+    "publishedEventId",
+    "publishedEventCode",
+    "businessValidation",
+    "humanDecision"
+  ],
+  "statComIdenticalPercent": 100,
+  "rollbackTables": 113,
+  "tests": [
+    "100% Stat.Com/codes/dates/times/OI/publics/themes/human decisions/publication links identical to main on the fresh snapshot",
+    "Current CFF occupation persists with or without Oxygen; no invented whole-site conflict",
+    "Actual OSR 08 October 08:00-16:00 accepted by the scoped exception",
+    "OI technical reordering no-op; withdrawal reason enforced; business field and decision journal preserved",
+    "Existing authorized Stat.Com qualification persisted on clone is explicitly traced as automatic, not human",
+    "Protected events, attendance, assignments, qualifications, all codes, dates and Stat.Com remain unchanged during recipes"
+  ],
+  "journal": [
+    {
+      "action": "MODIFIER_OCCURRENCE",
+      "avant": {
+        "fields": {
+          "date": "2027-06-02",
+          "sold": true,
+          "cursus": "PAPR",
+          "domain": "F7",
+          "family": "PR",
+          "lieuId": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+          "themes": [
+            "AO Simulateur"
+          ],
+          "endTime": "22:00",
+          "oiCodes": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "statCom": "011PR",
+          "cursusId": "355b2b86-9c72-4813-b0d0-e29a1c3f71d6",
+          "lieuLibre": "",
+          "roomLabel": "",
+          "startTime": "17:00",
+          "updatedAt": "2026-10-14T05:43:16.568Z",
+          "publicCodes": [
+            "PR:CAND-PAPR",
+            "PR:FMF",
+            "PR:FORMATEUR-PR"
+          ],
+          "ecawinExport": true,
+          "activityLabel": "Cursus PAPR - module 3",
+          "locationLabel": "La Rama",
+          "activityNature": "SDIS_RECURRENT",
+          "planningStatus": "PLANIFIE",
+          "salleTheorieId": null,
+          "specialisation": "PAPR",
+          "annualRecurrence": true,
+          "externalActivity": false,
+          "publicFreeLabels": [],
+          "responsibleLabel": "C PR",
+          "sessionStructure": {
+            "definitionId": "QV26-PAPR-M03",
+            "sessionCount": 1,
+            "sessionIndex": 1,
+            "sessionLabel": "Aucune session distincte",
+            "occurrenceCount": 1
+          },
+          "ecawinActivityCode": "EXERCI",
+          "qualificationCodes": [
+            "PAPR"
+          ],
+          "responsibleSelections": [
+            {
+              "code": "C PR",
+              "kind": "REFERENCE",
+              "label": "C PR"
+            }
+          ],
+          "participationEvaluation": true,
+          "responsableFonctionCode": "C PR"
+        },
+        "validation": null
+      },
+      "apres": {
+        "fields": {
+          "date": "2027-06-02",
+          "sold": true,
+          "cursus": "PAPR",
+          "domain": "F7",
+          "family": "PR",
+          "lieuId": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+          "themes": [
+            "Thème de recette sans publication"
+          ],
+          "endTime": "22:00",
+          "oiCodes": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "statCom": "011PR",
+          "cursusId": "ab52b606-6172-4bf2-94da-6586f84f50df",
+          "lieuLibre": "",
+          "roomLabel": "",
+          "startTime": "17:00",
+          "updatedAt": "2026-10-14T05:43:17.374Z",
+          "publicCodes": [
+            "PR:CAND-PAPR",
+            "PR:FMF",
+            "PR:FORMATEUR-PR"
+          ],
+          "ecawinExport": true,
+          "activityLabel": "Cursus PAPR - module 3",
+          "locationLabel": "La Rama",
+          "activityNature": "SDIS_RECURRENT",
+          "planningStatus": "PLANIFIE",
+          "salleTheorieId": null,
+          "specialisation": "PAPR",
+          "annualRecurrence": true,
+          "externalActivity": false,
+          "publicFreeLabels": [
+            "Description de recette sans qualification"
+          ],
+          "responsibleLabel": "C PR",
+          "sessionStructure": {
+            "definitionId": "QV26-PAPR-M03",
+            "sessionCount": 1,
+            "sessionIndex": 1,
+            "sessionLabel": "Aucune session distincte",
+            "occurrenceCount": 1
+          },
+          "ecawinActivityCode": "EXERCI",
+          "qualificationCodes": [
+            "PAPR"
+          ],
+          "responsibleSelections": [
+            {
+              "code": "C PR",
+              "kind": "REFERENCE",
+              "label": "C PR"
+            }
+          ],
+          "participationEvaluation": true,
+          "responsableFonctionCode": "C PR"
+        },
+        "revision": null,
+        "validation": null,
+        "transaction": {
+          "source": "Programme SCOPE",
+          "workflow": "SAVE",
+          "manualCreation": false
+        },
+        "automaticChanges": {}
+      },
+      "commentaire": null
+    },
+    {
+      "action": "RETIRER_VALIDATION",
+      "avant": {
+        "fields": {
+          "date": "2027-06-02",
+          "sold": true,
+          "cursus": "PAPR",
+          "domain": "F7",
+          "family": "PR",
+          "lieuId": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+          "themes": [
+            "AO Simulateur"
+          ],
+          "endTime": "22:00",
+          "oiCodes": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "statCom": "011PR",
+          "cursusId": "355b2b86-9c72-4813-b0d0-e29a1c3f71d6",
+          "lieuLibre": "",
+          "roomLabel": "",
+          "startTime": "17:00",
+          "updatedAt": "2026-10-13T13:52:53.922Z",
+          "publicCodes": [
+            "PR:CAND-PAPR",
+            "PR:FMF",
+            "PR:FORMATEUR-PR"
+          ],
+          "ecawinExport": true,
+          "activityLabel": "Cursus PAPR - module 3",
+          "locationLabel": "La Rama",
+          "activityNature": "SDIS_RECURRENT",
+          "planningStatus": "PLANIFIE",
+          "salleTheorieId": null,
+          "specialisation": "PAPR",
+          "annualRecurrence": true,
+          "externalActivity": false,
+          "publicFreeLabels": [],
+          "responsibleLabel": "C PR",
+          "sessionStructure": {
+            "definitionId": "QV26-PAPR-M03",
+            "sessionCount": 1,
+            "sessionIndex": 1,
+            "sessionLabel": "Aucune session distincte",
+            "occurrenceCount": 1
+          },
+          "ecawinActivityCode": "EXERCI",
+          "qualificationCodes": [
+            "PAPR"
+          ],
+          "responsibleSelections": [
+            {
+              "code": "C PR",
+              "kind": "REFERENCE",
+              "label": "C PR"
+            }
+          ],
+          "participationEvaluation": true,
+          "responsableFonctionCode": "C PR"
+        },
+        "validation": {
+          "year": 2027,
+          "fields": {
+            "sold": true,
+            "cursus": "PAPR",
+            "domain": "F7",
+            "family": "PR",
+            "lieuId": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+            "themes": [
+              "AO Simulateur"
+            ],
+            "oiCodes": [
+              "DPS:G1",
+              "DPS:C1",
+              "DPS:B1",
+              "DPS:B2"
+            ],
+            "statCom": "011PR",
+            "cursusId": "355b2b86-9c72-4813-b0d0-e29a1c3f71d6",
+            "lieuLibre": "",
+            "roomLabel": "",
+            "publicCodes": [
+              "PR:CAND-PAPR",
+              "PR:FMF",
+              "PR:FORMATEUR-PR"
+            ],
+            "ecawinExport": true,
+            "activityLabel": "Cursus PAPR - module 3",
+            "locationLabel": "La Rama",
+            "activityNature": "SDIS_RECURRENT",
+            "salleTheorieId": null,
+            "specialisation": "PAPR",
+            "annualRecurrence": true,
+            "publicFreeLabels": [],
+            "responsibleLabel": "C PR",
+            "sessionStructure": {
+              "definitionId": "QV26-PAPR-M03",
+              "sessionCount": 1,
+              "sessionIndex": 1,
+              "sessionLabel": "Aucune session distincte",
+              "occurrenceCount": 1
+            },
+            "ecawinActivityCode": "EXERCI",
+            "qualificationCodes": [
+              "PAPR"
+            ],
+            "responsibleSelections": [
+              {
+                "code": "C PR",
+                "kind": "REFERENCE",
+                "label": "C PR"
+              }
+            ],
+            "participationEvaluation": true,
+            "responsableFonctionCode": "C PR"
+          },
+          "validatedAt": "2026-10-13T13:52:53.922Z",
+          "changedFields": [
+            "themes",
+            "domain",
+            "publicCodes",
+            "lieuId",
+            "qualificationCodes",
+            "specialisation",
+            "cursusId",
+            "cursus",
+            "ecawinActivityCode",
+            "responsibleSelections",
+            "publicFreeLabels",
+            "sold",
+            "ecawinExport",
+            "activityNature",
+            "annualRecurrence"
+          ],
+          "baselineFields": {
+            "domain": "PR",
+            "family": "PR",
+            "lieuId": null,
+            "oiCodes": [
+              "DPS:G1",
+              "DPS:C1",
+              "DPS:B1",
+              "DPS:B2"
+            ],
+            "statCom": "011PR",
+            "lieuLibre": "",
+            "roomLabel": "",
+            "publicCodes": [
+              "PR:CAND-PAPR",
+              "PR:FORMATEUR-PR"
+            ],
+            "activityLabel": "Cursus PAPR - module 3",
+            "locationLabel": "La Rama",
+            "salleTheorieId": null,
+            "responsibleLabel": "C PR",
+            "sessionStructure": {
+              "definitionId": "QV26-PAPR-M03",
+              "sessionCount": 1,
+              "sessionIndex": 1,
+              "sessionLabel": "Aucune session distincte",
+              "occurrenceCount": 1
+            },
+            "participationEvaluation": true,
+            "responsableFonctionCode": "C PR"
+          }
+        }
+      },
+      "apres": {
+        "fields": {
+          "date": "2027-06-02",
+          "sold": true,
+          "cursus": "PAPR",
+          "domain": "F7",
+          "family": "PR",
+          "lieuId": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+          "themes": [
+            "AO Simulateur"
+          ],
+          "endTime": "22:00",
+          "oiCodes": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "statCom": "011PR",
+          "cursusId": "355b2b86-9c72-4813-b0d0-e29a1c3f71d6",
+          "lieuLibre": "",
+          "roomLabel": "",
+          "startTime": "17:00",
+          "updatedAt": "2026-10-14T05:43:16.568Z",
+          "publicCodes": [
+            "PR:CAND-PAPR",
+            "PR:FMF",
+            "PR:FORMATEUR-PR"
+          ],
+          "ecawinExport": true,
+          "activityLabel": "Cursus PAPR - module 3",
+          "locationLabel": "La Rama",
+          "activityNature": "SDIS_RECURRENT",
+          "planningStatus": "PLANIFIE",
+          "salleTheorieId": null,
+          "specialisation": "PAPR",
+          "annualRecurrence": true,
+          "externalActivity": false,
+          "publicFreeLabels": [],
+          "responsibleLabel": "C PR",
+          "sessionStructure": {
+            "definitionId": "QV26-PAPR-M03",
+            "sessionCount": 1,
+            "sessionIndex": 1,
+            "sessionLabel": "Aucune session distincte",
+            "occurrenceCount": 1
+          },
+          "ecawinActivityCode": "EXERCI",
+          "qualificationCodes": [
+            "PAPR"
+          ],
+          "responsibleSelections": [
+            {
+              "code": "C PR",
+              "kind": "REFERENCE",
+              "label": "C PR"
+            }
+          ],
+          "participationEvaluation": true,
+          "responsableFonctionCode": "C PR"
+        },
+        "revision": null,
+        "validation": null,
+        "transaction": {
+          "source": "Programme SCOPE",
+          "workflow": "WITHDRAW",
+          "manualCreation": false
+        },
+        "automaticChanges": {}
+      },
+      "commentaire": "Recette ciblée : retrait motivé sur clone, rollback."
+    },
+    {
+      "action": "VALIDER_OCCURRENCE",
+      "avant": {
+        "fields": {
+          "date": "2027-06-02",
+          "sold": true,
+          "cursus": "PAPR",
+          "domain": "F7",
+          "family": "PR",
+          "lieuId": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+          "themes": [
+            "Thème de recette sans publication"
+          ],
+          "endTime": "22:00",
+          "oiCodes": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "statCom": "011PR",
+          "cursusId": "ab52b606-6172-4bf2-94da-6586f84f50df",
+          "lieuLibre": "",
+          "roomLabel": "",
+          "startTime": "17:00",
+          "updatedAt": "2026-10-14T05:43:17.374Z",
+          "publicCodes": [
+            "PR:CAND-PAPR",
+            "PR:FMF",
+            "PR:FORMATEUR-PR"
+          ],
+          "ecawinExport": true,
+          "activityLabel": "Cursus PAPR - module 3",
+          "locationLabel": "La Rama",
+          "activityNature": "SDIS_RECURRENT",
+          "planningStatus": "PLANIFIE",
+          "salleTheorieId": null,
+          "specialisation": "PAPR",
+          "annualRecurrence": true,
+          "externalActivity": false,
+          "publicFreeLabels": [
+            "Description de recette sans qualification"
+          ],
+          "responsibleLabel": "C PR",
+          "sessionStructure": {
+            "definitionId": "QV26-PAPR-M03",
+            "sessionCount": 1,
+            "sessionIndex": 1,
+            "sessionLabel": "Aucune session distincte",
+            "occurrenceCount": 1
+          },
+          "ecawinActivityCode": "EXERCI",
+          "qualificationCodes": [
+            "PAPR"
+          ],
+          "responsibleSelections": [
+            {
+              "code": "C PR",
+              "kind": "REFERENCE",
+              "label": "C PR"
+            }
+          ],
+          "participationEvaluation": true,
+          "responsableFonctionCode": "C PR"
+        },
+        "validation": null
+      },
+      "apres": {
+        "fields": {
+          "date": "2027-06-02",
+          "sold": true,
+          "cursus": "PAPR",
+          "domain": "F7",
+          "family": "PR",
+          "lieuId": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+          "themes": [
+            "Thème de recette sans publication"
+          ],
+          "endTime": "22:00",
+          "oiCodes": [
+            "DPS:G1",
+            "DPS:C1",
+            "DPS:B1",
+            "DPS:B2"
+          ],
+          "statCom": "011PR",
+          "cursusId": "ab52b606-6172-4bf2-94da-6586f84f50df",
+          "lieuLibre": "",
+          "roomLabel": "",
+          "startTime": "17:00",
+          "updatedAt": "2026-10-14T05:43:18.155Z",
+          "publicCodes": [
+            "PR:CAND-PAPR",
+            "PR:FMF",
+            "PR:FORMATEUR-PR"
+          ],
+          "ecawinExport": true,
+          "activityLabel": "Cursus PAPR - module 3",
+          "locationLabel": "La Rama",
+          "activityNature": "SDIS_RECURRENT",
+          "planningStatus": "PLANIFIE",
+          "salleTheorieId": null,
+          "specialisation": "PAPR",
+          "annualRecurrence": true,
+          "externalActivity": false,
+          "publicFreeLabels": [
+            "Description de recette sans qualification"
+          ],
+          "responsibleLabel": "C PR",
+          "sessionStructure": {
+            "definitionId": "QV26-PAPR-M03",
+            "sessionCount": 1,
+            "sessionIndex": 1,
+            "sessionLabel": "Aucune session distincte",
+            "occurrenceCount": 1
+          },
+          "ecawinActivityCode": "EXERCI",
+          "qualificationCodes": [
+            "PAPR"
+          ],
+          "responsibleSelections": [
+            {
+              "code": "C PR",
+              "kind": "REFERENCE",
+              "label": "C PR"
+            }
+          ],
+          "participationEvaluation": true,
+          "responsableFonctionCode": "C PR"
+        },
+        "revision": null,
+        "validation": {
+          "year": 2027,
+          "fields": {
+            "sold": true,
+            "cursus": "PAPR",
+            "domain": "F7",
+            "family": "PR",
+            "lieuId": "016d82c2-a22f-4ecd-91e1-d083d6f7c740",
+            "themes": [
+              "Thème de recette sans publication"
+            ],
+            "oiCodes": [
+              "DPS:G1",
+              "DPS:C1",
+              "DPS:B1",
+              "DPS:B2"
+            ],
+            "statCom": "011PR",
+            "cursusId": "ab52b606-6172-4bf2-94da-6586f84f50df",
+            "lieuLibre": "",
+            "roomLabel": "",
+            "publicCodes": [
+              "PR:CAND-PAPR",
+              "PR:FMF",
+              "PR:FORMATEUR-PR"
+            ],
+            "ecawinExport": true,
+            "activityLabel": "Cursus PAPR - module 3",
+            "locationLabel": "La Rama",
+            "activityNature": "SDIS_RECURRENT",
+            "salleTheorieId": null,
+            "specialisation": "PAPR",
+            "annualRecurrence": true,
+            "publicFreeLabels": [
+              "Description de recette sans qualification"
+            ],
+            "responsibleLabel": "C PR",
+            "sessionStructure": {
+              "definitionId": "QV26-PAPR-M03",
+              "sessionCount": 1,
+              "sessionIndex": 1,
+              "sessionLabel": "Aucune session distincte",
+              "occurrenceCount": 1
+            },
+            "ecawinActivityCode": "EXERCI",
+            "qualificationCodes": [
+              "PAPR"
+            ],
+            "responsibleSelections": [
+              {
+                "code": "C PR",
+                "kind": "REFERENCE",
+                "label": "C PR"
+              }
+            ],
+            "participationEvaluation": true,
+            "responsableFonctionCode": "C PR"
+          },
+          "validatedAt": "2026-10-14T05:43:18.155Z",
+          "changedFields": [
+            "themes",
+            "domain",
+            "publicCodes",
+            "lieuId",
+            "qualificationCodes",
+            "specialisation",
+            "cursusId",
+            "cursus",
+            "ecawinActivityCode",
+            "responsibleSelections",
+            "publicFreeLabels",
+            "sold",
+            "ecawinExport",
+            "activityNature",
+            "annualRecurrence"
+          ],
+          "baselineFields": {
+            "domain": "PR",
+            "family": "PR",
+            "lieuId": null,
+            "oiCodes": [
+              "DPS:G1",
+              "DPS:C1",
+              "DPS:B1",
+              "DPS:B2"
+            ],
+            "statCom": "011PR",
+            "lieuLibre": "",
+            "roomLabel": "",
+            "publicCodes": [
+              "PR:CAND-PAPR",
+              "PR:FORMATEUR-PR"
+            ],
+            "activityLabel": "Cursus PAPR - module 3",
+            "locationLabel": "La Rama",
+            "salleTheorieId": null,
+            "responsibleLabel": "C PR",
+            "sessionStructure": {
+              "definitionId": "QV26-PAPR-M03",
+              "sessionCount": 1,
+              "sessionIndex": 1,
+              "sessionLabel": "Aucune session distincte",
+              "occurrenceCount": 1
+            },
+            "participationEvaluation": true,
+            "responsableFonctionCode": "C PR"
+          }
+        },
+        "transaction": {
+          "source": "Programme SCOPE",
+          "workflow": "VALIDATE",
+          "manualCreation": false
+        },
+        "automaticChanges": {}
+      },
+      "commentaire": null
+    }
+  ],
+  "reservations": {
+    "before": 0,
+    "after": 0,
+    "cff": {
+      "id": "QV27:MANUAL:dc8ea3aa-3131-476f-b4f0-36ad139c98d9",
+      "date": "2027-02-26T08:00:00",
+      "room": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+      "conflictsBefore": [],
+      "conflictsAfter": []
+    }
+  }
+}
