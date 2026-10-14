@@ -660,3 +660,40 @@ Trois formats existants : annuel/compact A4 paysage, mensuel A4 portrait ; marge
 Conserver Responsable, Public cible, Stat.Com, État et les thèmes ; blocs non coupés et ordre chronologique.
 Noms dynamiques : `QUO VADIS AAAA, Planning annuel.pdf`, `QUO VADIS AAAA, Liste compacte.pdf`,
 `QUO VADIS AAAA, Planning mensuel - Mois.pdf`. Sources métier inchangées ; accents et points médians conservés.
+
+## Finalisation Consolidée PR #18 — 14.10.2026
+
+### QV-CYCLE-006 — Dates confirmées et ancienne publication EM
+Rapport annuel définitivement **23.02.2027**, cycle suivant **24.02.2027**, clôture proposée
+**10.02.2028 provisoire / Codir**. La publication du Rapport et son occurrence concordent au 23.02.
+EM **16.02.2027 18:00–21:00** maintenu. Sa publication historique au 24.02 est le même événement
+lié, révision ciblée déjà en attente, pas une seconde séance ni une date de report validée.
+Confirmation humaine motivée sur cet événement existant uniquement, après résolution JSP ;
+identifiant, Stat.Com publié NULL, code NULL, lignée et historique conservés. Le repère EMSEA
+préparatoire ne remplit jamais automatiquement le Stat.Com de cette ancienne publication.
+Une révision approuvée d'une séance d'un seul jour conserve la cohérence date/date_fin ; aucune
+date humaine n'est déplacée par la lecture du Programme ou par la proposition.
+
+### QV-JSP-001 — Propositions Direction JSP, non déplacements approuvés
+La projection N+364 et la priorité d'une séance explicite mensuelle restent les moteurs existants.
+Il ne s'agit pas d'un mardi obligatoire : `PLANIF-JSP` autorise le mercredi et les sources 2026
+montrent plusieurs jours de semaine. Les propositions MOA **17.02.2027** et **23.06.2027**,
+**18:30–20:30**, restent dans leur mois, hors vacances/fériés et sans réservation de la salle
+État-major à ces créneaux au contrôle du 14.10. Elles sont recommandées, **À VALIDER**.
+Publics, OI JSP, responsable C JSP et fonctions historiques C for/C JSP/C site JSP/Resp for JSP
+restent inchangés ; Chef formation commun avec EM conformément à QV-EM-001.
+Changer de salle le 16.02 ou le 22.06 ne suffit pas à libérer une fonction commune.
+Aucun enregistrement automatique, aucune affectation nominative inventée, recontrôle avant saisie.
+
+### QV-RESERVATION-004 — Résolution manuelle et preuves d'identité
+Décision MOA : conflits ordinaires réglés **manuellement dans SCOPE**, par les procédures existantes,
+sans moteur de résolution automatique ni création de salle/événement. Le tableau de résolution unique
+est intégré au [rapport de la PR #18](../SCOPE_QV_MOA_20261014.md), avec disponibilités datées,
+battement >=30 minutes, publications et tous cycles, fonctions communes et décisions restantes.
+Une salle libre ne démontre ni capacité/équipement ni disponibilité nominative exhaustive.
+Une publication ancienne et sa préparation doivent être réconciliées, pas supprimées ou fusionnées.
+Les références des cours cadres DPS/DAP des 31.03 et 22.06 ont Stat.Com, OI et sources 2026 distincts ;
+les deux AUTO du 18.01 ont horaires/personnels source et publications distincts. Aucun doublon n'est
+déduit de l'intitulé ni de leur salle commune. Animation conjointe/distincte à arbitrer par la MOA ;
+préserver toutes les lignées, codes et décisions en attendant. Gel Y1/IndeX inchangé, suivi Cours ECA
+et éditeur de règles conservés dans la roadmap existante. Ce GO n'autorise ni fusion ni déploiement.

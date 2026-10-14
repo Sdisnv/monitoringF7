@@ -156,3 +156,27 @@ et la séance de coordination existante restent intacts, y compris son annulatio
 Rapprochement IndeX, suivi spécialisé Cours ECA et éditeur de règles restent des jalons explicites,
 sans module parallèle. Correctif salles/calendrier/annulations/familles/publics/PDF :
 [rapport et réserves du lot](SCOPE_QV_MOA_20261014.md), sans déplacement ni publication automatique.
+
+### Finalisation PR #18 — GO Limité Au Lot
+Préflight GitHub/Netlify : main et production `6666e2c`, PR #18 sur `a5cb32d` avant ce complément.
+Le [rapport existant](SCOPE_QV_MOA_20261014.md#tableau-unique-de-résolution) contient désormais
+l'unique tableau des 12 paires de salles (21 IDs), plus le conflit fonctionnel JSP de juin et la
+réconciliation EM. **Sept dossiers manuels M1–M7, six propositions P1–P6, aucun déplacement exécuté**.
+Deux défauts du mécanisme de révision existant corrigés : compatibilité limitée EM historique sans
+remplir son Stat.Com NULL ; fin de date d'une séance d'un jour cohérente après révision approuvée.
+Preuve ciblée sur le même clone : 938 lignes courantes, 935 IDs acquis conservés, invariants identiques,
+confirmations JSP/EM simulées puis annulées, six refus de sécurité, rollback des 113 tables initiales.
+Les trois nouvelles occupations CFF et la modification humaine courante restent conservées.
+
+| Dossier | Suite humaine, sans nouveau développement automatique |
+|---|---|
+| M1–M6 : réservations et publications liées | Rapprochement DPS/DAP janvier, salles JSP janvier/FVSP/MAT/PR/groupe JSP ; vérifier configuration de formation de la révision PR |
+| M7 : EM publié 24.02 / préparé 16.02 | Même événement, révision PENDING à confirmer avec motif conforme au maintien du 16.02 ; aucune nouvelle publication |
+| P2/P6 : JSP février/juin | 17.02 et 23.06, 18:30–20:30 admissibles, salle État-major libre au relevé ; restent propositions à valider |
+| P1/P3/P4/P5 : fonctions communes | AUTO, cadres DAP/EM, cours cadres DPS/DAP : arbitrer animation et participation ; autre salle insuffisante seule |
+| Rapport et cycle | 23.02.2027 définitif, début 24.02 ; 10.02.2028 provisoire / Codir |
+| Livraison PR #18 | READY_FOR_MOA n'autorise ni fusion ni publication ; garde-fou de branche conservé |
+
+Les preuves Chrome/PDF/intercycles/annulations acquises restent applicables, sans nouvelle campagne.
+QV-RULES-001, Cours ECA spécialisés et rapprochement officiel IndeX restent dans leurs jalons existants ;
+aucun module parallèle, aucune modification du budget DAP Y1 ni du référentiel IndeX.

@@ -168,7 +168,12 @@ async function applyPublishedRevision(client,link,fields,changedFields,{actor,mo
   if(!locked) throw new HttpError(404,'programme_evenement_introuvable','Événement publié introuvable.');
   if(Number(expectedVersion) !== Number(locked.version))
     throw new HttpError(409,'programme_publication_conflit','L’événement publié a changé. Rouvrez sa fiche avant de poursuivre.');
-  if(String(fields.statCom || '') !== String(locked.statcom_code || ''))
+  // This linked legacy EM publication predates the Programme's EMSEA reference; retain its null code.
+  const legacyEm=locked.statcom_code==null && fields.statCom==='EMSEA'
+    && locked.code_source==='QV26-SEANCE-EM-ED042EBD'
+    && link.source_definition_id===locked.code_source
+    && link.evenement_id===locked.evenement_id && !changedFields.includes('statCom');
+  if(String(fields.statCom || '') !== String(locked.statcom_code || '') && !legacyEm)
     throw new HttpError(422,'programme_statcom_publie_immutable','Le Stat.Com de l’événement publié doit être conservé.');
   if(changedFields.some(key=>['qualificationCodes','cursusId'].includes(key)))
     throw new HttpError(422,'programme_revision_configuration_requise','Cette révision nécessite la configuration de formation existante de l’événement. La publication et les présences restent conservées.');
@@ -212,9 +217,10 @@ async function applyPublishedRevision(client,link,fields,changedFields,{actor,mo
     .filter(code=>Object.hasOwn(descriptive,code)).map(code=>({code,label:descriptive[code]}));
   await client.query(`update scope_evenements set lieu_id=case when $5 then $2 else lieu_id end,
     salle_theorie_id=case when $6 then $3 else salle_theorie_id end,
-    engine_snapshot=coalesce(nullif(engine_snapshot,'null'::jsonb),'{}'::jsonb) || $4::jsonb
+    engine_snapshot=coalesce(nullif(engine_snapshot,'null'::jsonb),'{}'::jsonb) || $4::jsonb,
+    date_fin=case when $7::boolean and date_fin=$8::date then $9::date else date_fin end
     where evenement_id=$1`,[link.evenement_id,fields.lieuId || null,fields.salleTheorieId || null,JSON.stringify(snapshot),
-    changedFields.includes('lieuId'),changedFields.includes('salleTheorieId')]);
+    changedFields.includes('lieuId'),changedFields.includes('salleTheorieId'),changedFields.includes('date'),locked.date,fields.date]);
   if(relationTarget) await service.reconcileExpectedPopulation({eventIds:[link.evenement_id],reason:'QV_TARGETED_REVISION'}, {sub:actor});
   return {eventId:link.evenement_id,version:updated.version};
 }

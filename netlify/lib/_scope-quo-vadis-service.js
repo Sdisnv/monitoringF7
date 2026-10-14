@@ -4065,7 +4065,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       if(existing && (!lockedPreparation || new Date(lockedPreparation.updated_at).getTime() !== new Date(existing.updated_at).getTime()))
         throw new HttpError(409,'programme_preparation_conflit','Cette occurrence a changé. Rouvrez sa fiche avant de poursuivre.');
       const previousMetadata = lockedPreparation?.metadata || {};
-      const link = (await client.query(`select evenement_id from scope_qv_publication_links
+      const link = (await client.query(`select evenement_id,source_definition_id from scope_qv_publication_links
         where source_year=$1 and publication_unit_id=$2 for share`,[year,String(itemId)])).rows[0];
       const currentProgramme = await createScopeQuoVadisService({database:{query:(...args)=>client.query(...args)}}).listProgramme(year);
       const currentView=currentProgramme.canonicalProgramme.rows.find(row=>String(row.id)===String(itemId));
