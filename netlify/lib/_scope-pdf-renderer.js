@@ -250,7 +250,10 @@ class ScopePdfRenderer {
     const landscape = Boolean(model && model.landscape);
     this.pageW = landscape ? 841.89 : PAGE_W;
     this.pageH = landscape ? 595.28 : PAGE_H;
-    this.contentBottom = this.pageH - FOOTER_H - 6;
+    this.printInset=model.kind==='QUO_VADIS'?30:0;
+    this.contentTop=HEADER_H + this.printInset;
+    this.footerTop=model.kind==='QUO_VADIS'?this.pageH-this.printInset-18:this.pageH-FOOTER_H;
+    this.contentBottom = this.footerTop - 6;
     const generated = new Date((meta && meta.generatedAt) || Date.now());
     this.doc = new PDFDocument({
       size: [this.pageW, this.pageH],
@@ -267,7 +270,7 @@ class ScopePdfRenderer {
     });
     this.doc.on('pageAdded', () => this.drawChrome());
     this.drawChrome();
-    this.doc.y = HEADER_H + 18;
+    this.doc.y = this.contentTop + 18;
     const origAddPage = this.doc.addPage.bind(this.doc);
     this.doc.addPage = (opts) => {
       if (this._lockPages && !this._forcePage) return this.doc;
@@ -283,7 +286,7 @@ class ScopePdfRenderer {
     this.doc.addPage();
     this._forcePage = false;
     this._pageIndex += 1;
-    this.doc.y = HEADER_H + 18;
+    this.doc.y = this.contentTop + 18;
   }
 
   drawChrome(){
@@ -291,19 +294,19 @@ class ScopePdfRenderer {
     const logos = headerLogoLayout(this.pageW);
     const title = headerTitleLayout();
     doc.save();
-    doc.rect(0, 0, this.pageW, HEADER_H).fill(rgb(INSTITUTION.red));
+    doc.rect(this.printInset, this.printInset, this.pageW-2*this.printInset, HEADER_H).fill(rgb(INSTITUTION.red));
     if(hasLogo(LOGO_SCOPE)){
-      doc.image(LOGO_SCOPE, logos.scopeX, logos.scopeTop, { fit: logos.scopeFit, valign: 'center' });
+      doc.image(LOGO_SCOPE, logos.scopeX, logos.scopeTop+this.printInset, { fit: logos.scopeFit, valign: 'center' });
     }
     if(hasLogo(LOGO_SDIS)){
-      doc.image(LOGO_SDIS, logos.sdisX, logos.sdisTop, { fit: logos.sdisFit, valign: 'center' });
+      doc.image(LOGO_SDIS, logos.sdisX, logos.sdisTop+this.printInset, { fit: logos.sdisFit, valign: 'center' });
     }
     const titleX = logos.scopeX + logos.scopeW + 10;
     const titleW = Math.max(160, logos.sdisX - titleX - 8);
     doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(title.titleSize)
-      .text(title.title, titleX, title.titleY, { width: titleW });
+      .text(title.title, titleX, title.titleY+this.printInset, { width: titleW });
     doc.font('Helvetica').fontSize(8)
-      .text(this.model.kind === 'SESSION' ? '' : (this.model.subtitle || ''), titleX, title.titleY + 14, { width: titleW });
+      .text(this.model.kind === 'SESSION' ? '' : (this.model.subtitle || ''), titleX, title.titleY + this.printInset + 14, { width: titleW });
     doc.restore();
   }
 
@@ -314,10 +317,10 @@ class ScopePdfRenderer {
     for(let i = 0; i < pageCount; i += 1){
       doc.switchToPage(i);
       doc.save();
-      doc.moveTo(MARGIN, this.pageH - FOOTER_H).lineTo(this.pageW - MARGIN, this.pageH - FOOTER_H)
+      doc.moveTo(MARGIN, this.footerTop).lineTo(this.pageW - MARGIN, this.footerTop)
         .strokeColor(rgb(INSTITUTION.red)).lineWidth(1.2).stroke();
       doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7)
-        .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${formatDisplayDateTime(generated) || date}  ·  SCOPE`, MARGIN, this.pageH - FOOTER_H + 6, { width: this.pageW - 2 * MARGIN });
+        .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${formatDisplayDateTime(generated) || date}  ·  SCOPE`, MARGIN, this.footerTop + 6, { width: this.pageW - 2 * MARGIN });
       if(this.model.kind !== 'QUO_VADIS'){
         doc.text('Taux officiels : moteur SCOPE. Les données LEGACY, lorsqu’elles sont affichées, restent distinctes du KPI officiel.', MARGIN, this.pageH - FOOTER_H + 18, { width: this.pageW - 2 * MARGIN });
       }
@@ -2037,7 +2040,7 @@ class ScopePdfRenderer {
       [key,typeof value==='string'?value.replace(/[ \t]*\u30fb[ \t]*/g,' \u00b7 '):value]))) : [];
     if(meta.mode === 'compact') sourceRows.sort((a,b) => String(a.dateIso).localeCompare(String(b.dateIso))
       || String(a.horaire).localeCompare(String(b.horaire)) || String(a.activite).localeCompare(String(b.activite),'fr'));
-    this.doc.y = HEADER_H + 12;
+    this.doc.y = this.contentTop + 12;
     this.iconHeading('plain', `QUO VADIS ${meta.year || 2027}`, 13, { after: 1 });
     this.para(meta.mode === 'monthly' ? `Planning mensuel · ${meta.periodLabel || meta.monthKey}`
       : meta.mode === 'compact' ? 'Liste compacte' : 'Planning annuel', { size: 10, bold: true });
@@ -2105,12 +2108,16 @@ class ScopePdfRenderer {
     let lastDate = '';
     const first = rows[0];
     const firstTitle = String(first && first.activite || '—');
-    const firstDetails = first ? [first.domaine, first.oi, first.lieu, first.salleTheorie, first.responsable]
-      .filter((value) => value && value !== '—').join(' · ') : '';
+    const detailsFor=row=>[
+      [row.domaine,row.oi,row.lieu,row.salleTheorie].filter(value=>value && value!=='—').join(' · '),
+      `Responsable : ${row.responsable || 'À affecter'}`,
+      `Public cible : ${row.publicCible || 'À définir'}`,
+      `Stat.Com : ${row.statcom || '—'} · État : ${row.etat || '—'}`].filter(Boolean).join('\n');
+    const firstDetails = first ? detailsFor(first) : '';
     doc.font('Helvetica-Bold').fontSize(9);
-    const firstTitleH = doc.heightOfString(firstTitle, { width: width - 118 });
+    const firstTitleH = doc.heightOfString(firstTitle, { width: width - 122 });
     doc.font('Helvetica').fontSize(7.5);
-    const firstDetailsH = doc.heightOfString(firstDetails || '—', { width: width - 118 });
+    const firstDetailsH = doc.heightOfString(firstDetails || '—', { width: width - 122 });
     const firstDayH = first ? 22 + Math.max(35, firstTitleH + firstDetailsH + 12) : 0;
     const panelH = this.qvMonthPanel(monthKey, rows.length, true);
     if(doc.y + panelH + firstDayH > this.contentBottom) this.nextPage();
@@ -2122,14 +2129,14 @@ class ScopePdfRenderer {
     for(const row of rows){
       const date = String(row.date || 'À positionner');
       const title = String(row.activite || '—');
-      const details = [row.domaine, row.oi, row.lieu, row.salleTheorie, row.responsable].filter((value) => value && value !== '—').join(' · ');
+      const details = detailsFor(row);
       doc.font('Helvetica-Bold').fontSize(9);
-      const titleH = doc.heightOfString(title, { width: width - 118 });
+      const titleH = doc.heightOfString(title, { width: width - 122 });
       doc.font('Helvetica').fontSize(7.5);
-      const detailH = doc.heightOfString(details || '—', { width: width - 118 });
+      const detailH = doc.heightOfString(details || '—', { width: width - 122 });
       const rowH = Math.max(35, titleH + detailH + 12);
       const dayH = date !== lastDate ? 22 : 0;
-      if(rowH > this.contentBottom - HEADER_H - 32) throw new Error('Une séance du planning mensuel dépasse une page A4.');
+      if(rowH > this.contentBottom - this.contentTop - 32) throw new Error('Une séance du planning mensuel dépasse une page A4.');
       if(doc.y + dayH + rowH > this.contentBottom){
         this.nextPage();
         lastDate = '';
@@ -2213,7 +2220,7 @@ class ScopePdfRenderer {
         return;
       }
       const rowH = measureRow(item.cells);
-      if(rowH > this.contentBottom - HEADER_H - headerH - 22) throw new Error('Une ligne du planning dépasse une page A4.');
+      if(rowH > this.contentBottom - this.contentTop - headerH - 22) throw new Error('Une ligne du planning dépasse une page A4.');
       if(this.doc.y + rowH > this.contentBottom){
         this.nextPage();
         paintHeader();

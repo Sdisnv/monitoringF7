@@ -584,3 +584,79 @@ Préparer Organisation, Cadres, Candidats par domaine, Spécialisation, Fonction
 Spécialisations par domaine puis ordre alphabétique ; propositions contextuelles par Stat.Com (`011PR` : PR/candidatures/fonctions pertinentes).
 Libellés officiels IndeX à conserver après rapprochement démontré ; aucun identifiant IndeX supposé ni migration.
 Inventaire, écarts, correspondances et questions dans la ROADMAP/ToDo existante. QV-RULES-001 reste un jalon futur, maquette validée inchangée.
+
+## Correctif post-recette MOA du 14.10.2026
+
+Source : mission « Correctif consolidé post-recette MOA — 14.10.2026 ». Ces décisions
+complètent les acquis PR #17 ; aucune réécriture des données historiques.
+
+### QV-RESERVATION-003 — Date réelle, tous cycles et battement
+Disponibilité selon date et horaires réels, salle ou ressource explicitement réservée,
+indépendamment du cycle affiché. Lire ensemble les préparations du Programme, les réservations
+persistées des autres cycles et les événements opérationnels/publiés. Les références rapprochées
+d'une même publication ne créent pas une seconde réservation ; ses créneaux effectivement différents
+restent visibles. Une ancienne obligation remplacée par sa préparation canonique n'écrase pas la décision humaine.
+Exclure les annulations ; une réservation distincte encore explicitement active reste indépendante.
+Un lieu seul n'est jamais exclusif. Deux salles différentes restent indépendantes, notamment
+Oxygène et État-major ; aucune salle déduite de la seule caserne, aucun conflit fictif pour CFF sans salle.
+Même salle : chevauchement ou battement strictement inférieur à 30 minutes = conflit, dans les deux sens.
+18:00–20:00 puis 20:00 ou 20:15 : conflit ; 20:30 : compatible. Les horaires sources ne changent pas.
+Contrôles immédiats sur date/début/fin/lieu/salle et nouvelle lecture serveur sous verrou transactionnel
+commun aux écritures de préparation, tous cycles. Une collision bloque le nouveau créneau ; elle ne
+déplace aucune décision existante et n'empêche pas une modification éditoriale sans nouveau créneau.
+Le filtre Salle dépend du Lieu ; les autres réservations effectives apparaissent en lecture seule,
+avec leur date réelle et leur cycle, sans ajout aux occurrences ni aux exports métier ECAwin.
+
+### QV-EM-001 — Priorité État-major
+État-major est prioritaire sur les activités nécessitant l'échelon IV : Commandant, chefs opérationnel,
+logistique et formation, quartier-maître, officier communication, chefs de site DPS et chef DAP.
+Chef formation participe également à la Direction JSP. Les fonctions/publics explicitement démontrés
+permettent un contrôle de participation commune ; ils ne créent ni NIP ni affectation individuelle.
+Cas MOA : 16.02.2027, État-major 18:00–21:00 / Direction JSP 18:30–20:30, salle État-major G1 ;
+22.06.2027 à contrôler également. Proposer le repositionnement de l'autre activité, soumis à validation MOA,
+sans inventer une nouvelle date ni déplacer un événement publié ou une décision humaine.
+La participation commune fonctionnelle reste distinguée d'une intersection nominative non démontrée.
+Les règles de jour, dérogations et autres contraintes canoniques existantes restent applicables.
+
+### QV-CALENDAR-003 — Calendrier validé, stable
+Composant existant : six semaines fixes, dimensions et position conservées pendant la navigation,
+y compris lorsqu'il s'ouvre au-dessus du champ ; rester dans la fenêtre. Clic direct, jj.mm.aaaa,
+aucun bouton supplémentaire. Vacances/fériés : mêmes référentiels et couleurs que l'Agenda annuel ;
+week-ends légèrement grisés, aucune légende ajoutée. Alerte rouge claire distincte sous « À contrôler »,
+date explicite et distinction date interdite/déconseillée/disponibilité/dérogation. Disparition à conformité,
+sans remplacement automatique d'une date humaine.
+
+### QV-AUDIT-003 — Annulation motivée, valeurs conservées
+Confirmation préalable avec activité, date, horaire, OI, année et conséquences ; motif obligatoire.
+Boutons « Conserver l'activité » / « Confirmer l'annulation ». Une action d'annulation identifiable,
+auteur/horodatage/ancienne valeur/nouvelle valeur/motif ; les champs inchangés restent identiques dans
+les deux instantanés. Les anciens journaux partiels sont présentés comme l'action de cycle réellement
+enregistrée, jamais comme une suppression de leurs champs ; leurs données sources restent intactes.
+Occurrence annulée : paramètres de planification historiques clairement expliqués, pas de réactivation
+implicite par un enregistrement ordinaire. Annulation annuelle et arrêt de reconduction restent distincts.
+Suppression logique existante : confirmation et motif obligatoires, arrêt des productions futures,
+fiche annuelle/historique conservés. Aucun DELETE ni élargissement silencieux de cette sémantique ;
+un retrait de l'année courante reste l'action d'annulation annuelle, non une suppression d'historique.
+
+### QV-FAMILY-002 / QV-PUBLIC-007 — Organisation et présentation
+Famille organisationnelle indépendante du domaine fonctionnel : OI qualifiés DAP Y1–Y4 permettent DAP,
+DPS G1/C1/B1/B2 permettent DPS, OI JSP permettent JSP. Choix humain compatible ou transversal/non qualifié,
+jamais une déduction budgétaire ni une famille imposée aux activités multi-OI. Réutiliser les champs et
+la reconduction existants, sans changer Stat.Com, publics ou spécialisations.
+Publics : virgules ; échelons contigus contractés « Échelon I et II », « Échelon I à III »,
+« Échelon II et III », « Échelon II à IV », « Échelon IV ». Mêmes sélections internes, affichage uniforme
+fiche/tableau/historique/PDF. OSR prioritaire dans l'affichage ; FOBA 1, 2 et 3 inchangés.
+
+### QV-FREEZE-20261014 — Budget et IndeX gelés
+Séance de coordination du 25.08.2027, 19:00–21:00, DAP Y1, Local Y1 : enregistrement existant uniquement.
+Conserver `070F23` et `070F23.006`, son annulation humaine actuelle, son historique et sa lignée.
+Ne pas recréer ni dupliquer cette séance. Aucun compte Y1 ni ventilation ou correction similaire déduite.
+IndeX : aucun identifiant, fonction, spécialisation, qualification, renommage, correspondance ou affectation
+inventé/modifié dans ce lot. Rapprochement documentaire maintenu dans la roadmap, exécution gelée.
+
+### QV-PDF-003 — Impression à 100 %
+Trois formats existants : annuel/compact A4 paysage, mensuel A4 portrait ; marge imprimable minimale
+10 mm autour de tous les éléments, bandeau/logos/pied de page compris. Aucun facteur de réduction imposé.
+Conserver Responsable, Public cible, Stat.Com, État et les thèmes ; blocs non coupés et ordre chronologique.
+Noms dynamiques : `QUO VADIS AAAA, Planning annuel.pdf`, `QUO VADIS AAAA, Liste compacte.pdf`,
+`QUO VADIS AAAA, Planning mensuel - Mois.pdf`. Sources métier inchangées ; accents et points médians conservés.

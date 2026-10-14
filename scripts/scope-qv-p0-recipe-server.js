@@ -11,13 +11,15 @@ const { generateQuoVadisProgrammeReport } = require('../netlify/lib/_scope-repor
 
 const performanceMode=process.argv.find(arg=>/^--performance-(before|after)$/.test(arg));
 const postPr16Mode=process.argv.includes('--post-pr16-moa');
-const postRecetteMode=process.argv.includes('--post-recette-moa') || postPr16Mode;
+const moa14Mode=process.argv.includes('--moa-20261014');
+const postRecetteMode=process.argv.includes('--post-recette-moa') || postPr16Mode || moa14Mode;
+if(moa14Mode) process.env.SCOPE_RECIPE_MOA_20261014='1';
 if(postPr16Mode) process.env.SCOPE_RECIPE_POST_PR16='1';
 if(performanceMode || postRecetteMode) {
   for(const mode of ['ROADMAP','COMPLEMENT','FINALISATION','CORRECTIVE','MOA13','FINAL_CONTROLS','PERFORMANCE'])
     process.env[`SCOPE_RECIPE_${mode}`]='1';
   process.env.SCOPE_RECIPE_PERFORMANCE_BEFORE=performanceMode==='--performance-before'?'1':'0';
-  process.env.SCOPE_RECIPE_EVIDENCE_DIR=postPr16Mode?'docs/captures/qv-post-pr16-moa-20261014/browser':postRecetteMode?'docs/captures/qv-post-recette-moa-20261013/browser'
+  process.env.SCOPE_RECIPE_EVIDENCE_DIR=moa14Mode?'docs/captures/qv-moa-20261014/browser':postPr16Mode?'docs/captures/qv-post-pr16-moa-20261014/browser':postRecetteMode?'docs/captures/qv-post-recette-moa-20261013/browser'
     :`docs/captures/qv-response-performance-20261013/browser-${performanceMode.slice(14)}`;
 }
 
@@ -68,6 +70,7 @@ let baseline;
 let originalPreparations;
 let originalEvents;
 const touchedReferences=new Set();
+let moa14ProtectedBaseline=null;
 const touchedEvents=new Set();
 let recipeFailureAfterWrite=false;
 let recipeWritten=false;
@@ -222,12 +225,17 @@ async function stop() {
     otherEventsUnchanged=JSON.stringify(events.filter(row=>!touchedEvents.has(row.evenement_id)))
       ===JSON.stringify(originalEvents.filter(row=>!touchedEvents.has(row.evenement_id)));
   }
+  const moa14BusinessUnchanged={};
+  for(const [table,hash] of Object.entries(moa14ProtectedBaseline || {}))
+    moa14BusinessUnchanged[table]=JSON.stringify(await fingerprint(table))===JSON.stringify(hash);
   await client.query('rollback');
   const restored = {};
   for(const table of protectedTables) restored[table] = await fingerprint(table);
   const rollback=JSON.stringify(restored) === JSON.stringify(baseline);
   const evidence={database,port:5432,nonTargetTables:unchanged,otherPreparationsUnchanged:othersUnchanged,otherEventsUnchanged,rollback,
-    verdict:rollback && othersUnchanged && otherEventsUnchanged && Object.values(unchanged).every(Boolean) ? 'PASS' : 'NOK'};
+    ...(moa14Mode?{productionWrites:false,businessUnchanged:moa14BusinessUnchanged}:{}),
+    verdict:rollback && othersUnchanged && otherEventsUnchanged && Object.values(unchanged).every(Boolean)
+      && Object.values(moa14BusinessUnchanged).every(Boolean) ? 'PASS' : 'NOK'};
   console.log(JSON.stringify(evidence));console.log(`ROLLBACK ${rollback ? 'PASS' : 'NOK'}`);
   if(process.env.SCOPE_RECIPE_EVIDENCE_DIR){
     const directory=path.resolve(root,process.env.SCOPE_RECIPE_EVIDENCE_DIR);
@@ -258,6 +266,7 @@ async function start() {
   if(postRecetteMode) {
     const snapshot=await require('./scope-qv-post-recette-moa-clone').replayCurrent(query);
     for(const row of snapshot?.preparations || []) touchedReferences.add(row.source_ref);
+    if(moa14Mode) for(const row of snapshot?.events || []) touchedEvents.add(row.evenement_id);
   }
   if(process.env.SCOPE_RECIPE_CORRECTIVE==='1')
     await client.query(fs.readFileSync(path.join(root,'database/migrations/20261012_scope_internal_event_identity.sql'),'utf8'));
@@ -269,6 +278,21 @@ async function start() {
   if(process.env.SCOPE_RECIPE_FINALISATION==='1') await require('../netlify/lib/_scope-qv-moa-proposals').installAnnualReportProposal(client);
   if(process.env.SCOPE_RECIPE_PR13_COMPLEMENT==='1')
     await require('./lib/scope-qv-pr13-complement-recipe').seedPublishedAliases(query,await service.listProgramme(2027));
+  if(moa14Mode){
+    const room=(await query("select salle_id,lieu_id,libelle from scope_salles_theorie where libelle='État-major' limit 1")).rows[0];
+    const programme=(await query(`insert into scope_quo_vadis_programmes(annee,code,libelle,periode_debut,periode_fin)
+      values(2028,'QV-RECIPE-2028','Cycle interannée de recette','2027-12-01','2028-12-31')
+      on conflict(annee) do update set annee=excluded.annee returning programme_id`)).rows[0];
+    const fields={activityLabel:'Réservation clone intercycle',date:'2027-08-26',startTime:'18:00',endTime:'20:00',
+      lieuId:room.lieu_id,salleTheorieId:room.salle_id,roomLabel:room.libelle,locationLabel:'Caserne G1'};
+    await query(`insert into scope_quo_vadis_obligations(programme_id,source_type,source_ref,title,domain,statut,statcom_policy,metadata,lieu_id,salle_theorie_id)
+      values($1,'MANUAL','RECIPE-INTERCYCLE-20261014',$2,'PR','PLANIFIE','A_CONFIRMER',$3::jsonb,$4,$5)`,
+      [programme.programme_id,fields.activityLabel,JSON.stringify({source:'QV_PROGRAMME_PREPARATION',planningFields:fields,humanDecision:true}),room.lieu_id,room.salle_id]);
+    touchedReferences.add('RECIPE-INTERCYCLE-20261014');
+    moa14ProtectedBaseline={};
+    for(const table of ['scope_evenements','scope_qv_publication_links','scope_participations','scope_affectations','scope_attendus',
+      'scope_personnes','scope_person_qualifications']) moa14ProtectedBaseline[table]=await fingerprint(table);
+  }
   server.listen(port,'127.0.0.1',() => console.log(`SCOPE CLONE BROWSER http://127.0.0.1:${port}/scope.html#/quo-vadis/programme`));
 }
 process.on('SIGINT',() => { stop().catch((error) => {console.error(error);process.exitCode=1;}); });

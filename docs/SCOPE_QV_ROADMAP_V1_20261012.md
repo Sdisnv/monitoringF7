@@ -148,3 +148,11 @@ Participation : types suivis, Cours ECA individuels, agrégats et présences, sa
 ECAwin : codes, exports, rapprochements, événements déjà existants sans recréation.
 Observations : sélection, forçage manuel, évaluations. Reconduction N→N+1 : versions métier validées conservées.
 Les règles de publication annuelle, RLS, permissions et données historiques restent inchangées.
+
+### Gel MOA Du 14.10.2026
+Budget DAP Y1 et transformations du référentiel IndeX gelés : aucune déduction depuis l'OI,
+aucun compte, identifiant, renommage, qualification ou affectation inventé. `070F23` / `070F23.006`
+et la séance de coordination existante restent intacts, y compris son annulation annuelle humaine.
+Rapprochement IndeX, suivi spécialisé Cours ECA et éditeur de règles restent des jalons explicites,
+sans module parallèle. Correctif salles/calendrier/annulations/familles/publics/PDF :
+[rapport et réserves du lot](SCOPE_QV_MOA_20261014.md), sans déplacement ni publication automatique.
