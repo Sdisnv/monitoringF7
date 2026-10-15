@@ -1,0 +1,779 @@
+{
+  "reference": "435bed709dc61c6534d1e58ce2978c6f7bbceac2",
+  "unit": {
+    "status": "PASS",
+    "cases": 4,
+    "rawCatalogueUnchanged": true,
+    "descriptiveCodesUnchanged": true,
+    "exportsIdentical": true,
+    "projectionUnchanged": true,
+    "abbreviations": {
+      "C for": "Chef formation",
+      "C log": "Chef logistique",
+      "C op": "Chef opérationnel",
+      "C DAP": "Chef DAP",
+      "C PR": "Chef PR"
+    },
+    "displayCatalogue": [
+      {
+        "group": "Général",
+        "items": [
+          [
+            "GEN:RECRUE",
+            "Recrue"
+          ],
+          [
+            "GEN:SAPEUR",
+            "Sapeur"
+          ],
+          [
+            "GEN:SAPEUR-DAP",
+            "Sapeur DAP"
+          ],
+          [
+            "GEN:SAPEUR-DPS",
+            "Sapeur DPS"
+          ]
+        ]
+      },
+      {
+        "group": "Commandement",
+        "items": [
+          [
+            "CMDT:C-FOR",
+            "Chef formation"
+          ],
+          [
+            "CMDT:C-LOG",
+            "Chef logistique"
+          ],
+          [
+            "CMDT:C-OP",
+            "Chef opérationnel"
+          ],
+          [
+            "CMDT:CDT",
+            "CDT"
+          ],
+          [
+            "C DAP",
+            "Chef DAP"
+          ],
+          [
+            "CMDT:CODIR",
+            "Membres du Codir"
+          ],
+          [
+            "CMDT:QM",
+            "QM"
+          ]
+        ]
+      },
+      {
+        "group": "Échelons",
+        "items": [
+          [
+            "ECH:I",
+            "Échelon I"
+          ],
+          [
+            "ECH:II",
+            "Échelon II"
+          ],
+          [
+            "ECH:III",
+            "Échelon III"
+          ],
+          [
+            "ECH:IV",
+            "Échelon IV"
+          ]
+        ]
+      },
+      {
+        "group": "Sections DPS",
+        "items": [
+          [
+            "N01",
+            "N01"
+          ],
+          [
+            "N01a",
+            "N01a"
+          ],
+          [
+            "N01b",
+            "N01b"
+          ],
+          [
+            "N02",
+            "N02"
+          ],
+          [
+            "N02a",
+            "N02a"
+          ],
+          [
+            "N02b",
+            "N02b"
+          ],
+          [
+            "N03",
+            "N03"
+          ],
+          [
+            "N03a",
+            "N03a"
+          ],
+          [
+            "N03b",
+            "N03b"
+          ],
+          [
+            "N04",
+            "N04"
+          ],
+          [
+            "N04a",
+            "N04a"
+          ],
+          [
+            "N04b",
+            "N04b"
+          ],
+          [
+            "N05",
+            "N05"
+          ],
+          [
+            "N05a",
+            "N05a"
+          ],
+          [
+            "N05b",
+            "N05b"
+          ],
+          [
+            "N06",
+            "N06"
+          ]
+        ]
+      },
+      {
+        "group": "Encadrement",
+        "items": [
+          [
+            "ENC:C-GROUPE",
+            "C groupe"
+          ],
+          [
+            "ENC:C-SECTION",
+            "Chef section"
+          ],
+          [
+            "ENC:CAND-C-GROUPE",
+            "Candidat C groupe"
+          ],
+          [
+            "ENC:PREPOSE-MATERIEL",
+            "Préposé matériel"
+          ],
+          [
+            "ENC:RESP-MATERIEL",
+            "Resp matériel"
+          ]
+        ]
+      },
+      {
+        "group": "Opérationnel",
+        "items": [
+          [
+            "ENC:OSR",
+            "OSR"
+          ],
+          [
+            "ENC:CI-DPS",
+            "CI DPS"
+          ],
+          [
+            "ENC:CAND-CI-DPS",
+            "Candidat CI DPS"
+          ],
+          [
+            "ENC:CI-DAP",
+            "CI DAP"
+          ],
+          [
+            "ENC:CAND-CI-DAP",
+            "Candidat CI DAP"
+          ]
+        ]
+      },
+      {
+        "group": "Formation",
+        "items": [
+          [
+            "FOBA:1",
+            "FOBA 1"
+          ],
+          [
+            "FOBA:2",
+            "FOBA 2"
+          ],
+          [
+            "FOBA:3",
+            "FOBA 3"
+          ]
+        ]
+      },
+      {
+        "group": "PR",
+        "items": [
+          [
+            "PR:C-PR",
+            "Chef PR"
+          ],
+          [
+            "PR:CAND-PAPR",
+            "Candidat PAPR"
+          ],
+          [
+            "PR:CHEF-PISTE",
+            "Chef piste"
+          ],
+          [
+            "PR:FMF",
+            "Formateur maison Feu (FMF)"
+          ],
+          [
+            "PR:FORMATEUR-PR",
+            "Formateur PR"
+          ],
+          [
+            "PR:3",
+            "PABC"
+          ],
+          [
+            "PR:2",
+            "PAPR"
+          ],
+          [
+            "PR:PREPOSE-APR",
+            "Préposé APR"
+          ]
+        ]
+      },
+      {
+        "group": "AUTO",
+        "items": [
+          [
+            "AUTO:CAND-EA",
+            "Candidat machiniste EA"
+          ],
+          [
+            "AUTO:1",
+            "Cond PL"
+          ],
+          [
+            "AUTO:CAND-PL",
+            "Candidat cond PL"
+          ],
+          [
+            "AUTO:2",
+            "Cond TP9"
+          ],
+          [
+            "AUTO:CAND-TP9",
+            "Candidat cond TP9"
+          ],
+          [
+            "AUTO:3",
+            "Cond VL"
+          ],
+          [
+            "AUTO:CAND-VL",
+            "Candidat cond VL"
+          ],
+          [
+            "AUTO:FORMATEUR-C1-118",
+            "Formateur C1/118"
+          ],
+          [
+            "AUTO:FORM-EA",
+            "Formateur EA"
+          ],
+          [
+            "AUTO:FORM-GRUTIER",
+            "Formateur grutier"
+          ],
+          [
+            "AUTO:4",
+            "Grutier"
+          ],
+          [
+            "AUTO:5",
+            "Machiniste EA"
+          ],
+          [
+            "AUTO:MONITEUR-CONDUITE",
+            "Moniteur conduite"
+          ],
+          [
+            "AUTO:OF-AUTO",
+            "Of auto"
+          ],
+          [
+            "AUTO:6",
+            "Pilote BAT"
+          ]
+        ]
+      },
+      {
+        "group": "FOSPEC",
+        "items": [
+          [
+            "FOSPEC:1",
+            "Antichute"
+          ],
+          [
+            "FOSPEC:2",
+            "NAC"
+          ],
+          [
+            "FOSPEC:3",
+            "OFSI"
+          ],
+          [
+            "FOSPEC:4",
+            "OP VPC"
+          ]
+        ]
+      },
+      {
+        "group": "JSP",
+        "items": [
+          [
+            "JSP:1",
+            "JSP"
+          ]
+        ]
+      }
+    ],
+    "rows": 943
+  },
+  "clone": {
+    "status": "PASS",
+    "clone": "scope_qv_2027_recipe_20261006",
+    "readOnly": true,
+    "rollbackVerified": true,
+    "before": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      },
+      "scope_personnes": {
+        "count": 296,
+        "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+      },
+      "scope_public_definitions": {
+        "count": 34,
+        "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+      },
+      "scope_public_rule_versions": {
+        "count": 27,
+        "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+      }
+    },
+    "after": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      },
+      "scope_personnes": {
+        "count": 296,
+        "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+      },
+      "scope_public_definitions": {
+        "count": 34,
+        "hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+      },
+      "scope_public_rule_versions": {
+        "count": 27,
+        "hash": "e564fa5c3ab7724d692019fe1fc0add4"
+      }
+    },
+    "datedOiChecks": [
+      {
+        "domain": "DPS",
+        "distinctPeople": 153,
+        "scope": "OI assignments only; NOT a count of section chiefs"
+      },
+      {
+        "domain": "DAP",
+        "distinctPeople": 64,
+        "scope": "OI assignments only; NOT a count of section chiefs"
+      }
+    ],
+    "chiefsExtraction": "NOT_AVAILABLE: missing persisted dated person-function-domain-OI relation and function facts adapter",
+    "warnings": [
+      "MISSING_INPUT_FUNCTIONS"
+    ]
+  },
+  "browser": {
+    "status": "PASS",
+    "browser": "Google Chrome / Playwright",
+    "viewports": 2,
+    "cases": [
+      {
+        "case": "actual-trailing-space",
+        "viewport": {
+          "width": 1440,
+          "height": 1100
+        },
+        "selected": [
+          {
+            "code": "ENC:C-SECTION",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Chef section DAP\"]"
+          },
+          {
+            "code": "ENC:RESP-MATERIEL",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Resp matériel \"]"
+          }
+        ],
+        "payloadPublicsPreserved": true,
+        "publicsFingerprint": "fd208fda1cde6fdd5baef6d01621505bf558033cf3ed055d6c907b8c68f44c50"
+      },
+      {
+        "case": "exact-with-other-selections",
+        "viewport": {
+          "width": 1440,
+          "height": 1100
+        },
+        "selected": [
+          {
+            "code": "ECH:II",
+            "preservedCodes": "[\"ECH:II\"]"
+          },
+          {
+            "code": "ENC:C-SECTION",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Chef section DAP\"]"
+          },
+          {
+            "code": "ENC:PREPOSE-MATERIEL",
+            "preservedCodes": "[\"ENC:PREPOSE-MATERIEL\"]"
+          },
+          {
+            "code": "ENC:RESP-MATERIEL",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Resp matériel\"]"
+          },
+          {
+            "code": "PR:2",
+            "preservedCodes": "[\"PR:2\"]"
+          },
+          {
+            "code": "Atelier : logistique"
+          },
+          {
+            "code": "C inconnu"
+          }
+        ],
+        "payloadPublicsPreserved": true,
+        "publicsFingerprint": "e051a74de3bb539144a9d47c54445bcefde833a3609135b79e14cfe046cc5a51"
+      },
+      {
+        "case": "legacy-and-common-codes",
+        "viewport": {
+          "width": 1440,
+          "height": 1100
+        },
+        "selected": [
+          {
+            "code": "CMDT:C-FOR",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C for\"]"
+          },
+          {
+            "code": "C DAP",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C DAP\"]"
+          },
+          {
+            "code": "ENC:C-SECTION",
+            "preservedCodes": "[\"CMDT:CHEF-SECTION-DAP\",\"ENC:C-SECTION\"]"
+          },
+          {
+            "code": "ENC:RESP-MATERIEL",
+            "preservedCodes": "[\"ENC:RESP-MATERIEL\"]",
+            "preservedFree": "[\"Resp matériel \"]"
+          },
+          {
+            "code": "PR:C-PR",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C PR\"]"
+          },
+          {
+            "code": "AUTO:1",
+            "preservedCodes": "[\"AUTO:1\"]"
+          }
+        ],
+        "payloadPublicsPreserved": true,
+        "publicsFingerprint": "17e9dbee32649bb27abf7bc5a689b4b8b0a9f6d57e81a503198acd795499c8b0"
+      },
+      {
+        "case": "reference-and-free-aliases",
+        "viewport": {
+          "width": 1440,
+          "height": 1100
+        },
+        "selected": [
+          {
+            "code": "CMDT:C-FOR",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C for\"]"
+          },
+          {
+            "code": "CMDT:C-LOG",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C log\"]"
+          },
+          {
+            "code": "CMDT:C-OP",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C op\"]"
+          },
+          {
+            "code": "ENC:C-SECTION",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Chef section DPS\"]"
+          },
+          {
+            "code": "ENC:RESP-MATERIEL",
+            "preservedCodes": "[\"ENC:RESP-MATERIEL\"]",
+            "preservedFree": "[\"Resp matériel\"]"
+          },
+          {
+            "code": "PR:C-PR",
+            "preservedCodes": "[\"PR:C-PR\"]",
+            "preservedFree": "[\"C PR\"]"
+          },
+          {
+            "code": "AUTO:CAND-PL",
+            "preservedCodes": "[\"AUTO:CAND-PL\"]"
+          }
+        ],
+        "payloadPublicsPreserved": true,
+        "publicsFingerprint": "b60fd2f0445e63ab12100914cf8b56d0637de2208815527112c35d2cbaa10b5a"
+      },
+      {
+        "case": "actual-trailing-space",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "selected": [
+          {
+            "code": "ENC:C-SECTION",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Chef section DAP\"]"
+          },
+          {
+            "code": "ENC:RESP-MATERIEL",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Resp matériel \"]"
+          }
+        ],
+        "payloadPublicsPreserved": true,
+        "publicsFingerprint": "fd208fda1cde6fdd5baef6d01621505bf558033cf3ed055d6c907b8c68f44c50"
+      },
+      {
+        "case": "exact-with-other-selections",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "selected": [
+          {
+            "code": "ECH:II",
+            "preservedCodes": "[\"ECH:II\"]"
+          },
+          {
+            "code": "ENC:C-SECTION",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Chef section DAP\"]"
+          },
+          {
+            "code": "ENC:PREPOSE-MATERIEL",
+            "preservedCodes": "[\"ENC:PREPOSE-MATERIEL\"]"
+          },
+          {
+            "code": "ENC:RESP-MATERIEL",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Resp matériel\"]"
+          },
+          {
+            "code": "PR:2",
+            "preservedCodes": "[\"PR:2\"]"
+          },
+          {
+            "code": "Atelier : logistique"
+          },
+          {
+            "code": "C inconnu"
+          }
+        ],
+        "payloadPublicsPreserved": true,
+        "publicsFingerprint": "e051a74de3bb539144a9d47c54445bcefde833a3609135b79e14cfe046cc5a51"
+      },
+      {
+        "case": "legacy-and-common-codes",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "selected": [
+          {
+            "code": "CMDT:C-FOR",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C for\"]"
+          },
+          {
+            "code": "C DAP",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C DAP\"]"
+          },
+          {
+            "code": "ENC:C-SECTION",
+            "preservedCodes": "[\"CMDT:CHEF-SECTION-DAP\",\"ENC:C-SECTION\"]"
+          },
+          {
+            "code": "ENC:RESP-MATERIEL",
+            "preservedCodes": "[\"ENC:RESP-MATERIEL\"]",
+            "preservedFree": "[\"Resp matériel \"]"
+          },
+          {
+            "code": "PR:C-PR",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C PR\"]"
+          },
+          {
+            "code": "AUTO:1",
+            "preservedCodes": "[\"AUTO:1\"]"
+          }
+        ],
+        "payloadPublicsPreserved": true,
+        "publicsFingerprint": "17e9dbee32649bb27abf7bc5a689b4b8b0a9f6d57e81a503198acd795499c8b0"
+      },
+      {
+        "case": "reference-and-free-aliases",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "selected": [
+          {
+            "code": "CMDT:C-FOR",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C for\"]"
+          },
+          {
+            "code": "CMDT:C-LOG",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C log\"]"
+          },
+          {
+            "code": "CMDT:C-OP",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"C op\"]"
+          },
+          {
+            "code": "ENC:C-SECTION",
+            "preservedCodes": "[]",
+            "preservedFree": "[\"Chef section DPS\"]"
+          },
+          {
+            "code": "ENC:RESP-MATERIEL",
+            "preservedCodes": "[\"ENC:RESP-MATERIEL\"]",
+            "preservedFree": "[\"Resp matériel\"]"
+          },
+          {
+            "code": "PR:C-PR",
+            "preservedCodes": "[\"PR:C-PR\"]",
+            "preservedFree": "[\"C PR\"]"
+          },
+          {
+            "code": "AUTO:CAND-PL",
+            "preservedCodes": "[\"AUTO:CAND-PL\"]"
+          }
+        ],
+        "payloadPublicsPreserved": true,
+        "publicsFingerprint": "b60fd2f0445e63ab12100914cf8b56d0637de2208815527112c35d2cbaa10b5a"
+      }
+    ],
+    "errors": [],
+    "interceptedSaveCount": 8,
+    "businessServerWrites": 0,
+    "projectionRows": 943,
+    "mode": "isolated asset/projection interception on existing local recipe; not installed in the live MOA tab"
+  },
+  "productionBusinessWrites": 0
+}

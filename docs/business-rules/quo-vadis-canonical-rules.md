@@ -899,6 +899,42 @@ conversion persistante de ces occurrences ou publications n'est autorisée par c
 ultérieure exige un inventaire et une autorisation MOA distincte ; une variante ambiguë reste libre.
 La sélection n'engendre ni NIP, affectation, obligation ni contribution statistique automatique.
 
+**Complément MOA du 15.10.2026, après recette des PR #22 et #23.** Les décisions ci-dessus
+restent tracées ; les nouvelles règles de présentation suivantes prévalent pour le sélecteur :
+
+- Une seule fonction visible **Chef section**, réutilisant `ENC:C-SECTION`. Ne pas créer de
+  fonctions indépendantes DPS/DAP. L'ancien code `CMDT:CHEF-SECTION-DAP`, les libellés libres
+  Chef section DAP / Chef section DPS et C section sont reconnus pour l'affichage et le filtre,
+  sans conversion persistante. Le code historique reste connu des mécanismes descriptifs existants.
+- La distinction DPS G1/C1/B1/B2 et DAP Y1/Y2/Y3/Y4 repose sur des rattachements qualifiés et
+  datés. Une personne peut exercer la fonction dans plusieurs domaines. Ni la famille ni l'OI
+  d'un événement ne prouvent sa fonction individuelle. Les extractions doivent croiser NIP,
+  fonction, domaine/OI et validité temporelle, puis dédupliquer les personnes, sans nouveau moteur.
+- Resp matériel (`ENC:RESP-MATERIEL`) et Préposé matériel (`ENC:PREPOSE-MATERIEL`) restent dans
+  Encadrement. La reconnaissance tolère uniquement les espaces de bord autour des alias confirmés ;
+  la valeur brute historique, y compris ces espaces, reste conservée. Une référence et son ancien
+  libellé libre apparaissent comme une seule sélection, sans perte des autres publics.
+- Dans AUTO, chaque candidat suit immédiatement sa qualification : `AUTO:1` / `AUTO:CAND-PL`,
+  `AUTO:2` / `AUTO:CAND-TP9`, `AUTO:3` / `AUTO:CAND-VL`. Aucun nouveau code ni qualification.
+- Les références visibles commencent par une majuscule, sans modifier la suite du libellé ni
+  les sigles. Correspondances Chef confirmées : C for / Chef formation, C log / Chef logistique,
+  C op / Chef opérationnel, C DAP / Chef DAP, C PR / Chef PR. Codes techniques inchangés.
+  Aucune expansion générique du préfixe C ; C groupe et Candidat C groupe restent inchangés
+  faute d'équivalence supplémentaire démontrée dans les sources consultées de ce lot.
+- La présentation commune aux fiches, résumés et filtres ne modifie ni le catalogue historique
+  utilisé par les projections/populations ni les exports PDF/Excel. Les décisions individuelles,
+  affectations, publications, présences, Stat.Com et codes SCOPE restent inchangés.
+
+**Limite constatée, pas une nouvelle règle de population :** l'inventaire SQL en lecture seule
+du 15.10.2026 confirme les affectations datées et trois personnes rattachées à DPS et DAP,
+mais pas de relation persistante personne-fonction-domaine/OI avec dates de validité. Le public
+`DPS-CHEFS-SECTION-REMPLACANTS` porte toujours `personFunctionMapping=PENDING_INDEX_SYNC`.
+L'adaptateur du moteur ne fournit pas les faits `functions` ; les seuls codes de fonction pris
+en charge par ce moteur sont historiquement DPS. Les rôles affectés à un événement ne prouvent
+pas une fonction organisationnelle permanente. Les extractions de chefs DPS/DAP/tous domaines
+restent donc non démontrables tant que cette relation n'est pas résolue et autorisée ; aucun
+effectif de chefs n'est inventé. Preuves et périmètre : `docs/SCOPE_QV_PUBLICS_MOA_20261015.md`.
+
 ### QV-CURSUS-009 — CI DAP et CI DPS sous FOCA
 Décision explicite remplaçant la réserve de rattachement QV-FILTER-007 : les cursus existants
 CI-DAP et CI-DPS appartiennent à FOCA. Ordre alphabétique français : Cursus C groupe, Cursus CI DAP,

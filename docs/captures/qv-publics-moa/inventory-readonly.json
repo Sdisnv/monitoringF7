@@ -1,0 +1,48 @@
+{
+  "at": "2026-10-15T08:15:01.87073+00:00",
+  "database": "postgres",
+  "assignments": [
+    {
+      "rows": 72,
+      "domaine": "DAP",
+      "datedrows": 72,
+      "distinctpeople": 72
+    },
+    {
+      "rows": 161,
+      "domaine": "DPS",
+      "datedrows": 161,
+      "distinctpeople": 158
+    },
+    {
+      "rows": 71,
+      "domaine": "JSP",
+      "datedrows": 71,
+      "distinctpeople": 69
+    }
+  ],
+  "nipDuplicates": 0,
+  "multiDomainPeople": 3,
+  "historicalSelection": [
+    {
+      "sourceRef": "QV26-VISION-LOCALE-DAP-F8783089:O3:S1",
+      "publicCodes": [],
+      "publicFreeLabels": [
+        "Chef section DAP",
+        "Resp matériel "
+      ]
+    }
+  ],
+  "transactionReadOnly": "on",
+  "pendingFunctionPublic": [
+    {
+      "code": "DPS-CHEFS-SECTION-REMPLACANTS",
+      "label": "Chefs de section DPS et remplaçants",
+      "metadata": {
+        "source": "QV_CATALOGUE_CANONIQUE_20261007",
+        "personFunctionMapping": "PENDING_INDEX_SYNC"
+      }
+    }
+  ],
+  "functionRelationColumns": []
+}

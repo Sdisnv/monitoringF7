@@ -3516,10 +3516,53 @@
   }
 
   function qvProgrammePublicReferenceCode(code) {
-    return ({'PR:FORMATEURS':'PR:FORMATEUR-PR','AUTO:MONITEURS':'AUTO:MONITEUR-CONDUITE',
-      'AUTO:FORM-C1':'AUTO:FORMATEUR-C1-118','Chef section DAP':'CMDT:CHEF-SECTION-DAP',
+    const value=String(code || '').trim();
+    const aliases={'PR:FORMATEURS':'PR:FORMATEUR-PR','AUTO:MONITEURS':'AUTO:MONITEUR-CONDUITE',
+      'AUTO:FORM-C1':'AUTO:FORMATEUR-C1-118',
+      'CMDT:CHEF-SECTION-DAP':'ENC:C-SECTION','Chef section DAP':'ENC:C-SECTION',
+      'Chef section DPS':'ENC:C-SECTION','Chef section':'ENC:C-SECTION','C section':'ENC:C-SECTION',
+      'C for':'CMDT:C-FOR','Chef formation':'CMDT:C-FOR',
+      'C log':'CMDT:C-LOG','Chef logistique':'CMDT:C-LOG',
+      'C op':'CMDT:C-OP','Chef opérationnel':'CMDT:C-OP',
+      'Chef DAP':'C DAP','C PR':'PR:C-PR','Chef PR':'PR:C-PR',
       'Candidat cond VL':'AUTO:CAND-VL','Resp matériel':'ENC:RESP-MATERIEL',
-      'Préposé matériel':'ENC:PREPOSE-MATERIEL'})[code] || code;
+      'Préposé matériel':'ENC:PREPOSE-MATERIEL'};
+    return Object.prototype.hasOwnProperty.call(aliases,value) ? aliases[value] : code;
+  }
+
+  // Presentation only: keep the historical catalogue for projection, population rules and exports.
+  function qvProgrammePublicDisplayCatalogue() {
+    const labels={'ENC:C-SECTION':'Chef section','CMDT:C-FOR':'Chef formation',
+      'CMDT:C-LOG':'Chef logistique','CMDT:C-OP':'Chef opérationnel','PR:C-PR':'Chef PR'};
+    const seen=new Set();
+    return qvProgrammePublicCatalogue().map(group=>{
+      const items=group.items.filter(([code])=>code!=='CMDT:CHEF-SECTION-DAP').flatMap(([code,label])=>{
+        const key=qvProgrammePublicReferenceCode(code);
+        if(seen.has(key)) return [];
+        seen.add(key);
+        return [[key,labels[key] || label.charAt(0).toLocaleUpperCase('fr')+label.slice(1)]];
+      });
+      for(const [candidate,driver] of [['AUTO:CAND-PL','AUTO:1'],['AUTO:CAND-TP9','AUTO:2'],['AUTO:CAND-VL','AUTO:3']]){
+        const index=items.findIndex(([code])=>code===candidate);
+        if(index<0 || !items.some(([code])=>code===driver)) continue;
+        const [item]=items.splice(index,1);
+        items.splice(items.findIndex(([code])=>code===driver)+1,0,item);
+      }
+      return {...group,items};
+    });
+  }
+
+  function qvProgrammePublicDisplayLabel(value) {
+    const code=qvProgrammePublicReferenceCode(value);
+    const item=qvProgrammePublicDisplayCatalogue().flatMap(group=>group.items).find(([key])=>key===code);
+    return item ? item[1] : qvProgrammePublicLabel(value);
+  }
+
+  function qvFormatPublicDisplayLabels(codes,freeLabels=[]) {
+    const labels=new Map(qvProgrammePublicDisplayCatalogue().flatMap(group=>group.items));
+    const reference=value=>labels.get(qvProgrammePublicReferenceCode(value));
+    return qvFormatPublicLabels([],[...(codes || []).map(code=>reference(code) || qvProgrammePublicLabel(code)),
+      ...freeLabels.map(label=>reference(label) || label)]);
   }
 
   function qvProgrammeCursusLabel(item) {
@@ -5836,6 +5879,9 @@
     qvInternalEventCodeDisplay,
     qvProgrammeParameters,
     qvProgrammePublicCatalogue,
+    qvProgrammePublicDisplayCatalogue,
+    qvProgrammePublicDisplayLabel,
+    qvFormatPublicDisplayLabels,
     qvProgrammeDescriptivePublics,
     qvProgrammeActivityTypes,
     qvProgrammeInternalManifestation,

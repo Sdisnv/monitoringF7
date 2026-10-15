@@ -11032,7 +11032,8 @@
         domaine: qvProgrammeDomain(row),
         famille: L.qvProgrammeFamily(row),
         oi: L.qvProgrammeOiLabel(row) || '—',
-        publicCible: qvProgrammePublicLabel(row),
+        publicCible: L.qvFormatPublicLabels(row?.publics || [],row?.publicFreeLabels || [])
+          || (row && row.target === 'SDIS-ALL' ? 'SDIS (tous)' : 'À définir'),
         activite:qvProgrammeActivityLabel(row),
         themes:L.qvProgrammeVisibleThemes(row),
         specCursus: [row.specialisation, row.cursus].filter(Boolean).join(' · '),
@@ -11960,7 +11961,7 @@
     const value = String(code || '').trim();
     if (!value) return '';
     if (value === 'SDIS-ALL') return 'SDIS (tous)';
-    return L.qvProgrammePublicLabel(value);
+    return L.qvProgrammePublicDisplayLabel(value);
   }
 
   function qvProgrammePublicCodes(row) {
@@ -11973,7 +11974,7 @@
   }
 
   function qvProgrammePublicLabel(row) {
-    return L.qvFormatPublicLabels(row?.publics || [],row?.publicFreeLabels || [])
+    return L.qvFormatPublicDisplayLabels(row?.publics || [],row?.publicFreeLabels || [])
       || (row && row.target === 'SDIS-ALL' ? 'SDIS (tous)' : 'À définir');
   }
 
@@ -12117,7 +12118,7 @@
   }
 
   function qvProgrammePublicFilterOptions(codes, selected) {
-    const catalogue = L.qvProgrammePublicCatalogue();
+    const catalogue = L.qvProgrammePublicDisplayCatalogue();
     const known = new Set(catalogue.flatMap((group) => group.items.map(([code]) => code)));
     const groups = [
       ['Opérationnel · DPS', (code) => /^N0[1-6][ab]?$/.test(code) || /^(?:ENC:.*DPS|GEN:SAPEUR-DPS)$/.test(code)],
@@ -12378,7 +12379,7 @@
 
   function qvProgrammePublicGroups(codes, selected, freeLabels=[]) {
     const chosen = new Set([...(codes || []), ...(selected || [])]);
-    const catalogue = L.qvProgrammePublicCatalogue();
+    const catalogue = L.qvProgrammePublicDisplayCatalogue();
     const known = new Set(catalogue.flatMap((group) => group.items.map((item) => item[0])));
     const extra = [...chosen].filter((code) => code && !known.has(L.qvProgrammePublicReferenceCode(code)));
     const option = (code, label,retained=[],free=[]) => `<label${/^N0[1-6][ab]$/.test(code) ? ' class="qv-public-half-section"' : ''}><input type="checkbox" value="${escapeHtml(code)}" ${retained.length || free.length ? `checked data-preserved-codes="${escapeHtml(JSON.stringify(retained))}"` : ''}${free.length?` data-preserved-free="${escapeHtml(JSON.stringify(free))}"`:''}><span>${escapeHtml(label)}</span></label>`;
@@ -13022,7 +13023,8 @@
         <label><span>Lieu</span><select id="qv-programme-lieu"><option value="">Lieu à définir</option>${lieuChoices.map((entry) => `<option value="${escapeHtml(entry.lieuId)}" ${entry.lieuId === lieuValue ? 'selected' : ''}>${escapeHtml(entry.label)}</option>`).join('')}<option value="autre" ${lieuValue === 'autre' ? 'selected' : ''}>Autre lieu</option></select></label>
         <label><span>Salle</span><select id="qv-programme-salle">${qvSalleOptions(qv, salleLieuId, salleId)}</select></label>
         ${qvProgrammeDescriptiveControl('qv-programme-public','Public cible',qvProgrammePublicGroups(publicCodes,row.publics || [],row.publicFreeLabels),
-          (row.publicFreeLabels || []).filter(label=>L.qvProgrammePublicReferenceCode(label)===label),qvProgrammePublicLabel(row))}
+          (row.publicFreeLabels || []).filter(label=>!L.qvProgrammePublicDisplayCatalogue().some(group=>
+            group.items.some(([code])=>code===L.qvProgrammePublicReferenceCode(label)))),qvProgrammePublicLabel(row))}
         <label id="qv-programme-autre-field" ${lieuValue === 'autre' ? '' : 'hidden'}><span>Lieu existant</span><select id="qv-programme-autre"><option value="">Choisir un lieu</option>${autresLieux.map((item) => `<option value="${escapeHtml(item.lieuId)}" ${item.lieuId === autreValue ? 'selected' : ''}>${escapeHtml(item.nomCourt || item.code)}</option>`).join('')}<option value="__free" ${autreValue === '__free' ? 'selected' : ''}>Lieu absent du référentiel</option></select></label>
         <label id="qv-programme-lieu-libre-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Nouveau lieu</span><input id="qv-programme-lieu-libre" type="text" maxlength="28" value="${escapeHtml(row.lieuLibre || '')}"></label>
         <label id="qv-programme-lieu-keep-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Référentiel</span><span class="qv-programme-keep-lieu"><input id="qv-programme-lieu-keep" type="checkbox">Conserver ce lieu dans le référentiel</span></label>
@@ -15025,7 +15027,7 @@
           ? qvProgrammePublicCodeLabel(input.value) : input.closest('label').querySelector('span').textContent);
         const inputs=[...list.querySelectorAll('input:checked')];
         document.getElementById(id+'-summary').textContent=(id==='qv-programme-public'
-          ? L.qvFormatPublicLabels(inputs.filter(input=>input.dataset.choiceKind!=='FREE')
+          ? L.qvFormatPublicDisplayLabels(inputs.filter(input=>input.dataset.choiceKind!=='FREE')
             .flatMap(input=>input.dataset.preservedCodes?JSON.parse(input.dataset.preservedCodes):[input.value]),
             qvProgrammeSelectedFreePublics()) : labels.join(' ; '))
           || (id === 'qv-programme-responsable' ? 'À affecter' : 'À définir');
