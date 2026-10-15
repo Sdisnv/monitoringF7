@@ -780,7 +780,72 @@ function resolveUsualLieu(activity, lieux){
   return { lieu: null, lieuLibre: null, source: '' };
 }
 
+// Exact canonical definitions, not title matching. Mixed preparations still require qualified relations.
+const PREPARATION_PAIRS = [
+  ['QV26-EXERCICE-DAP-1-9890D687','QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30','DAP'],
+  ['QV26-EXERCICE-DAP-2-6285EF74','QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232','DAP'],
+  ['QV26-EXERCICE-DAP-3-618B0715','QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D','DAP'],
+  ['QV26-EXERCICE-DAP-4-46753B3A','QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B','DAP'],
+  ['QV26-EXERCICE-DPS-1-6A16603D','QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E','DPS'],
+  ['QV26-EXERCICE-DPS-2-54E09232','QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7','DPS'],
+  ['QV26-EXERCICE-DPS-3-29F948D1','QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84','DPS']
+];
+
+function preparationControls(input){
+  const rows=(input || []).filter(row=>!row.external && !row.excluded && !row.dapExerciseExcluded
+    && !row.programmeReconciliation && !['ANNULE','NON_RETENU'].includes(row.status));
+  const definition=row=>row.definitionId || row.sessionStructure?.definitionId;
+  const ois=row=>row.oiSelections || row.ois || [];
+  const label=row=>row?.activityLabel || row?.label || 'Cours absent';
+  const localDay=value=>{
+    let day=dateOnly(value);
+    if(value instanceof Date || /(?:Z|[+-]\d{2}:?\d{2})$/.test(String(value || ''))){
+      const parsed=new Date(value);
+      if(Number.isNaN(parsed.getTime())) return '';
+      const parts=new Intl.DateTimeFormat('fr-CH',{timeZone:'Europe/Zurich',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(parsed);
+      day=['year','month','day'].map(type=>parts.find(part=>part.type===type).value).join('-');
+    }
+    return /^\d{4}-\d{2}-\d{2}$/.test(day) && !Number.isNaN(Date.parse(day+'T00:00:00Z'))
+      && new Date(day+'T00:00:00Z').toISOString().slice(0,10)===day ? day : '';
+  };
+  const controls=[];
+  for(const exercise of rows){
+    const pair=PREPARATION_PAIRS.find(([id])=>id===definition(exercise));
+    const mixed=['QV26-EXERCICE-DPS-DAP-1-7F1E9444','QV26-EXERCICE-DPS-DAP-2-668A88B6'].includes(definition(exercise));
+    if(!pair && !mixed) continue;
+    const sites=ois(exercise),oi=sites.length===1?sites[0]:sites.join(', ');
+    const expected=pair && (pair[2]==='DAP'?/^DAP:(Y[1-4])$/:/^DPS:(G1|C1|B1|B2)$/).exec(oi);
+    const qualified=expected && exercise.statCom===(pair[2]==='DAP'?'013':'012')+expected[1];
+    const matching=qualified?rows.filter(course=>definition(course)===pair[1] && course.statCom===exercise.statCom
+      && ois(course).length===1 && ois(course)[0]===oi):[];
+    const sections=row=>(row.publics || row.publicCodes || []).filter(code=>/^N0[1-6][ab]?$/.test(code));
+    const candidates=matching.filter(course=>!sections(course).length || !sections(exercise).length
+      || sections(course).some(left=>sections(exercise).some(right=>left===right
+        || left.length===3 && right.startsWith(left) || right.length===3 && left.startsWith(right))));
+    const scopeConflict=matching.length>0 && candidates.length===0;
+    const course=candidates.length===1?candidates[0]:null;
+    const exerciseDate=localDay(exercise.startsAt),courseDate=course && localDay(course.endsAt || course.startsAt);
+    const days=exerciseDate && courseDate ? Math.round((Date.parse(exerciseDate+'T00:00:00Z')-Date.parse(courseDate+'T00:00:00Z'))/86400000):null;
+    const status=!qualified || candidates.length>1 || scopeConflict ? 'MOA_REQUIRED' : !course || !exerciseDate || !courseDate ? 'A_CONTROLER'
+      : days<0 ? 'NON_CONFORME_CRITIQUE' : days<14 ? 'A_CONTROLER' : 'CONFORME';
+    const cause=!qualified?'Relation préparatoire qualifiée à confirmer par la MOA.' : scopeConflict?'Les sections ou demi-sections du cours et de l’exercice ne correspondent pas.' : candidates.length>1?'Plusieurs cours correspondants : arbitrage MOA requis.'
+      : !course?'Cours de cadres correspondant absent.' : !courseDate?'Cours de cadres sans date.' : !exerciseDate?'Exercice sans date.'
+        : days<0?'Le cours a lieu après l’exercice.' : days<14?'Le délai minimal de préparation n’est pas respecté.' : 'Délai minimal respecté.';
+    const key=JSON.stringify([exercise.id,course?.id || null,oi,exerciseDate,courseDate,14]);
+    const exception=[...(exercise.preparationDerogations || []),...(course?.preparationDerogations || [])]
+      .find(item=>item.key===key && item.motif?.trim() && item.actor && item.at);
+    const message=`${label(exercise)} · OI ${oi || 'à qualifier'} · Exercice ${exerciseDate || 'sans date'} · ${label(course)} ${courseDate || 'sans date'} · Délai ${days==null?'non calculable':days+' jours'} ; minimum 14 jours. ${cause}`;
+    controls.push({rule:'QV-EXERCICE-PREPARATION-001',key,exerciseId:exercise.id,courseId:course?.id || null,oi,
+      exerciseDate,courseDate,days,minimumDays:14,status,message,exception:exception || null,
+      blocking:status!=='CONFORME' && !exception && !exercise.publishedEventId,
+      exceptionAllowed:Boolean(course && courseDate && exerciseDate && qualified)});
+  }
+  return controls;
+}
+
 return {
+  preparationControls,
+  PREPARATION_PAIRS,
   WEEKDAY_LABELS,
   DAY_CLASS_LABELS,
   DEFAULT_DAY_POLICY,

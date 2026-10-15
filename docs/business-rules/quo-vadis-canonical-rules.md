@@ -945,3 +945,75 @@ Les fiches et filtres lisent ces mêmes références persistantes, sans catalogu
 
 Les causes techniques d'authentification et preuves ciblées sont séparées des règles métier dans
 `docs/SCOPE_QV_COMPLEMENT_MOA_20261015.md`. Aucune durée ni protection d'authentification n'est modifiée.
+
+## Complément Consolidé MOA Du 15.10.2026 Après PR #24
+
+### QV-PUBLIC-008 — Échelon 0 et candidat machiniste
+Ajouter `ECH:0` au catalogue descriptif existant, immédiatement avant I, II, III, IV ; aucune
+référence persistante équivalente trouvée lors de l'inventaire. Zéro n'est pas la lettre O.
+Deux échelons sont joints par « et ». Trois ou davantage ne forment une plage « à » que si
+TOUTE la sélection est continue. Une sélection discontinue reste une énumération explicite,
+sans ajouter les intermédiaires. Exemples : 0 et I ; 0 à III ; I à III ; II et III ; II à IV ;
+0 et III ; 0 et II et III. Réutiliser le formateur existant, sans changer les sélections.
+Même règle dans les extractions existantes ; aucun changement de moteur PDF/Excel.
+`AUTO:CAND-EA` suit immédiatement `AUTO:5`, comme les candidats PL/TP9/VL ; aucun nouveau code AUTO.
+
+### QV-DPS-003 — Complément Responsable commun Chef section
+Dans le sélecteur Responsable, la référence existante `C scrt` (libellé C sct) est présentée
+comme **Chef section**, commune DPS G1/C1/B1/B2 et DAP Y1/Y2/Y3/Y4. Anciennes références et valeurs
+libres Chef section DPS, Chef section DAP, Chef section, C sct restent reconnues et conservées.
+Le regroupement visuel ne convertit ni les événements ni les responsables enregistrés ; il ne
+modifie pas les fonctions individuelles. Le contexte organisationnel reste porté par domaine/OI.
+La réserve MOA_REQUIRED de relation personne-fonction-domaine/OI datée reste entière, sans table
+ni migration dans ce lot. Les libellés historiques exportés restent inchangés.
+
+### QV-EXERCICE-PREPARATION-001 — Cours préparatoire et délai minimal
+Complément des contrôles existants de couverture, attention et validation ; aucun second moteur.
+Un exercice DPS/DAP classique doit disposer de son cours de cadres préparatoire correspondant,
+terminé au moins **14 jours calendaires** avant sa date locale. 28, 21 et 14 jours sont conformes ;
+13, 7 et 0 jours sont à contrôler ; un cours après l'exercice déclenche une alerte critique.
+Cours absent, cours sans date ou exercice sans date : à contrôler. Relation ambiguë : MOA_REQUIRED.
+
+Les quatre couples canoniques DAP de QV-DAP-002 sont rapprochés par numéro de définition,
+OI unique Y1–Y4 et Stat.Com 013Yx concordant. Les trois couples DPS numérotés sont rapprochés
+par définitions canoniques exactes et même OI/Stat.Com 012xx, avec compatibilité des sections et
+demi-sections explicitement enregistrées. Les identifiants et sources 2026 sont repris des
+références versionnées ; ni titre seul ni famille seule ne prouvent la relation. Aucun nouveau
+cours ni date n'est généré. Les cours mixtes DPS-DAP ne sont pas attribués à des exercices sur
+le seul numéro : les relations qualifiées non démontrées restent à arbitrer par paire/OI.
+Les autres cours de cadres sont hors périmètre de ce contrôle.
+
+Contrôle recalculé sur la projection annuelle (génération/reconduction comprises), sur modification
+en fiche et côté serveur avant validation individuelle ou annuelle. Dates civiles calculées sans
+influence de fuseau ou changement d'heure. Alerte : exercice, cours, OI, dates, délai constaté,
+minimum et cause. Les contrôles conformes ne créent pas d'alerte ; une paire n'est pas répétée
+dans la liste annuelle. Une anomalie non résolue bloque la validation silencieuse.
+
+Une paire qualifiée et datée peut faire l'objet d'une exception explicitement confirmée dans
+le dialogue de dérogation existant, avec motif, acteur et trace du journal. Son empreinte est
+limitée à cette paire/OI/dates : une nouvelle date exige un nouveau contrôle. Une relation
+ambiguë ne se résout pas par un simple motif. Aucune validation historique supprimée ; les
+exercices déjà publiés restent signalés sans invalidation rétroactive. Aucun déplacement ni CTA modifié.
+
+### QV-CALENDAR-003 — Complément ouverture selon date et cycle
+Réutiliser le calendrier personnalisé existant : date renseignée prioritaire, mois/année et jour
+sélectionné correspondants. Sans date : janvier du cycle, pas le mois courant ni le dernier mois
+navigué. Une date janvier 2028 sur cycle 2027 ouvre janvier 2028. La route de fiche conserve
+explicitement l'année 2028. Ouvrir/naviguer ne modifie ni date ni autre champ et n'enregistre rien.
+Aucun remplacement par un sélecteur natif, aucune refonte UX.
+
+### QV-PROPOSITION-002 — Priorité de la date validée, champ par champ
+Une date humaine validée prévaut sur sa proposition automatique. Provenance exigée :
+`humanDecision`, validation métier horodatée et date explicitement validée. Pour les anciennes
+validations sans date dans l'instantané, seule la preuve d'une même écriture horodatée
+`businessValidation.validatedAt = planningFields.updatedAt` avec la date persistée est reconnue.
+PLANIFIE seul, une date seule ou une décision de famille seule ne suffisent jamais.
+Les validations futures tracent `validatedDate`. Une sauvegarde d'un autre champ conserve la
+preuve de date existante, sans créer une nouvelle validation ; une date différente, un retrait
+ou une révision en attente réactive le contrôle. Aucune migration rétroactive des historiques.
+
+La proposition reste historique, mais sa date/bouton Appliquer ne sont plus actifs ni comptés
+comme date à traiter après preuve de validation. Le bilan sépare dates actives/obsolètes.
+Une validation de date seule ne supprime pas les contrôles d'horaire, thème, public, responsable,
+lieu/salle. Une validation métier complète déjà acquise reste respectée. Reconduction future
+conservée : aucune date n'est copiée comme nouvelle décision humaine.

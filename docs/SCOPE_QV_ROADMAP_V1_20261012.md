@@ -220,3 +220,11 @@ sans reprise générale : [rapport V1 et preuves ciblées](SCOPE_QV_V1_TESTS19_3
 QV-RULES-001, suivi spécialisé Cours ECA, processus post-publication QV-CYCLE-007 restent préservés,
 sans module parallèle. Budget DAP Y1, `070F23`, correspondances IndeX, EM du 16.02 et décisions JSP
 approuvées inchangés. Aucun Programme annuel validé automatiquement ; fusion/publication sous GO distinct.
+
+## Complément MOA Du 15.10.2026 Après PR #24
+Lot ciblé : Échelon 0, formatage et/à déterministe, candidat machiniste EA, Responsable commun
+Chef section, délai préparatoire de 14 jours sur relations qualifiées, calendrier selon date/cycle,
+propositions de date subordonnées aux validations persistantes. Pas de nouvelle migration ni moteur.
+Réserves : relations mixtes DPS-DAP non démontrées à arbitrer par paire ; relation individuelle
+personne-fonction-domaine/OI datée toujours MOA_REQUIRED. Suivi spécialisé Cours ECA et processus
+post-publication restent au même périmètre. Preuves : `docs/SCOPE_QV_CONSOLIDE_PREPARATION_20261015.md`.
