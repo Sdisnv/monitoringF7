@@ -139,7 +139,7 @@
         return 'warn';
       }
       if (shouldRefresh() && typeof opts.refreshSession === 'function') {
-        refreshSession();
+        refreshSession().catch(() => {});
         return 'refresh';
       }
       return 'ok';
@@ -219,7 +219,13 @@
       headers: { Accept: 'application/json' },
       cache: 'no-store'
     });
-    return response.ok;
+    if (response.status >= 500 || response.status === 429) throw new Error('Renouvellement temporairement indisponible.');
+    if (!response.ok) return false;
+    const payload = await response.json();
+    if (payload.accessToken && typeof window !== 'undefined' && window.MonitoringApiClient?.setAccessToken) {
+      window.MonitoringApiClient.setAccessToken(payload.accessToken);
+    }
+    return true;
   }
 
   let activeController = null;

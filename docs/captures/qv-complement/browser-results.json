@@ -1,0 +1,264 @@
+{
+  "status": "PASS",
+  "tests": [
+    "A-G/T-W: quatre OI, quatre places, trois colonnes au format exact ; FOCA et identifiants communs",
+    "O-S: quatre libellés uniques et positions exactes ; payload intercepté conserve les valeurs libres et codes originaux",
+    "H-N: renouvellement réel local, réseau et 503 simulés sans déconnexion, contexte et brouillon conservés, alerte à neuf minutes sans perte de saisie",
+    "I/K/N: 401 définitif affiche la reconnexion ; même utilisateur et version inchangée retrouvent le brouillon, jamais annoncé enregistré",
+    "N/Z: version concurrente différente refuse la restauration du brouillon ; aucune décision plus récente écrasée"
+  ],
+  "auth": [
+    {
+      "mode": "real local cookie renewal",
+      "status": 200,
+      "unauthorized": 0
+    },
+    {
+      "mode": "temporary network failure",
+      "status": 0,
+      "unauthorized": 0
+    },
+    {
+      "mode": "temporary refresh 503",
+      "status": 0,
+      "unauthorized": 0
+    },
+    {
+      "mode": "permission denied",
+      "status": 403,
+      "unauthorized": 0
+    }
+  ],
+  "publicItems": [
+    {
+      "group": "Général",
+      "labels": [
+        "Recrue",
+        "Sapeur",
+        "Sapeur DAP",
+        "Sapeur DPS"
+      ]
+    },
+    {
+      "group": "Commandement",
+      "labels": [
+        "C for",
+        "C log",
+        "C op",
+        "CDT",
+        "Chef DAP",
+        "Chef section DAP",
+        "Membres du Codir",
+        "QM"
+      ]
+    },
+    {
+      "group": "Échelons",
+      "labels": [
+        "Échelon I",
+        "Échelon II",
+        "Échelon III",
+        "Échelon IV"
+      ]
+    },
+    {
+      "group": "Sections DPS",
+      "labels": [
+        "N01",
+        "N01a",
+        "N01b",
+        "N02",
+        "N02a",
+        "N02b",
+        "N03",
+        "N03a",
+        "N03b",
+        "N04",
+        "N04a",
+        "N04b",
+        "N05",
+        "N05a",
+        "N05b",
+        "N06"
+      ]
+    },
+    {
+      "group": "Encadrement",
+      "labels": [
+        "C groupe",
+        "C section",
+        "Candidat C groupe",
+        "Préposé matériel",
+        "Resp matériel"
+      ]
+    },
+    {
+      "group": "Opérationnel",
+      "labels": [
+        "OSR",
+        "CI DPS",
+        "Candidat CI DPS",
+        "CI DAP",
+        "Candidat CI DAP"
+      ]
+    },
+    {
+      "group": "Formation",
+      "labels": [
+        "FOBA 1",
+        "FOBA 2",
+        "FOBA 3"
+      ]
+    },
+    {
+      "group": "PR",
+      "labels": [
+        "C PR",
+        "Candidat PAPR",
+        "Chef piste",
+        "Formateur maison Feu (FMF)",
+        "Formateur PR",
+        "PABC",
+        "PAPR",
+        "Préposé APR"
+      ]
+    },
+    {
+      "group": "AUTO",
+      "labels": [
+        "Candidat cond PL",
+        "Candidat cond TP9",
+        "Candidat machiniste EA",
+        "cond PL",
+        "cond TP9",
+        "cond VL",
+        "Candidat cond VL",
+        "Formateur C1/118",
+        "Formateur EA",
+        "Formateur grutier",
+        "Grutier",
+        "Machiniste EA",
+        "Moniteur conduite",
+        "Of auto",
+        "Pilote BAT"
+      ]
+    },
+    {
+      "group": "FOSPEC",
+      "labels": [
+        "Antichute",
+        "NAC",
+        "OFSI",
+        "OP VPC"
+      ]
+    },
+    {
+      "group": "JSP",
+      "labels": [
+        "JSP"
+      ]
+    },
+    {
+      "group": "Libellés libres",
+      "labels": [
+        "Resp matériel "
+      ]
+    }
+  ],
+  "errors": [],
+  "businessServerWrites": 0,
+  "interceptedSaves": [
+    {
+      "path": "/api/scope/quo-vadis/programme-items/QV26-VISION-LOCALE-DAP-F8783089%3AO3%3AS1",
+      "body": {
+        "activityLabel": "Vision locale DAP",
+        "themes": [],
+        "statCom": "070F4",
+        "domain": "F4",
+        "saveAction": "SAVE",
+        "year": 2027,
+        "motif": "",
+        "confirmPopulationImpact": false,
+        "date": "2027-03-22",
+        "startTime": "19:00",
+        "endTime": "19:30",
+        "participationEvaluation": true,
+        "oiCodes": [
+          "DAP:Y1"
+        ],
+        "publicCodes": [],
+        "publicFreeLabels": [
+          "Chef section DAP",
+          "Resp matériel "
+        ],
+        "lieuId": "57c9e32d-d161-4af2-9f3a-131dbcd3a7bd",
+        "lieuLibre": "",
+        "keepLieuInReferential": false,
+        "salleTheorieId": null
+      }
+    },
+    {
+      "path": "/api/scope/quo-vadis/programme-items/QV26-VISION-LOCALE-DAP-F8783089%3AO3%3AS1",
+      "body": {
+        "activityLabel": "Vision locale DAP",
+        "themes": [
+          "Brouillon recette non enregistré"
+        ],
+        "statCom": "070F4",
+        "domain": "F4",
+        "saveAction": "SAVE",
+        "year": 2027,
+        "motif": "",
+        "confirmPopulationImpact": false,
+        "date": "2027-03-22",
+        "startTime": "19:00",
+        "endTime": "19:30",
+        "participationEvaluation": true,
+        "oiCodes": [
+          "DAP:Y1"
+        ],
+        "publicCodes": [],
+        "publicFreeLabels": [
+          "Chef section DAP",
+          "Resp matériel "
+        ],
+        "lieuId": "57c9e32d-d161-4af2-9f3a-131dbcd3a7bd",
+        "lieuLibre": "",
+        "keepLieuInReferential": false,
+        "salleTheorieId": null
+      }
+    },
+    {
+      "path": "/api/scope/quo-vadis/programme-items/QV26-VISION-LOCALE-DAP-F8783089%3AO3%3AS1",
+      "body": {
+        "activityLabel": "Vision locale DAP",
+        "themes": [
+          "Brouillon à ne pas restaurer sur une version modifiée"
+        ],
+        "statCom": "070F4",
+        "domain": "F4",
+        "saveAction": "SAVE",
+        "year": 2027,
+        "motif": "",
+        "confirmPopulationImpact": false,
+        "date": "2027-03-22",
+        "startTime": "19:00",
+        "endTime": "19:30",
+        "participationEvaluation": true,
+        "oiCodes": [
+          "DAP:Y1"
+        ],
+        "publicCodes": [],
+        "publicFreeLabels": [
+          "Chef section DAP",
+          "Resp matériel "
+        ],
+        "lieuId": "57c9e32d-d161-4af2-9f3a-131dbcd3a7bd",
+        "lieuLibre": "",
+        "keepLieuInReferential": false,
+        "salleTheorieId": null
+      }
+    }
+  ],
+  "mode": "existing local recipe, isolated new assets/projection; no change to open MOA session"
+}

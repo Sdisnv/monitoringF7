@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-15T06:46:37.692Z",
+  "productionProjection": [
+    {
+      "id": "QV26-VISION-LOCALE-DAP-F8783089:O3:S1",
+      "label": "Chef section DAP",
+      "kind": "FREE",
+      "publishedEventId": null
+    }
+  ],
+  "localOpenRecipe": [],
+  "conversionsPerformed": 0,
+  "exactMappings": {
+    "Chef section DAP": "CMDT:CHEF-SECTION-DAP",
+    "Candidat cond VL": "AUTO:CAND-VL",
+    "Resp matériel": "ENC:RESP-MATERIEL",
+    "Préposé matériel": "ENC:PREPOSE-MATERIEL"
+  }
+}

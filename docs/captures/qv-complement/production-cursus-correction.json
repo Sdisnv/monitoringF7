@@ -1,0 +1,93 @@
+{
+  "at": "2026-10-15T06:40:00.460536+00:00",
+  "results": [
+    {
+      "id": "ea7029d5-4355-4b8c-b976-6037d6bcea7e",
+      "code": "CI-DPS",
+      "status": "CORRECTED"
+    },
+    {
+      "id": "f618cd32-7e4a-4b2a-a34c-47d4fd5d02f1",
+      "code": "CI-DAP",
+      "status": "CORRECTED"
+    }
+  ],
+  "committed": true,
+  "protectedTables": [
+    {
+      "name": "scope_affectations",
+      "after_hash": "a25cf27b765a3ce9eb56ec739a7a90d7",
+      "before_hash": "a25cf27b765a3ce9eb56ec739a7a90d7"
+    },
+    {
+      "name": "scope_attendus",
+      "after_hash": "7f1f8c3a76f9e101da670659ef2f6d6a",
+      "before_hash": "7f1f8c3a76f9e101da670659ef2f6d6a"
+    },
+    {
+      "name": "scope_evenements",
+      "after_hash": "dc61ed6443401034fad126054397f955",
+      "before_hash": "dc61ed6443401034fad126054397f955"
+    },
+    {
+      "name": "scope_event_code_allocations",
+      "after_hash": "87c78bdc8b8cd485401dc3e9d4970be6",
+      "before_hash": "87c78bdc8b8cd485401dc3e9d4970be6"
+    },
+    {
+      "name": "scope_participations",
+      "after_hash": "5724d6cf9585198bf683282f94937dbf",
+      "before_hash": "5724d6cf9585198bf683282f94937dbf"
+    },
+    {
+      "name": "scope_person_qualifications",
+      "after_hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "before_hash": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "name": "scope_public_definitions",
+      "after_hash": "438edb2ecddafee7f3ede2ce32142502",
+      "before_hash": "438edb2ecddafee7f3ede2ce32142502"
+    },
+    {
+      "name": "scope_public_rule_versions",
+      "after_hash": "2d2559c5804c4d553805aab52d5cd957",
+      "before_hash": "2d2559c5804c4d553805aab52d5cd957"
+    },
+    {
+      "name": "scope_quo_vadis_cohortes",
+      "after_hash": "78ee3c46690956cf4a9551e9845c3972",
+      "before_hash": "78ee3c46690956cf4a9551e9845c3972"
+    },
+    {
+      "name": "scope_quo_vadis_cursus_programmes",
+      "after_hash": "e56b6011e12a80c2d2d952f0b9442857",
+      "before_hash": "e56b6011e12a80c2d2d952f0b9442857"
+    },
+    {
+      "name": "scope_quo_vadis_cursus_step_programmes",
+      "after_hash": "a6eedebdb501f074ee311370ddd0cf11",
+      "before_hash": "a6eedebdb501f074ee311370ddd0cf11"
+    },
+    {
+      "name": "scope_quo_vadis_cursus_steps",
+      "after_hash": "543ecff6dc09953111a5f56b8d66612f",
+      "before_hash": "543ecff6dc09953111a5f56b8d66612f"
+    },
+    {
+      "name": "scope_quo_vadis_cursus_versions",
+      "after_hash": "0b8a3ac4cd7567799c03a88b19efc401",
+      "before_hash": "0b8a3ac4cd7567799c03a88b19efc401"
+    },
+    {
+      "name": "scope_quo_vadis_obligations",
+      "after_hash": "a5bcc3e1cd5a5824d7b54357452d1dd4",
+      "before_hash": "a5bcc3e1cd5a5824d7b54357452d1dd4"
+    },
+    {
+      "name": "scope_qv_publication_links",
+      "after_hash": "5b1160c12416b88571d8be0f59e98b52",
+      "before_hash": "5b1160c12416b88571d8be0f59e98b52"
+    }
+  ]
+}

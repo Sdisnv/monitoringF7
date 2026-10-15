@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-15T06:40:32.523485+00:00",
+  "cursus": [
+    {
+      "id": "43cb32f6-8197-4295-9cb5-3b13100a1a4d",
+      "code": "C-GROUPE",
+      "domain": "FOCA",
+      "updatedAt": "2026-10-06T14:52:43.47053+00:00"
+    },
+    {
+      "id": "f618cd32-7e4a-4b2a-a34c-47d4fd5d02f1",
+      "code": "CI-DAP",
+      "domain": "FOCA",
+      "updatedAt": "2026-10-15T06:40:00.733127+00:00"
+    },
+    {
+      "id": "ea7029d5-4355-4b8c-b976-6037d6bcea7e",
+      "code": "CI-DPS",
+      "domain": "FOCA",
+      "updatedAt": "2026-10-15T06:40:00.732113+00:00"
+    }
+  ],
+  "readOnly": "on",
+  "freeLabels": [
+    {
+      "id": "f179d163-5d1b-428a-a6e0-bb3be7a56bdb",
+      "label": "Chef section DAP",
+      "sourceRef": "QV26-VISION-LOCALE-DAP-F8783089:O3:S1"
+    }
+  ]
+}

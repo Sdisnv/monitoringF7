@@ -133,12 +133,28 @@ Pour chaque demi-section active, sélectionner la première et la dernière inst
 Implémentation : `qvDeriveConduiteContinue`.
 
 ### QV-DAP-001 — Conduite / formation continue DAP
-Activité propre au DAP : Stat.Com `01522F7`, sections Y1–Y4, 18:30–21:30, local de section,
+Activité propre au DAP : Stat.Com `01522F7`, sections Y1–Y4, 18:30 - 21:30, local de section,
 responsable `Of auto`, public `cond VL`. Présente dans l’historique (17 réalisations :
 Y1 ×5, Y2 ×4, Y3 ×4, Y4 ×4) mais absente de la génération 2027 ; la décision MOA en retient
 quatre par section, entre mars et mai (16 soirées). Chaque soirée comprend quatre places
 chevauchées ; chacune prévoit 30 minutes de conduite et 30 minutes de connaissance du véhicule.
 Elle ne copie jamais les occurrences DPS (`0152F7`). Implémentation : `qvApplyDapConduite`.
+
+Complément MOA du 15.10.2026 : quatre places par soirée, chacune avec une heure de présence,
+30 minutes de conduite et 30 minutes de connaissance véhicule. Chevauchements imposés :
+
+| Place | Présence | Conduite | Connaissance véhicule |
+| --- | --- | --- | --- |
+| 1 | 18:30 - 19:30 | 18:30 - 19:00 | 19:00 - 19:30 |
+| 2 | 19:00 - 20:00 | 19:30 - 20:00 | 19:00 - 19:30 |
+| 3 | 20:00 - 21:00 | 20:00 - 20:30 | 20:30 - 21:00 |
+| 4 | 20:30 - 21:30 | 21:00 - 21:30 | 20:30 - 21:00 |
+
+Tous les affichages de ces créneaux utilisent exclusivement `HH:MM - HH:MM` : trait d'union ASCII
+et exactement une espace de chaque côté. Les valeurs temporelles persistantes ne changent pas pour
+la typographie. La source commune `qvDapConduiteSlots` est réutilisée pour Y1 à Y4 et les restitutions
+annuelles reconduites démontrées par type Conduite, Stat.Com `01522F7` et OI DAP qualifié unique.
+Aucune nouvelle programmation, date, plage globale, affectation ou présence n'est déduite de ce tableau.
 
 ### QV-DAP-002 — Quatre exercices DAP
 La formation groupée remplace un exercice de la série 2026 à cinq exercices. Le Programme 2027
@@ -862,3 +878,34 @@ Une décision de famille seule sur un instantané automatique peut être lue ave
 Elle n'adopte ni date ni état automatiquement et ne vaut pas validation. Le cours de cadres DAP 4 Y2
 reste sans date décidée ; sa restitution nécessite le correctif applicatif de ce lot, encore non déployé.
 Preuves et réserves : `docs/SCOPE_QV_MOA_CONSOLIDE_20261015.md`.
+
+## Correctif Complémentaire MOA Du 15.10.2026
+
+### QV-PUBLIC-008 — Quatre références descriptives
+Catalogue permanent partagé des fiches et filtres : Chef section DAP immédiatement après Chef DAP,
+Candidat cond VL immédiatement après cond VL, Resp matériel et Préposé matériel dans Encadrement.
+Le positionnement des deux fonctions matériel est provisoire ; aucune réorganisation des autres
+groupes n'est anticipée. L'ancre Chef DAP réutilise le code de fonction existant `C DAP` comme
+description, sans inventer d'équivalence de population individuelle ou de correspondance IndeX.
+Après recherche des équivalents dans les sources et le référentiel persistant des publics, seuls
+les quatre codes descriptifs manquants sont ajoutés au catalogue existant :
+`CMDT:CHEF-SECTION-DAP`, `AUTO:CAND-VL`, `ENC:RESP-MATERIEL`, `ENC:PREPOSE-MATERIEL`.
+Ce sont des références descriptives SCOPE, pas des qualifications ni des règles de population.
+
+Les quatre libellés strictement identiques sont reconnus dans les filtres et présentés sans doublon
+en fiche. Les codes et libellés libres déjà enregistrés restent présents dans les payloads de sauvegarde
+tant que l'utilisateur ne retire pas sa sélection. Reconnaître ne signifie pas convertir : aucune
+conversion persistante de ces occurrences ou publications n'est autorisée par ce lot. Toute conversion
+ultérieure exige un inventaire et une autorisation MOA distincte ; une variante ambiguë reste libre.
+La sélection n'engendre ni NIP, affectation, obligation ni contribution statistique automatique.
+
+### QV-CURSUS-009 — CI DAP et CI DPS sous FOCA
+Décision explicite remplaçant la réserve de rattachement QV-FILTER-007 : les cursus existants
+CI-DAP et CI-DPS appartiennent à FOCA. Ordre alphabétique français : Cursus C groupe, Cursus CI DAP,
+Cursus CI DPS. Identifiants existants réutilisés, aucun cursus supplémentaire. Seul `domain_code`
+est corrigé dans les deux références, avec date de modification et trace du journal ; inscriptions,
+cohortes, modules, versions, historiques, qualifications et affectations restent inchangés.
+Les fiches et filtres lisent ces mêmes références persistantes, sans catalogue parallèle.
+
+Les causes techniques d'authentification et preuves ciblées sont séparées des règles métier dans
+`docs/SCOPE_QV_COMPLEMENT_MOA_20261015.md`. Aucune durée ni protection d'authentification n'est modifiée.

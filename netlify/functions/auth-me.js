@@ -1,4 +1,4 @@
-const { response, verifyAccess, verifyToken, bearerToken, publicUser, publicOidcUserFromClaims, findUser } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken, publicUser, publicOidcUserFromClaims, findUser, authFailureResponse } = require('../lib/_auth-utils');
 const { hasHumanIdentity } = require('../lib/_auth-identity');
 
 exports.handler = async function(event){
@@ -22,6 +22,6 @@ exports.handler = async function(event){
     if(!hasHumanIdentity(safeUser)) return response(401, { ok:false, error:'unusable_identity', message:'Identité utilisateur indisponible.' });
     return response(200, { ok:true, user:safeUser, role:safeUser.role, roles:safeUser.roles, permissions:safeUser.permissions });
   }catch(error){
-    return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) });
+    return authFailureResponse(error);
   }
 };

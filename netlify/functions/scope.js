@@ -1,4 +1,4 @@
-const { response, parseBody, verifyAccess, verifyToken, bearerToken, resolveSessionUser } = require('../lib/_auth-utils');
+const { response, parseBody, verifyAccess, verifyToken, bearerToken, resolveSessionUser, authFailureResponse } = require('../lib/_auth-utils');
 const { canWriteRecords, hasPermission } = require('../lib/_rbac');
 const { HttpError } = require('../lib/_scope-rules');
 const { createScopeService } = require('../lib/_scope-service');
@@ -111,7 +111,7 @@ async function scopeHandler(event){
   let claims;
   try { claims = await requireAccess(event); }
   catch(error){
-    return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) });
+    return authFailureResponse(error);
   }
 
   const method = event.httpMethod;
