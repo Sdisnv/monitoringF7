@@ -1350,12 +1350,16 @@ function createScopeQuoVadisService({ database = db } = {}){
     return {
       domains: Array.from(domains.values()).sort((a, b) => a.label.localeCompare(b.label, 'fr')),
       months: Array.from(months.values()).sort((a, b) => String(a.key || '').localeCompare(String(b.key || ''))),
-      families: ['FOBA', 'FOCO', 'FOCA', 'FOSPEC'].map((code) => {
-        const items = (qv.obligations || []).filter((row) => coverage.formationFamily(row.domain) === code);
+      families: uiLogic.qvProgrammeFamilyCatalogue().map((code) => {
+        const items = (qv.canonicalProgramme?.rows?.filter(uiLogic.qvProgrammeIsActive) || qv.obligations || []).filter((row) => {
+          if(qv.canonicalProgramme) return uiLogic.qvProgrammeFamily(row)===code;
+          const family=row.metadata?.planningFields?.family ?? row.metadata?.reconductedBusiness?.family ?? row.classification?.family;
+          return (uiLogic.qvProgrammeFamilyCatalogue().includes(family)?family:coverage.formationFamily(row.domain))===code;
+        });
         return {
           code,
           total: items.length,
-          positionnees: items.filter((row) => row.statut === 'PLANIFIE').length,
+          positionnees: items.filter((row) => (row.status || row.statut) === 'PLANIFIE' || row.publishedEventId).length,
           aArbitrer: items.filter((row) => row.metadata?.needsArbitration === true).length
         };
       })
@@ -1903,6 +1907,8 @@ function createScopeQuoVadisService({ database = db } = {}){
             lieuId:preparation.lieu_id || null,
             lieuLibre:preparation.lieu_libre || '',
             salleTheorieId:preparation.salle_theorie_id || null,
+            ...(preparation.metadata.familyDecision?.scope==='FAMILY_ONLY' && Object.hasOwn(fields,'family')
+              ? {family:fields.family} : {}),
             participationEvaluation:participationEvaluation(fields,canonicalSource)
           } : preparation ? {
             preparation:{ type:'OBLIGATION',id:preparation.obligation_id,updatedAt:preparation.updated_at },
@@ -2359,6 +2365,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         ...(!row?.statCom && row?.sold === false && row?.ecawinExport === true
           ? {exportPreparationState:'IMPORT_CONTRACT_REQUIRED'} : {})};
     });
+    result.breakdown=buildAnnualBreakdown(result);
     return result;
   }
 

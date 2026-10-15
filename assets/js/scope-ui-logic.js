@@ -3489,7 +3489,7 @@
   }
 
   function qvProgrammeFamilyCatalogue() {
-    return ['SDIS','DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'];
+    return ['SDIS','DPS','DAP','JSP','Permanent','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'];
   }
 
   // Defaults for NEW proposals only. Saved occurrences retain their own family.
@@ -3498,7 +3498,7 @@
     if(qvProgrammeFamilyCatalogue().includes(family)) return family;
     const statCom=String(row?.statCom || '');
     const ois=qvProgrammeConfirmedOiCodes(row);
-    if(/^QV26-EXERCICE-DAP-[1-5]-/.test(String(row?.definitionId || ''))
+    if(/^QV26-(?:EXERCICE-DAP-[1-4]-|COURS-DE-CADRES-EXERCICE-DAP-[1-4]-)/.test(String(row?.definitionId || ''))
       && qvProgrammeFilterType(row)==='Exercice' && /^013Y[1-4]$/.test(statCom)
       && ois.length===1 && ois[0]===`DAP:${statCom.slice(-2)}`) return 'DAP';
     return '';
@@ -3512,6 +3512,14 @@
   function qvProgrammeCursusLabel(item) {
     const label=({'TP9':'cond TP9','OFSI-BASE':'OFSI'})[item.code] || item.libelle;
     return `Cursus ${label}`;
+  }
+
+  function qvProgrammeReferenceGroups(items,otherLabel,labeler){
+    const families=qvProgrammeFamilyCatalogue();
+    return [...families,otherLabel].map(group=>({group,items:(items || []).filter(item=>{
+      const family=item.domainCode || '';
+      return (families.includes(family)?family:otherLabel)===group;
+    }).sort((a,b)=>labeler(a).localeCompare(labeler(b),'fr'))})).filter(group=>group.items.length);
   }
 
   function qvProgrammeOrganisationalFamilies(codes) {
@@ -5830,6 +5838,7 @@
     qvProgrammeProposedFamily,
     qvProgrammePublicReferenceCode,
     qvProgrammeCursusLabel,
+    qvProgrammeReferenceGroups,
     qvProgrammeOrganisationalFamilies,
     qvProgrammeDomainMatches,
     qvNormalizeOiSelections,
