@@ -308,7 +308,9 @@ function canonicalBusinessProgramme2027(){
   const previousDomainRows = applyProvenInstitutionalDomains(reconcileValidatedCursusModules(arbitratedRows));
   const canonicalDomainRows = paprRules.restorePaprModules(applyMoaInstitutionalDomains(previousDomainRows),historicalReference2026.rows || []);
   canonicalBusinessCache = {
-    rows: applyMonthlyJspDirectionAndAnnualReport(canonicalDomainRows),
+    rows: applyMonthlyJspDirectionAndAnnualReport(canonicalDomainRows).map(row=>({
+      ...row,activityType:uiLogic.qvProgrammeFilterType(row)
+    })),
     summary: {
       institutionalDomains: canonicalDomainRows.flatMap((row, index) => previousDomainRows[index] && row.domain !== previousDomainRows[index].domain
         ? [{ id:row.id,label:row.label,before:previousDomainRows[index].domain,after:row.domain }] : []),
@@ -2012,7 +2014,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         const proposal = result.proposals.find(item => item.obligationId === row.obligationId && item.status !== 'ECARTE');
         const iso = value => value instanceof Date ? value.toISOString() : value;
         return { ...row.metadata.manualSource,id:row.sourceRef,label:row.title,activityLabel:row.title,eventDisplayLabel:row.title,
-          domain:fields.domain || row.domain,persistenceDomain:row.domain,family:fields.family,statCom:row.statcomCode,ois:fields.oiCodes || [],publics:row.cibleCodes,themes:fields.themes || [],
+          domain:fields.domain || row.domain,persistenceDomain:row.domain,family:fields.family,activityType:row.metadata.activityType || row.metadata.manualSource?.activityType || '',statCom:row.statcomCode,ois:fields.oiCodes || [],publics:row.cibleCodes,themes:fields.themes || [],
           startsAt:iso(row.imposedStartAt || proposal && proposal.startsAt) || null,endsAt:iso(row.imposedEndAt || proposal && proposal.endsAt) || null,
           responsible:fields.responsibleLabel,location:fields.locationLabel,room:fields.roomLabel,lieuId:row.lieuId,
           responsibleSelections:fields.responsibleSelections,publicFreeLabels:fields.publicFreeLabels || [],
@@ -3134,7 +3136,8 @@ function createScopeQuoVadisService({ database = db } = {}){
       where p.annee < $1 and (o.metadata ? 'businessValidation' or o.metadata ? 'lifecycleDecision') order by p.annee desc,o.updated_at desc`,[programme.annee]);
     let count = 0;
     for(const reference of consolidation.latestValidatedReferences(references.rows,programme.annee)){
-      const fields = {...consolidation.businessSnapshot(reference.metadata.businessValidation.fields),
+      const reconduction=consolidation.proposedReconductionSnapshot(reference);
+      const fields = {...reconduction.fields,
         participationEvaluation:resolveParticipationEvaluation({...reference.metadata.businessValidation.fields,year:programme.annee},
           programmeDefinition(reference,catalogue))};
       const lineage = { ...reference.metadata.lineage, parentYear:Number(reference.annee),parentOccurrence:reference.source_ref,
@@ -3142,7 +3145,9 @@ function createScopeQuoVadisService({ database = db } = {}){
       const obligation = await upsertObligation(programme,{
         sourceType:'HISTORIQUE',sourceRef:`LINEAGE:${lineage.key}`,title:fields.activityLabel,domain:qvPersistenceDomain(fields.domain),
         cibleCodes:fields.publicCodes,lieuId:fields.lieuId,lieuLibre:fields.lieuLibre,statut:'A_PLANIFIER',
-        metadata:{ lineage,reconductedBusiness:fields,businessJustification:'Dernière version métier validée de cette lignée',
+        metadata:{ lineage,reconductedBusiness:fields,activityType:reconduction.activityType,
+          ...(reconduction.familyProposal?{familyProposal:reconduction.familyProposal}:{}),
+          businessJustification:reconduction.familyProposal?'Référence validée conservée ; proposition de famille à valider pour le nouveau cycle':'Dernière version métier validée de cette lignée',
           statcomCode:fields.statCom,sessionStructure:fields.sessionStructure }
       });
       if(!obligation) continue;
@@ -3609,6 +3614,8 @@ function createScopeQuoVadisService({ database = db } = {}){
     const itemId = `QV${String(year).slice(-2)}:MANUAL:${randomUUID()}`;
     const manualSource = {
       id:itemId,label:activityLabel,activityLabel,domain,persistenceDomain:domain,
+      family:type?.defaults?.family || '',
+      activityType:type?.defaults?.activityType || '',
       statCom:String(body.statCom || '').trim(),ois:[],publics:[],themes:[],
       definitionId:type?.definitionId || null,
       typeSource:type ? {programmeTypeId:type.id,definitionId:type.definitionId,siteKey:type.siteKey || type.site || null} : null,
@@ -4040,10 +4047,8 @@ function createScopeQuoVadisService({ database = db } = {}){
     if(Object.hasOwn(body,'family') && planningFields.family && planningFields.family!==String(inherited.family ?? uiLogic.qvProgrammeFamily(source))){
       if(uiLogic.qvProgrammeFamily({family:planningFields.family})!==planningFields.family)
         throw new HttpError(422,'programme_famille_invalide','Choisissez une famille du référentiel, ou laissez la valeur vide.');
-      if(!uiLogic.qvProgrammeFamilyCatalogue(canonicalRows).includes(planningFields.family)){
-        const known=(await db.query("select exists(select 1 from scope_quo_vadis_obligations where metadata->'planningFields'->>'family'=$1) as found",[planningFields.family])).rows[0]?.found;
-        if(!known) throw new HttpError(422,'programme_famille_invalide','Choisissez une famille du référentiel existant.');
-      }
+      if(!uiLogic.qvProgrammeFamilyCatalogue().includes(planningFields.family))
+        throw new HttpError(422,'programme_famille_invalide','Choisissez une famille du référentiel existant.');
     }
     planningFields.ecawinActivityCode = ecawinActivityCode;
     if(responsibleSelections) planningFields.responsibleSelections = responsibleSelections;
