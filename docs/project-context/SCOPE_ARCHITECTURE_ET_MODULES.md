@@ -1,0 +1,34 @@
+# Architecture et modules SCOPE — guide de navigation
+
+Guide documentaire au main `3bdad82029ef79ea721bcf4043a5bb47e4d86764`. L’[inventaire capitalisé](../audits/20261015/SCOPE_INVENTAIRE_FONCTIONNEL_20261015.md) conserve le détail des routes, services, tables, migrations et réserves. Cette page n’ajoute ni table ni contrat API.
+
+## Modules et interactions
+
+| Bloc métier | Existant / interaction | Composants et sources | Limite à conserver |
+|---|---|---|---|
+| Personnes | Identité métier/NIP, fiche et temporalité ; distinct du compte applicatif | [Personnel](../../netlify/lib/_scope-personnel-service.js), [baseline](../SCOPE_V1_BASELINE.md) | Pas de NIP fictif ; dates d’entrée SDIS incomplètes selon relevé daté, pas inéligibilité automatique |
+| Grades | Référentiels et alias historiques utilisés par les fiches | [Référentiels personnel](../../assets/js/scope-personnel-referentials.js) | Pas de nouveau catalogue IndeX démontré par simple présence des libellés |
+| Fonctions | Références responsables et rôles d’événement ; ne prouvent pas une fonction organisationnelle individuelle | [Rapport #24](../SCOPE_QV_PUBLICS_MOA_20261015.md) | Relation personne–fonction–domaine–OI datée manquante ; extraction des chefs NON VÉRIFIÉE |
+| Affectations | Rattachement contextualisé et daté ; éligibilité à la date réelle | [Service](../../netlify/lib/_scope-service.js), [temporalité UI](../../assets/js/scope-personnel-temporal.js) | PRINCIPAL/SECONDAIRE ≠ Chef section ; pas de déduction entre DPS et DAP |
+| Qualifications | Faits individuels avec dates, distincts de l’inscription à un cursus | [C3-B](../SCOPE_PERSON_QUALIFICATIONS_C3_B.md), [service](../../netlify/lib/_scope-person-qualifications.js) | Aucune qualification créée depuis une sélection descriptive QV |
+| Spécialisations | Références typées et rattachements existants, multisélection | [C1](../SCOPE_CANONICAL_FOUNDATIONS_C1.md), [C3-B](../SCOPE_PERSON_QUALIFICATIONS_C3_B.md) | Alignement officiel IndeX restant dépendant de source et décision |
+| Candidatures | Choix descriptifs par domaine et faits applicables selon règles démontrées | [Publics](../../assets/js/scope-personnel-populations.js), [canon](../business-rules/quo-vadis-canonical-rules.md) | Candidat ≠ qualifié ; ne pas annoncer un module de candidature complet sans preuve |
+| Événements | Éditeur, version, révisions, publication liée ; personnes et présences conservées | [Service métier](../../netlify/lib/_scope-service.js), [API](../../netlify/functions/scope.js) | Même ID en révision ; code/Stat.Com publiés protégés, NULL légitime conservé |
+| Présences | Nominatives/quantitatives et statuts, clôture selon politiques | [Modèle](../../netlify/lib/_scope-model.js), [service](../../netlify/lib/_scope-service.js) | Participation non évaluée peut conserver ses présences ; historique non recalculé arbitrairement |
+| Obligations | Attendus et exigences applicables selon date/cycle/population | [Cycle](../../netlify/lib/_scope-cycle-service.js), [service](../../netlify/lib/_scope-service.js) | Obligation QV préparatoire et obligation individuelle ne sont pas interchangeables |
+| Participations | Consolidation, rôles/multiséance, permutations et rattrapages selon politiques | [Architecture de politique](../SCOPE_GENERIC_EVENT_SESSION_POLICY_ARCHITECTURE_1.md), [règles cycles](../../netlify/lib/_scope-cycle-rules.js) | Réutiliser le moteur ; parcours spécialisés Cours ECA restent partiels |
+| Statistiques | Calculs selon dates civiles, population datée, évaluation et objectifs | [Graphes](../../netlify/lib/_scope-graphs.js), [objectifs](../SCOPE_OBJECTIVES_1.md) | Cycle métier ne décale pas statistiques01.01–31.12 ; dispense et autres états suivent policy |
+| Rapports | Rendu depuis données/services existants, filtres et provenance | [Service rapports](../../netlify/lib/_scope-report-service.js), [multiséance](../../netlify/lib/_scope-multisession-report.js) | PDF témoin compact demandé non obtenu ; export QV Excel existant est CSV compatible, pas nouveau XLSX |
+| Formations | Configuration d’événement et qualifications, cours suivis vs obligations | [Service](../../netlify/lib/_scope-service.js), [roadmap](../audits/20261015/SCOPE_ROADMAP_CONSOLIDEE_20261015.md) | Contrat spécialisé Cours ECA/origine/import restant à formaliser ; changement de cursus ne réassocie pas silencieusement configuration |
+| Cursus | Catalogue/étapes/versions existants, PAPR et autres cursus | [Service QV](../../netlify/lib/_scope-quo-vadis-service.js), [C3-B](../SCOPE_PERSON_QUALIFICATIONS_C3_B.md) | QV-RULES-001 cible complète non démontrée ; présence générique ne vaut pas acceptation huit sections |
+| Administration | Objectifs/suivi, imports, référentiels et accès selon permissions | [RBAC](../../netlify/lib/_rbac.js), [API](../../netlify/functions/scope.js) | Utilisateur n’est pas automatiquement profil lecture seule ; mode EM à définir/protéger serveur |
+| QUO VADIS | Programme/agenda/calendrier/fiches, préparations, contrôles, reconduction, publication | [Couverture](../../assets/js/scope-qv-coverage.js), [service](../../netlify/lib/_scope-quo-vadis-service.js) | Programme 2027 NON VALIDÉ ; chaîne annuelle complète NON VÉRIFIÉE |
+| Authentification / exploitation | Auth existante, contrôles serveur, déploiement technique distinct validation métier | [Auth](../../netlify/lib/_auth-utils.js), [procédure](SCOPE_REPRISE_ET_LIVRAISON.md) | LOCAL documenté dans#22 ; activation Okta courante à recontrôler avant intervention ; aucune modification sécurité ici |
+
+## Relations conceptuelles et relations physiques
+
+Le chemin PERSONNE → affectation datée → qualification → public applicable → événement → obligation → présence → statistique est conceptuel. Le moteur croise les faits ; la qualification n’est pas une FK automatique vers un public, et la visibilité OI n’est pas une obligation nominative.
+
+Le [DDL versionné](../../netlify/lib/_scope-schema.js) déclare notamment `scope_affectations.personne_id`, `scope_attendus.personne_id` et `scope_participations.personne_id` vers `scope_personnes.id`. Cette lecture statique du DDL n’est pas une nouvelle attestation de contraintes effectives en production. Le relevé SQL de phase A atteste l’existence des tables et contraintes citées à sa date ; la correspondance complète de schémas/rôles/API et DATABASE_URL n’a pas été attestée. Pour une évolution, établir les deux preuves au périmètre utile, sans connexion ou mutation implicite.
+
+Le [modèle legacy MODEL-2](../SCOPE_MODEL_2.md) et les [fondations C1](../SCOPE_CANONICAL_FOUNDATIONS_C1.md) ont des portées différentes pour PR/AUTO/FOSPEC. Ne pas reclasser ni migrer le legacy au motif d’un schéma conceptuel. Le [moteur public C2](../SCOPE_PUBLIC_ENGINE_MIRROR_C2_B.md) est un socle en miroir ; sa présence ne signifie pas bascule générale autorisée.

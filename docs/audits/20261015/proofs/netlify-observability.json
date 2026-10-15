@@ -1,0 +1,391 @@
+{
+  "window": {
+    "from": 1792068413000,
+    "to": 1792072013000
+  },
+  "statuses_hour": {
+    "data": [
+      {
+        "type": "status_codes_response",
+        "attributes": {
+          "items": [
+            {
+              "key": "200",
+              "count": 282
+            },
+            {
+              "key": "499",
+              "count": 23
+            },
+            {
+              "key": "401",
+              "count": 6
+            },
+            {
+              "key": "201",
+              "count": 1
+            }
+          ]
+        }
+      }
+    ],
+    "meta": {
+      "responses": [
+        {
+          "from": 1792068413000,
+          "to": 1792072013000,
+          "type": "counts"
+        }
+      ]
+    }
+  },
+  "statuses_day": {
+    "data": [
+      {
+        "type": "status_codes_response",
+        "attributes": {
+          "items": [
+            {
+              "key": "200",
+              "count": 2010
+            },
+            {
+              "key": "499",
+              "count": 64
+            },
+            {
+              "key": "401",
+              "count": 59
+            },
+            {
+              "key": "404",
+              "count": 10
+            },
+            {
+              "key": "302",
+              "count": 9
+            },
+            {
+              "key": "422",
+              "count": 7
+            },
+            {
+              "key": "201",
+              "count": 6
+            },
+            {
+              "key": "304",
+              "count": 5
+            },
+            {
+              "key": "301",
+              "count": 3
+            }
+          ]
+        }
+      }
+    ],
+    "meta": {
+      "responses": [
+        {
+          "from": 1792015200000,
+          "to": 1792072013000,
+          "type": "counts"
+        }
+      ]
+    }
+  },
+  "errors": [
+    {
+      "request_id": "01M4ZVGYFHJM3GN0JDTSG6TFQ3",
+      "timestamp": "2026-10-15T13:20:16.881478409Z",
+      "method": "GET",
+      "path": "/favicon.ico",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 0.608436,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZVGYEW6P9G19NGMSRY4QJV",
+      "timestamp": "2026-10-15T13:20:16.860909089Z",
+      "method": "GET",
+      "path": "/auth/config",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 21.270572,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1E8XJK652WXJXNXDT5YS",
+      "timestamp": "2026-10-15T13:11:48.76523848Z",
+      "method": "POST",
+      "path": "/auth/refresh",
+      "status": 401,
+      "function_invoked": true,
+      "duration_ms": 733.59719,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1DDK5FX08ND1C9E9M78F",
+      "timestamp": "2026-10-15T13:11:47.891811236Z",
+      "method": "GET",
+      "path": "/auth/me",
+      "status": 401,
+      "function_invoked": true,
+      "duration_ms": 860.337033,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHS07YRXMM6K6ZFAGW6",
+      "timestamp": "2026-10-15T13:11:47.001884916Z",
+      "method": "GET",
+      "path": "/assets/js/scope-ui.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 44.979822,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHSBEJMKTFMN1S7QN0X",
+      "timestamp": "2026-10-15T13:11:47.001703504Z",
+      "method": "GET",
+      "path": "/assets/js/scope-personnel-activity-modal.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 45.296577,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHS3AYJEQH0MYB10C8Z",
+      "timestamp": "2026-10-15T13:11:47.001565539Z",
+      "method": "GET",
+      "path": "/assets/js/scope-personnel-display.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 45.854215,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHSS3RDBXZ0JF79WG87",
+      "timestamp": "2026-10-15T13:11:47.0015064Z",
+      "method": "GET",
+      "path": "/assets/js/scope-personnel-temporal.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 46.27531,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHRANKB24SKJ6DZWPFP",
+      "timestamp": "2026-10-15T13:11:47.000800973Z",
+      "method": "GET",
+      "path": "/assets/js/scope-personnel-referentials.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 46.123011,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHRE3NKAB8QM4D1FFZ1",
+      "timestamp": "2026-10-15T13:11:47.00055288Z",
+      "method": "GET",
+      "path": "/assets/js/scope-pdf-viewer.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 46.362925,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHRFYK29S5GT5MK7REJ",
+      "timestamp": "2026-10-15T13:11:47.000436037Z",
+      "method": "GET",
+      "path": "/assets/vendor/pdfjs/pdf.min.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 46.863665,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHR6CENTWMN7AVAFK93",
+      "timestamp": "2026-10-15T13:11:47.000418585Z",
+      "method": "GET",
+      "path": "/assets/js/scope-api.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 46.992347,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHQ4620JDAFA17V76HV",
+      "timestamp": "2026-10-15T13:11:46.999924999Z",
+      "method": "GET",
+      "path": "/assets/js/scope-auth-idle.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 47.131237,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHQSVBQCHGYZTM5BYM3",
+      "timestamp": "2026-10-15T13:11:46.999489719Z",
+      "method": "GET",
+      "path": "/assets/js/scope-charts.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 47.793914,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHQDKQMR6FX4Y6F0G8D",
+      "timestamp": "2026-10-15T13:11:46.999308518Z",
+      "method": "GET",
+      "path": "/assets/js/scope-ecawin.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 47.903423,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHQ6WSYW3R5EGQS4W3N",
+      "timestamp": "2026-10-15T13:11:46.999065223Z",
+      "method": "GET",
+      "path": "/assets/js/scope-ui-logic.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 47.565752,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHP33TZRA2B03CCQMS0",
+      "timestamp": "2026-10-15T13:11:46.9989403Z",
+      "method": "GET",
+      "path": "/assets/js/scope-qv-coverage.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 48.315727,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHPJ6T2WZMX6A6S3W6H",
+      "timestamp": "2026-10-15T13:11:46.998919345Z",
+      "method": "GET",
+      "path": "/assets/js/scope-event-series.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 48.06047,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHPHDZFG9KNM14ACQBV",
+      "timestamp": "2026-10-15T13:11:46.998106662Z",
+      "method": "GET",
+      "path": "/assets/js/scope-activity-label.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 49.32165,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHN3MW9466FNCKWRCCG",
+      "timestamp": "2026-10-15T13:11:46.998018684Z",
+      "method": "GET",
+      "path": "/assets/js/rbac.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 49.107921,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHND73SGVDD6PS7ZG21",
+      "timestamp": "2026-10-15T13:11:46.997651364Z",
+      "method": "GET",
+      "path": "/assets/js/api-client.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 49.159942,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHN4QDGADEV03Q2CDZ9",
+      "timestamp": "2026-10-15T13:11:46.997288815Z",
+      "method": "GET",
+      "path": "/assets/js/backend-config.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 49.327014,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHNE78MTB1RPFK62KBB",
+      "timestamp": "2026-10-15T13:11:46.997267491Z",
+      "method": "GET",
+      "path": "/assets/js/config.js",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 49.375436,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV1CHMFYVR991VPGZNMKMV",
+      "timestamp": "2026-10-15T13:11:46.996586063Z",
+      "method": "GET",
+      "path": "/assets/css/scope.css",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 50.050452,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV0GS5KKZANHBXZDPPBPCZ",
+      "timestamp": "2026-10-15T13:11:18.565288811Z",
+      "method": "POST",
+      "path": "/auth/refresh",
+      "status": 401,
+      "function_invoked": true,
+      "duration_ms": 374.263828,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV0G5H0MHC6BRA6852874P",
+      "timestamp": "2026-10-15T13:11:17.937775063Z",
+      "method": "GET",
+      "path": "/api/scope/alerts",
+      "status": 401,
+      "function_invoked": true,
+      "duration_ms": 614.857454,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV0EXGJ9E27N32S35AAG6B",
+      "timestamp": "2026-10-15T13:11:16.656580216Z",
+      "method": "POST",
+      "path": "/auth/refresh",
+      "status": 401,
+      "function_invoked": true,
+      "duration_ms": 1249.556305,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZV0CW8G4M6P5XVQK4R63J9",
+      "timestamp": "2026-10-15T13:11:14.568745743Z",
+      "method": "GET",
+      "path": "/api/scope/quo-vadis/programmes/2027",
+      "status": 401,
+      "function_invoked": true,
+      "duration_ms": 2091.81841,
+      "log_shape": []
+    },
+    {
+      "request_id": "01M4ZTY7DPYYYN4X3WG37WQT60",
+      "timestamp": "2026-10-15T13:10:03.446264132Z",
+      "method": "GET",
+      "path": "/auth/me",
+      "status": 499,
+      "function_invoked": false,
+      "duration_ms": 225.49671,
+      "log_shape": []
+    }
+  ],
+  "definitions": "Ratio HTTP >=400 calculé séparément du taux d'erreurs affiché par l'interface Netlify. Aucun IP, cookie, jeton ou query string conservé."
+}
