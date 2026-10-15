@@ -11629,6 +11629,10 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-filters{grid-template-columns:minmax(240px,2fr) repeat(5,minmax(112px,1fr));align-items:end;padding:14px;background:#f1f3f5;border:1px solid #d8dde3}
 .qv-programme-filters option.qv-oi-parent,.qv-programme-filters option.qv-option-group-start{font-weight:700;border-top:1px solid #d8dde3}
 .qv-programme-filters option.qv-oi-child{padding-left:18px}
+.qv-agenda-filters select optgroup,.qv-toolbar select optgroup,.qv-programme-edit-grid select optgroup{background:#eef0f2;color:#626972;font-weight:650;font-style:normal}
+.qv-agenda-filters select optgroup option,.qv-toolbar select optgroup option,.qv-programme-edit-grid select optgroup option{background:#fff;color:#20262d;font-weight:400}
+.qv-programme-filters option.qv-oi-parent{border-top:3px solid #d8dde3}
+#qv-programme-specialisation legend{background:#eef0f2;color:#626972}
 .qv-programme-filters .qv-statcom-field{min-width:0;position:relative}
 .qv-statcom-field .qv-filter-label{display:block;margin-bottom:6px;color:var(--scope-muted);font-size:var(--scope-type-label);font-weight:650;text-transform:uppercase}
 .qv-statcom-menu{position:relative}

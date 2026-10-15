@@ -1,0 +1,396 @@
+{
+  "status": "PASS",
+  "tests": [
+    "1-8: eleven families, Permanent, no selectable Exercice, empty last, native grey groups, catalogue-based French sorting, SDIS first",
+    "3/12: actual service saves Permanent in a temporary fixture, statistics/filter retrieve it, reconduction retains it",
+    "9-13: exact authorised SQL corrects 16 remaining DAP families; 16 manual corrections untouched; all 32 exercise/cadre rows DAP; every protected field unchanged",
+    "11/12: concurrent target blocked individually, already-corrected targets remain untouched; rerun cannot overwrite later decisions"
+  ],
+  "sourceReadAt": "2026-10-15T05:33:25.796749+00:00",
+  "productionWrites": false,
+  "clone": "scope_qv_2027_recipe_20261006",
+  "rollbackVerified": true,
+  "publicCloneHashes": {
+    "before": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "fcba8d9f06936b80a89fa7952618adc3"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "ad594855acf4e467a1a6ea6a16b136f3"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "a25cf27b765a3ce9eb56ec739a7a90d7"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "d2dc59bd9d453460894034b7e2728f2b"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3b20b494a18db85af8f7f4ba41745d34"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "7cf9c45939cee06403e0a927ec2846b5"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "e9ca75e7d1ced0c40836586c9275444f"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "83d0ea19ae89a71cf68690608e0ccb7e"
+      }
+    },
+    "after": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "fcba8d9f06936b80a89fa7952618adc3"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "ad594855acf4e467a1a6ea6a16b136f3"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "a25cf27b765a3ce9eb56ec739a7a90d7"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "d2dc59bd9d453460894034b7e2728f2b"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3b20b494a18db85af8f7f4ba41745d34"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "7cf9c45939cee06403e0a927ec2846b5"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "e9ca75e7d1ced0c40836586c9275444f"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "83d0ea19ae89a71cf68690608e0ccb7e"
+      }
+    }
+  },
+  "familyCorrectionCloneProof": {
+    "at": "2026-10-15T05:45:28.300267+00:00",
+    "scope": "MOA GO 15.10.2026, family only",
+    "results": [
+      {
+        "id": "051e854f-37a3-48c7-a4ae-ecee3ec59029",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O1:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "486d6e25-9784-43ed-a839-f71507fa6142",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O2:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "ced6cd0e-8a68-48e9-aaa6-d32f414e94bb",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O3:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "28c4505e-36f5-4404-a7bb-702d00927b5c",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O4:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "a13fc3f3-d6c6-4115-a61a-34744ffe9cc1",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O1:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "2517d1c4-8a6a-4b39-a9be-f8d75ed57590",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O2:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "427ab933-7a6b-42aa-a3de-aa875bb98a8e",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O3:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "bf9f0c05-e2cb-4027-aa4c-e6e95130eb5a",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O4:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "86d373ff-017f-4e24-a5cb-d8862d2a2845",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O1:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "00188406-4236-4ba7-ab1d-e2141dd0f491",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O2:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "6543bf35-1cc0-494c-af9b-cfd5c342b733",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O3:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "9779ef65-4ee6-4e2d-a58b-19732624b48b",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O4:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "7b01d84e-de8d-4b97-aadd-b7f43aca983a",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O1:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "799ea7da-4541-4a1f-a502-2b5630ac8eaf",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O2:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "3a2e6f0a-ccb7-4cb4-a011-95a28fbe920a",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O3:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "da53ea46-f2cf-46bb-af96-2cf3d0e95774",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-EXERCICE-DAP-1-9890D687:O1:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "441f102c-673a-47b5-a3c4-3e81641163b7",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-EXERCICE-DAP-1-9890D687:O2:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "526feb18-343e-427b-a846-9a4d65583eb8",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-EXERCICE-DAP-1-9890D687:O3:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "6e26ce4f-6172-45e9-a2dd-952b51f0e40c",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-EXERCICE-DAP-1-9890D687:O4:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "536447d9-fe2b-4740-a49d-5284907b706f",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-EXERCICE-DAP-2-6285EF74:O1:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "c50c3e4f-c5dc-4b1b-a5b7-09d8e4ba5357",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-EXERCICE-DAP-2-6285EF74:O2:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "6fb058a8-978e-4f7f-ab12-7df94ec00893",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-EXERCICE-DAP-2-6285EF74:O3:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "dd45f0f9-1b4a-4e2f-a4ec-e471b3dcfbe3",
+        "reason": "Already corrected, untouched",
+        "status": "CONFORME",
+        "sourceRef": "QV26-EXERCICE-DAP-2-6285EF74:O4:S1",
+        "after_family": "DAP",
+        "before_family": "DAP"
+      },
+      {
+        "id": "601293c1-8027-41b2-a658-1abc578e5a59",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-EXERCICE-DAP-3-618B0715:O1:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "e50ffe6f-e111-4cda-a32b-6e54b7bce54d",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-EXERCICE-DAP-3-618B0715:O2:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "3989b128-98d6-4f2e-af09-a0e03a87b800",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-EXERCICE-DAP-3-618B0715:O3:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "51541dbd-035c-459f-a8c8-15b47eafa139",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-EXERCICE-DAP-3-618B0715:O4:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "a6de28f5-6a07-4686-a13d-317ac0e3b971",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-EXERCICE-DAP-4-46753B3A:O1:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "c4e93967-0d07-44ff-a231-d1af7d27c44a",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-EXERCICE-DAP-4-46753B3A:O2:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "57d29891-e740-4947-a13e-0f0b6c9b2bb0",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-EXERCICE-DAP-4-46753B3A:O3:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "16172f16-2a4d-46e1-ac3c-95da39cb3987",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV26-EXERCICE-DAP-4-46753B3A:O4:S1",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      },
+      {
+        "id": "28aca891-888a-4400-ab7e-77af0a58a1b3",
+        "reason": "Editorial family-only SAVE; previous validation retained",
+        "status": "CORRECTED",
+        "sourceRef": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:2027-09-28:1900:Y3",
+        "after_family": "DAP",
+        "before_family": "Exercice"
+      }
+    ],
+    "committed": false,
+    "protectedTables": [
+      {
+        "name": "scope_affectations",
+        "after_hash": "a25cf27b765a3ce9eb56ec739a7a90d7",
+        "before_hash": "a25cf27b765a3ce9eb56ec739a7a90d7"
+      },
+      {
+        "name": "scope_attendus",
+        "after_hash": "3b20b494a18db85af8f7f4ba41745d34",
+        "before_hash": "3b20b494a18db85af8f7f4ba41745d34"
+      },
+      {
+        "name": "scope_evenement_ois",
+        "after_hash": "fc1a180cba7d66be248aab182451415a",
+        "before_hash": "fc1a180cba7d66be248aab182451415a"
+      },
+      {
+        "name": "scope_evenement_publics_qv",
+        "after_hash": "4983f2f4bb131567edfb9529a851d0e0",
+        "before_hash": "4983f2f4bb131567edfb9529a851d0e0"
+      },
+      {
+        "name": "scope_evenements",
+        "after_hash": "7fe801eb20513cbd1f1a9787fed49b2a",
+        "before_hash": "7fe801eb20513cbd1f1a9787fed49b2a"
+      },
+      {
+        "name": "scope_event_code_allocations",
+        "after_hash": "83d0ea19ae89a71cf68690608e0ccb7e",
+        "before_hash": "83d0ea19ae89a71cf68690608e0ccb7e"
+      },
+      {
+        "name": "scope_participations",
+        "after_hash": "d2dc59bd9d453460894034b7e2728f2b",
+        "before_hash": "d2dc59bd9d453460894034b7e2728f2b"
+      },
+      {
+        "name": "scope_person_qualifications",
+        "after_hash": "d41d8cd98f00b204e9800998ecf8427e",
+        "before_hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "scope_qv_publication_links",
+        "after_hash": "5b1160c12416b88571d8be0f59e98b52",
+        "before_hash": "5b1160c12416b88571d8be0f59e98b52"
+      }
+    ],
+    "statComAndCodesIdenticalPercent": 100,
+    "existingValidationHistoryPreserved": true
+  },
+  "rows": 943
+}

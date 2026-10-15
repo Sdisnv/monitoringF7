@@ -1,0 +1,252 @@
+{
+  "status": "PASS",
+  "tests": [
+    "1-8: exact eleven families; empty last; grey nonselectable native headers; grouped French sorting; unknown cursus retained; SDIS first",
+    "Permanent filter works without reclassifying any existing occurrence; effective DAP/Y4 filtering",
+    "9-13: four newly authorised Y4 exercise/cadre fiches show DAP, unchanged Stat.Com, no dirty family on opening"
+  ],
+  "groups": {
+    "qv-filter-family": [
+      {
+        "label": "Organisation",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "SDIS",
+            "label": "SDIS"
+          },
+          {
+            "value": "DPS",
+            "label": "DPS"
+          },
+          {
+            "value": "DAP",
+            "label": "DAP"
+          },
+          {
+            "value": "JSP",
+            "label": "JSP"
+          },
+          {
+            "value": "Permanent",
+            "label": "Permanent"
+          }
+        ]
+      },
+      {
+        "label": "Formation",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "FOBA",
+            "label": "FOBA"
+          },
+          {
+            "value": "FOCO",
+            "label": "FOCO"
+          },
+          {
+            "value": "FOCA",
+            "label": "FOCA"
+          },
+          {
+            "value": "FOSPEC",
+            "label": "FOSPEC"
+          },
+          {
+            "value": "AUTO",
+            "label": "AUTO"
+          },
+          {
+            "value": "PR",
+            "label": "PR"
+          }
+        ]
+      }
+    ],
+    "qv-filter-cursus": [
+      {
+        "label": "JSP",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "577288c0-3373-4dfa-9c59-c082ca26f1d6",
+            "label": "Cursus JSP"
+          }
+        ]
+      },
+      {
+        "label": "FOCA",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "43cb32f6-8197-4295-9cb5-3b13100a1a4d",
+            "label": "Cursus C groupe"
+          }
+        ]
+      },
+      {
+        "label": "FOSPEC",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "281b614f-d623-4c06-920e-d6dce8fbaadc",
+            "label": "Cursus OFSI"
+          },
+          {
+            "value": "8f6c57cd-f67d-4655-8d67-457e623d53da",
+            "label": "Cursus Opérateur VPC"
+          }
+        ]
+      },
+      {
+        "label": "AUTO",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "6f9c3e85-aec4-415c-9226-5db5b0f9c89f",
+            "label": "Cursus cond TP9"
+          },
+          {
+            "value": "e19a9cea-d1c8-43d4-8ddf-ade20b94da34",
+            "label": "Cursus cond VL"
+          },
+          {
+            "value": "c3212c10-cb75-4139-ac7f-22862df58e42",
+            "label": "Cursus Élévateur à timon S2"
+          },
+          {
+            "value": "1dd98bf6-d08c-4df4-b8ce-24fc336f1c95",
+            "label": "Cursus MEA"
+          }
+        ]
+      },
+      {
+        "label": "PR",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "355b2b86-9c72-4813-b0d0-e29a1c3f71d6",
+            "label": "Cursus PAPR"
+          }
+        ]
+      },
+      {
+        "label": "Autres cursus",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "f618cd32-7e4a-4b2a-a34c-47d4fd5d02f1",
+            "label": "Cursus CI DAP"
+          },
+          {
+            "value": "ea7029d5-4355-4b8c-b976-6037d6bcea7e",
+            "label": "Cursus CI DPS"
+          }
+        ]
+      }
+    ],
+    "qv-filter-specialisation": [
+      {
+        "label": "FOSPEC",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "ANTICHUTE",
+            "label": "Antichute"
+          },
+          {
+            "value": "NAC",
+            "label": "NAC"
+          },
+          {
+            "value": "OFSI",
+            "label": "OFSI"
+          },
+          {
+            "value": "SANITAIRE",
+            "label": "Sanitaire"
+          },
+          {
+            "value": "VPC",
+            "label": "VPC"
+          }
+        ]
+      },
+      {
+        "label": "AUTO",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "CARISTE",
+            "label": "Cariste"
+          },
+          {
+            "value": "COND_PL",
+            "label": "cond PL"
+          },
+          {
+            "value": "COND_TP9",
+            "label": "cond TP9"
+          },
+          {
+            "value": "COND_VL",
+            "label": "cond VL"
+          },
+          {
+            "value": "GRUTIER",
+            "label": "Grutier"
+          },
+          {
+            "value": "GRUTIER_A",
+            "label": "Grutier A"
+          },
+          {
+            "value": "GRUTIER_C",
+            "label": "Grutier C"
+          },
+          {
+            "value": "MACHINISTE_EA",
+            "label": "Machiniste EA"
+          },
+          {
+            "value": "MEA",
+            "label": "MEA"
+          },
+          {
+            "value": "PILOTE_BAT",
+            "label": "Pilote BAT"
+          }
+        ]
+      },
+      {
+        "label": "PR",
+        "tag": "OPTGROUP",
+        "background": "rgb(238, 240, 242)",
+        "items": [
+          {
+            "value": "PABC",
+            "label": "PABC"
+          },
+          {
+            "value": "PAPR",
+            "label": "PAPR"
+          }
+        ]
+      }
+    ]
+  },
+  "errors": [],
+  "businessApiWrites": [],
+  "mode": "Existing local recipe; new assets and corrected read-only projection substituted in test session only"
+}

@@ -823,3 +823,42 @@ sources/journaux, pas de undefined, HUMAN_REVIEW_REQUIRED ou identifiant interne
 ### Perspectives ProgJour Et GELORE2
 ProgJour et export des réservations G1 vers GELORE2 : exigences conservées dans la roadmap existante.
 Aucun écran, table, synchronisation, événement dupliqué, API ou format d'import inventé dans ce lot.
+
+## Complément Consolidé MOA Du 15.10.2026
+
+### QV-FAMILY-005 — Permanent et ordre des onze familles
+Cette décision complète QV-FAMILY-004 et remplace sa liste de dix nouvelles références par :
+SDIS, DPS, DAP, JSP, Permanent, FOBA, FOCO, FOCA, FOSPEC, AUTO, PR, dans cet ordre exact.
+Permanent est disponible en fiche, filtre, statistiques et reconduction. Aucun événement existant
+n'est automatiquement classé Permanent. Les anciennes valeurs restent conservées, non sélectionnables
+comme nouvelles références ; « — » reste le dernier choix et le filtre d'absence reste disponible.
+
+### QV-FILTER-007 — Groupes descriptifs et rattachements démontrés
+Le filtre Famille sépare Organisation (SDIS à Permanent) et Formation (FOBA à PR), dans l'ordre
+QV-FAMILY-005, avec en-têtes gris clair non sélectionnables. Les cursus et spécialisations utilisent
+uniquement le rattachement explicite existant du référentiel (`domainCode` exposant `domain_code`),
+lorsqu'il désigne une famille officielle. Tri alphabétique français dans chaque groupe ; sans
+rattachement démontré : Autres cursus / Autres spécialisations. Aucun code, identifiant ou
+rattachement n'est inventé. CI-DPS et CI-DAP restent notamment dans Autres cursus tant que leur
+rattachement persistant est absent ; leur nom n'autorise pas à le déduire.
+Filtre OI : SDIS, DPS (G1, C1, B1, B2), DAP (Y1, Y2, Y3, Y4), JSP (G1, C1, B1).
+Séparation visuelle des groupes, codes qualifiés et sélections multiples existantes conservés.
+
+### QV-DAP-002 — Complément de classification autorisé le 15.10.2026
+La classification DAP couvre les quatre exercices classiques ET leurs quatre cours de cadres
+correspondants par section Y1 à Y4. Cette décision étend explicitement le périmètre restreint de
+QV-FAMILY-004, sans toucher aux mixtes DPS-DAP, cinquièmes exercices masqués ou autres historiques.
+La preuve repose sur la définition canonique exacte, l'OI unique DAP:Yx et le Stat.Com 013Yx
+concordants, jamais sur le seul intitulé. Relire identifiant, famille et empreinte de dernière
+modification ; toute divergence bloque uniquement sa cible. Une cible déjà DAP reste intacte.
+Une publication, révision en attente ou validation retirée nécessite son workflow dédié.
+Le GO de ce lot n'autorise aucune modification de publication ni nouvelle validation annuelle.
+
+Le 15.10.2026, 16 familles restantes Exercice ont été corrigées en DAP, avec journal et conservation
+des validations antérieures ; 16 occurrences déjà DAP sont restées intactes, dont les quatre cas Y4
+des 04.03, 24.03, 11.05 et 27.05. Dates, horaires et tous les autres champs métier sont préservés.
+Une décision de famille seule sur un instantané automatique peut être lue avec le marqueur explicite
+`familyDecision.scope=FAMILY_ONLY` sans transformer cet instantané en préparation humaine complète.
+Elle n'adopte ni date ni état automatiquement et ne vaut pas validation. Le cours de cadres DAP 4 Y2
+reste sans date décidée ; sa restitution nécessite le correctif applicatif de ce lot, encore non déployé.
+Preuves et réserves : `docs/SCOPE_QV_MOA_CONSOLIDE_20261015.md`.
