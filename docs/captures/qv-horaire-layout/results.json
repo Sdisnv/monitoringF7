@@ -1,0 +1,2716 @@
+{
+  "status": "PASS",
+  "reference": "74ac904ff78c464dbc57482c2d7d06ccf3d2300f",
+  "boundedRows": 921,
+  "dataSha256": "a43555bd1e0093205eb2eb7146b01777c6a394c12cfbffc0b7fb8a8716d39340",
+  "businessApiWrites": [],
+  "errors": [],
+  "results": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1920,
+        "height": 1080
+      },
+      "before": {
+        "dap": [
+          {
+            "id": "QV27:DAPCOND:2027-03-03:Y2:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-03:Y4:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y2:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y3:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y4:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-09:Y3:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "09.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-10:Y2:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "10.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y2:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y3:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y4:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-18:Y4:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "18.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-25:Y3:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "24.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-04-26:Y1:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "26.04.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-03:Y1:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "03.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-10:Y1:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "10.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-17:Y1:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 529.984375,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "24.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          }
+        ],
+        "other": [
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S1",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 645.53125,
+                "bottom": 664.421875,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 666.421875,
+                "bottom": 685.3125,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "02.03.27",
+              "Exercice PR 1.1Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S2",
+            "time": "08:0011:00",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "08:00",
+                "top": 702.3125,
+                "bottom": 721.203125,
+                "textRight": 482.515625
+              },
+              {
+                "value": "11:00",
+                "top": 723.203125,
+                "bottom": 742.09375,
+                "textRight": 481.46875
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Exercice PR 1.2Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S3",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 759.09375,
+                "bottom": 777.984375,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 779.984375,
+                "bottom": 798.875,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "09.03.27",
+              "Exercice PR 1.3Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S4",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 815.875,
+                "bottom": 834.765625,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 836.765625,
+                "bottom": 855.65625,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "11.03.27",
+              "Exercice PR 1.4Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S5",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 872.65625,
+                "bottom": 891.546875,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 893.546875,
+                "bottom": 912.4375,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "16.03.27",
+              "Exercice PR 1.5Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S6",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 929.4375,
+                "bottom": 948.328125,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 950.328125,
+                "bottom": 969.21875,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "18.03.27",
+              "Exercice PR 1.6Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "dap": [
+          {
+            "id": "QV27:DAPCOND:2027-03-03:Y2:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1059.53125,
+                "bottom": 1078.421875,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1080.421875,
+                "bottom": 1099.3125,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-03:Y4:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1116.3125,
+                "bottom": 1135.203125,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1137.203125,
+                "bottom": 1156.09375,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y2:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1173.09375,
+                "bottom": 1191.984375,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1193.984375,
+                "bottom": 1212.875,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y3:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1229.875,
+                "bottom": 1248.765625,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1250.765625,
+                "bottom": 1269.65625,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y4:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1286.65625,
+                "bottom": 1305.546875,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1307.546875,
+                "bottom": 1326.4375,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-09:Y3:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1343.4375,
+                "bottom": 1362.328125,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1364.328125,
+                "bottom": 1383.21875,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "09.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-10:Y2:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1400.21875,
+                "bottom": 1419.109375,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1421.109375,
+                "bottom": 1440,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "10.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y2:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1457,
+                "bottom": 1475.890625,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1477.890625,
+                "bottom": 1496.78125,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y3:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1513.78125,
+                "bottom": 1532.671875,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1534.671875,
+                "bottom": 1553.5625,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y4:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1570.5625,
+                "bottom": 1589.453125,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1591.453125,
+                "bottom": 1610.34375,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-18:Y4:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1627.34375,
+                "bottom": 1646.234375,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1648.234375,
+                "bottom": 1667.125,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "18.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-25:Y3:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1684.125,
+                "bottom": 1703.015625,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1705.015625,
+                "bottom": 1723.90625,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "24.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-04-26:Y1:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1740.90625,
+                "bottom": 1759.796875,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1761.796875,
+                "bottom": 1780.6875,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "26.04.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-03:Y1:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1797.6875,
+                "bottom": 1816.578125,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1818.578125,
+                "bottom": 1837.46875,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-10:Y1:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1854.46875,
+                "bottom": 1873.359375,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1875.359375,
+                "bottom": 1894.25,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "10.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-17:Y1:1830",
+            "time": "18:3021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1911.25,
+                "bottom": 1930.140625,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 1932.140625,
+                "bottom": 1951.03125,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "24.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          }
+        ],
+        "other": [
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S1",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 645.53125,
+                "bottom": 664.421875,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 666.421875,
+                "bottom": 685.3125,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "02.03.27",
+              "Exercice PR 1.1Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S2",
+            "time": "08:0011:00",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "08:00",
+                "top": 702.3125,
+                "bottom": 721.203125,
+                "textRight": 482.515625
+              },
+              {
+                "value": "11:00",
+                "top": 723.203125,
+                "bottom": 742.09375,
+                "textRight": 481.46875
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Exercice PR 1.2Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S3",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 759.09375,
+                "bottom": 777.984375,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 779.984375,
+                "bottom": 798.875,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "09.03.27",
+              "Exercice PR 1.3Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S4",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 815.875,
+                "bottom": 834.765625,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 836.765625,
+                "bottom": 855.65625,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "11.03.27",
+              "Exercice PR 1.4Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S5",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 872.65625,
+                "bottom": 891.546875,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 893.546875,
+                "bottom": 912.4375,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "16.03.27",
+              "Exercice PR 1.5Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S6",
+            "time": "19:0021:30",
+            "cellLeft": 443.46875,
+            "cellRight": 520.234375,
+            "activityLeft": 520.234375,
+            "textRight": 516.234375,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 929.4375,
+                "bottom": 948.328125,
+                "textRight": 482.515625
+              },
+              {
+                "value": "21:30",
+                "top": 950.328125,
+                "bottom": 969.21875,
+                "textRight": 482.515625
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "18.03.27",
+              "Exercice PR 1.6Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "name": "laptop",
+        "width": 1366,
+        "height": 768
+      },
+      "before": {
+        "dap": [
+          {
+            "id": "QV27:DAPCOND:2027-03-03:Y2:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-03:Y4:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y2:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y3:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y4:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-09:Y3:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "09.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-10:Y2:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "10.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y2:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y3:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y4:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-18:Y4:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "18.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-25:Y3:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "24.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-04-26:Y1:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "26.04.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-03:Y1:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "03.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-10:Y1:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "10.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-17:Y1:1830",
+            "time": "18:30 - 21:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 292.953125,
+            "lines": [],
+            "otherCells": [
+              "Auto",
+              "24.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          }
+        ],
+        "other": [
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S1",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 339.53125,
+                "bottom": 358.421875,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 360.421875,
+                "bottom": 379.3125,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "02.03.27",
+              "Exercice PR 1.1Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S2",
+            "time": "08:0011:00",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "08:00",
+                "top": 396.3125,
+                "bottom": 415.203125,
+                "textRight": 245.484375
+              },
+              {
+                "value": "11:00",
+                "top": 417.203125,
+                "bottom": 436.09375,
+                "textRight": 244.4375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Exercice PR 1.2Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S3",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 453.09375,
+                "bottom": 471.984375,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 473.984375,
+                "bottom": 492.875,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "09.03.27",
+              "Exercice PR 1.3Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S4",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 509.875,
+                "bottom": 528.765625,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 530.765625,
+                "bottom": 549.65625,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "11.03.27",
+              "Exercice PR 1.4Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S5",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 566.65625,
+                "bottom": 585.546875,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 587.546875,
+                "bottom": 606.4375,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "16.03.27",
+              "Exercice PR 1.5Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S6",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 623.4375,
+                "bottom": 642.328125,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 644.328125,
+                "bottom": 663.21875,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "18.03.27",
+              "Exercice PR 1.6Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "dap": [
+          {
+            "id": "QV27:DAPCOND:2027-03-03:Y2:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1059.53125,
+                "bottom": 1078.421875,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1080.421875,
+                "bottom": 1099.3125,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-03:Y4:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1116.3125,
+                "bottom": 1135.203125,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1137.203125,
+                "bottom": 1156.09375,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y2:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1173.09375,
+                "bottom": 1191.984375,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1193.984375,
+                "bottom": 1212.875,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y3:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1229.875,
+                "bottom": 1248.765625,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1250.765625,
+                "bottom": 1269.65625,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-04:Y4:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1286.65625,
+                "bottom": 1305.546875,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1307.546875,
+                "bottom": 1326.4375,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "04.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-09:Y3:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1343.4375,
+                "bottom": 1362.328125,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1364.328125,
+                "bottom": 1383.21875,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "09.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-10:Y2:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1400.21875,
+                "bottom": 1419.109375,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1421.109375,
+                "bottom": 1440,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "10.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y2:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1457,
+                "bottom": 1475.890625,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1477.890625,
+                "bottom": 1496.78125,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y2",
+              "cond VL",
+              "Officier auto",
+              "Local Y2",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y3:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1513.78125,
+                "bottom": 1532.671875,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1534.671875,
+                "bottom": 1553.5625,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-17:Y4:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1570.5625,
+                "bottom": 1589.453125,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1591.453125,
+                "bottom": 1610.34375,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "17.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-18:Y4:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1627.34375,
+                "bottom": 1646.234375,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1648.234375,
+                "bottom": 1667.125,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "18.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y4",
+              "cond VL",
+              "Officier auto",
+              "Local Y4",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-03-25:Y3:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1684.125,
+                "bottom": 1703.015625,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1705.015625,
+                "bottom": 1723.90625,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "24.03.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y3",
+              "cond VL",
+              "Officier auto",
+              "Local Y3",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-04-26:Y1:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1740.90625,
+                "bottom": 1759.796875,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1761.796875,
+                "bottom": 1780.6875,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "26.04.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-03:Y1:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1797.6875,
+                "bottom": 1816.578125,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1818.578125,
+                "bottom": 1837.46875,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-10:Y1:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1854.46875,
+                "bottom": 1873.359375,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1875.359375,
+                "bottom": 1894.25,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "10.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV27:DAPCOND:2027-05-17:Y1:1830",
+            "time": "18:3021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "18:30",
+                "top": 1911.25,
+                "bottom": 1930.140625,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 1932.140625,
+                "bottom": 1951.03125,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "24.05.27",
+              "Conduite, formation continue",
+              "01522F7",
+              "F7Conduite",
+              "Y1",
+              "cond VL",
+              "Officier auto",
+              "Local Y1",
+              "Activité proposée",
+              "Consulterla fiche ›"
+            ]
+          }
+        ],
+        "other": [
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S1",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 339.53125,
+                "bottom": 358.421875,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 360.421875,
+                "bottom": 379.3125,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "02.03.27",
+              "Exercice PR 1.1Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S2",
+            "time": "08:0011:00",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "08:00",
+                "top": 396.3125,
+                "bottom": 415.203125,
+                "textRight": 245.484375
+              },
+              {
+                "value": "11:00",
+                "top": 417.203125,
+                "bottom": 436.09375,
+                "textRight": 244.4375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "03.03.27",
+              "Exercice PR 1.2Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S3",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 453.09375,
+                "bottom": 471.984375,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 473.984375,
+                "bottom": 492.875,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "09.03.27",
+              "Exercice PR 1.3Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S4",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 509.875,
+                "bottom": 528.765625,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 530.765625,
+                "bottom": 549.65625,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "11.03.27",
+              "Exercice PR 1.4Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S5",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 566.65625,
+                "bottom": 585.546875,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 587.546875,
+                "bottom": 606.4375,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "16.03.27",
+              "Exercice PR 1.5Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          },
+          {
+            "id": "QV26-EXERCICE-PR-1-1-30B1E01A:O1:S6",
+            "time": "19:0021:30",
+            "cellLeft": 206.4375,
+            "cellRight": 277.265625,
+            "activityLeft": 277.265625,
+            "textRight": 273.265625,
+            "lines": [
+              {
+                "value": "19:00",
+                "top": 623.4375,
+                "bottom": 642.328125,
+                "textRight": 245.484375
+              },
+              {
+                "value": "21:30",
+                "top": 644.328125,
+                "bottom": 663.21875,
+                "textRight": 245.484375
+              }
+            ],
+            "otherCells": [
+              "Auto",
+              "18.03.27",
+              "Exercice PR 1.6Base",
+              "011PR",
+              "F7PR",
+              "G1, C1, B1, B2",
+              "Formateur PR, PAPR",
+              "Chef PR",
+              "Caserne G1",
+              "Planifié",
+              "Consulterla fiche ›"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "conducteursTablesIdentical": true,
+  "businessTimeFunctionIdentical": true,
+  "ficheRendererIdentical": true,
+  "mode": "same existing clone projection in isolated browser sessions; no production access or SQL writes"
+}

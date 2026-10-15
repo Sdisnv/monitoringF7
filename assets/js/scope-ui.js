@@ -12234,7 +12234,8 @@
 
   function qvProgrammeTimeHtml(row) {
     const value = qvProgrammeTime(row) || 'À définir';
-    const parts = value.split(' – ');
+    const parts = value.split(/ (?:\u2013|-) /);
+    if(parts.length===1 && row?.definitionId==='CTA-PERMANENCE' && qvTime(row.endsAt)) parts.push(qvTime(row.endsAt));
     if (parts.length !== 2) return escapeHtml(value);
     return `<span class="qv-programme-time"><span>${escapeHtml(parts[0])}</span><span>${escapeHtml(parts[1])}</span></span>`;
   }

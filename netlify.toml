@@ -23,6 +23,9 @@
 [context."codex/scope-qv-complement-moa-20261015"]
   ignore = "exit 0"
 
+[context."codex/scope-qv-horaire-layout-20261015"]
+  ignore = "exit 0"
+
 [functions]
   node_bundler = "esbuild"
   included_files = [
