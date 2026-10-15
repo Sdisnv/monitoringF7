@@ -29,6 +29,7 @@
 
   const resolved = resolveMode();
   let client = resolved.client;
+  let authProgrammeDraft = null;
 
   const state = {
     year: L.currentYear('2026-08-19'),
@@ -2026,6 +2027,11 @@
   }
 
   function clearLocalAuthState() {
+    authProgrammeDraft=null;
+    invalidateCache(['quoVadis']);
+    state.quoVadis=null;
+    state.quoVadisReady=false;
+    state.quoVadisYears={};
     state.quoVadisHistoryCache={};
     state.quoVadisOpenHistory=null;
     state.session = null;
@@ -2036,6 +2042,7 @@
     clearSensitiveSessionData();
     window.CurrentRoles = [];
     window.CurrentPermissions = [];
+    window.MonitoringApiClient?.clearAccessToken?.();
     try { sessionStorage.removeItem(LEGACY_LIVE_KEY); } catch (_error) { /* ignore */ }
     try { sessionStorage.removeItem(QUAL_KEY); } catch (_error) { /* ignore */ }
     try { localStorage.removeItem('scope_auth_idle_last_activity'); } catch (_error) { /* ignore */ }
@@ -2053,7 +2060,13 @@
   }
 
   function handleUnauthorized(info) {
+    const form=root.querySelector('.qv-programme-preparation');
+    const row=quoVadisProgrammeData()?.canonicalProgramme?.rows?.find(item=>String(item.id)===String(route().qvProgrammeItemId));
+    const subject=state.session?.subject || state.session?.nip;
+    const draft=form && subject && row?.preparation?.updatedAt ? {form:form.cloneNode(true),subject,
+      hash:location.hash,version:String(row.preparation.updatedAt)} : authProgrammeDraft;
     invalidateScopeSession((info && info.url) || 'unauthorized');
+    authProgrammeDraft=draft;
     state.authError = presentFriendlyError(info || L.friendlyError({ status: 401, error: 'unauthorized' }));
     render();
   }
@@ -11869,7 +11882,7 @@
     const start = preparatory ? qvTime(row.startsAt) : (row.publishedEventId && row.publishedEventStart || qvTime(row.startsAt));
     if (row && row.definitionId === 'CTA-PERMANENCE') return start;
     const end = preparatory ? qvTime(row.endsAt) : (row.publishedEventId && row.publishedEventEnd || qvTime(row.endsAt));
-    return [start, end].filter(Boolean).join(' – ');
+    return [start, end].filter(Boolean).join(row?.conduiteRule==='QV-DAP-001'?' - ':' – ');
   }
 
   function qvProgrammeIntervalTitle(row) {
@@ -12074,7 +12087,7 @@
       if (filters.statcom && filters.statcom !== 'tous' && row.statCom !== filters.statcom) return false;
       if (filters.status && filters.status !== 'tous' && visual.label !== filters.status) return false;
       if (filters.type && filters.type !== 'tous' && type !== filters.type) return false;
-      if (filters.cible && filters.cible !== 'tous' && !qvProgrammePublicCodes(row).some(code=>
+      if (filters.cible && filters.cible !== 'tous' && ![...qvProgrammePublicCodes(row),...(row.publicFreeLabels || [])].some(code=>
         L.qvProgrammePublicReferenceCode(code)===L.qvProgrammePublicReferenceCode(filters.cible))) return false;
       if (filters.specialisation && filters.specialisation !== 'tous') {
         const reference=(qv.qualifications || []).find(item=>item.code===filters.specialisation);
@@ -12111,7 +12124,7 @@
       ['Opérationnel · DAP', (code) => /^(?:ENC:.*DAP|GEN:SAPEUR-DAP)$/.test(code)],
       ['Opérationnel · JSP', (code) => code.startsWith('JSP:')],
       ['Général', (code) => code.startsWith('GEN:') || code === 'SDIS-ALL'],
-      ['Commandement', (code) => code.startsWith('CMDT:')],
+      ['Commandement', (code) => code.startsWith('CMDT:') || code==='C DAP'],
       ['Domaines · FOBA', (code) => code.startsWith('FOBA:')],
       ['Domaines · FOCA', (code) => code.startsWith('ECH:') || code.startsWith('FOCA:')],
       ['Domaines · FOCO', (code) => code.startsWith('FOCO:')],
@@ -12362,12 +12375,12 @@
     return L.qvProgrammeOiLabel({ oiSelections: codes }) || 'À définir';
   }
 
-  function qvProgrammePublicGroups(codes, selected) {
+  function qvProgrammePublicGroups(codes, selected, freeLabels=[]) {
     const chosen = new Set([...(codes || []), ...(selected || [])]);
     const catalogue = L.qvProgrammePublicCatalogue();
     const known = new Set(catalogue.flatMap((group) => group.items.map((item) => item[0])));
-    const extra = [...chosen].filter((code) => code && !known.has(code));
-    const option = (code, label,retained=[]) => `<label${/^N0[1-6][ab]$/.test(code) ? ' class="qv-public-half-section"' : ''}><input type="checkbox" value="${escapeHtml(code)}" ${retained.length ? `checked data-preserved-codes="${escapeHtml(JSON.stringify(retained))}"` : ''}><span>${escapeHtml(label)}</span></label>`;
+    const extra = [...chosen].filter((code) => code && !known.has(L.qvProgrammePublicReferenceCode(code)));
+    const option = (code, label,retained=[],free=[]) => `<label${/^N0[1-6][ab]$/.test(code) ? ' class="qv-public-half-section"' : ''}><input type="checkbox" value="${escapeHtml(code)}" ${retained.length || free.length ? `checked data-preserved-codes="${escapeHtml(JSON.stringify(retained))}"` : ''}${free.length?` data-preserved-free="${escapeHtml(JSON.stringify(free))}"`:''}><span>${escapeHtml(label)}</span></label>`;
     const groups = catalogue.map((group) => {
       const visible=new Map();
       group.items.forEach(([code,label])=>{
@@ -12376,12 +12389,18 @@
         visible.get(key).codes.push(code);
       });
       return `<fieldset><legend>${escapeHtml(group.group)}</legend>${[...visible.values()].map(item=>
-        option(item.code,item.label,item.codes.filter(code=>(selected || []).includes(code)))).join('')}</fieldset>`;
+        option(item.code,item.label,(selected || []).filter(code=>L.qvProgrammePublicReferenceCode(code)===item.code),
+          freeLabels.filter(label=>L.qvProgrammePublicReferenceCode(label)===item.code))).join('')}</fieldset>`;
     });
     if (extra.length) {
       groups.push(`<fieldset><legend>Autres</legend>${extra.sort((a,b)=>qvProgrammePublicCodeLabel(a).localeCompare(qvProgrammePublicCodeLabel(b),'fr')).map((code) => option(code, qvProgrammePublicCodeLabel(code),(selected || []).includes(code)?[code]:[])).join('')}</fieldset>`);
     }
     return groups.join('');
+  }
+
+  function qvProgrammeSelectedFreePublics(){
+    return [...new Set([...(document.getElementById('qv-programme-public')?.querySelectorAll('input:checked') || [])]
+      .flatMap(input=>input.dataset.choiceKind==='FREE'?[input.value]:JSON.parse(input.dataset.preservedFree || '[]')))];
   }
 
   function qvProgrammeMultiOptions(values, selected, labeler) {
@@ -12520,7 +12539,7 @@
       return 'Séance État-major rattachée au domaine CMDT. Stat.Com EMSEA démontré par la source QUO VADIS.';
     }
     if (Array.isArray(row.conduiteSlots) && row.conduiteSlots.length === 4) {
-      return 'Conduite DAP par section : quatre conducteurs VL par soirée, chacun avec 30 minutes de conduite et 30 minutes de connaissance du véhicule. Les créneaux se chevauchent sur la plage 18h30–21h30.';
+      return 'Conduite DAP par section : quatre conducteurs VL par soirée, chacun avec 30 minutes de conduite et 30 minutes de connaissance du véhicule. Les créneaux se chevauchent sur la plage 18:30 - 21:30.';
     }
     if (row.historicalProposal) {
       const ref = row.historicalProposal;
@@ -13001,7 +13020,8 @@
         <div class="qv-programme-choice-field"><span id="qv-oi-label">OI</span><details class="qv-programme-choice-menu"><summary id="qv-programme-oi-summary">${escapeHtml(qvProgrammeOiSummary(row.oiSelections || row.ois || []))}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-oi-search" type="search" aria-label="Rechercher une OI" placeholder="Rechercher"><div id="qv-programme-oi" class="qv-programme-choice-list" role="group" aria-labelledby="qv-oi-label">${qvProgrammeOiOptions(row.oiSelections || row.ois || [])}</div></div></details></div>
         <label><span>Lieu</span><select id="qv-programme-lieu"><option value="">Lieu à définir</option>${lieuChoices.map((entry) => `<option value="${escapeHtml(entry.lieuId)}" ${entry.lieuId === lieuValue ? 'selected' : ''}>${escapeHtml(entry.label)}</option>`).join('')}<option value="autre" ${lieuValue === 'autre' ? 'selected' : ''}>Autre lieu</option></select></label>
         <label><span>Salle</span><select id="qv-programme-salle">${qvSalleOptions(qv, salleLieuId, salleId)}</select></label>
-        ${qvProgrammeDescriptiveControl('qv-programme-public','Public cible',qvProgrammePublicGroups(publicCodes,row.publics || []),row.publicFreeLabels,qvProgrammePublicLabel(row))}
+        ${qvProgrammeDescriptiveControl('qv-programme-public','Public cible',qvProgrammePublicGroups(publicCodes,row.publics || [],row.publicFreeLabels),
+          (row.publicFreeLabels || []).filter(label=>L.qvProgrammePublicReferenceCode(label)===label),qvProgrammePublicLabel(row))}
         <label id="qv-programme-autre-field" ${lieuValue === 'autre' ? '' : 'hidden'}><span>Lieu existant</span><select id="qv-programme-autre"><option value="">Choisir un lieu</option>${autresLieux.map((item) => `<option value="${escapeHtml(item.lieuId)}" ${item.lieuId === autreValue ? 'selected' : ''}>${escapeHtml(item.nomCourt || item.code)}</option>`).join('')}<option value="__free" ${autreValue === '__free' ? 'selected' : ''}>Lieu absent du référentiel</option></select></label>
         <label id="qv-programme-lieu-libre-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Nouveau lieu</span><input id="qv-programme-lieu-libre" type="text" maxlength="28" value="${escapeHtml(row.lieuLibre || '')}"></label>
         <label id="qv-programme-lieu-keep-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Référentiel</span><span class="qv-programme-keep-lieu"><input id="qv-programme-lieu-keep" type="checkbox">Conserver ce lieu dans le référentiel</span></label>
@@ -13016,7 +13036,7 @@
           <section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('calendar')}</span>Planification</h3><dl class="qv-definition-list"><dt>Date</dt><dd>${escapeHtml(qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner')}</dd><dt>Horaire</dt><dd>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</dd><dt>Lieu</dt><dd>${escapeHtml(qvProgrammeLocationLabel(row))}</dd><dt>Salle</dt><dd>${escapeHtml(qvProgrammeRoomLabel(row))}</dd><dt>Responsable</dt><dd>${escapeHtml(qvProgrammeResponsableLabel(row))}</dd><dt>État</dt><dd>${scopeStateHtml(visual.tone, visual.label)}</dd></dl></section></div>
         <details class="qv-programme-reference" open><summary><span class="qv-programme-reference-icon">${qvCockpitIcon('info')}</span><strong>Règle appliquée · ${escapeHtml(qvProgrammeProvenance(row))}</strong><span class="qv-programme-reference-chevron" aria-hidden="true">⌄</span></summary><div class="qv-programme-reference-body"><p>${escapeHtml(qvProgrammeAppliedRule(row))}</p><button type="button" class="scope-btn" id="qv-programme-full-rule" aria-expanded="false" aria-controls="qv-programme-full-rule-content">Voir la règle complète</button><div id="qv-programme-full-rule-content" class="qv-programme-full-rule" hidden>${qvProgrammeFullRuleHtml(qv,row)}</div></div></details>
         ${row.conduiteMinutesPerParticipant ? `<p class="qv-programme-workflow-note">Conduite DPS : ${escapeHtml(String(row.conduiteMinutesPerParticipant))} minutes de conduite par conducteur concerné.</p>` : ''}
-        ${Array.isArray(row.conduiteSlots) && row.conduiteSlots.length ? `<section class="scope-form-section"><h3>Conducteurs VL</h3><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Place</th><th>Présence</th><th>Conduite</th><th>Connaissance véhicule</th></tr></thead><tbody>${row.conduiteSlots.map((slot) => `<tr><td>${escapeHtml(String(slot.position))}</td><td>${escapeHtml(qvTime(slot.startsAt))}–${escapeHtml(qvTime(slot.endsAt))}</td><td>${escapeHtml(qvTime(slot.conduiteStartsAt))}–${escapeHtml(qvTime(slot.conduiteEndsAt))}</td><td>${escapeHtml(qvTime(slot.connaissanceVehiculeStartsAt))}–${escapeHtml(qvTime(slot.connaissanceVehiculeEndsAt))}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
+        ${Array.isArray(row.conduiteSlots) && row.conduiteSlots.length ? `<section class="scope-form-section"><h3>Conducteurs VL</h3><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Place</th><th>Présence</th><th>Conduite</th><th>Connaissance véhicule</th></tr></thead><tbody>${row.conduiteSlots.map((slot) => `<tr><td>${escapeHtml(String(slot.position))}</td><td>${escapeHtml(qvTime(slot.startsAt))} - ${escapeHtml(qvTime(slot.endsAt))}</td><td>${escapeHtml(qvTime(slot.conduiteStartsAt))} - ${escapeHtml(qvTime(slot.conduiteEndsAt))}</td><td>${escapeHtml(qvTime(slot.connaissanceVehiculeStartsAt))} - ${escapeHtml(qvTime(slot.connaissanceVehiculeEndsAt))}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
         ${(row.reason && row.reason !== 'Proposition historique 2026 à valider.' || row.publishedEventId || arbitrationActivity && (arbitrationActivity.proposals || []).length) ? `<div class="qv-programme-workflow">${row.reason && row.reason !== 'Proposition historique 2026 à valider.' ? `<p>${escapeHtml(row.reason)}</p>` : ''}${row.publishedEventId ? `<p>L’occurrence est publiée et reliée à son événement SCOPE.</p><a class="scope-btn" href="#/exercices/${escapeHtml(row.publishedEventId)}">Ouvrir l'événement</a>` : arbitrationActivity && (arbitrationActivity.proposals || []).length ? `<a class="scope-btn" href="${qvHref('activites',{id:arbitrationActivity.activityId,from:'programme'})}">Arbitrage</a>` : ''}</div>` : ''}
       </section>
       <div id="qv-programme-live-controls" aria-live="polite">${qvProgrammeControls(row)}</div>
@@ -14166,7 +14186,9 @@
     return renderQuoVadisShell(content) + calendarModal;
   }
 
-  function render() {
+  function render(options={}) {
+    const programmeForm=options.preserveProgrammeForm && !state.needOkta
+      ? root.querySelector('.qv-programme-preparation')?.cloneNode(true) : null;
     const focused=document.activeElement;
     const preserveSearch=route().screen==='quo-vadis' && route().qvView==='programme'
       && focused?.id==='qv-filter-q' && root.querySelector('#qv-filter-q')===focused
@@ -14211,6 +14233,24 @@
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
     root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderPersonnelAssignmentModal()}${renderPersonnelManualAddModal()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalUnsavedSaisie()}${renderModalCancel()}${renderModalDelete()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
+    if(programmeForm) root.querySelector('.qv-programme-preparation')?.replaceWith(programmeForm);
+    if(authProgrammeDraft && state.session && !state.authLoginBusy){
+      const draft=authProgrammeDraft,form=root.querySelector('.qv-programme-preparation');
+      const subject=state.session.subject || state.session.nip;
+      if(subject!==draft.subject || location.hash!==draft.hash) authProgrammeDraft=null;
+      else if(form){
+        const row=quoVadisProgrammeData()?.canonicalProgramme?.rows?.find(item=>String(item.id)===String(r.qvProgrammeItemId));
+        const sameVersion=String(row?.preparation?.updatedAt)===draft.version && hasScopePermission('references:manage');
+        if(sameVersion){
+          draft.form.querySelectorAll('button[id]').forEach(button=>{
+            const fresh=form.querySelector('#'+button.id);if(fresh) button.disabled=fresh.disabled;
+          });
+          form.replaceWith(draft.form);
+          draft.form.insertAdjacentHTML('afterbegin','<p role="status">Saisie non enregistrée restaurée après reconnexion.</p>');
+        }else form.insertAdjacentHTML('afterbegin','<p role="status">La fiche ou vos droits ont changé. La saisie précédente n’a pas été restaurée.</p>');
+        authProgrammeDraft=null;
+      }
+    }
     if(preserveSearch && root.querySelector('#qv-filter-q')) {
       root.querySelector('#qv-filter-q').replaceWith(preserveSearch.node);
       preserveSearch.node.focus({preventScroll:true});
@@ -14838,7 +14878,7 @@
         planningDomain:base.planningDomain || base.domain,
         domain:document.getElementById('qv-programme-domain')?.value || base.domain,
         statCom:document.getElementById('qv-programme-statcom')?.value || '',publics:selected('qv-programme-public'),
-        publicFreeLabels:[...(document.getElementById('qv-programme-public')?.querySelectorAll('input[data-choice-kind="FREE"]:checked') || [])].map(input=>input.value),
+        publicFreeLabels:qvProgrammeSelectedFreePublics(),
         startsAt:date && `${date}T${document.getElementById('qv-programme-start')?.value || '00:00'}`,
         endsAt:date && `${date}T${document.getElementById('qv-programme-end')?.value || '00:00'}`,
         lieuId:document.getElementById('qv-programme-lieu')?.value==='autre'
@@ -14986,13 +15026,13 @@
         document.getElementById(id+'-summary').textContent=(id==='qv-programme-public'
           ? L.qvFormatPublicLabels(inputs.filter(input=>input.dataset.choiceKind!=='FREE')
             .flatMap(input=>input.dataset.preservedCodes?JSON.parse(input.dataset.preservedCodes):[input.value]),
-            inputs.filter(input=>input.dataset.choiceKind==='FREE').map(input=>input.value)) : labels.join(' ; '))
+            qvProgrammeSelectedFreePublics()) : labels.join(' ; '))
           || (id === 'qv-programme-responsable' ? 'À affecter' : 'À définir');
         state.qvProgrammePopupPosition?.();
       };
       list?.addEventListener('change',event=>{
         if(!event.detail?.automatic) list.dataset.manual='true';
-        if(id==='qv-programme-public' && event.target.dataset && !event.detail?.automatic) delete event.target.dataset.preservedCodes;
+        if(id==='qv-programme-public' && event.target.dataset && !event.detail?.automatic && !event.target.dataset.preservedFree) delete event.target.dataset.preservedCodes;
         refresh();
       });
       const add=()=>{
@@ -15000,7 +15040,8 @@
         const value=input?.value || '';
         if(!value.trim()) return;
         if(id === 'qv-programme-responsable' && qvResponsableIsDefault(value)){input.value='';return;}
-        const existing=[...(list?.querySelectorAll('input[data-choice-kind="FREE"]') || [])].find(item=>item.value === value);
+        const existing=[...(list?.querySelectorAll('input') || [])].find(item=>item.value===value
+          || id==='qv-programme-public' && item.value===L.qvProgrammePublicReferenceCode(value));
         if(existing) existing.checked=true;
         else {
           const group=list.querySelector('[data-free-choices]');
@@ -15222,7 +15263,7 @@
         participationEvaluation:document.getElementById('qv-programme-participation-evaluation')?.checked !== false,
         oiCodes: selected('qv-programme-oi'),
         publicCodes: selected('qv-programme-public'),
-        publicFreeLabels:[...(document.getElementById('qv-programme-public')?.querySelectorAll('input[data-choice-kind="FREE"]:checked') || [])].map(input=>input.value),
+        publicFreeLabels:qvProgrammeSelectedFreePublics(),
         lieuId: lieuRaw === 'autre' ? (autreRaw && autreRaw !== '__free' ? autreRaw : null) : (lieuRaw || null),
         lieuLibre: autreRaw === '__free' ? String(document.getElementById('qv-programme-lieu-libre')?.value || '').trim().slice(0, 28) : '',
         keepLieuInReferential: autreRaw === '__free' && document.getElementById('qv-programme-lieu-keep')?.checked === true,
@@ -16004,7 +16045,7 @@
     document.getElementById('scope-idle-stay')?.addEventListener('click', () => {
       state.idleWarn = false;
       if (window.ScopeAuthIdle) window.ScopeAuthIdle.stayConnected();
-      render();
+      render({preserveProgrammeForm:true});
     });
     document.getElementById('scope-logout')?.addEventListener('click', () => {
       logoutScopeSession();
@@ -19573,7 +19614,7 @@
         window.ScopeAuthIdle.start({
           onWarn() {
             state.idleWarn = true;
-            render();
+            render({preserveProgrammeForm:true});
           },
           onExpire() {
             state.idleExpired = true;
@@ -19584,6 +19625,10 @@
       return true;
     } catch (error) {
       const info = presentFriendlyError(L.friendlyError(error));
+      if(hadSession && (Number(error.status)===0 || Number(error.status)>=500 || Number(error.status)===429)){
+        state.authError=info;
+        return false;
+      }
       clearLocalAuthState();
       state.authError = !hadSession && Number(error.status) === 401 ? null : info;
       if (!state.authConfig) await loadAuthConfig();

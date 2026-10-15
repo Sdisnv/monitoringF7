@@ -2344,6 +2344,10 @@ function createScopeQuoVadisService({ database = db } = {}){
         .filter(value => !isUnassignedResponsible(value.code || value.label))} : {})
     }));
     if(result.canonicalProgramme) result.canonicalProgramme.rows=result.canonicalProgramme.rows.map(row=>{
+      const oi=uiLogic.qvProgrammeConfirmedOiCodes(row),date=dateOnly(row.startsAt);
+      if(row.statCom==='01522F7' && uiLogic.qvProgrammeFilterType(row)==='Conduite'
+        && oi.length===1 && /^DAP:Y[1-4]$/.test(oi[0]) && date)
+        row={...row,conduiteSlots:uiLogic.qvDapConduiteSlots(date),conduiteRule:'QV-DAP-001'};
       const grouped=row.definitionId==='QV26-FORMATION-GROUPEE-1-1-3D8CCE58'
         && ['DPS:G1','DPS:C1','DPS:B1','DPS:B2'].every(code=>row.oiSelections?.includes(code)) && row.oiSelections.length===4;
       const corrected=grouped && row.statCom==='0162F7' && !row.humanDecision && !row.businessValidation && !row.publishedEventId

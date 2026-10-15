@@ -1,0 +1,110 @@
+{
+  "status": "PASS",
+  "base": "e7672369e08727849e96ef56d4462840d9dfca0e",
+  "checks": [
+    "A-G: 16 soirées Y1-Y4, seules places 1/3 corrigées, durées 60/30/30 et créneaux réutilisables en 2028",
+    "H-N: bearer périmé reproduit avant et corrigé après renouvellement, 401 réel, 403 distinct, réseau/503 transitoires, activité inter-onglets et délai inchangé",
+    "O-R: quatre références descriptives, codes/positions exacts, ancre Chef DAP réutilisant C DAP"
+  ],
+  "auth": {
+    "before": {
+      "status": 401,
+      "unauthorized": 1,
+      "refreshes": 1,
+      "calls": 2,
+      "token": "expired-access"
+    },
+    "after": {
+      "status": 200,
+      "unauthorized": 0,
+      "refreshes": 1,
+      "calls": 2,
+      "token": "fresh-access"
+    },
+    "expired": {
+      "status": 401,
+      "unauthorized": 1,
+      "refreshes": 1,
+      "calls": 1,
+      "token": "expired-access"
+    },
+    "forbidden": {
+      "status": 403,
+      "unauthorized": 0,
+      "refreshes": 0,
+      "calls": 1,
+      "token": "expired-access"
+    },
+    "transient": {
+      "network": {
+        "status": 0,
+        "unauthorized": 0,
+        "refreshes": 1,
+        "calls": 1,
+        "token": "expired-access"
+      },
+      "unavailable": {
+        "status": 0,
+        "unauthorized": 0,
+        "refreshes": 1,
+        "calls": 1,
+        "token": "expired-access"
+      }
+    },
+    "serverTransient": [
+      {
+        "file": "netlify/functions/auth-me.js",
+        "before": 401,
+        "after": 503
+      },
+      {
+        "file": "netlify/functions/auth-refresh.js",
+        "before": 401,
+        "after": 503
+      },
+      {
+        "file": "netlify/functions/scope.js",
+        "before": 401,
+        "after": 503
+      }
+    ]
+  },
+  "dap": {
+    "rows": 16,
+    "expectedSlots": [
+      [
+        "18:30",
+        "19:30",
+        "18:30",
+        "19:00",
+        "19:00",
+        "19:30"
+      ],
+      [
+        "19:00",
+        "20:00",
+        "19:30",
+        "20:00",
+        "19:00",
+        "19:30"
+      ],
+      [
+        "20:00",
+        "21:00",
+        "20:00",
+        "20:30",
+        "20:30",
+        "21:00"
+      ],
+      [
+        "20:30",
+        "21:30",
+        "21:00",
+        "21:30",
+        "20:30",
+        "21:00"
+      ]
+    ]
+  },
+  "productionWrites": false
+}

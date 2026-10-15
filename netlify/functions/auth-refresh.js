@@ -1,4 +1,4 @@
-const { response, parseBody, verifyToken, signToken, bearerToken, publicUser, publicOidcUserFromClaims, findUser } = require('../lib/_auth-utils');
+const { response, parseBody, verifyToken, signToken, bearerToken, publicUser, publicOidcUserFromClaims, findUser, authFailureResponse } = require('../lib/_auth-utils');
 const { ACCESS_COOKIE, ACCESS_TTL_SECONDS, secureCookie } = require('../lib/_oidc-utils');
 const { requireSession } = require('../lib/_local-sessions');
 const { isAuthMethodEnabled } = require('../lib/_auth-utils');
@@ -57,6 +57,6 @@ exports.handler = async function(event){
     result.multiValueHeaders = { 'Set-Cookie': [secureCookie(ACCESS_COOKIE, accessToken, ACCESS_TTL_SECONDS)] };
     return result;
   }catch(error){
-    return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) });
+    return authFailureResponse(error);
   }
 };

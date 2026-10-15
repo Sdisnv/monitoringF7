@@ -261,7 +261,14 @@ async function verifyAccess(event){
   return claims;
 }
 
+function authFailureResponse(error){
+  const unavailable=String(error?.message)==='local_session_unavailable';
+  return response(unavailable?503:401,{ok:false,error:unavailable?'server_auth_unavailable':'unauthorized',
+    message:unavailable?'Vérification de session temporairement indisponible. Réessayez.':String(error.message || error)});
+}
+
 module.exports = {
+  authFailureResponse,
   response,
   parseBody,
   hashPassword,

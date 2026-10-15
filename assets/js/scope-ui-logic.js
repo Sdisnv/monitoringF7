@@ -3324,6 +3324,9 @@
       'CMDT:CODIR': 'Membres du Codir',
       'CMDT:CDT': 'CDT', 'CMDT:C-OP': 'C op', 'CMDT:C-LOG': 'C log',
       'CMDT:C-FOR': 'C for', 'CMDT:QM': 'QM',
+      'C DAP': 'Chef DAP', 'CMDT:CHEF-SECTION-DAP': 'Chef section DAP',
+      'ENC:RESP-MATERIEL': 'Resp matériel', 'ENC:PREPOSE-MATERIEL': 'Préposé matériel',
+      'AUTO:CAND-VL': 'Candidat cond VL',
       'PR:C-PR': 'C PR', 'PR:FORMATEUR-PR': 'Formateur PR', 'PR:PREPOSE-APR':'Préposé APR',
       'AUTO:OF-AUTO': 'Of auto', 'AUTO:FORMATEUR-C1-118': 'Formateur C1/118',
       'AUTO:MONITEUR-CONDUITE': 'Moniteur conduite'
@@ -3334,10 +3337,10 @@
     const descriptive = Object.entries(qvProgrammeDescriptivePublics());
     return [
       { group: 'Général', items: [['GEN:RECRUE', 'Recrue'], ['GEN:SAPEUR', 'Sapeur'], ['GEN:SAPEUR-DPS', 'Sapeur DPS'], ['GEN:SAPEUR-DAP', 'Sapeur DAP']] },
-      { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:')) },
+      { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:') || code==='C DAP') },
       { group: 'Échelons', items: [['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
       { group: 'Sections DPS', items: ['N01', 'N01a', 'N01b', 'N02', 'N02a', 'N02b', 'N03', 'N03a', 'N03b', 'N04', 'N04a', 'N04b', 'N05', 'N05a', 'N05b', 'N06'].map(code => [code, code]) },
-      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe']] },
+      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe'],...descriptive.filter(([code])=>code.startsWith('ENC:'))] },
       { group: 'Opérationnel', items: [['ENC:OSR','OSR'],['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidat CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidat CI DAP']] },
       { group: 'Formation', items: [['FOBA:1', 'FOBA 1'], ['FOBA:2', 'FOBA 2'], ['FOBA:3', 'FOBA 3']] },
       { group: 'PR', items: [['PR:2', 'PAPR'], ['PR:CAND-PAPR', 'Candidat PAPR'], ['PR:3', 'PABC'], ['PR:FORMATEURS', 'Formateur PR'], ['PR:FMF', 'Formateur maison Feu (FMF)'], ['PR:CHEF-PISTE', 'Chef piste']] },
@@ -3348,7 +3351,15 @@
       ['PR', 'AUTO'].includes(group.group) ? descriptive.filter(([code]) => code.startsWith(`${group.group}:`)) : []
     ).sort((a,b) => group.group==='Opérationnel'
       ? ['ENC:OSR','ENC:CI-DPS','ENC:CAND-CI-DPS','ENC:CI-DAP','ENC:CAND-CI-DAP'].indexOf(a[0])-['ENC:OSR','ENC:CI-DPS','ENC:CAND-CI-DPS','ENC:CI-DAP','ENC:CAND-CI-DAP'].indexOf(b[0])
-      : a[1].localeCompare(b[1], 'fr'))}));
+      : a[1].localeCompare(b[1], 'fr'))})).map(group=>{
+      for(const [code,anchor] of [['CMDT:CHEF-SECTION-DAP','C DAP'],['AUTO:CAND-VL','AUTO:3']]){
+        const index=group.items.findIndex(item=>item[0]===code);
+        if(index<0 || !group.items.some(item=>item[0]===anchor)) continue;
+        const [item]=group.items.splice(index,1);
+        group.items.splice(group.items.findIndex(value=>value[0]===anchor)+1,0,item);
+      }
+      return group;
+    });
   }
 
   function qvProgrammeExportActivity(row, format) {
@@ -3506,7 +3517,9 @@
 
   function qvProgrammePublicReferenceCode(code) {
     return ({'PR:FORMATEURS':'PR:FORMATEUR-PR','AUTO:MONITEURS':'AUTO:MONITEUR-CONDUITE',
-      'AUTO:FORM-C1':'AUTO:FORMATEUR-C1-118'})[code] || code;
+      'AUTO:FORM-C1':'AUTO:FORMATEUR-C1-118','Chef section DAP':'CMDT:CHEF-SECTION-DAP',
+      'Candidat cond VL':'AUTO:CAND-VL','Resp matériel':'ENC:RESP-MATERIEL',
+      'Préposé matériel':'ENC:PREPOSE-MATERIEL'})[code] || code;
   }
 
   function qvProgrammeCursusLabel(item) {
@@ -4602,10 +4615,10 @@
   function qvDapConduiteSlots(date) {
     return [['18:30', '19:30'], ['19:00', '20:00'], ['20:00', '21:00'], ['20:30', '21:30']]
       .map(([start, end], index) => ({ position: index + 1, startsAt: `${date}T${start}`, endsAt: `${date}T${end}`,
-        conduiteStartsAt: `${date}T${['19:00', '19:30', '20:30', '21:00'][index]}`,
-        conduiteEndsAt: `${date}T${['19:30', '20:00', '21:00', '21:30'][index]}`,
-        connaissanceVehiculeStartsAt: `${date}T${['18:30', '19:00', '20:00', '20:30'][index]}`,
-        connaissanceVehiculeEndsAt: `${date}T${['19:00', '19:30', '20:30', '21:00'][index]}`,
+        conduiteStartsAt: `${date}T${['18:30', '19:30', '20:00', '21:00'][index]}`,
+        conduiteEndsAt: `${date}T${['19:00', '20:00', '20:30', '21:30'][index]}`,
+        connaissanceVehiculeStartsAt: `${date}T${['19:00', '19:00', '20:30', '20:30'][index]}`,
+        connaissanceVehiculeEndsAt: `${date}T${['19:30', '19:30', '21:00', '21:00'][index]}`,
         conduiteMinutes: 30, connaissanceVehiculeMinutes: 30 }));
   }
 
@@ -5629,6 +5642,7 @@
     qvApplyPeriodicActivityRules,
     qvPeriodicActivityDecision,
     qvApplyDapConduite,
+    qvDapConduiteSlots,
     qvDapConduiteBuckets,
     qvApplyDapAnnualExercisePlan,
     qvApplyFobaOccurrenceThemes,

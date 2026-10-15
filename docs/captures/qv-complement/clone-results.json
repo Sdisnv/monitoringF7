@@ -1,0 +1,200 @@
+{
+  "status": "PASS",
+  "clone": "scope_qv_2027_recipe_20261006",
+  "rollbackVerified": true,
+  "productionWrites": false,
+  "checks": [
+    "T-W: deux cursus existants sous FOCA, mêmes identifiants, ordre filtre/fiche commun",
+    "A-G: 16 conduites DAP, quatre places exactes ; restitution 2028 via fixture de lignée sur le moteur existant",
+    "R-S: publics libres reconnus par les filtres sans conversion persistante",
+    "X-Z: toutes les lignes Programme identiques après rattachement, Stat.Com/codes et historiques conservés"
+  ],
+  "cursus": {
+    "at": "2026-10-15T08:31:54.710551+02:00",
+    "results": [
+      {
+        "id": "ea7029d5-4355-4b8c-b976-6037d6bcea7e",
+        "code": "CI-DPS",
+        "status": "CORRECTED"
+      },
+      {
+        "id": "f618cd32-7e4a-4b2a-a34c-47d4fd5d02f1",
+        "code": "CI-DAP",
+        "status": "CORRECTED"
+      }
+    ],
+    "committed": false,
+    "protectedTables": [
+      {
+        "name": "scope_affectations",
+        "after_hash": "fd3bb8539413835af3221dd86cbbc497",
+        "before_hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      {
+        "name": "scope_attendus",
+        "after_hash": "3fe24cb0abc074300e41fec163b7fd81",
+        "before_hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      {
+        "name": "scope_evenements",
+        "after_hash": "ab36bf6bf7353d06a71fe153d2210670",
+        "before_hash": "ab36bf6bf7353d06a71fe153d2210670"
+      },
+      {
+        "name": "scope_event_code_allocations",
+        "after_hash": "ebacaadee669a8d31a1fc16e9dff965a",
+        "before_hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      },
+      {
+        "name": "scope_participations",
+        "after_hash": "acfa527effe1d04d435c82536dc75e06",
+        "before_hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      {
+        "name": "scope_person_qualifications",
+        "after_hash": "d41d8cd98f00b204e9800998ecf8427e",
+        "before_hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "name": "scope_public_definitions",
+        "after_hash": "b3ea526bd4f8273b4dd43cf5549ba5e1",
+        "before_hash": "b3ea526bd4f8273b4dd43cf5549ba5e1"
+      },
+      {
+        "name": "scope_public_rule_versions",
+        "after_hash": "e564fa5c3ab7724d692019fe1fc0add4",
+        "before_hash": "e564fa5c3ab7724d692019fe1fc0add4"
+      },
+      {
+        "name": "scope_quo_vadis_cohortes",
+        "after_hash": "83378d3e1d04b934aa2f45d902b2f9e3",
+        "before_hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+      },
+      {
+        "name": "scope_quo_vadis_cursus_programmes",
+        "after_hash": "e82e1f0ed71a7278c3585f1a6994b1be",
+        "before_hash": "e82e1f0ed71a7278c3585f1a6994b1be"
+      },
+      {
+        "name": "scope_quo_vadis_cursus_step_programmes",
+        "after_hash": "768f2870adbc07ed57c6e2e4837e4204",
+        "before_hash": "768f2870adbc07ed57c6e2e4837e4204"
+      },
+      {
+        "name": "scope_quo_vadis_cursus_steps",
+        "after_hash": "73a216591405ea28f145f52b63516076",
+        "before_hash": "73a216591405ea28f145f52b63516076"
+      },
+      {
+        "name": "scope_quo_vadis_cursus_versions",
+        "after_hash": "a209803843cd767593099392dad8410c",
+        "before_hash": "a209803843cd767593099392dad8410c"
+      },
+      {
+        "name": "scope_quo_vadis_obligations",
+        "after_hash": "75beaf8e25ea5420b3fd08d6393cd4cb",
+        "before_hash": "75beaf8e25ea5420b3fd08d6393cd4cb"
+      },
+      {
+        "name": "scope_qv_publication_links",
+        "after_hash": "dc27eda248e595e2979aacef735ffd18",
+        "before_hash": "dc27eda248e595e2979aacef735ffd18"
+      }
+    ]
+  },
+  "rows": 943,
+  "publicHashes": {
+    "before": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      },
+      "scope_quo_vadis_cursus_definitions": {
+        "count": 11,
+        "hash": "598a451891d35b8b9bbe976fdc306fb1"
+      },
+      "scope_quo_vadis_cohortes": {
+        "count": 2,
+        "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+      },
+      "scope_person_qualifications": {
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      }
+    },
+    "after": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      },
+      "scope_quo_vadis_cursus_definitions": {
+        "count": 11,
+        "hash": "598a451891d35b8b9bbe976fdc306fb1"
+      },
+      "scope_quo_vadis_cohortes": {
+        "count": 2,
+        "hash": "83378d3e1d04b934aa2f45d902b2f9e3"
+      },
+      "scope_person_qualifications": {
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      }
+    }
+  }
+}
