@@ -1,0 +1,123 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "filters": [
+        {
+          "oi": "DAP:Y1",
+          "rows": 95
+        },
+        {
+          "oi": "DPS:G1",
+          "rows": 383
+        },
+        {
+          "oi": "JSP:C1",
+          "rows": 80
+        },
+        {
+          "oi": "SDIS",
+          "rows": 44
+        },
+        {
+          "oi": "tous",
+          "rows": 924
+        }
+      ],
+      "calendars": [
+        {
+          "oi": "DAP:Y1",
+          "cmdtVisible": false,
+          "nonCmdtPreserved": true
+        },
+        {
+          "oi": "DPS:G1",
+          "cmdtVisible": false,
+          "nonCmdtPreserved": true
+        },
+        {
+          "oi": "JSP:C1",
+          "cmdtVisible": false,
+          "nonCmdtPreserved": true
+        },
+        {
+          "oi": "SDIS",
+          "cmdtVisible": true,
+          "nonCmdtPreserved": true
+        },
+        {
+          "oi": "tous",
+          "cmdtVisible": true,
+          "nonCmdtPreserved": true
+        }
+      ],
+      "pdfAndCsvMatchDisplayedScope": true
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "filters": [
+        {
+          "oi": "DAP:Y1",
+          "rows": 95
+        },
+        {
+          "oi": "DPS:G1",
+          "rows": 383
+        },
+        {
+          "oi": "JSP:C1",
+          "rows": 80
+        },
+        {
+          "oi": "SDIS",
+          "rows": 44
+        },
+        {
+          "oi": "tous",
+          "rows": 924
+        }
+      ],
+      "calendars": [
+        {
+          "oi": "DAP:Y1",
+          "cmdtVisible": false,
+          "nonCmdtPreserved": true
+        },
+        {
+          "oi": "DPS:G1",
+          "cmdtVisible": false,
+          "nonCmdtPreserved": true
+        },
+        {
+          "oi": "JSP:C1",
+          "cmdtVisible": false,
+          "nonCmdtPreserved": true
+        },
+        {
+          "oi": "SDIS",
+          "cmdtVisible": true,
+          "nonCmdtPreserved": true
+        },
+        {
+          "oi": "tous",
+          "cmdtVisible": true,
+          "nonCmdtPreserved": true
+        }
+      ],
+      "pdfAndCsvMatchDisplayedScope": true
+    }
+  ],
+  "errors": [],
+  "businessWrites": 0,
+  "engine": "Chrome / Playwright",
+  "isolatedAssetsAndProjection": true,
+  "liveMoaSessionUntouched": true,
+  "safari": "Non testé, runtime WebKit absent"
+}

@@ -1,0 +1,279 @@
+{
+  "status": "PASS",
+  "templatesAndColumnsUnchanged": true,
+  "format": "PDF annuel et CSV Excel existants",
+  "results": [
+    {
+      "oi": "DAP:Y1",
+      "rows": 95,
+      "before": 121,
+      "pdfPages": 8,
+      "pdfSha256": "724932554289fbb852a8be21f5c648ec88e956af8e6344334ffcaedfdcc0ef0a",
+      "csvSha256": "46eb5892ecda7330effbe0bf966a0b936cbc15e68f421e382f2c1dc0a9def3b7",
+      "inputModelHash": "109585ecbc76b4d12447b57a7c68e42bb5401c3e37ff642af7c278790a18f8d8",
+      "samePdfCsvSelection": true,
+      "geometry": [
+        {
+          "page": 1,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 2,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 3,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 4,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 5,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 6,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 7,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 8,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        }
+      ]
+    },
+    {
+      "oi": "SDIS",
+      "rows": 44,
+      "before": 44,
+      "pdfPages": 5,
+      "pdfSha256": "a5fc62f69fdfda2fd5622aea5754cb0186f7d64daebe81a188282b6291db6194",
+      "csvSha256": "40b227a0cd5d79e1d469a2e4ca076d807828f20cf6f7875f4ee6db3ca020e35e",
+      "inputModelHash": "cbb60071d80a26a85d9c5452eb95a32a94bb30b3d7cc55da372c7c6cde0dfe99",
+      "samePdfCsvSelection": true,
+      "globalSdisIdentical": true,
+      "geometry": [
+        {
+          "page": 1,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 2,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 3,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 4,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        },
+        {
+          "page": 5,
+          "width": 841.89,
+          "height": 595.28,
+          "headerOrder": [
+            "Date",
+            "Horaire",
+            "Activité",
+            "Domaine",
+            "Famille",
+            "OI",
+            "Public cible",
+            "Lieu",
+            "Salle",
+            "Responsable",
+            "Stat.Com",
+            "État"
+          ]
+        }
+      ]
+    }
+  ]
+}

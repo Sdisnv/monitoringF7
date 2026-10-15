@@ -1,0 +1,689 @@
+{
+  "status": "PASS",
+  "base": "0d1fc89912d0b03120e3c57a8d0f9dd83c2dcf41",
+  "database": "scope_qv_2027_recipe_20261006",
+  "transactionReadOnly": true,
+  "rollbackVerified": true,
+  "productionWrites": 0,
+  "projectionSource": "PR26 private representative clone projection (not a fresh exhaustive production snapshot)",
+  "projectionRows": 944,
+  "activeRows": 924,
+  "inputHash": "464b25ede286d70f5a637861faa849877671f61650fa9717f52397494c72efb2",
+  "outputHash": "464b25ede286d70f5a637861faa849877671f61650fa9717f52397494c72efb2",
+  "cmdt": [
+    {
+      "id": "qv-source-862",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-01-12T18:00:00",
+      "endsAt": "2027-01-12T21:00:00",
+      "publishedEventId": "63b7f0bf-79d4-4aa4-afae-9802368e117d",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "qv-source-893",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.001",
+      "startsAt": "2027-01-29T08:00:00",
+      "endsAt": "2027-01-29T09:30:00",
+      "publishedEventId": "1cfbfe96-7f05-4936-adbb-a9b1e251fe2b",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "qv-source-921",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-02-16T18:00:00",
+      "endsAt": "2027-02-16T21:00:00",
+      "publishedEventId": "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+      "humanDecision": true,
+      "businessValidated": false
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-CONFERENCE-DES-COMMANDANTS-A2DEA769",
+      "definitionId": "QV26-CONFERENCE-DES-COMMANDANTS-A2DEA769",
+      "label": "Conférence des Commandants",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.002",
+      "startsAt": "2027-03-18T17:00",
+      "endsAt": "2027-03-18T20:00",
+      "humanDecision": false,
+      "businessValidated": false
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-CODIR-REPAS-81897EA7",
+      "definitionId": "QV26-SEANCE-CODIR-REPAS-81897EA7",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.004",
+      "startsAt": "2027-06-25T08:00:00",
+      "endsAt": "2027-06-25T09:30:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-CRDIS-B8654449",
+      "definitionId": "QV26-SEANCE-CRDIS-B8654449",
+      "label": "Séance CRDIS",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.006",
+      "startsAt": "2027-05-04T09:30",
+      "endsAt": "2027-05-04T14:00",
+      "humanDecision": false,
+      "businessValidated": false
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:03",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-03-16T18:00:00",
+      "endsAt": "2027-03-16T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:04",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-04-13T18:00:00",
+      "endsAt": "2027-04-13T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:05",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-05-18T18:00:00",
+      "endsAt": "2027-05-18T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:06",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-06-22T18:00:00",
+      "endsAt": "2027-06-22T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:07",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-08-17T18:00:00",
+      "endsAt": "2027-08-17T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:08",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-09-07T18:00:00",
+      "endsAt": "2027-09-07T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:09",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-09-28T18:00:00",
+      "endsAt": "2027-09-28T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:10",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-11-02T18:00:00",
+      "endsAt": "2027-11-02T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:EMSEA:SESSION:11",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "",
+      "startsAt": "2027-12-07T18:00:00",
+      "endsAt": "2027-12-07T21:00:00",
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-02-26:0800:Caserne-G1",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.003",
+      "startsAt": "2027-02-26T08:00:00",
+      "endsAt": "2027-02-26T09:30:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-03-19:0800:Caserne-G1",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.003",
+      "startsAt": "2027-03-19T08:00:00",
+      "endsAt": "2027-03-19T09:30:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-04-23:0800:Caserne-G1",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.003",
+      "startsAt": "2027-04-23T08:00:00",
+      "endsAt": "2027-04-23T09:30:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-05-26:1800:Belmont-sur-Yverdon",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.003",
+      "startsAt": "2027-05-27T18:00:00",
+      "endsAt": "2027-05-27T19:00:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-08-27:0800:Caserne-G1",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.003",
+      "startsAt": "2027-08-27T08:00:00",
+      "endsAt": "2027-08-27T09:30:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-09-16:1800:Ursins",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.003",
+      "startsAt": "2027-09-23T18:00:00",
+      "endsAt": "2027-09-23T19:00:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-92921E7C:2027-10-29:0800:Caserne-G1",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.003",
+      "startsAt": "2027-10-29T08:00:00",
+      "endsAt": "2027-10-29T09:30:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CODIR-REPAS-81897EA7:2027-12-10:1030:Caserne-G1",
+      "definitionId": "QV26-SEANCE-CODIR-REPAS-81897EA7",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.004",
+      "startsAt": "2027-12-10T08:00:00",
+      "endsAt": "2027-12-10T09:30:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-CRDIS-B8654449:2027-09-22:0930:Caserne-G1",
+      "definitionId": "QV26-SEANCE-CRDIS-B8654449",
+      "label": "Séance CRDIS",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.006",
+      "startsAt": "2027-09-22T09:30",
+      "endsAt": "2027-09-22T14:00",
+      "publishedEventId": null,
+      "humanDecision": false,
+      "businessValidated": false
+    },
+    {
+      "id": "QV27:CYCLE:QV26-SEANCE-CODIR-92921E7C:893",
+      "definitionId": "QV26-SEANCE-CODIR-92921E7C",
+      "label": "Séance Codir",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "070F0",
+      "code": "070F0.014",
+      "startsAt": "2028-01-28T08:00:00",
+      "endsAt": "2028-01-28T09:30:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    },
+    {
+      "id": "QV27:CYCLE:QV26-SEANCE-EM-ED042EBD:862",
+      "definitionId": "QV26-SEANCE-EM-ED042EBD",
+      "label": "Séance État-major",
+      "oi": [
+        "SDIS"
+      ],
+      "statCom": "EMSEA",
+      "code": "EMSEA.001",
+      "startsAt": "2028-01-11T18:00:00",
+      "endsAt": "2028-01-11T21:00:00",
+      "publishedEventId": null,
+      "humanDecision": true,
+      "businessValidated": true
+    }
+  ],
+  "filters": [
+    {
+      "oi": "DPS:G1",
+      "before": 409,
+      "after": 383,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DPS:C1",
+      "before": 283,
+      "after": 257,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DPS:B1",
+      "before": 280,
+      "after": 254,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DPS:B2",
+      "before": 270,
+      "after": 244,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DAP:Y1",
+      "before": 121,
+      "after": 95,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DAP:Y2",
+      "before": 102,
+      "after": 76,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DAP:Y3",
+      "before": 103,
+      "after": 77,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DAP:Y4",
+      "before": 100,
+      "after": 74,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "JSP:G1",
+      "before": 105,
+      "after": 79,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "JSP:C1",
+      "before": 106,
+      "after": 80,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "JSP:B1",
+      "before": 105,
+      "after": 79,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DPS",
+      "before": 633,
+      "after": 607,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "DAP",
+      "before": 197,
+      "after": 171,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    },
+    {
+      "oi": "JSP",
+      "before": 132,
+      "after": 106,
+      "removedCmdt": 26,
+      "nonCmdtSdis": 18
+    }
+  ],
+  "exports": [
+    {
+      "oi": "tous",
+      "count": 924,
+      "identical": true,
+      "modelHash": "774b006d93aa9334377e357450a919213b34c4cc1fe27d1de226fb4b25a0f7fc",
+      "csvHash": "26c0226cbe6cdaaae13cb75bd0985cbbb91605fe46d021b93ae540dbd972ebbd"
+    },
+    {
+      "oi": "SDIS",
+      "count": 44,
+      "identical": true,
+      "modelHash": "cbc93b5f41900e476575e0b46cb85bb500aac4c95f86ed01ccc05cc05011e8e1",
+      "csvHash": "40b227a0cd5d79e1d469a2e4ca076d807828f20cf6f7875f4ee6db3ca020e35e"
+    }
+  ],
+  "nonCmdtSdis": [
+    {
+      "id": "QV26-EXERCICE-FOBA-4-FEF301C5:O1:S1",
+      "label": "Exercice FOBA 4"
+    },
+    {
+      "id": "QV26-EXERCICE-FOBA-8-AE81E3A7:O1:S1",
+      "label": "Exercice FOBA 8"
+    },
+    {
+      "id": "QV26-TEST-ANNUEL-FOBA-7BE50D02:O1:S1",
+      "label": "Test annuel FOBA"
+    },
+    {
+      "id": "qv-source-859",
+      "label": "Répétition garde drapeau RA '26"
+    },
+    {
+      "id": "qv-source-863",
+      "label": "Séance cadres F5/6"
+    },
+    {
+      "id": "qv-source-865",
+      "label": "Séance échelons II, III et IV"
+    },
+    {
+      "id": "qv-source-894",
+      "label": "Équipement des recrues FOBA 1"
+    },
+    {
+      "id": "qv-source-895",
+      "label": "Cours de cadres FOBA"
+    },
+    {
+      "id": "FINAL:MOA_ARBITRATION:QV26-ASSEMBLEE-CI-FCF435B1",
+      "label": "Assemblée CI"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-COSEC-B710F41E",
+      "label": "Séance COSEC"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-INTERSDIS-4B877B98",
+      "label": "Séance interSDIS"
+    },
+    {
+      "id": "FINAL:INSUFFICIENT_INFORMATION:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54",
+      "label": "Table ouverte avec le Commandant"
+    },
+    {
+      "id": "QV27:PROJ:QV26-ASSEMBLEE-CI-FCF435B1:2027-09-16:1930:-d-finir",
+      "label": "Assemblée CI"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-03-23:1830:SSP",
+      "label": "Séance COSEC"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-05-20:1830:Caserne-G1",
+      "label": "Séance COSEC"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-09-14:1830:SSP",
+      "label": "Séance COSEC"
+    },
+    {
+      "id": "QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-11-23:1830:Caserne-G1",
+      "label": "Séance COSEC"
+    },
+    {
+      "id": "QV27:PROJ:QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54:2027-11-09:1700:Caserne-G1",
+      "label": "Table ouverte avec le Commandant"
+    }
+  ],
+  "qualification": {
+    "exactDefinitions": true,
+    "noTitleDomainPublicOrStatcomInference": true,
+    "manualCanonicalType": true,
+    "lineagePreserved": true
+  },
+  "unchanged": [
+    "netlify/lib/_scope-quo-vadis-service.js",
+    "netlify/lib/_scope-service.js",
+    "netlify/lib/_scope-public-engine.js",
+    "netlify/lib/_scope-report-service.js",
+    "assets/js/scope-ui.js",
+    "assets/js/scope-qv-coverage.js"
+  ],
+  "before": {
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    }
+  },
+  "after": {
+    "scope_quo_vadis_obligations": {
+      "count": 959,
+      "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+    },
+    "scope_evenements": {
+      "count": 257,
+      "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+    },
+    "scope_qv_publication_links": {
+      "count": 125,
+      "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "fd3bb8539413835af3221dd86cbbc497"
+    },
+    "scope_participations": {
+      "count": 6156,
+      "hash": "acfa527effe1d04d435c82536dc75e06"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3fe24cb0abc074300e41fec163b7fd81"
+    },
+    "scope_journal_metier": {
+      "count": 2290,
+      "hash": "26d8643de3d6f733306b96f8e699912d"
+    },
+    "scope_event_code_allocations": {
+      "count": 70,
+      "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+    },
+    "scope_evenement_ois": {
+      "count": 190,
+      "hash": "fc1a180cba7d66be248aab182451415a"
+    },
+    "scope_evenement_publics_qv": {
+      "count": 56,
+      "hash": "4983f2f4bb131567edfb9529a851d0e0"
+    },
+    "scope_personnes": {
+      "count": 296,
+      "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+    }
+  }
+}
