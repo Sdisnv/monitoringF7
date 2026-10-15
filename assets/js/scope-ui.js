@@ -11056,7 +11056,7 @@
   }
 
   function qvProgrammeExportMeta(monthly, monthKey, fullYear) {
-    const filters = fullYear ? {} : state.quoVadisFilters || {};
+    const filters = fullYear ? {oi:state.quoVadisFilters?.oi} : state.quoVadisFilters || {};
     const active = [
       ['Recherche', filters.q], ['Domaine', filters.domain], ['Famille', filters.family],
       ['OI', filters.oi], ['Stat.Com', filters.statcom], ['Public', filters.cible],
@@ -11369,8 +11369,10 @@
     const calendar = qvCalendarIndex(qv);
     const holidayDates = Object.keys(calendar).filter((date) => (calendar[date] || []).some((mark) => qvCalendarKind(mark) === 'FERIE'));
     const viewed = year === 2028 && typeof state !== 'undefined' ? (state.quoVadisYears || {})[2028] : qv;
-    const programmeRows = (((viewed || {}).canonicalProgramme || {}).rows || []).filter(L.qvProgrammeIsActive);
-    const recurrenceRows = (((qv.agendaYears || {})[year] || {}).rows || []);
+    const programmeRows = (((viewed || {}).canonicalProgramme || {}).rows || []).filter(L.qvProgrammeIsActive)
+      .filter(row=>year===2026 || L.qvProgrammeOiMatches(row,state.quoVadisFilters?.oi));
+    const recurrenceRows = (((qv.agendaYears || {})[year] || {}).rows || [])
+      .filter(row=>year===2026 || L.qvProgrammeOiMatches(row,state.quoVadisFilters?.oi));
     const history = qv.historicalAgenda2026;
     const historicalRows = history ? [...history.events, ...history.references] : programmeRows.filter(row => row.historicalProposal).map(row => ({ ...row, kind: 'EXCEL_REFERENCE', date: row.historicalProposal.date2026, title: row.historicalProposal.title2026, start: row.historicalProposal.start, end: row.historicalProposal.end }));
     const programmeYear = Number(((viewed || {}).programme || {}).annee || 2027);
@@ -11454,7 +11456,8 @@
   }
 
   function qvAgendaProjection(qv) {
-    const rows = (((qv || {}).canonicalProgramme || {}).rows || []).filter(L.qvProgrammeIsActive);
+    const rows = (((qv || {}).canonicalProgramme || {}).rows || []).filter(L.qvProgrammeIsActive)
+      .filter(row=>L.qvProgrammeOiMatches(row,state.quoVadisFilters?.oi));
     const dated = rows.filter((row) => qvProgrammeDate(row));
     const undated = rows.filter((row) => !qvProgrammeDate(row));
     return { total: rows.length, dated: dated.length, undated: undated.length, historical: rows.filter((row) => row.historicalProposal).length };
@@ -11530,7 +11533,7 @@
 
   function qvAgendaProposedPool(qv) {
     const rows = (((qv || {}).canonicalProgramme || {}).rows || []).filter((row) => L.qvProgrammeIsActive(row)
-      && !qvProgrammeDate(row) && !qvProgrammeProposedMonthKey(row));
+      && L.qvProgrammeOiMatches(row,state.quoVadisFilters?.oi) && !qvProgrammeDate(row) && !qvProgrammeProposedMonthKey(row));
     if (!rows.length) return '';
     const byDomain = new Map();
     rows.forEach((row) => {
@@ -11554,6 +11557,7 @@
       <section class="qv-year-intro">
         ${qvSectionHead('calendar', `Agenda annuel ${year}`, year === 2026 ? 'Événements SCOPE, références historiques et permanences calculées.' : `Programme préparatoire ${year}.`)}
         <nav class="qv-agenda-years" aria-label="Année de l’agenda">${[2026, 2027, 2028].map((value) => `<a href="${qvHref('agenda-annuel', { annee: value })}" ${year === value ? 'aria-current="page"' : ''}>${value}</a>`).join('')}</nav>
+        ${year>=2027?`<label class="scope-field">OI<select id="qv-agenda-oi"><option value="tous">Tous</option>${qvProgrammeOiFilterOptions()}</select></label>`:''}
         ${year === 2027 ? `<div class="scope-actions qv-export-actions">${qvProgrammePdfControl()}<button type="button" class="scope-btn" id="qv-export-programme-pdf">Exporter PDF</button><button type="button" class="scope-btn" id="qv-export-programme-excel">Exporter pour Excel</button></div>` : ''}
         ${year === 2026 && qv.historicalAgenda2026 ? `<p class="scope-muted">${qv.historicalAgenda2026.counts.events} événements SCOPE · ${qv.historicalAgenda2026.counts.matchedReferences} références Excel reliées · ${qv.historicalAgenda2026.counts.unmatchedReferences} références Excel sans correspondance démontrée${qv.historicalAgenda2026.available ? '' : ' · Historique SCOPE indisponible'}</p>` : ''}
         ${year === 2027 ? `
@@ -12153,15 +12157,19 @@
     return (qv.cursusSelections || []).filter(item=>!item.statut || item.statut==='ACTIF');
   }
 
+  function qvProgrammeOiFilterOptions(){
+    const selected=state.quoVadisFilters?.oi;
+    return L.qvProgrammeOiCatalogue().map(group=>group.group==='SDIS'
+      ? `<option class="qv-oi-parent" value="SDIS" ${selected==='SDIS'?'selected':''}>SDIS</option>`
+      : `<option class="qv-oi-parent" value="${group.group}" ${selected===group.group?'selected':''}>${group.group}</option>${group.items.map(([code,label])=>
+        `<option class="qv-oi-child" value="${escapeHtml(code)}" ${selected===code?'selected':''}>&nbsp;&nbsp;&nbsp;${escapeHtml(label)}</option>`).join('')}`).join('');
+  }
+
   function qvProgrammeFilterBar(qv) {
     const all = ((qv.canonicalProgramme || {}).rows || []).filter(L.qvProgrammeIsActive);
     const filters = state.quoVadisFilters || {};
     const domainLabels = { F0:'Gouvernance',F1:'Personnel',F2:'Renseignements',F3:'Opérationnel',F4:'Logistique',F5:'Partenaires',F6:'SIC',F7:'Formation',F8:'Finances' };
-    const oiGroups = L.qvProgrammeOiCatalogue();
-    const oiOptions = `<option class="qv-oi-parent" value="SDIS" ${filters.oi === 'SDIS' ? 'selected' : ''}>SDIS</option>`+['DPS','DAP','JSP'].map((parent) => {
-      const group = oiGroups.find((item) => item.group === parent);
-      return `<option class="qv-oi-parent" value="${parent}" ${filters.oi === parent ? 'selected' : ''}>${parent}</option>${group.items.map(([code, label]) => `<option class="qv-oi-child" value="${escapeHtml(code)}" ${filters.oi === code ? 'selected' : ''}>&nbsp;&nbsp;&nbsp;${escapeHtml(label)}</option>`).join('')}`;
-    }).join('');
+    const oiOptions = qvProgrammeOiFilterOptions();
     const statcom = qvFilterOptions(all, (row) => row.statCom);
     const selectedStatcom = (qv.statComCodes || []).find((item) => item.code === filters.statcom);
     const statcomLabel = (item) => item && (item.label || item.libelle) || '';
@@ -12839,8 +12847,11 @@
         row.dapGroupedProposal.replanning ? 'Lieu et salle à confirmer.' : '',
         'Horaires, thème, public et responsable à confirmer.'].filter(Boolean).join(' ')]);
     for(const item of row.preparationControls || []) if(item.status!=='CONFORME' && !item.exception)
-      controls.push([item.status==='NON_CONFORME_CRITIQUE'?'Préparation exercice — alerte critique':'Préparation exercice',item.message,
-        item.status==='MOA_REQUIRED'?'Faire arbitrer la relation préparatoire par la MOA.':'Contrôler les dates ou soumettre une exception motivée à la MOA.']);
+      controls.push([item.status==='NON_CONFORME_CRITIQUE'?'Préparation exercice — alerte critique':'Préparation exercice',
+        row.id===item.courseId && item.status==='NON_CONFORME_CRITIQUE'
+          ? `Ce cours de cadres est programmé après ${item.groupId?'la formation':'l’exercice'} qu’il doit préparer. ${item.message}` : item.message,
+        (row.preparationPreview?'Dates en cours de saisie, non enregistrées. ':'')
+          +(item.status==='MOA_REQUIRED'?'Faire arbitrer la relation préparatoire par la MOA.':'Contrôler les dates ou soumettre une exception motivée à la MOA.'),item.key]);
     if(row.paprOiRevisionRequired) controls.push(['OI publiés','Les quatre OI DPS ne sont pas persistés dans la publication.','Confirmer une révision ciblée.']);
     if(row.paprProposal?.status==='CONFLIT') controls.push(['Cursus PAPR',row.paprProposal.conflicts?.join(' ; ') || row.reason || 'Contraintes de calendrier incompatibles.','Adapter la proposition ou arbitrer le conflit.']);
     if(row.reservationConflicts?.length) controls.push(['Réservation',
@@ -12876,7 +12887,7 @@
       .replace(/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi,'référence conservée');
     const day=row.planningDayControl && !row.businessValidation?row.planningDayControl:null;
     const dateNotice=day?`<aside class="qv-programme-date-alert" role="status"><strong>Date de planification à contrôler</strong><span>${escapeHtml(new Intl.DateTimeFormat('fr-CH',{weekday:'long',timeZone:'UTC'}).format(new Date(`${day.date}T12:00:00Z`))+' '+qvFormatDate(day.date))} · ${day.dayClass==='INTERDIT'?'Date interdite':'Jour déconseillé'}. ${day.derogationAllowed?'Dérogation motivée possible.':'Dérogation interdite.'}</span></aside>`:'';
-    return `<section class="qv-programme-controls" aria-label="À contrôler"><h3>À contrôler</h3><ul>${controls.map(([point,reason,action])=>`<li><strong>${escapeHtml(point)}</strong><span>${escapeHtml(message(reason))}</span><span>${escapeHtml(message(action))}</span></li>`).join('')}</ul>
+    return `<section class="qv-programme-controls" aria-label="À contrôler"><h3>À contrôler</h3><ul>${controls.map(([point,reason,action,key])=>`<li${key?` data-qv-preparation-key="${escapeHtml(key)}"`:''}><strong>${escapeHtml(point)}</strong><span>${escapeHtml(message(reason))}</span><span>${escapeHtml(message(action))}</span></li>`).join('')}</ul>
       ${proposalDates.length?`<div class="scope-actions">${proposalDates.map(date=>`<button type="button" class="scope-btn scope-btn-secondary" data-qv-proposed-date="${escapeHtml(date)}">Appliquer le ${escapeHtml(qvFormatDate(date))}</button>`).join('')}</div>`:''}</section>${dateNotice}`;
   }
 
@@ -14649,6 +14660,11 @@
       state.quoVadisProgrammePage = 1;
       render();
     };
+    document.getElementById('qv-agenda-oi')?.addEventListener('change',event=>{
+      state.quoVadisFilters.oi=event.target.value;
+      state.quoVadisProgrammeContextActive=true;
+      render();
+    });
     const queryField=document.getElementById('qv-filter-q');
     let queryTimer;
     if(queryField && queryField.dataset.searchBound!=='true') {
@@ -14913,7 +14929,8 @@
         || JSON.stringify([...(base.publics || [])].sort())!==JSON.stringify([...draft.publics].sort())) draft.businessValidation=null;
       draft.planningDayControl=/^\d{4}-\d{2}-\d{2}$/.test(date) ? engine.programmeDayControl(draft,qv) : null;
       draft.preparationControls=engine.preparationControls((qv.canonicalProgramme?.rows || []).map(row=>row.id===draft.id?draft:row))
-        .filter(item=>item.exerciseId===draft.id || item.courseId===draft.id);
+        .filter(item=>engine.preparationControlAffects(item,draft.id));
+      draft.preparationPreview=date!==String(base.startsAt || '').slice(0,10);
       draft.reservationConflicts=engine.reservationConflicts([draft,...(qv.reservations || [])
         .filter(row=>row.id!==draft.id && (!base.publishedEventId || row.publishedEventId!==base.publishedEventId))])
         .filter(item=>item.leftId===draft.id || item.rightId===draft.id)
@@ -15768,7 +15785,8 @@
       const monthKey = monthly ? (selectedMonth && selectedMonth !== 'tous' ? selectedMonth
         : state.quoVadisProgrammeMode === 'mensuelle' ? `${qvProgrammeYear()}-01` : '') : '';
       if(monthly && !monthKey) throw new Error('Sélectionnez un mois dans la période du Programme pour le planning mensuel.');
-      const rows = qvProgrammeFilteredRows(qv, fullYear ? { ignoreFilters: true } : {});
+      const rows = qvProgrammeFilteredRows(qv, fullYear ? { ignoreFilters: true } : {})
+        .filter(row=>!fullYear || L.qvProgrammeOiMatches(row,state.quoVadisFilters?.oi));
       const exported = monthly ? rows.filter((row) => {
         const from = `${monthKey}-01`;
         const to = `${monthKey}-31`;

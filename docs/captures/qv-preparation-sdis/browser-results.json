@@ -1,0 +1,119 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "bidirectionalSameKey": true,
+      "liveUnsavedDate": true,
+      "oneGroupedControl": true,
+      "filters": [
+        {
+          "oi": "DAP:Y1",
+          "count": 121
+        },
+        {
+          "oi": "DPS:G1",
+          "count": 409
+        },
+        {
+          "oi": "JSP:C1",
+          "count": 106
+        },
+        {
+          "oi": "SDIS",
+          "count": 44
+        }
+      ],
+      "calendars": [
+        {
+          "oi": "DAP:Y1",
+          "month": "2027-06",
+          "date": "2027-06-12",
+          "sdisEventVisible": true,
+          "organizer": "SDIS",
+          "noDuplicates": true
+        },
+        {
+          "oi": "DPS:G1",
+          "month": "2027-06",
+          "date": "2027-06-12",
+          "sdisEventVisible": true,
+          "organizer": "SDIS",
+          "noDuplicates": true
+        },
+        {
+          "oi": "JSP:C1",
+          "month": "2027-06",
+          "date": "2027-06-12",
+          "sdisEventVisible": true,
+          "organizer": "SDIS",
+          "noDuplicates": true
+        }
+      ],
+      "pdfAndCsvSameSelection": true
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "bidirectionalSameKey": true,
+      "liveUnsavedDate": true,
+      "oneGroupedControl": true,
+      "filters": [
+        {
+          "oi": "DAP:Y1",
+          "count": 121
+        },
+        {
+          "oi": "DPS:G1",
+          "count": 409
+        },
+        {
+          "oi": "JSP:C1",
+          "count": 106
+        },
+        {
+          "oi": "SDIS",
+          "count": 44
+        }
+      ],
+      "calendars": [
+        {
+          "oi": "DAP:Y1",
+          "month": "2027-06",
+          "date": "2027-06-12",
+          "sdisEventVisible": true,
+          "organizer": "SDIS",
+          "noDuplicates": true
+        },
+        {
+          "oi": "DPS:G1",
+          "month": "2027-06",
+          "date": "2027-06-12",
+          "sdisEventVisible": true,
+          "organizer": "SDIS",
+          "noDuplicates": true
+        },
+        {
+          "oi": "JSP:C1",
+          "month": "2027-06",
+          "date": "2027-06-12",
+          "sdisEventVisible": true,
+          "organizer": "SDIS",
+          "noDuplicates": true
+        }
+      ],
+      "pdfAndCsvSameSelection": true
+    }
+  ],
+  "errors": [],
+  "businessWrites": 0,
+  "isolatedAssetsAndProjection": true,
+  "liveMoaTransactionUntouched": true,
+  "engine": "Chrome / Playwright",
+  "safari": "Non testé (runtime WebKit absent)"
+}

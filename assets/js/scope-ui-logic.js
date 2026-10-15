@@ -3609,6 +3609,8 @@
   function qvProgrammeOiMatches(row, selected) {
     if (!selected || selected === 'tous') return true;
     const codes = qvProgrammeConfirmedOiCodes(row);
+    if(codes.includes('SDIS') && (['DPS','DAP','JSP'].includes(selected)
+      || qvProgrammeOiCatalogue().filter(group=>group.group!=='SDIS').some(group=>group.items.some(([code])=>code===selected)))) return true;
     return ['DPS', 'DAP', 'JSP'].includes(selected)
       ? codes.some((code) => code.startsWith(`${selected}:`))
       : codes.includes(selected);

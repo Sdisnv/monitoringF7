@@ -1,0 +1,1215 @@
+{
+  "base": "92cce517f79a89e3040d234314b8de52613af05a",
+  "unit": {
+    "status": "PASS",
+    "oiCodes": [
+      "DPS:G1",
+      "DPS:C1",
+      "DPS:B1",
+      "DPS:B2",
+      "DAP:Y1",
+      "DAP:Y2",
+      "DAP:Y3",
+      "DAP:Y4",
+      "JSP:G1",
+      "JSP:C1",
+      "JSP:B1"
+    ],
+    "groupedDays": 29,
+    "groupedBoundaries": [
+      14,
+      13,
+      -1
+    ],
+    "oneRelationForTwoSessions": true,
+    "exceptionExpiresOnDateChange": true,
+    "lineage2028": true
+  },
+  "clone": {
+    "status": "PASS",
+    "database": "scope_qv_2027_recipe_20261006",
+    "rollbackVerified": true,
+    "before": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      },
+      "scope_personnes": {
+        "count": 296,
+        "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+      },
+      "scope_quo_vadis_proposals": {
+        "count": 159,
+        "hash": "8311de7912a41a8250dc802490327d65"
+      },
+      "scope_quo_vadis_calendar_days": {
+        "count": 18,
+        "hash": "31449a187fd3a01780001acb6f70f9a2"
+      }
+    },
+    "after": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      },
+      "scope_personnes": {
+        "count": 296,
+        "hash": "508d4758265b5b90e2520f56cb3f1c7d"
+      },
+      "scope_quo_vadis_proposals": {
+        "count": 159,
+        "hash": "8311de7912a41a8250dc802490327d65"
+      },
+      "scope_quo_vadis_calendar_days": {
+        "count": 18,
+        "hash": "31449a187fd3a01780001acb6f70f9a2"
+      }
+    },
+    "rows": 944,
+    "invariant": [
+      "id",
+      "statCom",
+      "code",
+      "businessCode",
+      "startsAt",
+      "endsAt",
+      "ois",
+      "oiSelections",
+      "publics",
+      "publicFreeLabels",
+      "responsible",
+      "responsibleSelections",
+      "publishedEventId",
+      "publishedEventCode",
+      "businessValidation",
+      "humanDecision",
+      "status",
+      "themes"
+    ],
+    "baselineBidirectional": true,
+    "critical": {
+      "rule": "QV-EXERCICE-PREPARATION-001",
+      "key": "[\"QV26-EXERCICE-DAP-1-9890D687:O1:S1\",\"QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O1:S1\",\"DAP:Y1\",\"2027-02-10\",\"2027-03-10\",14]",
+      "exerciseId": "QV26-EXERCICE-DAP-1-9890D687:O1:S1",
+      "exerciseIds": [
+        "QV26-EXERCICE-DAP-1-9890D687:O1:S1"
+      ],
+      "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O1:S1",
+      "oi": "DAP:Y1",
+      "exerciseDate": "2027-02-10",
+      "courseDate": "2027-03-10",
+      "days": -28,
+      "minimumDays": 14,
+      "status": "NON_CONFORME_CRITIQUE",
+      "message": "Exercice DAP 1 · OI DAP:Y1 · Exercice 2027-02-10 · Cours de cadres exercice DAP 1 2027-03-10 · Délai -28 jours ; minimum 14 jours. Le cours a lieu après l’exercice.",
+      "exception": null,
+      "blocking": true,
+      "exceptionAllowed": true
+    },
+    "groups": [
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "key": "[\"QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S1\",\"QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5:O1:S1\",\"DPS:G1, DPS:C1, DPS:B1, DPS:B2\",\"2027-05-12\",\"2027-03-15\",14,\"DPS-GROUP-1\",[[\"QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S1\",\"2027-05-12\"],[\"QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S2\",\"2027-05-20\"],[\"QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S3\",\"2027-05-26\"],[\"QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S4\",\"2027-06-04\"],[\"QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S5\",\"2027-06-08\"],[\"QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S6\",\"2027-06-15\"]]]",
+        "exerciseId": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S1",
+        "exerciseIds": [
+          "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S1",
+          "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S2",
+          "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S3",
+          "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S4",
+          "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S5",
+          "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S6"
+        ],
+        "groupId": "DPS-GROUP-1",
+        "firstSessionId": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S1",
+        "courseId": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5:O1:S1",
+        "oi": "DPS:G1, DPS:C1, DPS:B1, DPS:B2",
+        "exerciseDate": "2027-05-12",
+        "courseDate": "2027-03-15",
+        "days": 58,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Formation groupée 1.1 · OI DPS:G1, DPS:C1, DPS:B1, DPS:B2 · Première séance 2027-05-12 · Cours de cadres Formation groupée DPS 2027-03-15 · Délai 58 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "key": "[\"QV27:DAP-GROUP:1.1\",\"QV27:MANUAL:26ff9a06-a58a-4da0-8e63-2486118fc62b\",\"DAP:Y1, DAP:Y2, DAP:Y3, DAP:Y4\",\"2027-04-21\",\"2027-03-23\",14,\"DAP-GROUP-1\",[[\"QV27:DAP-GROUP:1.1\",\"2027-04-21\"],[\"QV27:DAP-GROUP:1.2\",\"2027-04-28\"]]]",
+        "exerciseId": "QV27:DAP-GROUP:1.1",
+        "exerciseIds": [
+          "QV27:DAP-GROUP:1.1",
+          "QV27:DAP-GROUP:1.2"
+        ],
+        "groupId": "DAP-GROUP-1",
+        "firstSessionId": "QV27:DAP-GROUP:1.1",
+        "courseId": "QV27:MANUAL:26ff9a06-a58a-4da0-8e63-2486118fc62b",
+        "oi": "DAP:Y1, DAP:Y2, DAP:Y3, DAP:Y4",
+        "exerciseDate": "2027-04-21",
+        "courseDate": "2027-03-23",
+        "days": 29,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Formation groupée DAP 1.1 · OI DAP:Y1, DAP:Y2, DAP:Y3, DAP:Y4 · Première séance 2027-04-21 · Cours de cadres formation groupée DAP 1 2027-03-23 · Délai 29 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      }
+    ],
+    "filters": [
+      {
+        "oi": "DPS:G1",
+        "count": 409,
+        "sdisCount": 44
+      },
+      {
+        "oi": "DPS:C1",
+        "count": 283,
+        "sdisCount": 44
+      },
+      {
+        "oi": "DPS:B1",
+        "count": 280,
+        "sdisCount": 44
+      },
+      {
+        "oi": "DPS:B2",
+        "count": 270,
+        "sdisCount": 44
+      },
+      {
+        "oi": "DAP:Y1",
+        "count": 121,
+        "sdisCount": 44
+      },
+      {
+        "oi": "DAP:Y2",
+        "count": 102,
+        "sdisCount": 44
+      },
+      {
+        "oi": "DAP:Y3",
+        "count": 103,
+        "sdisCount": 44
+      },
+      {
+        "oi": "DAP:Y4",
+        "count": 100,
+        "sdisCount": 44
+      },
+      {
+        "oi": "JSP:G1",
+        "count": 105,
+        "sdisCount": 44
+      },
+      {
+        "oi": "JSP:C1",
+        "count": 106,
+        "sdisCount": 44
+      },
+      {
+        "oi": "JSP:B1",
+        "count": 105,
+        "sdisCount": 44
+      },
+      {
+        "oi": "SDIS",
+        "count": 44,
+        "sdisCount": 44
+      }
+    ],
+    "globalExportsIdentical": true,
+    "futureAssignments": {
+      "distinctNips": true,
+      "datedPublicResolution": true,
+      "assigned": 0,
+      "createdPresences": 0,
+      "createdObligations": 0
+    },
+    "groupedValidation": {
+      "ordinaryValidationBlocked": true,
+      "secondSessionUsesSameRelation": true,
+      "explicitException": true,
+      "motifActorTimestampAndJournal": true,
+      "fixtureRolledBack": true
+    },
+    "transportBytes": 891460,
+    "classicalControls": [
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-1-6A16603D:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-1-6A16603D:O1:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E:O1:S1",
+        "oi": "DPS:C1",
+        "exerciseDate": "2027-03-23",
+        "courseDate": "2027-03-02",
+        "days": 21,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 1 · OI DPS:C1 · Exercice 2027-03-23 · Cours de cadres exercice DPS 1 2027-03-02 · Délai 21 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-1-6A16603D:O2:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-1-6A16603D:O2:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E:O2:S1",
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-03-23",
+        "courseDate": "2027-03-02",
+        "days": 21,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 1 · OI DPS:B1 · Exercice 2027-03-23 · Cours de cadres exercice DPS 1 2027-03-02 · Délai 21 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-2-54E09232:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-2-54E09232:O1:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:O1:S1",
+        "oi": "DPS:C1",
+        "exerciseDate": "2027-09-16",
+        "courseDate": "2027-08-18",
+        "days": 29,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 2 · OI DPS:C1 · Exercice 2027-09-16 · Cours de cadres exercice DPS 2 2027-08-18 · Délai 29 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-2-54E09232:O2:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-2-54E09232:O2:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:O2:S1",
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-09-16",
+        "courseDate": "2027-08-18",
+        "days": 29,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 2 · OI DPS:B1 · Exercice 2027-09-16 · Cours de cadres exercice DPS 2 2027-08-18 · Délai 29 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-3-29F948D1:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-3-29F948D1:O1:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84:O1:S1",
+        "oi": "DPS:C1",
+        "exerciseDate": "2027-10-26",
+        "courseDate": "2027-09-21",
+        "days": 35,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 3 · OI DPS:C1 · Exercice 2027-10-26 · Cours de cadres exercice DPS 3 2027-09-21 · Délai 35 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O1:S1"
+        ],
+        "courseId": null,
+        "oi": "DPS:B2",
+        "exerciseDate": "2027-05-19",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 1 · OI DPS:B2 · Exercice 2027-05-19 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O2:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O2:S1"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y4",
+        "exerciseDate": "2027-05-19",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 1 · OI DAP:Y4 · Exercice 2027-05-19 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O3:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O3:S1"
+        ],
+        "courseId": null,
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-05-19",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 1 · OI DPS:B1 · Exercice 2027-05-19 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O4:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O4:S1"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y1",
+        "exerciseDate": "2027-05-19",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 1 · OI DAP:Y1 · Exercice 2027-05-19 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-DAP-2-668A88B6:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-DAP-2-668A88B6:O1:S1"
+        ],
+        "courseId": null,
+        "oi": "DPS:C1",
+        "exerciseDate": "2027-08-26",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DPS:C1 · Exercice 2027-08-26 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-DAP-2-668A88B6:O2:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-DAP-2-668A88B6:O2:S1"
+        ],
+        "courseId": null,
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-08-26",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DPS:B1 · Exercice 2027-08-26 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-DAP-2-668A88B6:O3:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-DAP-2-668A88B6:O3:S1"
+        ],
+        "courseId": null,
+        "oi": "DPS:B2",
+        "exerciseDate": "2027-08-26",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DPS:B2 · Exercice 2027-08-26 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DPS-DAP-2-668A88B6:O4:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DPS-DAP-2-668A88B6:O4:S1"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y2",
+        "exerciseDate": "2027-08-26",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DAP:Y2 · Exercice 2027-08-26 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-1-9890D687:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-1-9890D687:O1:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O1:S1",
+        "oi": "DAP:Y1",
+        "exerciseDate": "2027-02-10",
+        "courseDate": "2027-03-10",
+        "days": -28,
+        "minimumDays": 14,
+        "status": "NON_CONFORME_CRITIQUE",
+        "message": "Exercice DAP 1 · OI DAP:Y1 · Exercice 2027-02-10 · Cours de cadres exercice DAP 1 2027-03-10 · Délai -28 jours ; minimum 14 jours. Le cours a lieu après l’exercice.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-1-9890D687:O2:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-1-9890D687:O2:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O2:S1",
+        "oi": "DAP:Y2",
+        "exerciseDate": "2027-03-24",
+        "courseDate": "2027-02-16",
+        "days": 36,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 1 · OI DAP:Y2 · Exercice 2027-03-24 · Cours de cadres exercice DAP 1 2027-02-16 · Délai 36 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-1-9890D687:O3:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-1-9890D687:O3:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O3:S1",
+        "oi": "DAP:Y3",
+        "exerciseDate": "2027-03-17",
+        "courseDate": "2027-03-03",
+        "days": 14,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 1 · OI DAP:Y3 · Exercice 2027-03-17 · Cours de cadres exercice DAP 1 2027-03-03 · Délai 14 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-1-9890D687:O4:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-1-9890D687:O4:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O4:S1",
+        "oi": "DAP:Y4",
+        "exerciseDate": "2027-03-24",
+        "courseDate": "2027-03-04",
+        "days": 20,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 1 · OI DAP:Y4 · Exercice 2027-03-24 · Cours de cadres exercice DAP 1 2027-03-04 · Délai 20 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-2-6285EF74:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-2-6285EF74:O1:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O1:S1",
+        "oi": "DAP:Y2",
+        "exerciseDate": "2027-05-19",
+        "courseDate": "2027-04-28",
+        "days": 21,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 2 · OI DAP:Y2 · Exercice 2027-05-19 · Cours de cadres exercice DAP 2 2027-04-28 · Délai 21 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-2-6285EF74:O2:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-2-6285EF74:O2:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O3:S1",
+        "oi": "DAP:Y3",
+        "exerciseDate": "2027-05-19",
+        "courseDate": "2027-05-04",
+        "days": 15,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 2 · OI DAP:Y3 · Exercice 2027-05-19 · Cours de cadres exercice DAP 2 2027-05-04 · Délai 15 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-2-6285EF74:O3:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-2-6285EF74:O3:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O2:S1",
+        "oi": "DAP:Y1",
+        "exerciseDate": "2027-06-16",
+        "courseDate": "2027-05-19",
+        "days": 28,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 2 · OI DAP:Y1 · Exercice 2027-06-16 · Cours de cadres exercice DAP 2 2027-05-19 · Délai 28 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-2-6285EF74:O4:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-2-6285EF74:O4:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O4:S1",
+        "oi": "DAP:Y4",
+        "exerciseDate": "2027-05-27",
+        "courseDate": "2027-05-11",
+        "days": 16,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 2 · OI DAP:Y4 · Exercice 2027-05-27 · Cours de cadres exercice DAP 2 2027-05-11 · Délai 16 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-3-618B0715:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-3-618B0715:O1:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O1:S1",
+        "oi": "DAP:Y2",
+        "exerciseDate": "2027-09-08",
+        "courseDate": "2027-08-25",
+        "days": 14,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 3 · OI DAP:Y2 · Exercice 2027-09-08 · Cours de cadres exercice DAP 3 2027-08-25 · Délai 14 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-3-618B0715:O2:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-3-618B0715:O2:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O2:S1",
+        "oi": "DAP:Y3",
+        "exerciseDate": "2027-10-06",
+        "courseDate": "2027-09-22",
+        "days": 14,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 3 · OI DAP:Y3 · Exercice 2027-10-06 · Cours de cadres exercice DAP 3 2027-09-22 · Délai 14 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-3-618B0715:O3:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-3-618B0715:O3:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O3:S1",
+        "oi": "DAP:Y1",
+        "exerciseDate": "2027-09-02",
+        "courseDate": "2027-07-28",
+        "days": 36,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 3 · OI DAP:Y1 · Exercice 2027-09-02 · Cours de cadres exercice DAP 3 2027-07-28 · Délai 36 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-3-618B0715:O4:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-3-618B0715:O4:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O4:S1",
+        "oi": "DAP:Y4",
+        "exerciseDate": "2027-09-22",
+        "courseDate": "2027-08-31",
+        "days": 22,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 3 · OI DAP:Y4 · Exercice 2027-09-22 · Cours de cadres exercice DAP 3 2027-08-31 · Délai 22 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-4-46753B3A:O1:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-4-46753B3A:O1:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O1:S1",
+        "oi": "DAP:Y1",
+        "exerciseDate": "2027-11-06",
+        "courseDate": "2027-09-29",
+        "days": 38,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 4 · OI DAP:Y1 · Exercice 2027-11-06 · Cours de cadres exercice DAP 4 2027-09-29 · Délai 38 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-4-46753B3A:O2:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-4-46753B3A:O2:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O2:S1",
+        "oi": "DAP:Y2",
+        "exerciseDate": "2027-10-30",
+        "courseDate": "2027-08-05",
+        "days": 86,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 4 · OI DAP:Y2 · Exercice 2027-10-30 · Cours de cadres exercice DAP 4 2027-08-05 · Délai 86 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-4-46753B3A:O3:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-4-46753B3A:O3:S1"
+        ],
+        "courseId": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O3:S1",
+        "oi": "DAP:Y4",
+        "exerciseDate": "2027-10-26",
+        "courseDate": "2027-10-06",
+        "days": 20,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 4 · OI DAP:Y4 · Exercice 2027-10-26 · Cours de cadres exercice DAP 4 2027-10-06 · Délai 20 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV26-EXERCICE-DAP-4-46753B3A:O4:S1",
+        "exerciseIds": [
+          "QV26-EXERCICE-DAP-4-46753B3A:O4:S1"
+        ],
+        "courseId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:2027-09-28:1900:Y3",
+        "oi": "DAP:Y3",
+        "exerciseDate": "2027-11-12",
+        "courseDate": "2027-10-27",
+        "days": 16,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DAP 4 · OI DAP:Y3 · Exercice 2027-11-12 · Cours de cadres exercice DAP 4 2027-10-27 · Délai 16 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-1-6A16603D:2027-03-23:1900:B2",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-1-6A16603D:2027-03-23:1900:B2"
+        ],
+        "courseId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E:2027-03-02:1900:B2",
+        "oi": "DPS:B2",
+        "exerciseDate": "2027-03-23",
+        "courseDate": "2027-03-02",
+        "days": 21,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 1 · OI DPS:B2 · Exercice 2027-03-23 · Cours de cadres exercice DPS 1 2027-03-02 · Délai 21 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-1-6A16603D:2027-04-21:1900:G1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-1-6A16603D:2027-04-21:1900:G1"
+        ],
+        "courseId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E:2027-04-01:1830:G1",
+        "oi": "DPS:G1",
+        "exerciseDate": "2027-04-21",
+        "courseDate": "2027-04-01",
+        "days": 20,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 1 · OI DPS:G1 · Exercice 2027-04-21 · Cours de cadres exercice DPS 1 2027-04-01 · Délai 20 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-2-54E09232:2027-09-16:1900:B2",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-2-54E09232:2027-09-16:1900:B2"
+        ],
+        "courseId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:2027-08-18:1900:B2",
+        "oi": "DPS:B2",
+        "exerciseDate": "2027-09-16",
+        "courseDate": "2027-08-18",
+        "days": 29,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 2 · OI DPS:B2 · Exercice 2027-09-16 · Cours de cadres exercice DPS 2 2027-08-18 · Délai 29 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-2-54E09232:2027-11-17:1900:G1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-2-54E09232:2027-11-17:1900:G1"
+        ],
+        "courseId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:2027-09-29:1830:G1",
+        "oi": "DPS:G1",
+        "exerciseDate": "2027-11-17",
+        "courseDate": "2027-09-29",
+        "days": 49,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 2 · OI DPS:G1 · Exercice 2027-11-17 · Cours de cadres exercice DPS 2 2027-09-29 · Délai 49 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-3-29F948D1:2027-10-26:1900:B1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-3-29F948D1:2027-10-26:1900:B1"
+        ],
+        "courseId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84:2027-09-21:1900:B1",
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-10-26",
+        "courseDate": "2027-09-21",
+        "days": 35,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 3 · OI DPS:B1 · Exercice 2027-10-26 · Cours de cadres exercice DPS 3 2027-09-21 · Délai 35 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-3-29F948D1:2027-10-26:1900:B2",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-3-29F948D1:2027-10-26:1900:B2"
+        ],
+        "courseId": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84:2027-09-21:1900:B2",
+        "oi": "DPS:B2",
+        "exerciseDate": "2027-10-26",
+        "courseDate": "2027-09-21",
+        "days": 35,
+        "minimumDays": 14,
+        "status": "CONFORME",
+        "message": "Exercice DPS 3 · OI DPS:B2 · Exercice 2027-10-26 · Cours de cadres exercice DPS 3 2027-09-21 · Délai 35 jours ; minimum 14 jours. Délai minimal respecté.",
+        "exception": null,
+        "blocking": false,
+        "exceptionAllowed": true
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-03:1900:B1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-03:1900:B1"
+        ],
+        "courseId": null,
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-06-03",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 1 · OI DPS:B1 · Exercice 2027-06-03 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-03:1900:Y2",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-03:1900:Y2"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y2",
+        "exerciseDate": "2027-06-03",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 1 · OI DAP:Y2 · Exercice 2027-06-03 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-16:1900:C1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-16:1900:C1"
+        ],
+        "courseId": null,
+        "oi": "DPS:C1",
+        "exerciseDate": "2027-06-16",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 1 · OI DPS:C1 · Exercice 2027-06-16 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-16:1900:Y3",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-16:1900:Y3"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y3",
+        "exerciseDate": "2027-06-16",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 1 · OI DAP:Y3 · Exercice 2027-06-16 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-08-26:1900:Y3",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-08-26:1900:Y3"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y3",
+        "exerciseDate": "2027-08-26",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DAP:Y3 · Exercice 2027-08-26 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-08-26:1900:Y4",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-08-26:1900:Y4"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y4",
+        "exerciseDate": "2027-08-26",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DAP:Y4 · Exercice 2027-08-26 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:C1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:C1"
+        ],
+        "courseId": null,
+        "oi": "DPS:C1",
+        "exerciseDate": "2027-09-02",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DPS:C1 · Exercice 2027-09-02 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:B1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:B1"
+        ],
+        "courseId": null,
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-09-02",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DPS:B1 · Exercice 2027-09-02 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:B2",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:B2"
+        ],
+        "courseId": null,
+        "oi": "DPS:B2",
+        "exerciseDate": "2027-09-02",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DPS:B2 · Exercice 2027-09-02 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y2",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y2"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y2",
+        "exerciseDate": "2027-09-02",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DAP:Y2 · Exercice 2027-09-02 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y3",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y3"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y3",
+        "exerciseDate": "2027-09-02",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DAP:Y3 · Exercice 2027-09-02 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y4",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y4"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y4",
+        "exerciseDate": "2027-09-02",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DAP:Y4 · Exercice 2027-09-02 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-29:1900:B1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-29:1900:B1"
+        ],
+        "courseId": null,
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-09-29",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DPS:B1 · Exercice 2027-09-29 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-29:1900:Y1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-29:1900:Y1"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y1",
+        "exerciseDate": "2027-09-29",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DAP:Y1 · Exercice 2027-09-29 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-10-07:1900:B1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-10-07:1900:B1"
+        ],
+        "courseId": null,
+        "oi": "DPS:B1",
+        "exerciseDate": "2027-10-07",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DPS:B1 · Exercice 2027-10-07 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      },
+      {
+        "rule": "QV-EXERCICE-PREPARATION-001",
+        "exerciseId": "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-10-07:1900:Y1",
+        "exerciseIds": [
+          "QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-10-07:1900:Y1"
+        ],
+        "courseId": null,
+        "oi": "DAP:Y1",
+        "exerciseDate": "2027-10-07",
+        "courseDate": null,
+        "days": null,
+        "minimumDays": 14,
+        "status": "MOA_REQUIRED",
+        "message": "Exercice DPS-DAP 2 · OI DAP:Y1 · Exercice 2027-10-07 · Cours absent sans date · Délai non calculable ; minimum 14 jours. Relation préparatoire qualifiée à confirmer par la MOA.",
+        "exception": null,
+        "blocking": true,
+        "exceptionAllowed": false
+      }
+    ]
+  },
+  "productionWrites": 0
+}

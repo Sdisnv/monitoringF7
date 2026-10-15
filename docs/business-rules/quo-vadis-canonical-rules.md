@@ -1017,3 +1017,60 @@ comme date à traiter après preuve de validation. Le bilan sépare dates active
 Une validation de date seule ne supprime pas les contrôles d'horaire, thème, public, responsable,
 lieu/salle. Une validation métier complète déjà acquise reste respectée. Reconduction future
 conservée : aucune date n'est copiée comme nouvelle décision humaine.
+
+## Complément MOA Du 15.10.2026 — Préparation Et SDIS Transversal
+
+### QV-EXERCICE-PREPARATION-001 — Bidirectionnalité et formations groupées
+Complément, sans remplacement des décisions précédentes : une relation préparatoire produit
+un seul contrôle, partagé par le cours et toutes les séances qu'il prépare. Les deux fiches
+présentent le cours, la première séance concernée, leurs dates civiles, le délai, le minimum
+de 14 jours et la cause. Sur le cours situé après l'exercice, le message désigne explicitement
+ce cours comme tardif. Modifier une date recalcule ce même contrôle immédiatement ; un aperçu
+non enregistré n'est pas une décision validée.
+
+Le délai de 14 jours calendaires, calculé depuis la fin du cours, s'applique aux formations
+groupées DPS/DAP uniquement si la relation est démontrée par les identifiants canoniques,
+la lignée, les OI qualifiés et les références métier. Le titre seul ne suffit pas. Le cours
+prépare l'ensemble des séances identifiées, avec contrôle de la plus précoce ; aucune séance
+n'est déplacée, dupliquée ou supprimée. Une séance sans date empêche de certifier la première.
+
+Relations démontrées dans les sources et l'inventaire en lecture seule du 15.10.2026 :
+- DPS : définition `QV26-FORMATION-GROUPEE-1-1-3D8CCE58`, six séances
+  `:O1:S1` à `:O1:S6`, cours de définition
+  `QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5`, quatre OI DPS.
+  Source QUO VADIS 2026 : cours Formation groupée DPS / OFSI / ABC le 16.03.2026,
+  six formations 1.1 à 1.6, mêmes quatre DPS et thème OFSI/ABC. Qualification des formations
+  `0120F7` selon QV-DPS-GROUP-001 ; cours `0162F7` conservé. Aucun Stat.Com réécrit.
+- DAP : `QV27:DAP-GROUP:1.1` et `QV27:DAP-GROUP:1.2`, cours manuel identifié
+  `QV27:MANUAL:26ff9a06-a58a-4da0-8e63-2486118fc62b`, quatre OI DAP, `0130F7`.
+  La lignée initiale du cours conserve ce rapprochement pour la reconduction, sans déduire
+  un cours du seul libellé. Dates validées inchangées : cours 23.03.2027, séances
+  21.04.2027 et 28.04.2027 ; délai 29 jours, CONFORME.
+
+Une nouvelle identité non démontrée ou plusieurs cours compatibles restent MOA_REQUIRED.
+Les cours sans relation démontrée ne sont pas arbitrairement rattachés. Validation individuelle,
+validation annuelle et reconduction réutilisent le contrôle existant. Une anomalie critique
+bloque la validation ordinaire. L'exception reste explicitement motivée et tracée ; sa clé
+comprend le cours, les séances, les OI et toutes les dates des séances groupées. Changer une
+date rend l'ancienne exception inapplicable. Les publications historiques ne sont pas invalidées
+rétroactivement ; aucun nouveau cours, affectation ou décision humaine n'est généré.
+
+### QV-OI-SDIS-001 — Visibilité transversale de l'organisateur SDIS
+Une activité dont l'OI organisateur enregistré est `SDIS` est visible dans les onze OI
+qualifiés : DPS G1/C1/B1/B2, DAP Y1/Y2/Y3/Y4, JSP G1/C1/B1. DPS G1 et JSP G1 restent
+distincts. Le filtre d'un OI contient ses activités propres et celles de SDIS ; les filtres
+parents DPS/DAP/JSP conservent cette même portée. Le filtre SDIS ne contient que les
+activités dont l'organisateur réel comprend SDIS. Aucune inversion automatique.
+
+Le même prédicat de visibilité s'applique au Programme, à l'Agenda annuel, au calendrier
+mensuel et aux extractions PDF/Excel existantes. Les filtres combinés et sélections multiples
+enregistrées sont conservés. Le calendrier et l'export globaux ne dupliquent pas l'événement.
+L'OI organisateur réel reste SDIS, sans matérialiser onze activités, sans déduire un OI du lieu,
+sans modifier CTA, dates, salles ou réservations. L'agenda historique 2026 reste inchangé.
+
+Visibilité ne signifie pas participation : le public, les affectations datées, qualifications,
+spécialisations et règles d'applicabilité déterminent seuls la population réellement concernée.
+Les moteurs existants et l'identité individuelle/NIP sont conservés ; une personne multi-OI
+ne doit pas être comptée deux fois pour un événement. Ce lot ne crée aucune assignation,
+présence ou obligation. Une relation individuelle personne-fonction-domaine/OI non démontrée
+reste MOA_REQUIRED, sans inventer de données ni de moteur parallèle.
