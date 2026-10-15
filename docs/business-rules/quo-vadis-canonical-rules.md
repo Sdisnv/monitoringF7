@@ -1074,3 +1074,36 @@ Les moteurs existants et l'identité individuelle/NIP sont conservés ; une pers
 ne doit pas être comptée deux fois pour un événement. Ce lot ne crée aucune assignation,
 présence ou obligation. Une relation individuelle personne-fonction-domaine/OI non démontrée
 reste MOA_REQUIRED, sans inventer de données ni de moteur parallèle.
+
+### QV-OI-SDIS-002 — Diffusion CMDT — Gouvernance
+Décision MOA du 15.10.2026 : CMDT est exclusivement un périmètre de diffusion organisationnelle,
+pas un OI, une famille, un domaine, un public ni une population nominative. L'OI organisateur
+enregistré reste SDIS. Les événements restent uniques, avec leurs identifiants et leur historique.
+
+Catégories confirmées et définitions canoniques existantes :
+- Séance État-major : `QV26-SEANCE-EM-ED042EBD`.
+- Séance Codir : `QV26-SEANCE-CODIR-92921E7C`, y compris sa variante source
+  `QV26-SEANCE-CODIR-REPAS-81897EA7` (Séance Codir + repas).
+- Séance CRDIS : `QV26-SEANCE-CRDIS-B8654449`.
+- Conférence des Commandants : `QV26-CONFERENCE-DES-COMMANDANTS-A2DEA769`.
+
+La qualification réutilise ces références démontrées et l'OI SDIS, dans le prédicat de visibilité
+existant. Une création depuis un type canonique conserve sa définition ; la reconduction conserve
+la même identité de définition. Aucun texte approximatif, code Stat.Com générique, domaine F0,
+public Membres du Codir ou titre libre seul ne permet de déduire le périmètre. Une activité libre
+sans référence démontrée conserve son traitement existant jusqu'à qualification MOA.
+
+Les événements CMDT restent dans le Programme global, le filtre SDIS et l'Agenda global SDIS.
+Ils sont exclus des filtres/calendriers opérationnels DPS G1/C1/B1/B2, DAP Y1/Y2/Y3/Y4,
+JSP G1/C1/B1, y compris les filtres parents DPS/DAP/JSP. La même sélection s'applique aux
+exports PDF et Excel existants ; aucun modèle, colonne ou format n'est modifié.
+
+QV-OI-SDIS-001 reste applicable aux autres activités SDIS : elles ne sont ni reclassées ni
+retirées automatiquement des OI opérationnels. Les autres séances de cadres, COSEC, interSDIS
+et activités F0 ne sont pas assimilées à CMDT par analogie. Toute extension exige une décision MOA.
+
+Aucune propriété persistante nouvelle n'est nécessaire pour ce périmètre déterministe.
+Aucun événement, OI organisateur, famille, domaine, date/horaire, Stat.Com, code SCOPE, public,
+responsable, présence, affectation, publication, validation ou historique n'est réécrit.
+La diffusion ne change ni les permissions ni la population applicable : pas d'assignation,
+présence, obligation ou notification créée, aucune duplication en onze événements, aucune migration.

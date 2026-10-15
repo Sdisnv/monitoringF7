@@ -3606,11 +3606,21 @@
     return statCom ? `F${statCom[1]}` : '';
   }
 
+  function qvProgrammeDiffusionScope(row) {
+    if (!qvProgrammeConfirmedOiCodes(row).includes('SDIS')) return '';
+    const definition = row && (row.definitionId || row.sessionStructure?.definitionId || row.typeSource?.definitionId);
+    return ['QV26-SEANCE-EM-ED042EBD', 'QV26-SEANCE-CODIR-92921E7C',
+      'QV26-SEANCE-CODIR-REPAS-81897EA7', 'QV26-SEANCE-CRDIS-B8654449',
+      'QV26-CONFERENCE-DES-COMMANDANTS-A2DEA769'].includes(definition) ? 'CMDT' : '';
+  }
+
   function qvProgrammeOiMatches(row, selected) {
     if (!selected || selected === 'tous') return true;
     const codes = qvProgrammeConfirmedOiCodes(row);
-    if(codes.includes('SDIS') && (['DPS','DAP','JSP'].includes(selected)
-      || qvProgrammeOiCatalogue().filter(group=>group.group!=='SDIS').some(group=>group.items.some(([code])=>code===selected)))) return true;
+    const operational = ['DPS','DAP','JSP'].includes(selected)
+      || qvProgrammeOiCatalogue().filter(group=>group.group!=='SDIS').some(group=>group.items.some(([code])=>code===selected));
+    if (operational && qvProgrammeDiffusionScope(row) === 'CMDT') return false;
+    if (codes.includes('SDIS') && operational) return true;
     return ['DPS', 'DAP', 'JSP'].includes(selected)
       ? codes.some((code) => code.startsWith(`${selected}:`))
       : codes.includes(selected);
@@ -5894,6 +5904,7 @@
     qvProgrammeFilterType,
     qvProgrammeFunctionalDomain,
     qvProgrammeOiMatches,
+    qvProgrammeDiffusionScope,
     qvProgrammeHasMultipleSessions,
     qvProgrammeOiCatalogue,
     qvProgrammeFamily,

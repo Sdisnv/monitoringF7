@@ -1,0 +1,127 @@
+{
+  "main": "0d1fc89912d0b03120e3c57a8d0f9dd83c2dcf41",
+  "production": {
+    "id": "6ad0a892de679dbc83844576",
+    "state": "ready",
+    "commit_ref": "0d1fc89912d0b03120e3c57a8d0f9dd83c2dcf41",
+    "published_at": "2026-10-15T10:19:31.125Z"
+  },
+  "mergedPrs": [
+    {
+      "number": 20,
+      "title": "SCOPE / QUO VADIS : familles métier et filtres cohérents",
+      "head": "5a7135b1c211083fa8bf599c2b4a6ed55789e539",
+      "merge": "fba5bda6e98956458530cf1f947640e9341a57c5",
+      "merged": true,
+      "merged_at": "2026-10-15T05:12:57Z"
+    },
+    {
+      "number": 21,
+      "title": "SCOPE / QUO VADIS : lot consolidé MOA du 15.10.2026",
+      "head": "cf0aebcd37a13502a7c38198e1a708bdee625cfe",
+      "merge": "e7672369e08727849e96ef56d4462840d9dfca0e",
+      "merged": true,
+      "merged_at": "2026-10-15T05:59:58Z"
+    },
+    {
+      "number": 22,
+      "title": "SCOPE / QUO VADIS : correctif complémentaire MOA du 15.10.2026",
+      "head": "2d0beb21086c4bbe693eededfdccdf5a0f31f528",
+      "merge": "74ac904ff78c464dbc57482c2d7d06ccf3d2300f",
+      "merged": true,
+      "merged_at": "2026-10-15T06:55:55Z"
+    },
+    {
+      "number": 23,
+      "title": "SCOPE : restaurer les horaires Programme sur deux lignes",
+      "head": "c192e697fcf0d501fe21ec32ff1c85b48ad100f0",
+      "merge": "435bed709dc61c6534d1e58ce2978c6f7bbceac2",
+      "merged": true,
+      "merged_at": "2026-10-15T07:34:09Z"
+    },
+    {
+      "number": 24,
+      "title": "SCOPE : Public cible, références communes et sélections historiques",
+      "head": "207fb209d2a288b5339f492855ea79a75216c3f2",
+      "merge": "b3b0cb372fa68aa4a83f8ef8f0856d31d7fbc3a5",
+      "merged": true,
+      "merged_at": "2026-10-15T08:31:19Z"
+    },
+    {
+      "number": 25,
+      "title": "SCOPE : lot MOA publics, préparation DPS/DAP et calendriers",
+      "head": "f40046db0015d19f8157be3ef573b560863b6f26",
+      "merge": "92cce517f79a89e3040d234314b8de52613af05a",
+      "merged": true,
+      "merged_at": "2026-10-15T09:29:52Z"
+    },
+    {
+      "number": 26,
+      "title": "SCOPE / QUO VADIS : préparation groupée et portée transversale SDIS",
+      "head": "88ce4e6bf3ea0b342befa58f833be59a55c13639",
+      "merge": "0d1fc89912d0b03120e3c57a8d0f9dd83c2dcf41",
+      "merged": true,
+      "merged_at": "2026-10-15T10:18:56Z"
+    }
+  ],
+  "openPrsAtPreflight": [],
+  "sqlReferences": [
+    {
+      "source": "definitions",
+      "rows": null
+    },
+    {
+      "source": "publications",
+      "rows": [
+        {
+          "id": "1cfbfe96-7f05-4936-adbb-a9b1e251fe2b",
+          "code": "070F0.001",
+          "date": "2027-01-29",
+          "title": "Séance Codir",
+          "statCom": "070F0",
+          "definition": "QV26-SEANCE-CODIR-92921E7C",
+          "sourceUnit": "qv-source-893"
+        },
+        {
+          "id": "63b7f0bf-79d4-4aa4-afae-9802368e117d",
+          "code": null,
+          "date": "2027-01-12",
+          "title": "Séance État-major",
+          "statCom": null,
+          "definition": "QV26-SEANCE-EM-ED042EBD",
+          "sourceUnit": "qv-source-862"
+        },
+        {
+          "id": "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+          "code": null,
+          "date": "2027-02-24",
+          "title": "Séance État-major",
+          "statCom": null,
+          "definition": "QV26-SEANCE-EM-ED042EBD",
+          "sourceUnit": "qv-source-921"
+        }
+      ]
+    }
+  ],
+  "programme2027": [
+    {
+      "captured_at": "2026-10-15 12:24:08.002309+00",
+      "annee": 2027,
+      "statut": "PREPARATION",
+      "stored_preparations": 878,
+      "existing_publication_links": 125,
+      "business_cycle": null,
+      "last_status": null
+    }
+  ],
+  "authPublicConfig": {
+    "methods": [
+      "local"
+    ],
+    "localEnabled": true,
+    "oktaEnabled": false,
+    "turnstileEnabled": false
+  },
+  "productionWrites": 0,
+  "scope": "Focused read-only inventory; not a new global audit or MOA validation"
+}

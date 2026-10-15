@@ -228,3 +228,52 @@ propositions de date subordonnées aux validations persistantes. Pas de nouvelle
 Réserves : relations mixtes DPS-DAP non démontrées à arbitrer par paire ; relation individuelle
 personne-fonction-domaine/OI datée toujours MOA_REQUIRED. Suivi spécialisé Cours ECA et processus
 post-publication restent au même périmètre. Preuves : `docs/SCOPE_QV_CONSOLIDE_PREPARATION_20261015.md`.
+
+## Actualisation Après PR #26 Et Lot CMDT — 15.10.2026
+
+Cette section actualise les états ci-dessus sans effacer leurs preuves historiques.
+Main et production vérifiés : `0d1fc89912d0b03120e3c57a8d0f9dd83c2dcf41`, PR #20 à #26 fusionnées.
+Dernière publication constatée : `6ad0a892de679dbc83844576`, 15.10 à 10:19:31 UTC.
+La fusion/publication d'un correctif n'est ni une recette MOA exhaustive ni une validation annuelle.
+Programme SQL 2027 encore PREPARATION lors de la lecture seule du lot CMDT.
+Synthèse de référence pour la revue V1 : [rapport en vingt rubriques](SCOPE_V1_SITUATION_20261015.md).
+Preuves nouvelles limitées : [correctif CMDT](SCOPE_QV_CMDT_20261015.md).
+
+### Roadmap V1 Courante
+
+| Jalon | État réel | Preuves et suite |
+| --- | --- | --- |
+| PR #20–#25 : familles, publics, horaires, stabilité LOCAL, préparation | DÉVELOPPÉ / TESTÉ TECHNIQUEMENT / PUBLIÉ | Commits fusionnés présents en production ; confirmations MOA limitées aux décisions et recettes explicitement acquises, pas une acceptation globale implicite |
+| PR #26 : préparation groupée et SDIS transversal | DÉVELOPPÉ / TESTÉ TECHNIQUEMENT / PUBLIÉ | 88ce4e6 → 0d1fc89 ; relations DAP/DPS démontrées, 24 relations mixtes et fonction individuelle non démontrées toujours ouvertes |
+| QV-OI-SDIS-002 : CMDT | DÉVELOPPÉ / TESTÉ TECHNIQUEMENT, NON PUBLIÉ | Correctif présent dans l'unique branche CMDT, décision métier MOA confirmée ; GO fusion/publication séparé requis |
+| Qualification finale Programme et réservations | PARTIEL / MOA_REQUIRED | Programme PREPARATION ; dates validées préservées, dossiers M/P selon workflow, aucune validation annuelle annoncée |
+| Cycle et reconduction | DÉVELOPPÉ / TESTÉ TECHNIQUEMENT / PUBLIÉ | Borne métier distincte des statistiques civiles ; Rapport 10.02.2028 provisoire/Codir, rotations et décisions conservées |
+| Publication, assignations, programmes individuels et communication | PARTIEL | Gardes/publication et moteurs datés existants ; orchestration et diffusion nominative complète non démontrées comme parcours accepté |
+| Participations et statistiques | Socle DÉVELOPPÉ / TESTÉ TECHNIQUEMENT / PUBLIÉ ; spécialisations PARTIELLES | NIP, publics applicables, périodes civiles, évaluation individuelle ; finir parcours spécialisés sans nouveau moteur |
+| QV-RULES-001 | Maquette/décision VALIDÉE MOA ; éditeur complet NON DÉMONTRÉ | Éditeur générique par domaine existant, pas l'éditeur cursus huit sections attendu ; jalon dédié après stabilisation |
+| Cours ECA spécialisés | PARTIEL | Contrat inscriptions/import, origine ECA, obligation SDIS/cours cantonal et agrégats à formaliser sur les mécanismes existants |
+| IndeX officiel / ECAwin sans Stat.Com | BLOQUÉ par sources/contrats manquants | Gel IndeX conservé ; rapprochement officiel et contrat d'échange requis, pas de fichier inventé |
+| Observations et évaluations qualitatives | NON DÉMONTRÉ / À développer | Besoin maintenu ; ne pas confondre avec la case Évaluer les participations |
+| ProgJour / GELORE2 | Besoins conservés, NON DÉMONTRÉS comme livrés | Périmètre MOA ProgJour et format fournisseur GELORE2 attendus, aucun module parallèle |
+
+### ToDo Consolidée Priorisée Pour La Revue MOA
+
+| Priorité | Action / propriétaire attendu | Critère de clôture | Dépendances et protection |
+| --- | --- | --- | --- |
+| P0 | MOA : recette ciblée CMDT et décision de livraison | Catégories visibles en SDIS/global, exclues des onze OI ; GO explicite | Une seule PR ; pas de répétition des recettes acquises |
+| P0 | MOA : finir qualification et réservations du Programme 2027 | Dossiers ouverts traités avec motif, contrôle de salles/personnel, validation annuelle explicite | M2 Vulcain souhaitée, disponibilité à démontrer ; JSP approuvés et EM préservés, pas de déplacement automatique |
+| P0 | Codir : confirmer/modifier Rapport 10.02.2028 | Borne métier confirmée et traçable | Provisoire jusque-là ; statistiques 01.01–31.12 inchangées |
+| P1 | MOA : qualifier les relations préparatoires mixtes restantes | Correspondance par paire/OI et dates démontrée, ou exception admissible | 24 cas dans la projection de preuve PR #26, nombre courant à rapprocher sans nouveau backfill |
+| P1 | MOA/données : relation NIP–fonction–domaine/OI datée | Population de chefs démontrée, sans extension DPS → DAP implicite | Réutiliser moteur daté ; aucun NIP/affectation fictif |
+| P1 | Produit/technique : terminer orchestration post-publication | Événements liés, assignations datées, programme individuel, communication initiale puis différentielle démontrés | Validation annuelle → publication → assignations → programmes individuels → communication → ajouts/modifications/annulations ; aucun renvoi systématique du programme initial |
+| P1 | MOA/technique : QV-RULES-001 | Une règle/cursus, huit sections, portées, jours, faisabilité et droits, recette dédiée | Réutiliser éditeur et moteurs existants, pas de moteur parallèle |
+| P1 | Formation : Cours ECA individuels | Import/inscription, origine, obligations distinctes, NIP et agrégats recettés | Contrat cantonal et données réelles autorisées |
+| P1 | MOA : fournir/valider IndeX et contrat ECAwin manquant | Correspondances officielles versionnées et échange démontré | Gel du référentiel IndeX et Stat.Com existants ; aucune modification budget DAP Y1/070F23 |
+| P2 | MOA : qualifier les autres diffusions SDIS si nécessaire | Liste de références approuvée | Ne pas extrapoler CMDT aux autres cadres, F0, COSEC ou interSDIS |
+| P2 | Produit/MOA : observations et évaluations | Périmètre sélection/forçage/saisie/traçabilité accepté | Réutiliser personnes/événements ; distinct des taux de participation |
+| P2 | MOA/fournisseur : ProgJour et GELORE2 | Règles hebdomadaires et format d'import de réservations reçus | Pas de synchronisation ou format supposé |
+| P2 | Exploitation/MOA : recette de stabilité sur conditions non prouvées | Veille physique/Safari et profils réels documentés si requis | Les preuves LOCAL/Chrome ne valent pas preuve Okta/veille réelle ; pas de modification sécurité dans le lot CMDT |
+
+La ToDo est consolidée ici, pas dans un second référentiel concurrent. Les anciennes lignes « terminé »
+désignent leurs jalons techniques, pas une validation MOA exhaustive. Aucun nouveau développement
+hors CMDT n'est exécuté par cette actualisation documentaire.
