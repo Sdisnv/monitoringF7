@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "tests": [
+    "Exact ten families; five required cursus from real IDs; full public catalogue and reserve N06 without duplicate labels",
+    "Actual family DAP + text filter retrieves all four corrected DAP 1 occurrences",
+    "Y4 fiche retains DAP and real cursus choices; opening does not mark family dirty",
+    "New activity type proposes DAP; switching to an unqualified type clears stale defaults; no save or business API write",
+    "Real browser cursus, specialisation and public controls filter successfully",
+    "Cancelled published fixture is retrievable via existing Annulé state, without changing workflow or any database row"
+  ],
+  "errors": [],
+  "businessApiWrites": [],
+  "base": "http://127.0.0.1:4410",
+  "mode": "Existing local recipe + changed assets + readonly fresh projection + one in-memory cancellation fixture",
+  "productionWrites": false
+}

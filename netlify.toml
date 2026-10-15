@@ -14,6 +14,9 @@
 [context."codex/scope-qv-v1-tests19-33-20261014"]
   ignore = "exit 0"
 
+[context."codex/scope-qv-familles-filtres-20261015"]
+  ignore = "exit 0"
+
 [functions]
   node_bundler = "esbuild"
   included_files = [

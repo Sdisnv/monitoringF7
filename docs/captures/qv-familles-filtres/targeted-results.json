@@ -1,0 +1,273 @@
+{
+  "status": "PASS",
+  "base": "95d8bdf",
+  "productionReadOnly": true,
+  "productionWrites": false,
+  "sourceReadAt": "2026-10-15T04:23:15.869624+00:00",
+  "publicationReadAt": "2026-10-15T04:28:04.788193+00:00",
+  "rows": 943,
+  "activeRows": 923,
+  "tests": [
+    "K/L: all persisted occurrence identities, families, dates, OI, Stat.Com, decisions and publications identical to main",
+    "A/B/C: four current MOA-corrected DAP exercises retained; proposed defaults use Stat.Com and qualified OI, not title",
+    "D: fiche/filter use the same exact ten families, real cursus IDs (all five required) and qualification catalogue",
+    "E: effective DAP filter retrieves all four MOA examples",
+    "F/G/H/I: real-ID cursus, both multiselected specialisations, cancelled publication, historical public aliases and reserve N06 actually filter",
+    "J/K: public aliases deduplicated visually; historical family displayed disabled without becoming an official reference",
+    "C/K/L: actual service creates new DAP proposal with separate Exercice nature, rejects legacy new family, validated reconduction snapshot preserves DAP/Stat.Com"
+  ],
+  "protectedFields": [
+    "id",
+    "family",
+    "domain",
+    "programmeDomain",
+    "statCom",
+    "code",
+    "businessCode",
+    "ois",
+    "oiSelections",
+    "publics",
+    "startsAt",
+    "endsAt",
+    "themes",
+    "businessValidation",
+    "humanDecision",
+    "publishedEventId",
+    "publishedEventCode",
+    "publicationRevision"
+  ],
+  "statComIdenticalPercent": 100,
+  "inventory": {
+    "ARBITRAGE_MOA": 858,
+    "CONFORME": 69,
+    "ANOMALIE_CERTAINE": 16
+  },
+  "dapExamples": [
+    {
+      "id": "QV26-EXERCICE-DAP-1-9890D687:O1:S1",
+      "technicalId": "da53ea46-f2cf-46bb-af96-2cf3d0e95774",
+      "date": "2027-03-10",
+      "activity": "Exercice DAP 1",
+      "statCom": "013Y1",
+      "ois": [
+        "DAP:Y1"
+      ],
+      "currentFamily": "DAP",
+      "expectedFamily": "DAP",
+      "nature": "Exercice",
+      "category": "CONFORME",
+      "justification": "Définition canonique Exercice DAP + nature Exercice + Stat.Com officiel 013Yx + OI qualifié DAP:Yx ; décision MOA du 15.10.2026",
+      "certainty": "CERTAIN",
+      "humanDecision": true,
+      "publishedEventId": null,
+      "sourceFamily": "Exercice",
+      "status": "PROPOSE",
+      "active": true,
+      "updatedAt": "2026-10-15T03:57:08.384745+00:00"
+    },
+    {
+      "id": "QV26-EXERCICE-DAP-1-9890D687:O2:S1",
+      "technicalId": "441f102c-673a-47b5-a3c4-3e81641163b7",
+      "date": "2027-03-24",
+      "activity": "Exercice DAP 1",
+      "statCom": "013Y2",
+      "ois": [
+        "DAP:Y2"
+      ],
+      "currentFamily": "DAP",
+      "expectedFamily": "DAP",
+      "nature": "Exercice",
+      "category": "CONFORME",
+      "justification": "Définition canonique Exercice DAP + nature Exercice + Stat.Com officiel 013Yx + OI qualifié DAP:Yx ; décision MOA du 15.10.2026",
+      "certainty": "CERTAIN",
+      "humanDecision": true,
+      "publishedEventId": null,
+      "sourceFamily": "Exercice",
+      "status": "PLANIFIE",
+      "active": true,
+      "updatedAt": "2026-10-15T04:02:29.003615+00:00"
+    },
+    {
+      "id": "QV26-EXERCICE-DAP-1-9890D687:O3:S1",
+      "technicalId": "526feb18-343e-427b-a846-9a4d65583eb8",
+      "date": "2027-03-17",
+      "activity": "Exercice DAP 1",
+      "statCom": "013Y3",
+      "ois": [
+        "DAP:Y3"
+      ],
+      "currentFamily": "DAP",
+      "expectedFamily": "DAP",
+      "nature": "Exercice",
+      "category": "CONFORME",
+      "justification": "Définition canonique Exercice DAP + nature Exercice + Stat.Com officiel 013Yx + OI qualifié DAP:Yx ; décision MOA du 15.10.2026",
+      "certainty": "CERTAIN",
+      "humanDecision": true,
+      "publishedEventId": null,
+      "sourceFamily": "Exercice",
+      "status": "PLANIFIE",
+      "active": true,
+      "updatedAt": "2026-10-15T04:01:10.189055+00:00"
+    },
+    {
+      "id": "QV26-EXERCICE-DAP-1-9890D687:O4:S1",
+      "technicalId": "6e26ce4f-6172-45e9-a2dd-952b51f0e40c",
+      "date": "2027-03-24",
+      "activity": "Exercice DAP 1",
+      "statCom": "013Y4",
+      "ois": [
+        "DAP:Y4"
+      ],
+      "currentFamily": "DAP",
+      "expectedFamily": "DAP",
+      "nature": "Exercice",
+      "category": "CONFORME",
+      "justification": "Définition canonique Exercice DAP + nature Exercice + Stat.Com officiel 013Yx + OI qualifié DAP:Yx ; décision MOA du 15.10.2026",
+      "certainty": "CERTAIN",
+      "humanDecision": true,
+      "publishedEventId": null,
+      "sourceFamily": "Exercice",
+      "status": "PLANIFIE",
+      "active": true,
+      "updatedAt": "2026-10-15T04:12:31.847606+00:00"
+    }
+  ],
+  "cursusReferences": [
+    {
+      "cursusId": "43cb32f6-8197-4295-9cb5-3b13100a1a4d",
+      "code": "C-GROUPE",
+      "libelle": "C groupe"
+    },
+    {
+      "cursusId": "f618cd32-7e4a-4b2a-a34c-47d4fd5d02f1",
+      "code": "CI-DAP",
+      "libelle": "CI DAP"
+    },
+    {
+      "cursusId": "ea7029d5-4355-4b8c-b976-6037d6bcea7e",
+      "code": "CI-DPS",
+      "libelle": "CI DPS"
+    },
+    {
+      "cursusId": "e19a9cea-d1c8-43d4-8ddf-ade20b94da34",
+      "code": "COND-VL",
+      "libelle": "cond VL"
+    },
+    {
+      "cursusId": "c3212c10-cb75-4139-ac7f-22862df58e42",
+      "code": "ELEVATEUR-S2",
+      "libelle": "Élévateur à timon S2"
+    },
+    {
+      "cursusId": "577288c0-3373-4dfa-9c59-c082ca26f1d6",
+      "code": "JSP",
+      "libelle": "JSP"
+    },
+    {
+      "cursusId": "1dd98bf6-d08c-4df4-b8ce-24fc336f1c95",
+      "code": "MEA",
+      "libelle": "MEA"
+    },
+    {
+      "cursusId": "281b614f-d623-4c06-920e-d6dce8fbaadc",
+      "code": "OFSI-BASE",
+      "libelle": "OFSI formation de base"
+    },
+    {
+      "cursusId": "8f6c57cd-f67d-4655-8d67-457e623d53da",
+      "code": "OPERATEUR-VPC",
+      "libelle": "Opérateur VPC"
+    },
+    {
+      "cursusId": "355b2b86-9c72-4813-b0d0-e29a1c3f71d6",
+      "code": "PAPR",
+      "libelle": "PAPR"
+    },
+    {
+      "cursusId": "6f9c3e85-aec4-415c-9226-5db5b0f9c89f",
+      "code": "TP9",
+      "libelle": "TP9"
+    }
+  ],
+  "originalTables": 9,
+  "rollbackVerified": true,
+  "publicCloneDataUnchanged": true,
+  "publicCloneHashes": {
+    "before": {
+      "scope_quo_vadis_programmes": {
+        "count": 1,
+        "hash": "180bcb3daaa42a2c62c9868a3851b548"
+      },
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      }
+    },
+    "after": {
+      "scope_quo_vadis_programmes": {
+        "count": 1,
+        "hash": "180bcb3daaa42a2c62c9868a3851b548"
+      },
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "a78236fecb499c2fa4b1fa794182ac1d"
+      },
+      "scope_evenements": {
+        "count": 257,
+        "hash": "d70ae30d5c3dfd60dbfa7c4749caeec5"
+      },
+      "scope_qv_publication_links": {
+        "count": 125,
+        "hash": "1a7af37f78c0ed4abe8f09acd88b59bc"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "scope_event_code_allocations": {
+        "count": 70,
+        "hash": "ebacaadee669a8d31a1fc16e9dff965a"
+      }
+    }
+  }
+}

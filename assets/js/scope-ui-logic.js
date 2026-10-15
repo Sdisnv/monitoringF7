@@ -3420,7 +3420,7 @@
       const ecawinCode = Object.prototype.hasOwnProperty.call(row, 'ecawinActivityCode') ? row.ecawinActivityCode
         : ecawinMatches.length === 1 ? ecawinMatches[0].activityCode : '';
       const values = {
-        activityLabel: label, domain, statCom: clean(row.statCom), ecawinActivityCode: clean(ecawinCode),
+        activityLabel: label, domain, family:qvProgrammeProposedFamily(row), activityType:qvProgrammeFilterType(row), statCom: clean(row.statCom), ecawinActivityCode: clean(ecawinCode),
         sold:row.sold,ecawinExport:row.ecawinExport,
         responsibleSelections: copy(responsibleSelections),
         publicCodes: row.publicCodes || row.publics || [], oiCodes: oi.ambiguous.length ? [] : oi.codes
@@ -3433,7 +3433,7 @@
       const ambiguity = [];
       const missing = [];
       const sourceIds = [...new Set(group.observations.map(({row}) => clean(row.id)).filter(Boolean))].sort();
-      for (const field of ['activityLabel', 'domain', 'statCom', 'ecawinActivityCode', 'responsibleSelections', 'publicCodes', 'oiCodes','sold','ecawinExport']) {
+      for (const field of ['activityLabel', 'domain', 'family', 'activityType', 'statCom', 'ecawinActivityCode', 'responsibleSelections', 'publicCodes', 'oiCodes','sold','ecawinExport']) {
         const values = group.observations.map(item => item.values[field]);
         const normalized = value => Array.isArray(value)
           ? JSON.stringify(value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).sort()) : JSON.stringify(value);
@@ -3488,10 +3488,30 @@
     return qvProgrammeFamily(row);
   }
 
-  function qvProgrammeFamilyCatalogue(rows=[]) {
-    const confirmed=['SDIS','DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'];
-    const retained=[...new Set(rows.map(qvProgrammeFamily).filter(value=>value && !confirmed.includes(value)))];
-    return confirmed.concat(retained.sort((a,b)=>a.localeCompare(b,'fr')));
+  function qvProgrammeFamilyCatalogue() {
+    return ['SDIS','DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'];
+  }
+
+  // Defaults for NEW proposals only. Saved occurrences retain their own family.
+  function qvProgrammeProposedFamily(row) {
+    const family=qvProgrammeFamily(row);
+    if(qvProgrammeFamilyCatalogue().includes(family)) return family;
+    const statCom=String(row?.statCom || '');
+    const ois=qvProgrammeConfirmedOiCodes(row);
+    if(/^QV26-EXERCICE-DAP-[1-5]-/.test(String(row?.definitionId || ''))
+      && qvProgrammeFilterType(row)==='Exercice' && /^013Y[1-4]$/.test(statCom)
+      && ois.length===1 && ois[0]===`DAP:${statCom.slice(-2)}`) return 'DAP';
+    return '';
+  }
+
+  function qvProgrammePublicReferenceCode(code) {
+    return ({'PR:FORMATEURS':'PR:FORMATEUR-PR','AUTO:MONITEURS':'AUTO:MONITEUR-CONDUITE',
+      'AUTO:FORM-C1':'AUTO:FORMATEUR-C1-118'})[code] || code;
+  }
+
+  function qvProgrammeCursusLabel(item) {
+    const label=({'TP9':'cond TP9','OFSI-BASE':'OFSI'})[item.code] || item.libelle;
+    return `Cursus ${label}`;
   }
 
   function qvProgrammeOrganisationalFamilies(codes) {
@@ -5807,6 +5827,9 @@
     qvProgrammeOiCatalogue,
     qvProgrammeFamily,
     qvProgrammeFamilyCatalogue,
+    qvProgrammeProposedFamily,
+    qvProgrammePublicReferenceCode,
+    qvProgrammeCursusLabel,
     qvProgrammeOrganisationalFamilies,
     qvProgrammeDomainMatches,
     qvNormalizeOiSelections,

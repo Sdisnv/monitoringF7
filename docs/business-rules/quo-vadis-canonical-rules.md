@@ -765,6 +765,43 @@ choix ; absence affichée « — » et recherchable par le filtre neutre, sans n
 Les historiques ne sont pas réécrits. Recensement daté de la source courante : 92 activités internes
 et 4 externes sans famille, à distinguer, aucune qualification automatique.
 
+### QV-FAMILY-004 — Familles exclusives, décision MOA du 15.10.2026
+
+Cette décision remplace la possibilité QV-FAMILY-003 de proposer les anciennes natures observées.
+Les seules nouvelles références sont, dans cet ordre : SDIS, DPS, DAP, JSP, FOBA, FOCO, FOCA,
+FOSPEC, AUTO, PR. Exercice, Instruction, Formation, Conduite, Événement et Permanence ne sont
+pas des familles. Famille, domaine fonctionnel, nature, cursus et spécialisation sont distincts.
+Une valeur historique reste conservée et visible sans être réintroduite comme référence officielle.
+Modifier un autre champ ne modifie pas la famille. Aucune donnée existante n'est reclassée automatiquement.
+
+Pour les définitions canoniques d'exercices DAP, la famille attendue est DAP lorsque la nature
+Exercice, le Stat.Com officiel 013Yx et l'OI qualifié DAP:Yx unique concordent. Ne pas déduire
+une correspondance du seul intitulé, ni étendre cette décision aux exercices mixtes ou cours de cadres.
+Le domaine F7, les Stat.Com, OI, dates et codes d'occurrence restent inchangés.
+Les nouvelles activités issues des types reprennent une proposition démontrée ; les autres
+classifications restent à qualifier. Dans une nouvelle reconduction seulement, une ancienne nature
+ne devient pas une nouvelle famille : reprendre la famille conforme enregistrée ou une proposition
+démontrée, avec provenance et validation restant requise. La nature est conservée séparément.
+L'instantané validé antérieur et les occurrences déjà enregistrées ne sont jamais réécrits.
+Une famille autorisée déjà validée reste conservée.
+
+Lecture de production du 15.10.2026 : les quatre Exercice DAP 1, dont Y4 du 24.03.2027,
+sont déjà corrigés manuellement en DAP. Ne pas les retoucher. Le plan séparé non exécuté et
+l'inventaire complet figurent dans `docs/SCOPE_QV_FAMILLES_FILTRES_MOA_20261015.md`.
+
+### QV-FILTER-006 — Référentiels communs fiche et Programme, 15.10.2026
+
+Les familles des filtres et fiches partagent QV-FAMILY-004. Les cursus utilisent les identifiants
+réels du catalogue actif, notamment CI-DPS, CI-DAP, C-GROUPE, TP9 et OFSI-BASE ; les libellés
+affichés sont Cursus CI DPS, Cursus CI DAP, Cursus C groupe, Cursus cond TP9 et Cursus OFSI.
+Aucun nouvel identifiant ou alias n'est créé. Les spécialisations proviennent des qualifications
+existantes et le filtre prend en compte chaque sélection, indépendamment du cursus.
+Les publics utilisent le catalogue des fiches, sections, demi-sections et réserves comprises.
+Les équivalences d'affichage déjà établies ne fusionnent ni ne suppriment les valeurs enregistrées.
+Les OI restent qualifiés et séparés : DPS G1 ne désigne pas JSP G1.
+L'état Annulé existant permet de retrouver une occurrence annulée même si elle était publiée ;
+aucun nouveau workflow ni réactivation implicite n'est introduit.
+
 ### QV-EXPORT-002 — Domaine court et ordre cohérent
 Tableaux compacts et exports : code du domaine seulement ; libellé complet conservé dans la fiche.
 Planning annuel : Public cible immédiatement après OI. CSV Excel : Famille ajoutée après Domaine,

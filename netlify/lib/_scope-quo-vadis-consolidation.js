@@ -79,6 +79,21 @@ function businessSnapshot(fields){
     .map(key => [key,structuredClone(fields[key])]));
 }
 
+function proposedReconductionSnapshot(reference){
+  const fields=businessSnapshot(reference.metadata.businessValidation.fields);
+  const activityType=logic.qvProgrammeFilterType(reference.metadata.manualSource)
+    || logic.qvProgrammeFilterType(reference.metadata.canonicalRow);
+  if(logic.qvProgrammeFamilyCatalogue().includes(fields.family)) return {fields,activityType};
+  const saved=reference.metadata.planningFields || {};
+  const from=fields.family || '';
+  const retained=Object.hasOwn(saved,'family') && (saved.family==='' || logic.qvProgrammeFamilyCatalogue().includes(saved.family));
+  fields.family=retained ? saved.family : logic.qvProgrammeProposedFamily({
+    ...reference.metadata.canonicalRow,...fields,oiSelections:fields.oiCodes || []
+  });
+  return {fields,activityType,familyProposal:{from,to:fields.family,requiresValidation:true,
+    source:retained?'SAVED_OCCURRENCE_FAMILY':'MOA_FAMILY_REFERENTIAL'}};
+}
+
 function latestValidatedReferences(rows, targetYear){
   const byLineage = new Map();
   const disabledLineages = new Set();
@@ -102,4 +117,4 @@ function latestValidatedReferences(rows, targetYear){
 }
 
 module.exports = { GENERATED_SOURCES, identity, equivalent, isAutomaticPreparationSnapshot, hasHumanDecision, programmeRequirement, activePopulation,
-  RECONDUCTIBLE_FIELDS, businessSnapshot, latestValidatedReferences };
+  RECONDUCTIBLE_FIELDS, businessSnapshot, proposedReconductionSnapshot, latestValidatedReferences };
