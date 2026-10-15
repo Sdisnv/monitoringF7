@@ -1872,6 +1872,8 @@ function createScopeQuoVadisService({ database = db } = {}){
             status:preparation.statut,provenance:'MANUAL_2027',
             lineage:preparation.metadata.lineage || null,
             businessValidation:preparation.metadata.businessValidation || null,
+            dateDecision:uiLogic.qvProgrammeDateDecision(preparation.metadata),
+            preparationDerogations:preparation.metadata.preparationDerogations || [],
             publicationRevision:preparation.metadata.publicationRevision || null,
             validationWithdrawal:preparation.metadata.validationWithdrawal || null,
             validationHistory:preparation.metadata.validationHistory || [],
@@ -1929,6 +1931,8 @@ function createScopeQuoVadisService({ database = db } = {}){
               ? {annualRecurrence:false} : {}),
             lineage:preparation.metadata.lineage || null,
             businessValidation:preparation.metadata.businessValidation || null,
+            dateDecision:uiLogic.qvProgrammeDateDecision(preparation.metadata),
+            preparationDerogations:preparation.metadata.preparationDerogations || [],
             publicationRevision:preparation.metadata.publicationRevision || null,
             validationWithdrawal:preparation.metadata.validationWithdrawal || null,
             validationHistory:preparation.metadata.validationHistory || [],
@@ -2028,6 +2032,8 @@ function createScopeQuoVadisService({ database = db } = {}){
           ...programmeEventFlags(fields,row.metadata?.manualSource || row),
           lieuLibre:row.lieuLibre,salleTheorieId:row.salleTheorieId,responsableFonctionCode:row.responsableFonctionCode,
           sessionStructure:fields.sessionStructure,lineage:row.metadata.lineage,businessValidation:row.metadata.businessValidation,
+          dateDecision:uiLogic.qvProgrammeDateDecision(row.metadata),preparationDerogations:row.metadata.preparationDerogations || [],
+          validationWithdrawal:row.metadata.validationWithdrawal,publicationRevision:row.metadata.publicationRevision,
           definitionId:row.metadata.manualSource?.definitionId || fields.sessionStructure?.definitionId,
           businessCode:row.metadata.businessCode || '',humanDecision:row.metadata.humanDecision === true,
           preparation:{type:'OBLIGATION',id:row.obligationId},status:row.statut,external:false };
@@ -2362,6 +2368,14 @@ function createScopeQuoVadisService({ database = db } = {}){
       row.reservationConflicts=programmeRevisions.reservationMessages(result.reservationConflicts,row.id);
       row.personnelConflicts=result.personnelConflicts.filter(item=>item.leftId===row.id || item.rightId===row.id);
     }
+    result.preparationControls=coverage.preparationControls((result.canonicalProgramme?.rows || []).filter(uiLogic.qvProgrammeIsActive));
+    result.dateProposalSummary={active:0,obsolete:0};
+    for(const row of result.canonicalProgramme?.rows || []) if(row.dapGroupedProposal)
+      result.dateProposalSummary[uiLogic.qvProgrammeHasValidatedDate(row)?'obsolete':'active']++;
+    for(const row of result.canonicalProgramme?.rows || []) row.preparationControls=result.preparationControls
+      .filter(item=>item.exerciseId===row.id || item.courseId===row.id);
+    for(const control of result.preparationControls.filter(item=>item.status!=='CONFORME' && !item.exception))
+      result.alerts.push({type:'À vérifier',programmeItemId:control.exerciseId,reason:control.message,rule:control.rule});
     result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || [],result.statComCodes).map(reference=>{
       const row=rowsById.get(reference.programmeItemId);
       return {...reference,scopeOccurrenceCode:uiLogic.qvInternalEventCodeDisplay(row?.businessCode || reference.scopeOccurrenceCode),
@@ -3506,6 +3520,8 @@ function createScopeQuoVadisService({ database = db } = {}){
       if(annual.programmeCycle?.provisional) throw new HttpError(422,'programme_cloture_provisoire','Le Rapport annuel de clôture reste à valider par le Codir.');
       const control = annual.annualValidationControl;
       if(control?.blocking) throw new HttpError(422,'programme_papr_prerequis_bloquant',control.issues.join(' '),{control});
+      const preparations=annual.preparationControls?.filter(item=>item.blocking) || [];
+      if(preparations.length) throw new HttpError(422,'programme_preparation_exercice_bloquante',preparations.map(item=>item.message).join(' '),{controls:preparations});
     }
     const decision = {statut,previousStatus:current.statut,updatedAt:new Date().toISOString(),motif:motif || null,actor:body.actor || null};
     await db.query(
@@ -4131,7 +4147,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         participationEvaluation:participationEvaluation(source),
         ...existing && existing.metadata.reconductedBusiness
       });
-      metadata.businessValidation = {validatedAt:new Date().toISOString(),year,baselineFields,
+      metadata.businessValidation = {validatedAt:new Date().toISOString(),validatedDate:date,year,baselineFields,
         fields:consolidation.businessSnapshot(planningFields),changedFields:consolidation.RECONDUCTIBLE_FIELDS.filter(key =>
           JSON.stringify(planningFields[key]) !== JSON.stringify(baselineFields[key]))};
     }
@@ -4165,7 +4181,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         if(saveAction==='PLAN') submitted.planningStatus=planningFields.planningStatus;
         const alreadyValidated=Boolean(previousMetadata.businessValidation || currentView.businessValidation)
           && !previousMetadata.validationWithdrawal && !['PENDING','WITHDRAWN'].includes(previousMetadata.publicationRevision?.status);
-        if(!programmeRevisions.revisionChanges(presented,submitted).changedFields.length && (body.validateBusiness!==true || alreadyValidated))
+        if(!programmeRevisions.revisionChanges(presented,submitted).changedFields.length && (body.validateBusiness!==true || alreadyValidated)
+          && (body.validateBusiness!==true || !currentView.preparationControls?.some(item=>item.blocking)))
           return {updated:true,unchanged:true,quoVadis:currentProgramme};
       }
       const slotChanged=!presented || ['date','startTime','endTime','lieuId','salleTheorieId'].some(key=>
@@ -4190,9 +4207,23 @@ function createScopeQuoVadisService({ database = db } = {}){
         startsAt:date && `${date}T${startTime}`,businessValidation:date===inherited.date && source.domain===planningFields.domain
           && JSON.stringify([...(source.publics || [])].sort())===JSON.stringify([...planningFields.publicCodes].sort())
           ? currentView?.businessValidation:null},currentProgramme);
+      const preparationCandidate={...currentView,...source,statCom:planningFields.statCom,oiSelections:planningFields.oiCodes,
+        startsAt:date && `${date}T${startTime}`,endsAt:date && `${date}T${endTime}`};
+      const preparationControls=coverage.preparationControls(currentProgramme.canonicalProgramme.rows
+        .map(row=>row.id===String(itemId)?preparationCandidate:row))
+        .filter(item=>item.blocking && (item.exerciseId===String(itemId) || item.courseId===String(itemId)));
+      if(body.validateBusiness===true && preparationControls.length){
+        if(preparationControls.some(item=>!item.exceptionAllowed)) throw new HttpError(422,'programme_preparation_relation_a_controler',
+          preparationControls.map(item=>item.message).join(' '),{controls:preparationControls});
+        if(body.confirmPreparationException!==true || !revisionMotif) throw new HttpError(422,'programme_motif_obligatoire',
+          preparationControls.map(item=>item.message).join(' '),{kind:'PREPARATION_DEROGATION',controls:preparationControls});
+        writeMetadata.preparationDerogations=[...(previousMetadata.preparationDerogations || []),...preparationControls.map(item=>({
+          key:item.key,rule:item.rule,motif:revisionMotif,actor:options.actor,at:new Date().toISOString()}))];
+      }
       if(body.validateBusiness===true && dayControl?.dayClass==='INTERDIT') {
         if(!dayControl.derogationAllowed) throw new HttpError(422,'programme_jour_interdit',dayControl.reasons.join(' '));
-        if(!revisionMotif) throw new HttpError(422,'programme_motif_obligatoire','Une dérogation métier exige un motif.',
+        if(!revisionMotif || body.confirmPreparationException===true && body.confirmDayException!==true)
+          throw new HttpError(422,'programme_motif_obligatoire','Une dérogation métier exige un motif.',
           {kind:'DAY_DEROGATION',ruleCode:dayControl.ruleCode,reasons:dayControl.reasons});
         writeMetadata.dayDerogation={...dayControl,motif:revisionMotif,actor:options.actor || null,at:new Date().toISOString()};
       }
@@ -4266,6 +4297,9 @@ function createScopeQuoVadisService({ database = db } = {}){
         action='MODIFIER_PUBLICATION_MINEURE';
       }
       if(!major && saveAction !== 'WITHDRAW' && body.validateBusiness === true) writeMetadata.validationWithdrawal=null;
+      const previousDateDecision=uiLogic.qvProgrammeDateDecision(previousMetadata);
+      if(!major && saveAction!=='WITHDRAW' && !writeMetadata.businessValidation && previousDateDecision?.value===date)
+        writeMetadata.businessValidation={...previousMetadata.businessValidation,validatedDate:date};
       if(!action) action=!existing && source.manualCreation ? 'CREER_OCCURRENCE'
         : body.validateBusiness===true ? 'VALIDER_OCCURRENCE' : 'MODIFIER_OCCURRENCE';
       if(action){

@@ -1,0 +1,145 @@
+{
+  "status": "PASS",
+  "engine": "Chrome / Playwright",
+  "checks": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "publicOrderAndSummary": true,
+      "responsibleHistoricalValuesPreserved": true,
+      "obsoleteDateOnlyHidden": true,
+      "plannedAloneNotValidated": true,
+      "criticalAlertAndLiveUpdate": true
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "publicOrderAndSummary": true,
+      "responsibleHistoricalValuesPreserved": true,
+      "obsoleteDateOnlyHidden": true,
+      "plannedAloneNotValidated": true,
+      "criticalAlertAndLiveUpdate": true
+    }
+  ],
+  "calendars": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "value": "24.03.2027",
+      "year": 2027,
+      "month": "2027-03",
+      "selected": "2027-03-24",
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "value": "06.11.2027",
+      "year": 2027,
+      "month": "2027-11",
+      "selected": "2027-11-06",
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "value": "",
+      "year": 2027,
+      "month": "2027-01",
+      "selected": null,
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "value": "",
+      "year": 2028,
+      "month": "2028-01",
+      "selected": null,
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "value": "10.01.2028",
+      "year": 2027,
+      "month": "2028-01",
+      "selected": "2028-01-10",
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "value": "24.03.2027",
+      "year": 2027,
+      "month": "2027-03",
+      "selected": "2027-03-24",
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "value": "06.11.2027",
+      "year": 2027,
+      "month": "2027-11",
+      "selected": "2027-11-06",
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "value": "",
+      "year": 2027,
+      "month": "2027-01",
+      "selected": null,
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "value": "",
+      "year": 2028,
+      "month": "2028-01",
+      "selected": null,
+      "noAutomaticSave": true
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "value": "10.01.2028",
+      "year": 2027,
+      "month": "2028-01",
+      "selected": "2028-01-10",
+      "noAutomaticSave": true
+    }
+  ],
+  "errors": [],
+  "savesIntercepted": 2,
+  "businessServerWrites": 0,
+  "mode": "existing recipe with isolated assets and projection; live MOA transaction untouched",
+  "safari": "Not tested: no WebKit/Safari runtime verified; existing custom calendar, no native picker substitution"
+}

@@ -1974,6 +1974,7 @@
           nav: 'quo-vadis',
           qvView: 'programme-fiche',
           qvProgrammeItemId: decodeURIComponent(parts.slice(2).join('/')),
+          qvAnnee: ['2027','2028'].includes(query.annee) ? Number(query.annee) : 2027,
           qvFrom: query.from || 'programme'
         };
       }
@@ -3338,7 +3339,7 @@
     return [
       { group: 'Général', items: [['GEN:RECRUE', 'Recrue'], ['GEN:SAPEUR', 'Sapeur'], ['GEN:SAPEUR-DPS', 'Sapeur DPS'], ['GEN:SAPEUR-DAP', 'Sapeur DAP']] },
       { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:') || code==='C DAP') },
-      { group: 'Échelons', items: [['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
+      { group: 'Échelons', items: [['ECH:0', 'Échelon 0'], ['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
       { group: 'Sections DPS', items: ['N01', 'N01a', 'N01b', 'N02', 'N02a', 'N02b', 'N03', 'N03a', 'N03b', 'N04', 'N04a', 'N04b', 'N05', 'N05a', 'N05b', 'N06'].map(code => [code, code]) },
       { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe'],...descriptive.filter(([code])=>code.startsWith('ENC:'))] },
       { group: 'Opérationnel', items: [['ENC:OSR','OSR'],['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidat CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidat CI DAP']] },
@@ -3542,7 +3543,7 @@
         seen.add(key);
         return [[key,labels[key] || label.charAt(0).toLocaleUpperCase('fr')+label.slice(1)]];
       });
-      for(const [candidate,driver] of [['AUTO:CAND-PL','AUTO:1'],['AUTO:CAND-TP9','AUTO:2'],['AUTO:CAND-VL','AUTO:3']]){
+      for(const [candidate,driver] of [['AUTO:CAND-PL','AUTO:1'],['AUTO:CAND-TP9','AUTO:2'],['AUTO:CAND-VL','AUTO:3'],['AUTO:CAND-EA','AUTO:5']]){
         const index=items.findIndex(([code])=>code===candidate);
         if(index<0 || !items.some(([code])=>code===driver)) continue;
         const [item]=items.splice(index,1);
@@ -5524,43 +5525,40 @@
   }
 
   function qvFormatEchelons(labels) {
-    const rank = { I: 1, II: 2, III: 3, IV: 4 };
-    const numeral = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' };
+    const rank = { 0: 0, I: 1, II: 2, III: 3, IV: 4 };
+    const numeral = { 0: '0', 1: 'I', 2: 'II', 3: 'III', 4: 'IV' };
     const ranks = [...new Set((labels || []).map((label) => {
-      const match = String(label || '').match(/^Échelon\s+(IV|I{1,3})$/);
-      return match ? rank[match[1]] : 0;
-    }).filter(Boolean))].sort((a, b) => a - b);
+      const match = String(label || '').match(/^Échelon\s+(0|IV|I{1,3})$/);
+      return match ? rank[match[1]] : null;
+    }).filter(value=>value!==null))].sort((a, b) => a - b);
     if (!ranks.length) return '';
-    const runs = [];
-    let start = ranks[0];
-    let previous = ranks[0];
-    for (let index = 1; index <= ranks.length; index += 1) {
-      const current = ranks[index];
-      if (current === previous + 1) {
-        previous = current;
-        continue;
-      }
-      runs.push([start, previous]);
-      start = current;
-      previous = current;
-    }
-    const phrase = (run) => {
-      const [from, to] = run;
-      if (from === to) return numeral[from];
-      if (runs.length === 1 && to === from + 1) return `${numeral[from]} et ${numeral[to]}`;
-      return `${numeral[from]} à ${numeral[to]}`;
-    };
-    return `Échelon ${runs.map(phrase).join(' et ')}`;
+    const continuous=ranks.every((value,index)=>!index || value===ranks[index-1]+1);
+    return `Échelon ${continuous && ranks.length>=3
+      ? `${numeral[ranks[0]]} à ${numeral[ranks.at(-1)]}` : ranks.map(value=>numeral[value]).join(' et ')}`;
+  }
+
+  function qvProgrammeDateDecision(metadata) {
+    const validation=metadata?.businessValidation,fields=metadata?.planningFields;
+    if(!metadata?.humanDecision || !validation?.validatedAt || metadata.validationWithdrawal
+      || ['PENDING','WITHDRAWN'].includes(metadata.publicationRevision?.status)) return null;
+    const date=validation.validatedDate || (validation.validatedAt===fields?.updatedAt ? fields?.date : null);
+    return date && date===fields?.date ? {value:date,validatedAt:validation.validatedAt,source:'BUSINESS_VALIDATION'} : null;
+  }
+
+  function qvProgrammeHasValidatedDate(row) {
+    return Boolean(row?.dateDecision?.validatedAt && row.dateDecision.value===String(row.startsAt || '').slice(0,10)
+      && !row.validationWithdrawal && !['PENDING','WITHDRAWN'].includes(row.publicationRevision?.status));
   }
 
   function qvFormatPublicLabels(codes,freeLabels=[]) {
     const labels = [...new Set([...(codes || []).map((code) => qvProgrammePublicLabel(code)),...freeLabels]
       .filter((label) => label && label !== 'À définir'))].sort((a,b)=>(a==='OSR'?-1:b==='OSR'?1:0));
-    const contraction = qvFormatEchelons(labels.filter((label) => /^Échelon\s+/.test(label)));
+    const isEchelon=label=>/^Échelon\s+(0|IV|I{1,3})$/.test(label);
+    const contraction = qvFormatEchelons(labels.filter(isEchelon));
     let placed = false;
     const rendered = [];
     labels.forEach((label) => {
-      if (/^Échelon\s+/.test(label)) {
+      if (isEchelon(label)) {
         if (!placed && contraction) rendered.push(contraction);
         placed = true;
         return;
@@ -5875,10 +5873,13 @@
     qvProgrammeIsActive,
     qvResponsableGroups,
     qvResponsableCanonique,
+    qvResponsableKey,
     qvResponsableVisualGroup,
     qvInternalEventCodeDisplay,
     qvProgrammeParameters,
     qvProgrammePublicCatalogue,
+    qvProgrammeDateDecision,
+    qvProgrammeHasValidatedDate,
     qvProgrammePublicDisplayCatalogue,
     qvProgrammePublicDisplayLabel,
     qvFormatPublicDisplayLabels,
