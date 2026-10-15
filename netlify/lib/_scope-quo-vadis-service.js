@@ -2373,7 +2373,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     for(const row of result.canonicalProgramme?.rows || []) if(row.dapGroupedProposal)
       result.dateProposalSummary[uiLogic.qvProgrammeHasValidatedDate(row)?'obsolete':'active']++;
     for(const row of result.canonicalProgramme?.rows || []) row.preparationControls=result.preparationControls
-      .filter(item=>item.exerciseId===row.id || item.courseId===row.id);
+      .filter(item=>coverage.preparationControlAffects(item,row.id));
     for(const control of result.preparationControls.filter(item=>item.status!=='CONFORME' && !item.exception))
       result.alerts.push({type:'À vérifier',programmeItemId:control.exerciseId,reason:control.message,rule:control.rule});
     result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || [],result.statComCodes).map(reference=>{
@@ -4211,7 +4211,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         startsAt:date && `${date}T${startTime}`,endsAt:date && `${date}T${endTime}`};
       const preparationControls=coverage.preparationControls(currentProgramme.canonicalProgramme.rows
         .map(row=>row.id===String(itemId)?preparationCandidate:row))
-        .filter(item=>item.blocking && (item.exerciseId===String(itemId) || item.courseId===String(itemId)));
+        .filter(item=>item.blocking && coverage.preparationControlAffects(item,String(itemId)));
       if(body.validateBusiness===true && preparationControls.length){
         if(preparationControls.some(item=>!item.exceptionAllowed)) throw new HttpError(422,'programme_preparation_relation_a_controler',
           preparationControls.map(item=>item.message).join(' '),{controls:preparationControls});

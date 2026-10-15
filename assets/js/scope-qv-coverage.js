@@ -791,6 +791,21 @@ const PREPARATION_PAIRS = [
   ['QV26-EXERCICE-DPS-3-29F948D1','QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84','DPS']
 ];
 
+const GROUPED_PREPARATIONS = [
+  {id:'DPS-GROUP-1',definitionId:'QV26-FORMATION-GROUPEE-1-1-3D8CCE58',
+    courseDefinitionId:'QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5',
+    sessionSourceIds:Array.from({length:6},(_,index)=>`QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S${index+1}`),
+    oiCodes:['DPS:G1','DPS:C1','DPS:B1','DPS:B2'],statCom:'0120F7',courseStatCom:'0162F7'},
+  {id:'DAP-GROUP-1',definitionId:'DAP-FORMATION-GROUPEE',
+    courseSourceId:'QV27:MANUAL:26ff9a06-a58a-4da0-8e63-2486118fc62b',
+    sessionSourceIds:['QV27:DAP-GROUP:1.1','QV27:DAP-GROUP:1.2'],
+    oiCodes:['DAP:Y1','DAP:Y2','DAP:Y3','DAP:Y4'],statCom:'0130F7',courseStatCom:'0130F7'}
+];
+
+function preparationControlAffects(control,id){
+  return control.courseId===id || (control.exerciseIds || [control.exerciseId]).includes(id);
+}
+
 function preparationControls(input){
   const rows=(input || []).filter(row=>!row.external && !row.excluded && !row.dapExerciseExcluded
     && !row.programmeReconciliation && !['ANNULE','NON_RETENU'].includes(row.status));
@@ -809,35 +824,52 @@ function preparationControls(input){
       && new Date(day+'T00:00:00Z').toISOString().slice(0,10)===day ? day : '';
   };
   const controls=[];
-  for(const exercise of rows){
+  const relations=rows.filter(row=>PREPARATION_PAIRS.some(([id])=>id===definition(row))
+    || ['QV26-EXERCICE-DPS-DAP-1-7F1E9444','QV26-EXERCICE-DPS-DAP-2-668A88B6'].includes(definition(row)))
+    .map(exercise=>({exercise,members:[exercise],group:null}));
+  for(const group of GROUPED_PREPARATIONS){
+    const known=row=>[row.id,row.lineage?.initialOccurrence,row.lineage?.key].some(id=>group.sessionSourceIds.includes(id));
+    const members=rows.filter(row=>definition(row)===group.definitionId && known(row))
+      .sort((a,b)=>localDay(a.startsAt).localeCompare(localDay(b.startsAt)) || String(a.id).localeCompare(String(b.id)));
+    if(members.length) relations.push({exercise:members[0],members,group});
+    for(const exercise of rows.filter(row=>definition(row)===group.definitionId && !known(row)))
+      relations.push({exercise,members:[exercise],group:{...group,ambiguous:true}});
+  }
+  for(const {exercise,members,group} of relations){
     const pair=PREPARATION_PAIRS.find(([id])=>id===definition(exercise));
-    const mixed=['QV26-EXERCICE-DPS-DAP-1-7F1E9444','QV26-EXERCICE-DPS-DAP-2-668A88B6'].includes(definition(exercise));
-    if(!pair && !mixed) continue;
+    const sameOi=(row,codes)=>ois(row).length===codes.length && codes.every(code=>ois(row).includes(code));
     const sites=ois(exercise),oi=sites.length===1?sites[0]:sites.join(', ');
     const expected=pair && (pair[2]==='DAP'?/^DAP:(Y[1-4])$/:/^DPS:(G1|C1|B1|B2)$/).exec(oi);
-    const qualified=expected && exercise.statCom===(pair[2]==='DAP'?'013':'012')+expected[1];
-    const matching=qualified?rows.filter(course=>definition(course)===pair[1] && course.statCom===exercise.statCom
-      && ois(course).length===1 && ois(course)[0]===oi):[];
+    const qualified=group ? !group.ambiguous && members.every(row=>sameOi(row,group.oiCodes) && row.statCom===group.statCom)
+      : expected && exercise.statCom===(pair[2]==='DAP'?'013':'012')+expected[1];
+    const matching=qualified?rows.filter(course=>group
+      ? (group.courseDefinitionId ? definition(course)===group.courseDefinitionId
+        : [course.id,course.lineage?.initialOccurrence,course.lineage?.key].includes(group.courseSourceId))
+          && sameOi(course,group.oiCodes) && course.statCom===group.courseStatCom
+      : definition(course)===pair[1] && course.statCom===exercise.statCom && ois(course).length===1 && ois(course)[0]===oi):[];
     const sections=row=>(row.publics || row.publicCodes || []).filter(code=>/^N0[1-6][ab]?$/.test(code));
     const candidates=matching.filter(course=>!sections(course).length || !sections(exercise).length
       || sections(course).some(left=>sections(exercise).some(right=>left===right
         || left.length===3 && right.startsWith(left) || right.length===3 && left.startsWith(right))));
     const scopeConflict=matching.length>0 && candidates.length===0;
     const course=candidates.length===1?candidates[0]:null;
-    const exerciseDate=localDay(exercise.startsAt),courseDate=course && localDay(course.endsAt || course.startsAt);
+    const exerciseDate=members.every(row=>localDay(row.startsAt))?localDay(exercise.startsAt):'',courseDate=course && localDay(course.endsAt || course.startsAt);
     const days=exerciseDate && courseDate ? Math.round((Date.parse(exerciseDate+'T00:00:00Z')-Date.parse(courseDate+'T00:00:00Z'))/86400000):null;
     const status=!qualified || candidates.length>1 || scopeConflict ? 'MOA_REQUIRED' : !course || !exerciseDate || !courseDate ? 'A_CONTROLER'
       : days<0 ? 'NON_CONFORME_CRITIQUE' : days<14 ? 'A_CONTROLER' : 'CONFORME';
     const cause=!qualified?'Relation préparatoire qualifiée à confirmer par la MOA.' : scopeConflict?'Les sections ou demi-sections du cours et de l’exercice ne correspondent pas.' : candidates.length>1?'Plusieurs cours correspondants : arbitrage MOA requis.'
       : !course?'Cours de cadres correspondant absent.' : !courseDate?'Cours de cadres sans date.' : !exerciseDate?'Exercice sans date.'
         : days<0?'Le cours a lieu après l’exercice.' : days<14?'Le délai minimal de préparation n’est pas respecté.' : 'Délai minimal respecté.';
-    const key=JSON.stringify([exercise.id,course?.id || null,oi,exerciseDate,courseDate,14]);
-    const exception=[...(exercise.preparationDerogations || []),...(course?.preparationDerogations || [])]
+    const identity=[exercise.id,course?.id || null,oi,exerciseDate,courseDate,14];
+    if(group) identity.push(group.id,members.map(row=>[row.id,localDay(row.startsAt)]).sort(([a],[b])=>a.localeCompare(b)));
+    const key=JSON.stringify(identity);
+    const exception=[...members.flatMap(row=>row.preparationDerogations || []),...(course?.preparationDerogations || [])]
       .find(item=>item.key===key && item.motif?.trim() && item.actor && item.at);
-    const message=`${label(exercise)} · OI ${oi || 'à qualifier'} · Exercice ${exerciseDate || 'sans date'} · ${label(course)} ${courseDate || 'sans date'} · Délai ${days==null?'non calculable':days+' jours'} ; minimum 14 jours. ${cause}`;
-    controls.push({rule:'QV-EXERCICE-PREPARATION-001',key,exerciseId:exercise.id,courseId:course?.id || null,oi,
+    const message=`${label(exercise)} · OI ${oi || 'à qualifier'} · ${group?'Première séance':'Exercice'} ${exerciseDate || 'sans date'} · ${label(course)} ${courseDate || 'sans date'} · Délai ${days==null?'non calculable':days+' jours'} ; minimum 14 jours. ${cause}`;
+    controls.push({rule:'QV-EXERCICE-PREPARATION-001',key,exerciseId:exercise.id,exerciseIds:members.map(row=>row.id),
+      ...(group?{groupId:group.id,firstSessionId:exercise.id}:{}),courseId:course?.id || null,oi,
       exerciseDate,courseDate,days,minimumDays:14,status,message,exception:exception || null,
-      blocking:status!=='CONFORME' && !exception && !exercise.publishedEventId,
+      blocking:status!=='CONFORME' && !exception && !members.every(row=>row.publishedEventId),
       exceptionAllowed:Boolean(course && courseDate && exerciseDate && qualified)});
   }
   return controls;
@@ -845,6 +877,8 @@ function preparationControls(input){
 
 return {
   preparationControls,
+  preparationControlAffects,
+  GROUPED_PREPARATIONS,
   PREPARATION_PAIRS,
   WEEKDAY_LABELS,
   DAY_CLASS_LABELS,
