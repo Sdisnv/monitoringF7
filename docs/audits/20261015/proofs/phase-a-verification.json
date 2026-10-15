@@ -1,0 +1,27 @@
+{
+  "repository": "Sdisnv/monitoringF7",
+  "main": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+  "published_deploy": {
+    "id": "6ad0d08255cda461366136f2",
+    "state": "ready",
+    "commit_ref": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+    "published_at": "2026-10-15T13:09:59.769Z"
+  },
+  "assembled_at_utc": "2026-10-15T14:00:51Z",
+  "method": "Direct gh api commits/main and PR metadata; Netlify getSite; Observability read-only",
+  "merged_prs": {
+    "20": "fba5bda6e98956458530cf1f947640e9341a57c5",
+    "21": "e7672369e08727849e96ef56d4462840d9dfca0e",
+    "22": "74ac904ff78c464dbc57482c2d7d06ccf3d2300f",
+    "23": "435bed709dc61c6534d1e58ce2978c6f7bbceac2",
+    "24": "b3b0cb372fa68aa4a83f8ef8f0856d31d7fbc3a5",
+    "25": "92cce517f79a89e3040d234314b8de52613af05a",
+    "26": "0d1fc89912d0b03120e3c57a8d0f9dd83c2dcf41",
+    "27": "3bdad82029ef79ea721bcf4043a5bb47e4d86764"
+  },
+  "tests_rerun": 0,
+  "writes_to_shared_repository": 0,
+  "writes_to_application_or_platform": 0,
+  "pdf_witness": "NON OBTENU",
+  "verdict": "AUDIT_INCOMPLET"
+}

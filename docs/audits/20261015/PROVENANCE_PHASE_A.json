@@ -1,0 +1,77 @@
+{
+  "phase_a_verdict": "AUDIT_INCOMPLET",
+  "reference_commit": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+  "source_manifest_verified": true,
+  "files": [
+    {
+      "file": "SCOPE_AUDIT_INTEGRAL_20261015.md",
+      "source_sha256": "22df65ed1584ebaf513bcb9b8b6d7fe55fca7329347b6cdac7e43092ac2360e8",
+      "source_bytes": 137910,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "1a19f50b19bf072d455a8f7a3474ab2894c49f0ba367b744f9567e8fc329439b"
+    },
+    {
+      "file": "SCOPE_DIAGNOSTIC_NETLIFY_20261015.md",
+      "source_sha256": "b8fcf37c91098e3280c2fe74823e564255011cf89d9c0e5b08417336d28a0320",
+      "source_bytes": 7181,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "0ffde75b4d0c2b0299ad173db063c6bd33584b949b3469c9fbf38a34b40040e0"
+    },
+    {
+      "file": "SCOPE_INVENTAIRE_FONCTIONNEL_20261015.md",
+      "source_sha256": "bb393e8ed613aed21f6a8f172b7a1678f4655d4ac791020b0f52d85631a7d383",
+      "source_bytes": 171014,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "8caac8b1b6bff38ccd2a0f55f26b1ef40a51e2eed041148d49a97523f52c0403"
+    },
+    {
+      "file": "SCOPE_MATRICE_TRACABILITE_20261015.md",
+      "source_sha256": "87213059b8071306435ded87c005c6035387aaef1e5310005977f3e4eaad3cc7",
+      "source_bytes": 792779,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "3382b4c390ff57c13c3545007fdac9454a4e5a01b436c7487282332c23151e5e"
+    },
+    {
+      "file": "SCOPE_PLAN_FINALISATION_QV_20261015.md",
+      "source_sha256": "6fb533947de1613985bfa217df1fb73d8213fc43b59ac275e6cfdf6a216bdfe4",
+      "source_bytes": 33433,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "1b2a8496b533582670e9d276201fb48552274ef199960847bade014cb79da768"
+    },
+    {
+      "file": "SCOPE_REGISTRE_ANOMALIES_20261015.md",
+      "source_sha256": "b5d6e6ac3429e6fd95b86f0a699a9dad9d36842c298431fed711bfddfe22038a",
+      "source_bytes": 47412,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "bc987094f7fd5daa509eec63e9e22ae4369fafe58c4da57f33f58b5622b922c7"
+    },
+    {
+      "file": "SCOPE_REGISTRE_DECISIONS_MOA_20261015.md",
+      "source_sha256": "f10756483d3665331c43fa68e9df9379a362411b53223d21c2564a9bb4ef7de5",
+      "source_bytes": 78093,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "60bb42c6a1a8af0f3fdb4c892ff1b0c4680d6b59abd0f49d40ddb6cbf4502ed8"
+    },
+    {
+      "file": "SCOPE_ROADMAP_CONSOLIDEE_20261015.md",
+      "source_sha256": "3a36c9a68361256806e7f7b833b9fffbb00e1abce1304dfd62278c044c5fc38e",
+      "source_bytes": 73079,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "ed6b23128b2a96b3efa68552132065113ddea0a0d32abc989385144f5ea14da0"
+    },
+    {
+      "file": "SCOPE_TODO_CONSOLIDEE_20261015.md",
+      "source_sha256": "57c7d7c102891a953ef772111a18df4ad91a6482b149628f07c7458cd2d3b4d8",
+      "source_bytes": 33764,
+      "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "capitalized_sha256": "68c4c4a18d7c5164b69cc81a705fcd91aa1af0bae9543638f54245070a1c6c5f"
+    }
+  ],
+  "editorial_changes": [
+    "Notice de transfert phase B ; état historique maintenu",
+    "Chemins locaux non versionnés remplacés par description de provenance ; lien humain local remplacé par source versionnée",
+    "Preuve Netlify normalisée rattachée au dossier versionné",
+    "Métadonnées ToDo enrichies en place ; tâche de capitalisation mise à jour selon mission phase B"
+  ],
+  "no_application_change": true
+}

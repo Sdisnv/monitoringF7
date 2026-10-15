@@ -1,5 +1,7 @@
 # SCOPE / QUO VADIS — ROADMAP V1, 12.10.2026
 
+> Navigation applicable après capitalisation du 15.10.2026 : [roadmap consolidée](audits/20261015/SCOPE_ROADMAP_CONSOLIDEE_20261015.md), [ToDo opérationnelle](audits/20261015/SCOPE_TODO_CONSOLIDEE_20261015.md), [contexte maître](SCOPE_PROJECT_MASTER_CONTEXT.md). Les sections ci-dessous restent l’historique des lots. En particulier « CMDT non publié / GO attendu » est dépassé par la fusion/publication #27 et le PASS MOA documentés dans la consolidation. Aucun nouveau backlog ni nouvelle règle n’est créé ici.
+
 ## A. HEAD
 
 Main GitHub vérifié : `6f0eb8b2f6aaad6d7a6ab7946304e3b9d3c76ba3`, PR #11 fusionnée.
