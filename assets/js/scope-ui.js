@@ -12295,14 +12295,13 @@
   }
 
   function qvProgrammeResponsableLabel(row,presentation=true) {
-    if(Array.isArray(row?.responsibleSelections)) {
-      const labels=row.responsibleSelections.filter(value=>!qvResponsableIsDefault(value.label || value.code)).map(value=>presentation && qvProgrammeResponsableIsSection(value.label || value.code) ? 'Chef section' : value.kind === 'REFERENCE'
-        ? L.qvResponsableCanonique(value.label,{domain:row.domain}) || value.label : value.label);
-      return (presentation?[...new Set(labels)]:labels).join(' ; ') || 'À affecter';
+    if(Array.isArray(row?.responsibleSelections)){
+      const values=row.responsibleSelections.filter(value=>!qvResponsableIsDefault(value.label || value.code));
+      return (presentation?[...new Set(values.sort((a,b)=>L.qvInstitutionalCompare(a.code || a.label,b.code || b.label))
+        .map(value=>L.qvInstitutionalLabel(value.code,value.label)))]:values.map(value=>value.label || value.code)).join(' ; ') || 'À affecter';
     }
-    const raw = String((row && (row.responsible || row.responsable)) || '').trim();
-    if(presentation && qvProgrammeResponsableIsSection(raw)) return 'Chef section';
-    return L.qvResponsableCanonique(raw, { domain: row && (row.domain || row.domainLabel) }) || (raw ? raw : 'À affecter');
+    const raw=String(row?.responsible || row?.responsable || '').trim();
+    return raw?L.qvInstitutionalLabel(raw):'À affecter';
   }
 
   function qvProgrammeResponsableSelection(qv, row) {
@@ -12317,7 +12316,7 @@
   }
 
   function qvProgrammeFreeChoices(values){
-    return (values || []).map(value=>`<label><input type="checkbox" data-choice-kind="FREE" value="${escapeHtml(value)}" checked><span>${escapeHtml(value)}</span></label>`).join('');
+    return [...(values || [])].sort(L.qvInstitutionalCompare).map(value=>`<label><input type="checkbox" data-choice-kind="FREE" value="${escapeHtml(value)}" checked><span>${escapeHtml(L.qvInstitutionalLabel(value))}</span></label>`).join('');
   }
 
   function qvResponsableIsDefault(value){
@@ -12336,35 +12335,35 @@
     return L.qvResponsableVisualGroup(value);
   }
 
+  function qvProgrammeInstitutionalFreeOptions(options,freeValues){
+    const free=`<div data-free-choices>${qvProgrammeFreeChoices(freeValues)}</div>`;
+    const index=options.lastIndexOf('</fieldset>');
+    return index<0?options+free:options.slice(0,index)+free+options.slice(index);
+  }
   function qvProgrammeDescriptiveControl(id,label,options,freeValues,summary){
-    return `<div class="qv-programme-choice-field"><span id="${id}-label">${label}</span><details class="qv-programme-choice-menu"><summary id="${id}-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="${id}-search" type="search" aria-label="Rechercher ${label.toLowerCase()}" placeholder="Rechercher"><div id="${id}" class="qv-programme-choice-list" role="group" aria-labelledby="${id}-label">${options}<fieldset data-free-choices><legend>Libellés libres</legend>${qvProgrammeFreeChoices(freeValues)}</fieldset></div><div class="qv-programme-choice-add"><input id="${id}-free" type="text" maxlength="160" aria-label="${label} libre" placeholder="Libellé libre"><button type="button" class="scope-btn" data-qv-add-free="${id}" aria-label="Ajouter ${label.toLowerCase()} libre" title="Ajouter ${label.toLowerCase()} libre">+</button></div></div></details></div>`;
+    return `<div class="qv-programme-choice-field"><span id="${id}-label">${label}</span><details class="qv-programme-choice-menu"><summary id="${id}-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="${id}-search" type="search" aria-label="Rechercher ${label.toLowerCase()}" placeholder="Rechercher"><div id="${id}" class="qv-programme-choice-list" role="group" aria-labelledby="${id}-label">${qvProgrammeInstitutionalFreeOptions(options,freeValues)}</div><div class="qv-programme-choice-add"><input id="${id}-free" type="text" maxlength="160" aria-label="${label} libre" placeholder="Libellé libre"><button type="button" class="scope-btn" data-qv-add-free="${id}" aria-label="Ajouter ${label.toLowerCase()} libre" title="Ajouter ${label.toLowerCase()} libre">+</button></div></div></details></div>`;
   }
 
   function qvProgrammeResponsibleControl(qv,row){
+    const refs=L.qvInstitutionalReferences();
     const all=(qv.responsableFonctions || []).filter(value=>!qvResponsableIsDefault(value.libelle || value.code));
-    const common=all.find(value=>value.code==='C scrt') || all.find(value=>qvProgrammeResponsableIsSection(value.libelle || value.code));
-    const references=all.filter(value=>!common || value===common || !qvProgrammeResponsableIsSection(value.libelle || value.code));
     const legacyCode=qvProgrammeResponsableCode(qv,row);
-    const selections=(row.responsibleSelections || (legacyCode ? [{kind:'REFERENCE',code:legacyCode}]
-      : row.responsible ? [{kind:'FREE',label:row.responsible}] : [])).filter(value=>!qvResponsableIsDefault(value.label || value.code));
-    const sectionSelections=common?selections.filter(value=>qvProgrammeResponsableIsSection(value.label || value.code)):[];
-    const selected=selections.filter(value=>value.kind === 'REFERENCE');
-    const retained=value=>value===common?sectionSelections:selected.filter(item=>item.code===value.code);
-    const groups = new Map();
-    references.forEach(value=>{
-      const domain = qvResponsableReferenceDomain(value);
-      if(!groups.has(domain)) groups.set(domain,[]);
-      groups.get(domain).push(value);
-    });
-    const order=['F0','F1/8','F2/3','F4','F5/6','F7','DPS','DAP','JSP','Autres domaines'];
-    const options=[...groups].sort(([a],[b])=>{
-      const rank=value=>order.includes(value)?order.indexOf(value):order.length;
-      return rank(a)-rank(b) || a.localeCompare(b,'fr');
-    }).map(([domain,values])=>`<fieldset><legend>${escapeHtml(domain)}</legend>${values.sort((a,b)=>qvResponsableReferenceLabel(a).localeCompare(qvResponsableReferenceLabel(b),'fr')).map(value=>`<label><input type="checkbox" data-choice-kind="REFERENCE" value="${escapeHtml(value.code)}" ${retained(value).length ? `checked data-preserved-selections="${escapeHtml(JSON.stringify(retained(value)))}"` : ''}><span>${escapeHtml(qvResponsableReferenceLabel(value))}</span></label>`).join('')}</fieldset>`).join('');
-    const historical=selected.filter(value=>!sectionSelections.includes(value) && !references.some(item=>item.code === value.code));
-    return qvProgrammeDescriptiveControl('qv-programme-responsable','Responsable',
-      `${options}${historical.length ? `<fieldset><legend>Valeurs conservées</legend>${historical.map(value=>`<label><input type="checkbox" data-choice-kind="REFERENCE" value="${escapeHtml(value.code)}" checked><span>${escapeHtml(value.label || value.code)}</span></label>`).join('')}</fieldset>` : ''}`,
-      selections.filter(value=>value.kind === 'FREE' && !sectionSelections.includes(value)).map(value=>value.label),qvProgrammeResponsableLabel(row));
+    const selections=(row.responsibleSelections || (legacyCode?[{kind:'REFERENCE',code:legacyCode}]
+      :row.responsible?[{kind:'FREE',label:row.responsible}]:[])).filter(value=>!qvResponsableIsDefault(value.label || value.code));
+    const key=value=>refs.institutionalReference(value.code)?.code || refs.institutionalReference(value.libelle || value.label)?.code || value.code || value.label;
+    const entries=new Map();
+    for(const value of all) if(!refs.institutionalReference(key(value))?.retired && !entries.has(key(value))) entries.set(key(value),{value,retained:[]});
+    const free=[];
+    for(const value of selections){
+      if(value.kind==='FREE' && !entries.has(key(value))){free.push(value.label);continue;}
+      if(!entries.has(key(value))) entries.set(key(value),{value,retained:[]});
+      entries.get(key(value)).retained.push(value);
+    }
+    const options=refs.INSTITUTIONAL_GROUPS.map(group=>`<fieldset><legend>${escapeHtml(group)}</legend>${[...entries.values()]
+      .filter(({value})=>(refs.institutionalReference(key(value))?.group || refs.INSTITUTIONAL_GROUPS[2])===group)
+      .sort((a,b)=>L.qvInstitutionalCompare(key(a.value),key(b.value))).map(({value,retained})=>
+      `<label><input type="checkbox" data-choice-kind="REFERENCE" value="${escapeHtml(value.code || value.label)}" ${retained.length?`checked data-preserved-selections="${escapeHtml(JSON.stringify(retained))}"`:''}><span>${escapeHtml(L.qvInstitutionalLabel(value.code,value.libelle || value.label || 'Fonction historique'))}</span></label>`).join('')}</fieldset>`).join('');
+    return qvProgrammeDescriptiveControl('qv-programme-responsable','Responsable',options,free,qvProgrammeResponsableLabel(row));
   }
 
   function qvProgrammeDateInputValue(row) {
@@ -12409,7 +12408,13 @@
       const visible=new Map();
       group.items.forEach(([code,label])=>{
         const functionRef=L.qvProgrammeFunctionContext(row || {}).functions.find(item=>item.code===code);
-        if(row && functionRef && !functionRef.applicableOiCodes.length
+        const metadata=L.qvInstitutionalReferences().institutionalReference(code);
+        const ois=L.qvProgrammeConfirmedOiCodes(row || {});
+        const jspOnly=metadata?.compatibleOiDomains.length===1 && metadata.compatibleOiDomains[0]==='JSP';
+        if(row && !functionRef && jspOnly && !ois.includes('SDIS') && !ois.some(oi=>oi.startsWith('JSP:'))
+          && !(selected || []).some(value=>L.qvProgrammePublicReferenceCode(value)===code)
+          && !freeLabels.some(value=>L.qvProgrammePublicReferenceCode(value)===code)) return;
+        if(row && functionRef && !functionRef.applicable
           && !(selected || []).some(value=>L.qvProgrammePublicReferenceCode(value)===code)
           && !freeLabels.some(value=>L.qvProgrammePublicReferenceCode(value)===code)) return;
         const key=L.qvProgrammePublicReferenceCode(code);
@@ -12421,7 +12426,7 @@
           freeLabels.filter(label=>L.qvProgrammePublicReferenceCode(label)===item.code))).join('')}</fieldset>`;
     });
     if (extra.length) {
-      groups.push(`<fieldset><legend>Autres</legend>${extra.sort((a,b)=>qvProgrammePublicCodeLabel(a).localeCompare(qvProgrammePublicCodeLabel(b),'fr')).map((code) => option(code, qvProgrammePublicCodeLabel(code),(selected || []).includes(code)?[code]:[])).join('')}</fieldset>`);
+      groups[2]=groups[2].replace('</fieldset>',`${extra.sort(L.qvInstitutionalCompare).map(code=>option(code,L.qvInstitutionalLabel(code),(selected || []).includes(code)?[code]:[])).join('')}</fieldset>`);
     }
     return groups.join('');
   }
@@ -12468,13 +12473,25 @@
       ? 'Stat.Com conservé ; correspondance ECAwin non confirmée.' : '';
   }
 
+  function qvProgrammeQualificationLabel(qv,code){
+    return L.qvInstitutionalLabel(code,(qv.qualifications || []).find(item=>item.code===code)?.label || 'Spécialisation historique');
+  }
+  function qvProgrammeQualificationSummary(qv,codes){
+    return [...(codes || [])].sort(L.qvInstitutionalCompare).map(code=>qvProgrammeQualificationLabel(qv,code))
+      .filter((label,index,values)=>values.indexOf(label)===index).join(' ; ');
+  }
   function qvProgrammeQualificationControl(qv,row){
-    const selected = row.qualificationCodes || [];
-    const options = qv.qualifications || [];
-    const summary = selected.map(code=>options.find(item=>item.code === code)?.label || code).join(' ; ')
-      || row.specialisation || '—';
-    const groups=L.qvProgrammeReferenceGroups(options,'Autres spécialisations',item=>item.label);
-    return `<div class="qv-programme-choice-field"><span id="qv-qualification-label">Spécialisation</span><details class="qv-programme-choice-menu"><summary id="qv-programme-qualification-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-qualification-search" type="search" aria-label="Rechercher une spécialisation" placeholder="Rechercher"><div id="qv-programme-specialisation" class="qv-programme-choice-list" role="group" aria-labelledby="qv-qualification-label">${groups.map(group=>`<fieldset><legend>${escapeHtml(group.group)}</legend>${group.items.map(item=>`<label><input type="checkbox" value="${escapeHtml(item.code)}" ${selected.includes(item.code) ? 'checked' : ''}><span>${escapeHtml(item.label)}</span></label>`).join('')}</fieldset>`).join('')}</div></div></details></div>`;
+    const selected=row.qualificationCodes || [],options=qv.qualifications || [],refs=L.qvInstitutionalReferences();
+    const identity=code=>refs.institutionalReference(code)?.code || refs.institutionalReference(options.find(item=>item.code===code)?.label)?.code || code;
+    const entries=new Map();
+    for(const code of [...options.map(item=>item.code),...selected]){
+      const key=identity(code);if(!entries.has(key)) entries.set(key,{code,retained:[]});
+      if(code===refs.institutionalReference(key)?.abbreviation)entries.get(key).code=code;
+    }
+    for(const code of selected) entries.get(identity(code)).retained.push(code);
+    const groups=L.qvInstitutionalGroups([...entries.keys()]);
+    const summary=qvProgrammeQualificationSummary(qv,selected) || L.qvInstitutionalLabel(row.specialisation) || '—';
+    return `<div class="qv-programme-choice-field"><span id="qv-qualification-label">Spécialisation</span><details class="qv-programme-choice-menu"><summary id="qv-programme-qualification-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-qualification-search" type="search" aria-label="Rechercher une spécialisation" placeholder="Rechercher"><div id="qv-programme-specialisation" class="qv-programme-choice-list" role="group" aria-labelledby="qv-qualification-label">${groups.map(group=>`<fieldset><legend>${escapeHtml(group.group)}</legend>${group.items.map(key=>{const {code,retained}=entries.get(key);return `<label><input type="checkbox" value="${escapeHtml(code)}" ${retained.length?`checked data-preserved-codes="${escapeHtml(JSON.stringify(retained))}"`:''}><span>${escapeHtml(qvProgrammeQualificationLabel(qv,code))}</span></label>`;}).join('')}</fieldset>`).join('')}</div></div></details></div>`;
   }
 
   function qvProgrammeCursusOptions(qv,row){
@@ -13016,7 +13033,7 @@
       <p>Cette préparation ne crée aucune assignation. Les OI de la fiche définissent les organisations concernées ; le Responsable n’est pas assigné automatiquement.</p>
       ${suggested.profile?`<p>Règle reconnue : ${escapeHtml(labels[suggested.profile] || 'Cours de cadres préparatoire')}${parameters?' — paramètres enregistrés':' — proposition à confirmer, non appliquée'}.</p>`:''}
       ${L.qvProgrammeIsPreparatory(row)?'<p>Ce cours préparatoire n’est pas évaluable. Ses présences restent conservées. Une valeur historique doit être corrigée explicitement avant validation.</p>':''}
-      <p>Fonctions applicables : ${escapeHtml(context.functions.filter(item=>item.applicableOiCodes.length).map(item=>item.label).join(', ') || 'à préciser par les OI de la fiche')}. Les rattachements individuels datés restent à renseigner depuis une source autorisée.</p>
+      <p>Fonctions applicables : ${escapeHtml(context.functions.filter(item=>item.applicable).map(item=>item.label).join(', ') || 'à préciser par les OI de la fiche')}. Les rattachements individuels datés restent à renseigner depuis une source autorisée.</p>
       <fieldset ${canPrepare?'':'disabled'}><legend>Règle propre à cette activité</legend>
         <label><span>Profil d’assignation</span><select id="qv-assignment-profile"><option value="">Aucun profil confirmé</option>${Object.entries(labels).map(([code,label])=>`<option value="${code}" ${parameters?.profile===code?'selected':''}>${escapeHtml(label)}</option>`).join('')}</select></label>
         <label><input type="checkbox" id="qv-assignment-responsible" ${parameters?.responsibleRequired?'checked':''}>Participation du responsable imposée par une règle de l’activité</label>
@@ -13025,6 +13042,7 @@
       <p>Candidats assimilés aux titulaires selon la règle applicable ; en TP9, seuls les conducteurs dont la qualification est validée à la date concernée sont admissibles. Auxiliaires manuels hors effectifs/statistiques ; dispenses conservées.</p>
       ${suggested.maxParticipants?`<p>Maximum : ${suggested.maxParticipants} participants par session.</p>`:''}
       ${suggested.sessionCount?`<p>${suggested.sessionCount} sessions ; ${suggested.profile.startsWith('PR_')?'six surveillants différents hors effectif, Préposé APR issu du public et compris dans les 12 à chaque session, formateurs désignés manuellement pour toutes les sessions, une contribution par exercice':'répartition proportionnée des participants'}.</p>`:''}
+      ${row.definitionId==='QV26-INTRODUCTION-PIONNIER-999BBC8C' && !(row.publics || []).includes('FOBA:3')?'<p>Règle MOA actuelle : introduction PIONNIER supplémentaire pour FOBA 3, DPS G1. Le public historique est conservé ; proposer sa correction explicitement avant validation.</p>':''}
       <p>À contrôler avant assignation : disponibilités individuelles, conflits et sessions compatibles, composition annuelle des sections, fonctions et candidatures datées. Vacances des permanents et ProgJour restent des dépendances futures.</p>
       <fieldset ${canPrepare?'':'disabled'}><legend>Proposer les valeurs saisies aux types sélectionnés</legend>
         <label><span>Types à contrôler — toutes leurs occurrences et sessions, pour les OI déjà portés par chaque fiche</span><select id="qv-correction-types" multiple size="6">${typeOptions}</select></label>
@@ -13166,7 +13184,7 @@
             <td>${escapeHtml(row.statcomCode || '—')}</td>
             <td>${escapeHtml(qvLieuLabel(row))}</td>
             <td>${escapeHtml(row.salleTheorie || '—')}</td>
-            <td>${escapeHtml(L.qvResponsableCanonique(row.responsable, { domain: row.domain || row.domainLabel }) || '—')}</td>
+            <td>${escapeHtml(L.qvInstitutionalLabel(row.responsable) || '—')}</td>
             <td>${qvActivityStateHtml(row)}</td>
             <td class="qv-activites-action"><a class="qv-row-open" href="${href}" aria-label="Ouvrir la fiche">${qvCockpitIcon('chevron')}</a></td>
           </tr>`;
@@ -13403,7 +13421,7 @@
     const responsableRaw = group.responsable
       || ((qv.responsableFonctions || []).find((row) => String(row.code || '') === String(responsableCode)) || {}).libelle
       || '';
-    const responsable = L.qvResponsableCanonique(responsableRaw, { domain: group.domain }) || responsableRaw;
+    const responsable = L.qvInstitutionalLabel(responsableRaw) || responsableRaw;
     return Object.assign({}, group, {
       oiCodes,
       cibleCodes,
@@ -15165,8 +15183,8 @@
         const selected=[...publics.querySelectorAll('input:checked')].filter(input=>input.dataset.choiceKind!=='FREE')
           .flatMap(input=>input.dataset.preservedCodes?JSON.parse(input.dataset.preservedCodes):[input.value]);
         const free=qvProgrammeSelectedFreePublics();
-        publics.innerHTML=qvProgrammePublicGroups([],selected,free,{oiSelections:codes})
-          +`<fieldset data-free-choices><legend>Libellés libres</legend>${qvProgrammeFreeChoices(free.filter(label=>!L.qvProgrammePublicDisplayCatalogue().some(group=>group.items.some(([code])=>code===L.qvProgrammePublicReferenceCode(label)))))}</fieldset>`;
+        publics.innerHTML=qvProgrammeInstitutionalFreeOptions(qvProgrammePublicGroups([],selected,free,{oiSelections:codes}),
+          free.filter(label=>!L.qvProgrammePublicDisplayCatalogue().some(group=>group.items.some(([code])=>code===L.qvProgrammePublicReferenceCode(label)))));
       }
     };
     const dateField = document.getElementById('qv-programme-date');
@@ -15278,7 +15296,7 @@
       field.dataset.dirty = 'true';
       const codes = [...field.querySelectorAll('input:checked')].map(input=>input.value);
       const summary = document.getElementById('qv-programme-qualification-summary');
-      if(summary) summary.textContent = codes.map(code=>(quoVadisData().qualifications || []).find(item=>item.code === code)?.label || code).join(' ; ') || '—';
+      if(summary) summary.textContent = qvProgrammeQualificationSummary(quoVadisData(),codes) || '—';
     });
     for(const id of ['qv-assignment-profile','qv-assignment-responsible','qv-assignment-responsible-rule'])
       document.getElementById(id)?.addEventListener('change',()=>{document.getElementById('qv-assignment-preparation').dataset.dirty='true';});

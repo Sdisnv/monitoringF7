@@ -3,6 +3,10 @@
 > Capitalisation phase B : import de la phase A actualisée à #27. Les déclarations « hors dépôt », « pas de phase B » et les prochains GO dans le texte importé décrivent son mandat historique. La mission de phase B autorise maintenant sa capitalisation documentaire en une PR, sans fusion ni déploiement. Les réserves AUDIT_INCOMPLET et Programme 2027 NON VALIDÉ restent applicables. Voir [provenance](README.md).
 
 
+## Actualisation institutionnelle OS / IndeX — 16.10.2026
+
+Base main directement vérifiée `02b034ab5e1d5065373b39b8fb43aa74740b7fa7`, PR#29 fusionnée à05:56:13UTC ; aucune PR ouverte au départ. Production publiée reste #27 `3bdad82029ef79ea721bcf4043a5bb47e4d86764`. Le mandat institutionnel autorise les seuls compléments déterministes sur branche isolée, sans conversion du stock. La fiche QV-PUBLIC-008/T-07 est amendée en place ; [preuves et concordance](../../SCOPE_OS_INDEX_UNIFORMISATION_20261016.md). Présentation et contrats testés ; source individuelle et recette MOA production restent distinctes. **Programme2027 NON VALIDÉ.**
+
 ## Actualisation du lot prioritaire — 16.10.2026
 
 Mission de développement autorisée, distincte de la phase B documentaire historique. Base main vérifiée `b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a` (#28 documentaire fusionnée), production fonctionnelle #27 inchangée `3bdad82029ef79ea721bcf4043a5bb47e4d86764`. Les fiches T-04/T-07/T-08 sont actualisées ci-dessous en place ; aucune nouvelle liste concurrente. [Preuves ciblées](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md). **Recette MOA production en attente, Programme2027 NON VALIDÉ.** Les paragraphes phase A suivants restent historiques.
@@ -153,18 +157,18 @@ Les identifiants marqués « proposé » viennent de la mission actuelle et ne s
 |---|---|
 | Identifiant | QV-PUBLIC-008 — complément relation datée (référence qualifiée) |
 | Description métier | Extractions fiables de chefs de section par PERSONNE–FONCTION–DOMAINE–OI à la date |
-| Source | Mission humaine lot prioritaire fiches/assignations et clarifications,16.10.2026 ; registre des décisions, section datée ; sources historiques conservées dans #24 et le canon. |
-| Date de décision | 15.10 complété le 16.10.2026 |
+| Source | Mission lot prioritaire puis uniformisation OS1.01 v1.1 / OS1.06 v1.4 / IndeX et réponses MOA16.10.2026 ; registre daté et canon ; références #24/#29 conservées. |
+| Date de décision | 15.10 complété le16.10.2026 ; décision Chef matériel JSP reçue pendant le lot institutionnel. |
 | Priorité | P1 proposé pour assignations nominatives |
 | Module | Personnel / publics / QV |
 | Dépendances | Affectations datées et identités/NIP existants ; fonction distincte qualification/responsabilité/événement |
-| État du développement | PARTIEL : catalogue commun contextualisé et prédicat daté étendu ; source/persistance des faits individuels toujours manquante. |
-| État des tests | Compatibilité historique et contextes datés testés sur fixtures ; extraction réelle et recette MOA production NON VÉRIFIÉES. |
-| Validation MOA | Règles de fonctions décidées ; acceptation de la version publiée encore nécessaire. |
-| Travaux restants | Arbitrer source réelle et mode de confirmation des faits fonctions/candidatures, puis raccorder aux personnes existantes sans déduction. |
+| État du développement | PARTIEL pour extraction réelle ; présentation institutionnelle, contextes et contrat FOBA/échelons DÉVELOPPÉS NON VALIDÉS MOA EN PRODUCTION ; source individuelle toujours manquante. |
+| État des tests | Tests ciblés nouveaux et navigateur synthétique PASS ; catalogues seuls lus en READ ONLY/ROLLBACK ; aucune campagne PR20–29 rejouée ; recette réelle production NON EFFECTUÉE. |
+| Validation MOA | Mandat et retrait Chef matériel JSP explicites ; acceptation de la version publiée encore nécessaire. |
+| Travaux restants | GO distincts et recette production du lot ; source réelle des fonctions, années de formation, échelons et candidatures puis raccord aux personnes existantes sans déduction. |
 | Critères d’acceptation | Mêmes personnes selon date/domaine/OI avec preuve de fonction ; PRINCIPAL/SECONDAIRE ne vaut pas Chef section ; aucun NIP fictif ni déduction depuis responsabilité ponctuelle |
-| Preuves | [Lot ciblé 16.10](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md) |
-| Prochain jalon | Réponse MOA sur la source individuelle ; livraison déterministe en PR, pas de migration. |
+| Preuves | [Lot fiches / #29](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md) ; [Lot OS / IndeX16.10](../../SCOPE_OS_INDEX_UNIFORMISATION_20261016.md) |
+| Prochain jalon | Revue de la PR institutionnelle ; GO fusion puis GO déploiement ; SHA réellement publié et PASS MOA production. Aucun import ou rattachement inventé. |
 
 ### QV-EXERCICE-PREPARATION-001 — reliquat après #25/#26
 

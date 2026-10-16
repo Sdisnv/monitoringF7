@@ -9,12 +9,13 @@ const LIMITS = Object.freeze({ maxDepth: 8, maxNodes: 64, maxCodesPerPredicate: 
 const OPERATORS = new Set(['ALL', 'ANY', 'NOT']);
 const PREDICATES = new Set([
   'PERSON_ELIGIBLE_AT', 'HAS_DOMAIN_ASSIGNMENT', 'HAS_OI',
-  'HAS_COMPETENCE', 'HAS_FOBA_LEVEL', 'HAS_JSP_ROLE', 'HAS_PERSON_FUNCTION'
+  'HAS_COMPETENCE', 'HAS_ECHELON', 'HAS_FOBA_LEVEL', 'HAS_JSP_ROLE', 'HAS_PERSON_FUNCTION'
 ]);
 const OI_CODES = new Set(canonical.ORGANISATIONAL_UNITS.map((row) => row.code));
 const COMPETENCE_CODES = new Set(canonical.COMPETENCE_DEFINITIONS.map((row) => row.code));
 const FOBA_CODES = new Set(canonical.FOBA_LEVELS.map((row) => row.code));
 const DOMAIN_CODES = new Set(canonical.CANONICAL_DOMAIN_CODES);
+const FUNCTION_DOMAIN_CODES=new Set([...DOMAIN_CODES,'F0']);
 const JSP_ROLES = new Set(['JEUNE', 'MONITEUR']);
 const functionDefinitions=require('../../assets/js/scope-ui-logic').qvProgrammeFunctionDefinitions();
 const PERSON_FUNCTIONS = new Set(['DPS_CHEF_SECTION','DPS_REMPLACANT_CHEF_SECTION',...functionDefinitions.map(row=>row.code.toUpperCase())]);
@@ -82,7 +83,8 @@ function normalizePublicRule(expression, options = {}){
       HAS_DOMAIN_ASSIGNMENT: { fields: ['domainCodes'], arrays: [['domainCodes', DOMAIN_CODES]] },
       HAS_OI: { fields: ['domainCode', 'oiCodes'], arrays: [['oiCodes', OI_CODES]], scalar: ['domainCode', DOMAIN_CODES] },
       HAS_COMPETENCE: { fields: ['competenceCodes','includeCandidates'], arrays: [['competenceCodes', competenceCatalog]] },
-      HAS_FOBA_LEVEL: { fields: ['levelCodes'], arrays: [['levelCodes', FOBA_CODES]] },
+      HAS_ECHELON: { fields:['levelCodes','includeCandidates'],arrays:[['levelCodes',new Set(['0','I','II','III','IV'])]] },
+      HAS_FOBA_LEVEL: { fields: ['levelCodes','institutionalPopulation'], arrays: [['levelCodes', FOBA_CODES]] },
       HAS_JSP_ROLE: { fields: ['roles', 'oiCodes'], arrays: [['roles', JSP_ROLES], ['oiCodes', OI_CODES]] },
       HAS_PERSON_FUNCTION: { fields: ['functionCodes','domainCode','oiCodes','siteCode','sectionCodes'], arrays: [['functionCodes', PERSON_FUNCTIONS]] }
     };
@@ -100,6 +102,14 @@ function normalizePublicRule(expression, options = {}){
       result[field] = upper(node[field]);
       if(!catalog.has(result[field])) throw validationError(`${path}.${field}`, `noncanonical code ${result[field]}`);
     }
+    if(predicate==='HAS_FOBA_LEVEL' && Object.hasOwn(node,'institutionalPopulation')){
+      if(typeof node.institutionalPopulation!=='boolean') throw validationError(path,'institutionalPopulation must be boolean');
+      result.institutionalPopulation=node.institutionalPopulation;
+    }
+    if(predicate==='HAS_ECHELON'){
+      if(Object.hasOwn(node,'includeCandidates') && typeof node.includeCandidates!=='boolean') throw validationError(path,'includeCandidates must be boolean');
+      result.includeCandidates=node.includeCandidates!==false;
+    }
     if(predicate==='HAS_COMPETENCE' && Object.hasOwn(node,'includeCandidates')){
       if(typeof node.includeCandidates!=='boolean') throw validationError(path,'includeCandidates must be boolean');
       result.includeCandidates=node.includeCandidates;
@@ -109,7 +119,7 @@ function normalizePublicRule(expression, options = {}){
       if(common && !node.domainCode) throw validationError(path,'a common function requires its domain context');
       if(node.domainCode){
         result.domainCode=upper(node.domainCode);
-        if(!DOMAIN_CODES.has(result.domainCode)) throw validationError(path,'unknown function domain');
+        if(!FUNCTION_DOMAIN_CODES.has(result.domainCode)) throw validationError(path,'unknown function domain');
         for(const code of result.functionCodes){
           const spec=functionDefinitions.find(row=>row.code.toUpperCase()===code);
           if(spec && !spec.domains[result.domainCode]) throw validationError(path,'function not applicable in this domain');
@@ -228,7 +238,8 @@ function requiredInputs(expression){
     if(node.predicate === 'HAS_DOMAIN_ASSIGNMENT' || node.predicate === 'HAS_OI') required.add('assignments');
     if(node.predicate === 'PERSON_ELIGIBLE_AT') required.add('periods');
     if(node.predicate === 'HAS_COMPETENCE') {required.add('competencies');if(node.includeCandidates) required.add('candidatures');}
-    if(node.predicate === 'HAS_FOBA_LEVEL') required.add('fobaLevels');
+    if(node.predicate === 'HAS_FOBA_LEVEL') {required.add('fobaLevels');if(node.institutionalPopulation){required.add('assignments');if(node.levelCodes.includes('1'))required.add('echelons');}}
+    if(node.predicate === 'HAS_ECHELON'){required.add('echelons');if(node.includeCandidates)required.add('candidatures');}
     if(node.predicate === 'HAS_JSP_ROLE') required.add('jspRoles');
     if(node.predicate === 'HAS_PERSON_FUNCTION') required.add('functions');
     for(const child of node.children || []) walk(child);
@@ -264,7 +275,24 @@ function evaluatePredicate(node, person, context, path){
     evidence = currentFacts(context.fobaLevels, id, context.date, {
       requireStart: (row) => row.temporalSource === 'LEGACY_ASSIGNMENT'
     }).filter((row) => node.levelCodes.includes(upper(row.levelCode || row.level_code || row.niveau_code)));
+    if(node.institutionalPopulation){
+      const incorporated=currentFacts(context.assignments,id,context.date,{requireStart:true}).filter(row=>{
+        const domain=upper(row.domainCode || row.domaine_code || row.domaine),oi=upper(row.oiCode || row.oi_code || row.targetCode || row.niveau_code);
+        return ['DPS','DAP'].includes(domain) && canonical.DOMAIN_ORGANISATIONAL_UNITS[domain].includes(oi);
+      });
+      const zero=currentFacts(context.echelons,id,context.date,{requireStart:true}).some(row=>upper(row.status)==='CONFIRMED' && upper(row.levelCode)==='0');
+      evidence=evidence.filter(row=>{
+        const level=upper(row.levelCode || row.level_code || row.niveau_code);
+        return upper(row.status)==='CONFIRMED' && Boolean(row.validFrom || row.valid_from) && Number(row.trainingYear)===Number(level)
+          && (level==='1'?zero && !incorporated.length:level==='2'?incorporated.length>0:incorporated.some(item=>upper(item.domainCode || item.domaine_code || item.domaine)==='DPS'));
+      });
+    }
     matched = evidence.length > 0;
+  }else if(node.predicate === 'HAS_ECHELON'){
+    evidence=currentFacts(context.echelons,id,context.date,{requireStart:true}).filter(row=>upper(row.status)==='CONFIRMED' && node.levelCodes.includes(upper(row.levelCode)));
+    if(node.includeCandidates) evidence=evidence.concat(currentFacts(context.candidatures,id,context.date,{requireStart:true})
+      .filter(row=>upper(row.status)==='CONFIRMED' && node.levelCodes.includes(upper(row.targetEchelon))));
+    matched=evidence.length>0;
   }else if(node.predicate === 'HAS_JSP_ROLE'){
     evidence = currentFacts(context.jspRoles, id, context.date).filter((row) =>
       node.roles.includes(upper(row.role)) && node.oiCodes.includes(upper(row.oiCode || row.oi_code))
@@ -281,11 +309,11 @@ function evaluatePredicate(node, person, context, path){
         const spec=functionDefinitions.find(item=>item.code.toUpperCase()===upper(row.functionCode || row.function_code));
         if(!spec) return true; // Historical DPS predicates retain their historical behavior.
         const domain=upper(row.domainCode || row.domaine_code || row.domaine),oi=upper(row.oiCode || row.oi_code);
-        if(upper(row.status)!=='CONFIRMED' || !spec.domains[domain]?.includes(oi) || spec.sectionRequired && !(row.sectionCode || row.section_code)) return false;
+        if(upper(row.status)!=='CONFIRMED' || (!spec.domains[domain] || !spec.global && !spec.domains[domain].includes(oi)) || spec.sectionRequired && !(row.sectionCode || row.section_code)) return false;
         if(!spec.requires) return true;
         return currentFacts(context.functions,id,context.date,{requireStart:true}).some(other=>
           upper(other.status)==='CONFIRMED' && upper(other.functionCode || other.function_code)===spec.requires.toUpperCase()
-          && upper(other.domainCode || other.domaine_code || other.domaine)===domain && spec.domains[domain].includes(upper(other.oiCode || other.oi_code))
+          && upper(other.domainCode || other.domaine_code || other.domaine)===domain && (spec.global || spec.domains[domain].includes(upper(other.oiCode || other.oi_code)))
           && (spec.requires!=='ENC:C-SECTION' || Boolean(other.sectionCode || other.section_code)));
       })());
     matched = evidence.length > 0;
@@ -347,9 +375,21 @@ function evaluatePublicRule(input){
   if(!Array.isArray(args.persons)) return incompleteResult(ruleFingerprint, date, 'INCOMPLETE', ['MISSING_INPUT_PERSONS']);
   const missing = requiredInputs(expression).filter((name) => !Array.isArray(args[name]));
   if(missing.length) return incompleteResult(ruleFingerprint, date, 'INCOMPLETE', missing.map((name) => `MISSING_INPUT_${name.toUpperCase()}`));
+  const strictFoba1=node=>node.predicate==='HAS_FOBA_LEVEL' && node.institutionalPopulation && node.levelCodes.includes('1')
+    || (node.children || []).some(strictFoba1);
+  const evaluatedIds=new Set(args.persons.map(personId));
+  if(strictFoba1(expression) && (args.assignments || []).some(row=>{
+    if(!evaluatedIds.has(personId(row)))return false;
+    const domain=upper(row.domainCode || row.domaine_code || row.domaine);
+    if(!['DPS','DAP'].includes(domain))return false;
+    const dates=factDates(row),from=normalizedFactDate(dates.from),to=normalizedFactDate(dates.to);
+    if(to && to<date || from && from>date)return false;
+    const oi=upper(row.oiCode || row.oi_code || row.targetCode || row.niveau_code);
+    return !from || dates.to && !to || !canonical.DOMAIN_ORGANISATIONAL_UNITS[domain].includes(oi);
+  }))return incompleteResult(ruleFingerprint,date,'INCOMPLETE',['FOBA1_INCORPORATION_NOT_VERIFIABLE']);
   const context = {
     date, periods: Array.isArray(args.periods) ? args.periods : [], assignments: args.assignments || [],
-    competencies: args.competencies || [], fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || [],functions:args.functions || [],candidatures:args.candidatures || []
+    competencies: args.competencies || [], fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || [],functions:args.functions || [],candidatures:args.candidatures || [],echelons:args.echelons || []
   };
   const uniquePersons = new Map();
   for(const person of args.persons){
@@ -395,7 +435,7 @@ function explainPersonExclusion(input){
   const expression = normalizePublicRule((args.ruleVersion || {}).expression, validationOptions);
   const trace = evaluateNode(expression, person, {
     date, periods: args.periods || [], assignments: args.assignments || [], competencies: args.competencies || [],
-    fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || [],functions:args.functions || [],candidatures:args.candidatures || []
+    fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || [],functions:args.functions || [],candidatures:args.candidatures || [],echelons:args.echelons || []
   });
   return { personId: id, found: true, matched: trace.matched, complete: true, evaluationDate: date, trace };
 }

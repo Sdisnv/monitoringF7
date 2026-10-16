@@ -3234,6 +3234,16 @@
   function splitActivityThemeLabel(value){ return ActivityLabel.splitActivityThemeLabel(value); }
   function formatActivityThemeLabel(activityOrLabel,theme){ return ActivityLabel.formatActivityThemeLabel(activityOrLabel,theme); }
 
+  function qvInstitutionalReferences(){
+    return typeof require==='function'?require('./scope-personnel-referentials'):globalThis.ScopePersonnelReferentials;
+  }
+  function qvInstitutionalLabel(code,fallback){
+    const refs=qvInstitutionalReferences(),entry=refs.institutionalReference(code) || refs.institutionalReference(fallback);
+    return entry?.label || refs.institutionalLabel(fallback || code);
+  }
+  function qvInstitutionalCompare(a,b){return qvInstitutionalReferences().compareInstitutional(a,b);}
+  function qvInstitutionalGroups(values){return qvInstitutionalReferences().institutionalGroups(values);}
+
   function qvResponsableGroups() {
     return [
       ['Commandant', 'Quartier-maître', 'Chef OP', 'Chef logistique', 'Chef formation', 'Of communication', 'Chef site DPS', 'Chef DAP'],
@@ -3283,18 +3293,8 @@
   }
 
   function qvResponsableVisualGroup(value) {
-    const key=qvResponsableKey(value.code || value.libelle || value.label);
-    const groups=[['F0',['cdt','commandant','presidente codir','presidente ci']],
-      ['F1/8',['qm','quartier-maitre','fourrier']],['F2/3',['c op','chef op','chef operationnel']],
-      ['F4',['c log','chef logistique']],['F5/6',['c audiovisuel','c communication','of communication','c publication']],
-      ['F7',['c for','c pr','c foba','c foca','c fospec','of auto','of spec','ref sanitaire','resp abc','resp apr','resp ofsi','resp vpc']],
-      ['DPS',['c site','c scrt','c sct']],['DAP',['c dap','chef dap','chef section dap']],
-      ['JSP',['c jsp','c site jsp','resp for jsp','resp mat jsp']]];
-    const known=groups.find(([,codes])=>codes.includes(key));
-    if(known) return known[0];
-    const domain=value.domain || value.metadata?.domain;
-    return {CMDT:'F0',PR:'F7',AUTO:'F7',FOBA:'F7',FOCA:'F7',FOSPEC:'F7',F1:'F1/8',F8:'F1/8',F2:'F2/3',F3:'F2/3',F5:'F5/6',F6:'F5/6'}[domain]
-      || domain || 'Autres domaines';
+    const refs=qvInstitutionalReferences();
+    return (refs.institutionalReference(value.code) || refs.institutionalReference(value.libelle || value.label))?.group || refs.INSTITUTIONAL_GROUPS[2];
   }
 
   function qvInternalEventCodeDisplay(value) {
@@ -3321,7 +3321,7 @@
   }
 
   function qvProgrammeDescriptivePublics() {
-    return {
+    const historical={
       'CMDT:CODIR': 'Membres du Codir',
       'CMDT:CDT': 'CDT', 'CMDT:C-OP': 'C op', 'CMDT:C-LOG': 'C log',
       'CMDT:C-FOR': 'C for', 'CMDT:QM': 'QM',
@@ -3333,24 +3333,32 @@
       'AUTO:OF-AUTO': 'Of auto', 'AUTO:FORMATEUR-C1-118': 'Formateur C1/118',
       'AUTO:MONITEUR-CONDUITE': 'Moniteur conduite'
     };
+    return Object.fromEntries([...Object.entries(historical),...qvInstitutionalReferences().INSTITUTIONAL_REFERENCES
+      .filter(row=>row.newPublicChoice && !Object.hasOwn(historical,row.code)).map(row=>[row.code,row.label])]);
   }
 
 
   // MOA 16.10.2026: shared function identities, scoped facts; never infer an individual from a label.
   function qvProgrammeFunctionDefinitions() {
     return [
+      {code:'CMDT:CDT',label:'Commandant',domains:{F0:[]},global:true},
       {code:'C site',label:'Chef site',domains:{DPS:['G1','C1','B1','B2'],JSP:['G1','C1','B1']}},
       {code:'ENC:C-SECTION',label:'Chef section',domains:{DPS:['G1','C1','B1','B2'],DAP:['Y1','Y2','Y3','Y4']},sectionRequired:true},
       {code:'C JSP',label:'Chef JSP',domains:{JSP:['G1','C1','B1']},requires:'C site',reportsTo:'CMDT:C-FOR'},
-      {code:'C DAP',label:'Chef DAP',domains:{DAP:['Y1','Y2','Y3','Y4']},requires:'ENC:C-SECTION'}
+      {code:'C DAP',label:'Chef DAP',domains:{DAP:['Y1','Y2','Y3','Y4']},requires:'ENC:C-SECTION'},
+      {code:'Resp for JSP',label:'Resp formation',domains:{JSP:['G1','C1','B1']}},
+      {code:'C FOBA',label:'Chef FOBA',domains:{FOBA:[]},global:true},
+      {code:'ENC:CADRE-FOBA',label:'Cadre FOBA',domains:{FOBA:[]},global:true},
+      {code:'FOBA:REMPL-CHEF',label:'Rempl. chef FOBA',domains:{FOBA:[]},global:true,requires:'ENC:CADRE-FOBA'}
     ];
   }
 
   function qvProgrammeFunctionContext(row) {
     const ois=qvProgrammeConfirmedOiCodes(row || {});
+    const contextualOis=ois.includes('SDIS')?qvProgrammeOiCatalogue().flatMap(group=>group.items.map(([code])=>code)).filter(code=>code!=='SDIS'):ois;
     return {oiCodes:ois,date:String(row?.startsAt || '').slice(0,10) || null,
-      functions:qvProgrammeFunctionDefinitions().map(item=>({...item,
-        applicableOiCodes:ois.filter(code=>{const [domain,oi]=code.split(':');return item.domains[domain]?.includes(oi);})})),
+      functions:qvProgrammeFunctionDefinitions().map(item=>({...item,applicable:item.global===true || contextualOis.some(code=>{const [domain,oi]=code.split(':');return item.domains[domain]?.includes(oi);}),
+        applicableOiCodes:contextualOis.filter(code=>{const [domain,oi]=code.split(':');return item.domains[domain]?.includes(oi);})})),
       individualResolution:'MISSING_DATED_FUNCTION_FACTS',responsibleAssignsAutomatically:false};
   }
 
@@ -3449,7 +3457,7 @@
     const result={profile,confirmed:Boolean(explicit),responsibleRequired:explicit?.responsibleRequired===true,
       includeCandidates:explicit?.includeCandidates ?? !['TP9_1','TP9_2'].includes(profile),oiCodes:ois,
       publicCodes:[...(row?.publics || [])],qualificationCodes:[...(row?.qualificationCodes || [])],
-      cursusId:row?.cursusId || null,functions:qvProgrammeFunctionContext(row).functions.filter(item=>item.applicableOiCodes.length),
+      cursusId:row?.cursusId || null,functions:qvProgrammeFunctionContext(row).functions.filter(item=>item.applicable),
       preparationOnly:true,assignmentWrites:false,auxiliaryManual:true,auxiliaryCounts:false,keepExemptions:true,
       balanceEchelons:['0','I','II','III','IV'],constraintsNotVerified:['DISPONIBILITES_INDIVIDUELLES','VACANCES_PERMANENT','COMPOSITION_ANNUELLE_SECTIONS','FONCTIONS_DATEES','CANDIDATURES_DATEES']};
     if(profile==='CAR') Object.assign(result,{requiredPublicCodes:['AUTO:3','AUTO:CAND-VL'],qualification:'COND_VL'});
@@ -3494,7 +3502,7 @@
 
   function qvProgrammePublicCatalogue() {
     const descriptive = Object.entries(qvProgrammeDescriptivePublics());
-    return [
+    const catalogue=[
       { group: 'Général', items: [['GEN:RECRUE', 'Recrue'], ['GEN:SAPEUR', 'Sapeur'], ['GEN:SAPEUR-DPS', 'Sapeur DPS'], ['GEN:SAPEUR-DAP', 'Sapeur DAP']] },
       { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:') || ['C DAP','C JSP'].includes(code)) },
       { group: 'Échelons', items: [['ECH:0', 'Échelon 0'], ['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
@@ -3519,6 +3527,10 @@
       }
       return group;
     });
+    const known=new Set(catalogue.flatMap(group=>group.items.map(([code])=>code)));
+    catalogue.push({group:'Compléments institutionnels',items:descriptive.filter(([code])=>!known.has(code))});
+    const seen=new Set();
+    return catalogue.map(group=>({...group,items:group.items.filter(([code])=>{if(seen.has(code))return false;seen.add(code);return true;})}));
   }
 
   function qvProgrammeExportActivity(row, format) {
@@ -3614,6 +3626,9 @@
           provenance[field] = { source: 'CANONICAL_PROGRAMME_CONSENSUS', definitionId: group.definitionId, sourceIds };
         }
       }
+      if(group.definitionId==='QV26-INTRODUCTION-PIONNIER-999BBC8C'){
+        defaults.publicCodes=['FOBA:3'];provenance.publicCodes={source:'MOA_OS_INDEX_20261016',definitionId:group.definitionId,sourceIds};
+      }
       return {
         id: group.id, definitionId: group.definitionId, label: group.site ? `${group.label} (${group.site})` : group.label,
         site: group.site || null, siteCode: group.site || null, formationDomain: group.formationDomain,
@@ -3676,6 +3691,8 @@
 
   function qvProgrammePublicReferenceCode(code) {
     const value=String(code || '').trim();
+    const institutional=qvInstitutionalReferences().institutionalReference(value);
+    if(institutional) return institutional.code;
     const aliases={'PR:FORMATEURS':'PR:FORMATEUR-PR','AUTO:MONITEURS':'AUTO:MONITEUR-CONDUITE',
       'AUTO:FORM-C1':'AUTO:FORMATEUR-C1-118',
       'CMDT:CHEF-SECTION-DAP':'ENC:C-SECTION','Chef section DAP':'ENC:C-SECTION',
@@ -3692,37 +3709,22 @@
 
   // Presentation only: keep the historical catalogue for projection, population rules and exports.
   function qvProgrammePublicDisplayCatalogue() {
-    const labels={'ENC:C-SECTION':'Chef section','CMDT:C-FOR':'Chef formation',
-      'CMDT:C-LOG':'Chef logistique','CMDT:C-OP':'Chef opérationnel','PR:C-PR':'Chef PR'};
-    const seen=new Set();
-    return qvProgrammePublicCatalogue().map(group=>{
-      const items=group.items.filter(([code])=>code!=='CMDT:CHEF-SECTION-DAP').flatMap(([code,label])=>{
-        const key=qvProgrammePublicReferenceCode(code);
-        if(seen.has(key)) return [];
-        seen.add(key);
-        return [[key,labels[key] || label.charAt(0).toLocaleUpperCase('fr')+label.slice(1)]];
-      });
-      for(const [candidate,driver] of [['AUTO:CAND-PL','AUTO:1'],['AUTO:CAND-TP9','AUTO:2'],['AUTO:CAND-VL','AUTO:3'],['AUTO:CAND-EA','AUTO:5']]){
-        const index=items.findIndex(([code])=>code===candidate);
-        if(index<0 || !items.some(([code])=>code===driver)) continue;
-        const [item]=items.splice(index,1);
-        items.splice(items.findIndex(([code])=>code===driver)+1,0,item);
-      }
-      return {...group,items};
-    });
+    const refs=qvInstitutionalReferences(),items=new Map();
+    for(const [code,label] of qvProgrammePublicCatalogue().flatMap(group=>group.items)){
+      const key=qvProgrammePublicReferenceCode(code);
+      if(refs.institutionalReference(key)?.retired) continue;
+      if(!items.has(key)) items.set(key,[key,qvInstitutionalLabel(key,label)]);
+    }
+    for(const entry of refs.INSTITUTIONAL_REFERENCES) if(!entry.retired && !items.has(entry.code)) items.set(entry.code,[entry.code,entry.label]);
+    return refs.INSTITUTIONAL_GROUPS.map(group=>({group,items:[...items.values()]
+      .filter(([code])=>(refs.institutionalReference(code)?.group || refs.INSTITUTIONAL_GROUPS[2])===group)
+      .sort(([a],[b])=>refs.compareInstitutional(a,b))}));
   }
-
   function qvProgrammePublicDisplayLabel(value) {
-    const code=qvProgrammePublicReferenceCode(value);
-    const item=qvProgrammePublicDisplayCatalogue().flatMap(group=>group.items).find(([key])=>key===code);
-    return item ? item[1] : qvProgrammePublicLabel(value);
+    return qvInstitutionalReferences().institutionalReference(value)?.label || qvInstitutionalLabel(value,qvProgrammePublicLabel(value));
   }
-
   function qvFormatPublicDisplayLabels(codes,freeLabels=[]) {
-    const labels=new Map(qvProgrammePublicDisplayCatalogue().flatMap(group=>group.items));
-    const reference=value=>labels.get(qvProgrammePublicReferenceCode(value));
-    return qvFormatPublicLabels([],[...(codes || []).map(code=>reference(code) || qvProgrammePublicLabel(code)),
-      ...freeLabels.map(label=>reference(label) || label)]);
+    return qvFormatPublicLabels([],qvInstitutionalReferences().institutionalLabels([...(codes || []),...freeLabels]));
   }
 
   function qvProgrammeCursusLabel(item) {
@@ -3887,7 +3889,8 @@
     const personnel = row.personnel || '';
     const segments = personnel.split(/[|+]/).map(key).filter(Boolean);
     const publics = [...new Set(row.publics || row.publicCodes || row.public_codes || [])];
-    const catalogue = qvProgrammePublicCatalogue().flatMap(group => group.items);
+    const catalogue = qvProgrammePublicCatalogue().flatMap(group => group.items)
+      .filter(([code])=>!qvInstitutionalReferences().institutionalReference(code)?.newPublicChoice);
     for(const target of targets){
       const exact = `${target.domain}:${target.code}`;
       const alias = target.domain === 'AUTO' ? ({PL:'AUTO:1',VL:'AUTO:3'})[target.code]
@@ -5723,7 +5726,7 @@
 
   function qvFormatPublicLabels(codes,freeLabels=[]) {
     const labels = [...new Set([...(codes || []).map((code) => qvProgrammePublicLabel(code)),...freeLabels]
-      .filter((label) => label && label !== 'À définir'))].sort((a,b)=>(a==='OSR'?-1:b==='OSR'?1:0));
+      .filter((label) => label && label !== 'À définir').map(label=>qvInstitutionalLabel(label)))].sort(qvInstitutionalCompare);
     const isEchelon=label=>/^Échelon\s+(0|IV|I{1,3})$/.test(label);
     const contraction = qvFormatEchelons(labels.filter(isEchelon));
     let placed = false;
@@ -6045,6 +6048,7 @@
     qvResponsableGroups,
     qvResponsableCanonique,
     qvResponsableKey,
+    qvInstitutionalReferences,qvInstitutionalLabel,qvInstitutionalCompare,qvInstitutionalGroups,
     qvResponsableVisualGroup,
     qvInternalEventCodeDisplay,
     qvProgrammeParameters,

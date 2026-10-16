@@ -2,6 +2,8 @@
 
 Référence documentaire : **16 octobre 2026**, Europe/Zurich. MOA : **SDIS régional du Nord vaudois**. Point d’entrée pour une nouvelle IA ou un développeur ; guide de navigation et de gouvernance, sans remplacer le référentiel détaillé.
 
+Actualisation institutionnelle16.10 : [lot OS1.01 / OS1.06 / IndeX](SCOPE_OS_INDEX_UNIFORMISATION_20261016.md), développé depuis main #29 fusionnée `02b034ab5e1d5065373b39b8fb43aa74740b7fa7`. Production toujours #27, sans déploiement de #29 ou de ce lot. Le référentiel Personnel existant porte les métadonnées communes ; trois groupes, abréviations, candidats, contextes et populations FOBA distinctes. Chef matériel JSP est exclu des nouveaux choix selon décision MOA, historique conservé. Aucun import individuel, source des faits réels encore nécessaire. GO fusion et déploiement distincts, SHA publié puis recette MOA exclusivement en production et PASS explicite avant clôture. Les paragraphes suivants sont des jalons datés, pas une autorisation de publication.
+
 Actualisation16.10 : [lot prioritaire fiches et préparation des assignations](SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md), en PR depuis main #28 `b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a`. Aucun déploiement de ce lot ; production fonctionnelle #27. Le catalogue et le contrat daté avancent, la source réelle des faits individuels reste à arbitrer. **Recette MOA exclusivement en production après GO fusion et GO déploiement distincts, vérification SHA et PASS explicite avant clôture** ; le local reste technique. Les états de capitalisation phase B ci-dessous décrivent leur mandat historique.
 
 ## 1. Présentation et priorité
