@@ -218,9 +218,10 @@ html, body {
 }
 
 .qv-subnav {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(150px, auto));
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
   margin: 0 0 18px;
   padding: 0;
   border-bottom: 1px solid var(--scope-line);
@@ -228,6 +229,7 @@ html, body {
 
 .qv-subnav-group {
   min-width: 0;
+  max-width: 100%;
 }
 .qv-subnav-group-label {
   display: block;
@@ -239,7 +241,8 @@ html, body {
 }
 .qv-subnav-group > div {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
 .qv-subnav-link {
@@ -248,7 +251,9 @@ html, body {
   align-items: center;
   gap: 6px;
   min-height: 40px;
-  padding: 8px 14px 10px;
+  padding: 8px 8px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
   border-radius: 0;
   color: var(--scope-gray-700);
   font-size: 13px;
@@ -270,9 +275,9 @@ html, body {
 .qv-subnav-link.is-active::after {
   content: "";
   position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: -1px;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
   height: 2px;
   background: var(--scope-red);
 }
@@ -11677,19 +11682,19 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-choice-list fieldset{margin:0;padding:0;border:0;min-width:0}
 .qv-programme-choice-list fieldset+fieldset{margin-top:26px}
 .qv-programme-choice-list legend{padding:0;margin-bottom:5px;font-size:.82rem;font-weight:600}
-.qv-programme-edit-grid .qv-programme-choice-list label{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px 10px;font-size:.82rem;font-weight:400}
+.qv-programme-choice-list label{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px 10px;font-size:.82rem;font-weight:400}
 .qv-programme-edit-grid .qv-programme-public-field .qv-public-half-section{padding-left:30px}
 .qv-programme-choice-list label:nth-of-type(even){background:#f4f5f6}
 .qv-programme-choice-list label:hover{background:#e9edf0}
 .qv-programme-choice-list label:focus-within{outline:1px solid #1769aa;outline-offset:-1px}
-.qv-programme-edit-grid .qv-programme-choice-list input[type=checkbox]{appearance:none;width:14px;height:14px;min-height:0;padding:0;margin:0;flex:0 0 14px;border:1px solid #687681;border-radius:0;background:#fff;position:relative;cursor:pointer}
+.qv-programme-choice-list input[type=checkbox]{appearance:none;width:14px;height:14px;min-height:0;padding:0;margin:0;flex:0 0 14px;border:1px solid #687681;border-radius:0;background:#fff;position:relative;cursor:pointer}
 .qv-programme-choice-list input[type=checkbox]:checked{background:#1769aa;border-color:#1769aa}
 .qv-programme-choice-list input[type=checkbox]:checked::after{content:'';position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 .qv-programme-choice-list input[type=checkbox]:indeterminate{background:#1769aa;border-color:#1769aa}
 .qv-programme-choice-list input[type=checkbox]:indeterminate::after{content:'';position:absolute;left:2px;top:5px;width:8px;height:2px;background:#fff}
 .qv-programme-edit-grid .qv-programme-choice-list legend label{padding-left:0;font-weight:600}
 .qv-programme-choice-list input[type=checkbox]:focus-visible{outline:2px solid #1769aa;outline-offset:2px}
-@media(forced-colors:active){.qv-programme-edit-grid .qv-programme-choice-list input[type=checkbox]{appearance:auto}.qv-programme-choice-list input[type=checkbox]:checked::after{content:none}}
+@media(forced-colors:active){.qv-programme-choice-list input[type=checkbox]{appearance:auto}.qv-programme-choice-list input[type=checkbox]:checked::after{content:none}}
 .qv-programme-edit-pair{grid-column:1/-1}
 #qv-programme-lieu-libre-field{grid-column:1/-1}
 #qv-programme-lieu-keep-field{grid-column:1/-1}
@@ -11708,8 +11713,8 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-choice-menu>summary{display:block;min-height:36px;box-sizing:border-box;padding:8px 30px 8px 10px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;font-size:.85rem}
 .qv-programme-choice-menu>summary::after{content:'⌄';position:absolute;right:10px;top:6px;color:#52606d}
 .qv-programme-choice-menu[open]>summary{border-bottom:1px solid #d7dfe7}
-.qv-programme-choice-popover{padding:8px}
-.qv-programme-edit-grid .qv-programme-choice-popover input[type=search]{height:34px;min-height:34px;margin-bottom:6px}
+.qv-programme-choice-popover{padding:8px;overflow-y:auto}
+.qv-programme-choice-popover input[type=search]{height:34px;min-height:34px;margin-bottom:6px}
 .qv-programme-choice-menu .qv-programme-choice-list{height:auto;max-height:220px;padding:2px 4px;border:0}
 .qv-programme-choice-list label[hidden],.qv-programme-choice-list fieldset[hidden]{display:none!important}
 .qv-programme-detail .scope-form-section{border:0;border-radius:0;background:transparent;padding:12px 0}
@@ -11831,10 +11836,10 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-month-table .qv-agenda-date-row th{width:auto;padding:0;background:#59616b;color:#fff}.qv-programme-month-table .qv-agenda-date-row .qv-agenda-day-bar{padding:9px 12px}.qv-programme-month-table .qv-agenda-date-row.is-vacation th{background:#8467a8;color:#fff}.qv-programme-month-table .qv-agenda-date-row.is-holiday th{background:#8f3f45;color:#fff}.qv-programme-month-table .qv-agenda-date-row.is-cta-holiday-coverage th{background:#6d78c4;color:#fff}.qv-programme-month-table .qv-agenda-day-main small{display:block;margin-top:2px;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:none}
 .qv-programme-day-filter{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0;padding:8px 12px;border-left:3px solid #4f84d6;background:#f5f8fb;font-size:.8rem}
 .qv-programme-pagination{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:12px;padding-top:10px;border-top:1px solid #d8dde3;font-size:12px}.qv-programme-pagination label,.qv-programme-pagination>div{display:flex;align-items:center;gap:8px}.qv-programme-pagination select{height:34px;min-width:72px}.qv-programme-pagination .scope-btn{width:34px;min-width:34px;height:34px;padding:0}
-@media(max-width:1150px){.qv-subnav{grid-template-columns:1fr 1fr}.qv-subnav-group:first-child{grid-column:1/-1}}
+
 @media(max-width:1150px){.qv-programme-kpis{grid-template-columns:repeat(3,minmax(130px,1fr))}.qv-programme-filters{grid-template-columns:repeat(3,minmax(140px,1fr))}}
 @media(max-width:960px){.qv-programme-view>.scope-section-head{align-items:flex-start;gap:10px}.qv-programme-mode{flex:0 0 auto}.qv-programme-table-wrap,.qv-programme-month-wrap{overflow-x:auto}.qv-programme-table{min-width:1080px}.qv-programme-month-table{min-width:920px}}
-@media(max-width:800px){.qv-subnav{grid-template-columns:1fr;gap:10px}.qv-subnav-group:first-child{grid-column:auto}.qv-programme-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.qv-programme-filters{grid-template-columns:1fr 1fr}.qv-programme-filters .qv-filter-search{grid-column:1/-1}.qv-programme-view>.scope-section-head{display:grid}.qv-programme-mode{width:100%}.qv-programme-mode button{flex:1}.qv-programme-edit-pair{grid-template-columns:1fr}.qv-programme-day-filter,.qv-programme-pagination{align-items:flex-start;flex-direction:column}.qv-programme-monthly .qv-agenda-nav-side:last-child{justify-self:start}.qv-programme-table,.qv-programme-month-table{display:table;width:100%}.qv-programme-table thead,.qv-programme-month-table thead{display:table-header-group}.qv-programme-table tbody,.qv-programme-month-table tbody{display:table-row-group}.qv-programme-table tr,.qv-programme-month-table tr{display:table-row;width:auto;margin:0;padding:0;border:0;border-radius:0;background:transparent}.qv-programme-table th,.qv-programme-table td,.qv-programme-month-table th,.qv-programme-month-table td{display:table-cell;width:auto}.qv-programme-table td::before,.qv-programme-month-table td::before{display:none;content:none}}
+@media(max-width:800px){.qv-subnav{gap:10px}.qv-subnav-group{flex-basis:100%}.qv-programme-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.qv-programme-filters{grid-template-columns:1fr 1fr}.qv-programme-filters .qv-filter-search{grid-column:1/-1}.qv-programme-view>.scope-section-head{display:grid}.qv-programme-mode{width:100%}.qv-programme-mode button{flex:1}.qv-programme-edit-pair{grid-template-columns:1fr}.qv-programme-day-filter,.qv-programme-pagination{align-items:flex-start;flex-direction:column}.qv-programme-monthly .qv-agenda-nav-side:last-child{justify-self:start}.qv-programme-table,.qv-programme-month-table{display:table;width:100%}.qv-programme-table thead,.qv-programme-month-table thead{display:table-header-group}.qv-programme-table tbody,.qv-programme-month-table tbody{display:table-row-group}.qv-programme-table tr,.qv-programme-month-table tr{display:table-row;width:auto;margin:0;padding:0;border:0;border-radius:0;background:transparent}.qv-programme-table th,.qv-programme-table td,.qv-programme-month-table th,.qv-programme-month-table td{display:table-cell;width:auto}.qv-programme-table td::before,.qv-programme-month-table td::before{display:none;content:none}}
 
 .annual-catalog-table{min-width:1500px;table-layout:auto}
 .annual-catalog-table th{white-space:nowrap}
@@ -12014,7 +12019,7 @@ body.scope-pdf-open { overflow: hidden; }
 /* Values remain ordinary text; headings and structural labels retain their hierarchy. */
 .qv-workspace :is(input,select,option,textarea,dd,p,td),.qv-workspace .scope-state-label,.qv-workspace .qv-review-state,.qv-workspace .qv-programme-choice-menu>summary{font-weight:400}
 .qv-workspace :is(td,dd,p) strong,.qv-workspace .scope-table tbody th,.qv-workspace .scope-table tbody th :is(strong,a),.qv-workspace .scope-table td a{font-weight:400}
-.qv-workspace :is(h1,h2,h3,h4,thead th,dt,legend),.qv-workspace label>span,.qv-workspace .qv-info-notice>strong{font-weight:700}
+.qv-workspace :is(h1,h2,h3,h4,thead th,dt,legend),.qv-workspace label:not(:has(input[type=checkbox],input[type=radio]))>span,.qv-workspace .qv-programme-choice-field>span,.qv-workspace .qv-info-notice>strong{font-weight:700}
 .qv-workspace [hidden]{display:none!important}
 .qv-workspace .qv-programme-reference.qv-info-notice{padding:var(--scope-space-4);margin-bottom:var(--scope-space-3)}
 .qv-workspace .qv-programme-reference .scope-section-head{align-items:center;gap:var(--scope-space-3);flex-wrap:wrap}
@@ -12025,10 +12030,28 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-workspace .qv-fiche-control-notice{margin-top:var(--scope-space-3)}
 .qv-workspace .qv-review-modes{margin-block:var(--scope-space-4);flex-wrap:wrap}
 .qv-workspace .qv-review-field input:is([type=date],[type=search]){height:var(--scope-h-control);border:1px solid var(--scope-border);border-radius:var(--scope-radius-xs);background:var(--scope-card);font:inherit;box-sizing:border-box;max-width:100%;min-width:0;padding:var(--scope-space-2)}
-.qv-workspace .qv-linked-activities{margin-top:var(--scope-space-4)}
+.qv-workspace .qv-linked-activities{margin-top:var(--scope-space-4);min-width:0}
 .qv-workspace .qv-linked-activities .scope-table{min-width:720px}
+.qv-workspace .qv-linked-activities .scope-table td{padding:7px 10px}
 .qv-workspace .qv-linked-activities,.qv-workspace .qv-annual-review details{scroll-margin-top:100px}
-@media(max-width:750px){.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table){display:table}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) thead{display:table-header-group}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) tbody{display:table-row-group}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) tr{display:table-row}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) :is(td,th){display:table-cell}.qv-workspace .qv-linked-activities{scroll-margin-top:230px}}
+@media(max-width:750px){.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table){display:table}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) thead{display:table-header-group}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) tbody{display:table-row-group}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) tr{display:table-row;width:auto;margin:0;padding:0;border:0;border-radius:0}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) :is(td,th){display:table-cell;width:auto}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) td::before{display:none;content:none}.qv-workspace .qv-linked-activities{scroll-margin-top:230px}}
 .qv-workspace .qv-definition-list dd,.qv-workspace .qv-programme-edit-grid :is(input,select,textarea){font-weight:400}
 .qv-workspace .qv-review-modes{height:auto;max-width:100%}
 .qv-workspace .qv-review-modes .scope-segmented-item{height:auto;min-height:var(--scope-h-field-compact);padding:var(--scope-space-2) var(--scope-space-3);white-space:normal;flex:1 1 160px}
+
+/* Common choice controls use the existing DS field geometry, including native cursus. */
+.qv-workspace .qv-programme-choice-field>label{font-weight:700}
+.qv-workspace :is(.qv-programme-choice-field,.qv-review-field){min-width:0;font-size:var(--scope-type-body)}
+.qv-workspace .qv-programme-choice-list label,.qv-workspace .qv-programme-choice-list label>span{font-weight:400}
+.qv-workspace .qv-programme-edit-grid :is(select,input:not([type=checkbox],[type=radio])),.qv-workspace .qv-review-field select,.qv-workspace .qv-programme-choice-menu>summary{box-sizing:border-box;height:var(--scope-h-control);min-height:var(--scope-h-control);font-family:inherit;font-size:var(--scope-type-body);border-color:var(--scope-border);border-radius:var(--scope-radius-xs)}
+.qv-workspace .qv-programme-choice-menu{border-color:var(--scope-border);border-radius:var(--scope-radius-xs)}
+.qv-workspace .qv-programme-choice-menu>summary{border:0;padding:var(--scope-space-2) 30px var(--scope-space-2) var(--scope-space-2)}
+.qv-workspace .qv-programme-choice-popover input[type=search]{height:var(--scope-h-control);width:100%;font:inherit;box-sizing:border-box;border:1px solid var(--scope-border);padding:var(--scope-space-2)}
+.qv-workspace .qv-programme-choice-list label{line-height:1.4;padding-block:var(--scope-space-1)}
+.qv-workspace .qv-programme-choice-list input[type=radio]{flex:0 0 14px;width:14px;height:14px;margin:0}
+.qv-workspace .qv-programme-choice-popover .qv-pilot-foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;font-size:var(--scope-type-secondary)}
+.qv-workspace .qv-programme-choice-popover .qv-pilot-count{flex-basis:100%;margin:4px 0}
+.qv-workspace .qv-review-summary thead button,.qv-workspace .qv-linked-activities thead button{font:inherit;font-weight:700;text-align:left;white-space:normal}
+.qv-workspace .qv-review-occurrences{min-width:1050px}
+.qv-workspace .qv-review-occurrences th:first-child{width:12%}
+.qv-workspace .qv-review-occurrences th:nth-child(2){width:24%}

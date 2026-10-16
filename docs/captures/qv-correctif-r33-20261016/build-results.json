@@ -1,0 +1,9 @@
+{
+  "status": "PASS_TECHNIQUE_LOCAL",
+  "assets": {
+    "assets/js/scope-ui.js": "cd4dbdd7fb692f8ee079301cc3c41cf0257353a4652876b4114995dded01a16a",
+    "assets/js/scope-ui-logic.js": "c07ee2a1e6b2ab605d184f960866900dc75e3778e27b97b1ad32359d3724034a",
+    "assets/css/scope.css": "49ff17b99977d7bf19680dabeea3965ffcaf3b259892b3f6b45711d093468923"
+  },
+  "htmlFingerprinted": true
+}

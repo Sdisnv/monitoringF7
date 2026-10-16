@@ -1,0 +1,43 @@
+{
+  "verified_at_utc": "2026-10-16T13:50:42Z",
+  "source": {
+    "title": "SCOPE ONLINE — MANDAT CORRECTIF CONSOLIDÉ PR #33",
+    "date": "2026-10-16",
+    "sha256": "e281f4f6ff561b8f82bbfd211a70125c0aa2980edd4e86b2a2697baeafb0acbc"
+  },
+  "branch": "codex/scope-qv-correctif-r33-20261016",
+  "base_main": "ef679b06ce8faebb27911a86e0766b5eb4cd8b9d",
+  "open_prs_before_lot": [],
+  "latest_merges": [
+    {
+      "pr": 33,
+      "sha": "ef679b06ce8faebb27911a86e0766b5eb4cd8b9d",
+      "merged_at": "2026-10-16T12:44:44Z"
+    },
+    {
+      "pr": 32,
+      "sha": "fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51",
+      "merged_at": "2026-10-16T10:50:26Z"
+    },
+    {
+      "pr": 31,
+      "sha": "0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5",
+      "merged_at": "2026-10-16T09:40:51Z"
+    }
+  ],
+  "site": {
+    "name": "scope-sdisnv",
+    "id": "6def8d4d-78c6-4112-bb76-6891df0e0a52",
+    "published_deploy": "6ad21c7a2c50c1b3d62ab95f",
+    "state": "ready",
+    "sha": "ef679b06ce8faebb27911a86e0766b5eb4cd8b9d",
+    "published_at": "2026-10-16T12:46:46.231Z"
+  },
+  "github_workflows": 0,
+  "production_business_requests": 0,
+  "production_writes": 0,
+  "merge_authorized": false,
+  "deploy_authorized": false,
+  "moa_recipe": "NON_EFFECTUEE",
+  "annual_programme": "NON_VALIDE"
+}

@@ -3544,6 +3544,7 @@
   }
   function qvProgrammeCorrectionProposals(rows,request={}) {
     const mode=request.mode || 'CONFORMITE',ids=new Set(request.definitionIds || []);
+    const occurrenceIds=Array.isArray(request.occurrenceIds)?new Set(request.occurrenceIds):null;
     if(!['CONFORMITE','HARMONISATION'].includes(mode) || Object.hasOwn(request,'values'))
       throw new Error('Choisissez un contrôle de conformité ou une harmonisation avec fiche modèle explicite.');
     if(!ids.size)throw new Error('Sélectionnez au moins un type destinataire.');
@@ -3554,7 +3555,7 @@
     if(mode==='HARMONISATION' && !source)throw new Error('Sélectionnez explicitement une fiche modèle disponible.');
     const result=[];
     for(const row of rows || []){
-      if(!ids.has(row.definitionId) || !active(row) || mode==='HARMONISATION' && row.id===source.id)continue;
+      if(!ids.has(row.definitionId) || !active(row) || occurrenceIds && !occurrenceIds.has(row.id) || mode==='HARMONISATION' && row.id===source.id)continue;
       for(const field of fields){
         const current=qvProgrammeReviewValue(row,field),rule=qvProgrammeFieldRule(row,field);
         const proposed=mode==='HARMONISATION'?qvProgrammeReviewValue(source,field):rule?.value;

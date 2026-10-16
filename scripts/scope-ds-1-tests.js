@@ -180,7 +180,10 @@ record('08 — primitives DS disponibles sans nouvelle saisie présence', () => 
 });
 
 record('09 — pas de logique métier dans le lot DS', () => {
-    assert.ok(html.includes('assets/css/scope.css?v=scope-multisession-v2-close-reopen-report-ux-3') || html.includes('assets/css/scope.css?v=scope-pr-abc-close-r2') || html.includes('assets/css/scope.css?v=scope-login-visual-alignment-orion-1') || html.includes('assets/css/scope.css?v=scope-login-1') || html.includes('assets/css/scope.css?v=scope-ds-1') || html.includes('assets/css/scope.css?v=scope-ux-event-1') || html.includes('assets/css/scope.css?v=scope-ux-event-2') || html.includes('assets/css/scope.css?v=scope-ux-event-3') || html.includes('assets/css/scope.css?v=scope-design-2') || html.includes('assets/css/scope.css?v=scope-design-2b') || html.includes('assets/css/scope.css?v=scope-design-2c') || html.includes('assets/css/scope.css?v=scope-design-2d') || html.includes('assets/css/scope-event-design-a') || html.includes('assets/css/scope-event-design-b') || html.includes('assets/css/scope-event-design-c') || html.includes('assets/css/scope-event-design-c1') || html.includes('scope-event-c3-fix') || html.includes('assets/css/scope.css?v=scope-participation-policy-engine-1'));
+  const links=[...html.matchAll(/<link\b[^>]*href=["'](assets\/css\/scope\.css\?v=[^"']+)["'][^>]*>/g)];
+  assert.equal(links.length,1,'une feuille CSS SCOPE versionnée');
+  assert.ok(links[0][1].split('?v=')[1].trim(),'version CSS non vide');
+  assert.ok(fs.statSync(path.join(ROOT,links[0][1].split('?')[0])).isFile(),'asset CSS existant');
   assert.ok(pkg.includes('scope-ds-1-tests.js'));
   assert.ok(!ui.includes('function computeTaux'));
 });

@@ -1,0 +1,151 @@
+{
+  "status": "PASS_TECHNIQUE_LOCAL",
+  "date_utc": "2026-10-16T13:59:52.477228+00:00",
+  "base_main": "ef679b06ce8faebb27911a86e0766b5eb4cd8b9d",
+  "unit_tests": {
+    "command": "node --test scripts/scope-qv-correctif-r33-20261016-tests.js",
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "log": "unit-tests.txt"
+  },
+  "browser": {
+    "status": "PASS_TECHNIQUE_LOCAL",
+    "scenarios": 13,
+    "checks": [
+      "immediate full-population search beyond 40 types, paginated choices, multiple selections retained across search and page",
+      "three-level control retained; date/activity/OI/session/results sort, direction toggle and pagination retain real-date order",
+      "immediate result search preserves caret; fiche return retains filters, sort and expanded occurrence",
+      "search finds model beyond 40; choosing it immediately proposes other same-type occurrences and only fields available on source",
+      "explicit individual recipients survive filtering; preview uses only selected IDs and writes nothing",
+      "changing model clears recipient choices; confirmed incompatible rule disables recommendation and preview",
+      "fiche entry preselects exact saved source, suggests same-type recipients without implicit selection",
+      "linked columns exact, six bidirectional sorts, real-date order and sort retained on paging, direct fiche links",
+      "Public/OI/Responsable/Spécialisation focus on open, keyboard and Escape; options normal; five controls identical 40px font and size",
+      "all ten QV pages share one nav with intact labels on one desktop line",
+      "390/1024/1440: every nav item reachable, controls and popup fit viewport, bounded list scrolls internally, no document overflow",
+      "existing management permissions preserved",
+      "synthetic fixtures, published JSP witness and business history unchanged; zero saves and zero external requests"
+    ],
+    "layouts": [
+      {
+        "width": 1440,
+        "popupFits": true,
+        "scrolls": true,
+        "listOverflow": "auto",
+        "pageFits": true
+      },
+      {
+        "width": 1024,
+        "popupFits": true,
+        "scrolls": true,
+        "listOverflow": "auto",
+        "pageFits": true
+      },
+      {
+        "width": 390,
+        "popupFits": true,
+        "scrolls": true,
+        "listOverflow": "auto",
+        "pageFits": true
+      }
+    ],
+    "typography": [
+      {
+        "height": 40,
+        "font": "Arial, Helvetica, sans-serif",
+        "size": "14px",
+        "weight": "400"
+      },
+      {
+        "height": 40,
+        "font": "Arial, Helvetica, sans-serif",
+        "size": "14px",
+        "weight": "400"
+      },
+      {
+        "height": 40,
+        "font": "Arial, Helvetica, sans-serif",
+        "size": "14px",
+        "weight": "400"
+      },
+      {
+        "height": 40,
+        "font": "Arial, Helvetica, sans-serif",
+        "size": "14px",
+        "weight": "400"
+      },
+      {
+        "height": 40,
+        "font": "Arial, Helvetica, sans-serif",
+        "size": "14px",
+        "weight": "400"
+      }
+    ],
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "interceptedSaves": 0
+  },
+  "static_build": {
+    "status": "PASS_TECHNIQUE_LOCAL",
+    "assets": {
+      "assets/js/scope-ui.js": "cd4dbdd7fb692f8ee079301cc3c41cf0257353a4652876b4114995dded01a16a",
+      "assets/js/scope-ui-logic.js": "c07ee2a1e6b2ab605d184f960866900dc75e3778e27b97b1ad32359d3724034a",
+      "assets/css/scope.css": "49ff17b99977d7bf19680dabeea3965ffcaf3b259892b3f6b45711d093468923"
+    },
+    "htmlFingerprinted": true
+  },
+  "local_check": {
+    "status": "PASS",
+    "log": "check-local.txt",
+    "baseline_failure": "retired auth-login assertion",
+    "fix": "active session/config routes plus OIDC assertions; literal wildcard patterns; no configuration change"
+  },
+  "design_system": {
+    "tests": 9,
+    "pass": 9,
+    "baseline_failure": "case09 obsolete CSS suffix allowlist",
+    "fix": "single versioned existing SCOPE CSS asset; eight primitive cases retained"
+  },
+  "moa_recipe": "NON_EFFECTUEE",
+  "production_writes": 0,
+  "annual_programme": "NON_VALIDE",
+  "document_checks": {
+    "status": "PASS",
+    "new_local_links": 38,
+    "provenance_files": 9,
+    "source_hashes_preserved": true,
+    "todo_fields": 9,
+    "roadmap_fields": 14,
+    "protected_configuration_unchanged": true
+  },
+  "source_sha256": {
+    "assets/js/scope-ui.js": "cd4dbdd7fb692f8ee079301cc3c41cf0257353a4652876b4114995dded01a16a",
+    "assets/js/scope-ui-logic.js": "c07ee2a1e6b2ab605d184f960866900dc75e3778e27b97b1ad32359d3724034a",
+    "assets/css/scope.css": "49ff17b99977d7bf19680dabeea3965ffcaf3b259892b3f6b45711d093468923",
+    "scripts/check-local.sh": "6f7426c405373e6fea40c59634c1de1c8fe1651544f5d5b5a636df3639cc8b1a",
+    "scripts/scope-ds-1-tests.js": "bde38a2a948183686a61bddd3b278e8d6d27a6beec9ec815e247ed3f1ff0df11",
+    "scripts/scope-qv-correctif-r33-20261016-tests.js": "45750e47b82433203d94849c929a276a3724598e51da1b1816cbceaa91f0766e",
+    "scripts/scope-qv-correctif-r33-20261016-browser.js": "0276f06f1c700c9af5de3c7471dd8a97cb4c0d009a367b9a1152d47ddbd3f3e7"
+  },
+  "proof_sha256": {
+    "activites-liees-390.png": "a9e5d6222dfc41c9f5f0275198ab602b95357b1124ad22af3250a6ff0ca87a69",
+    "activites-liees-actions-390.png": "09e7f98e25e694f767edf40f181ad2531754d43f5ff3dd393b1fc151a3f4cba2",
+    "browser-results.json": "9775fde57f9b0b3aede79c31736d195ef36ad9ff24eea4d46b1b4b716476c201",
+    "build-results.json": "b2a16b7336175dacb1fde9923c5ce53310416b00295a7e25955d9f9fdbe77d32",
+    "check-local.txt": "447b44f35ea96105aae97fccc824f659ea3142b0b73ba5ea991951157bfb38cc",
+    "controle-1024.png": "fd375edd0f407e6e6bdb89e82c6cfa13a46e7c4f9a9554aa1d8aca3b6e6d4334",
+    "controle-1440.png": "2516121b698b476fbbd1efc5fcdd75a08777d00a5c28db0a728f827d4c5bdcc6",
+    "controle-390.png": "26d3fbf58082c4815c486ebcfe557fc0add1eaae47d92ffc365ca7a8b70c2642",
+    "controle-occurrences-1440.png": "ce938747113b0fbb8b8ac7e00650e2b1fd5e4be6c15eacb06f9fe5906f9c92b1",
+    "design-system.txt": "1c79c2d7cd47483277c76428a12f78a39097bfa37eb3f6eb09f630302820ed08",
+    "harmonisation-1024.png": "34e1083528269a992e80695ba58e7d8dc5f50d9b7807fedb8302843c3ae9efca",
+    "harmonisation-1440.png": "84a676f2523d98ae88ef22221b4c60a702dc413298a14f528974171789b3dfdb",
+    "harmonisation-390.png": "d431fbab1b059ce21bef4a05519a4382031bf649070e512f345b3f59a198ab23",
+    "navigation-1024.png": "024d6ff3cd084f3660ee82ce497d0cf5660e98680452d72f9daa129aa6390d4d",
+    "navigation-1440.png": "2516121b698b476fbbd1efc5fcdd75a08777d00a5c28db0a728f827d4c5bdcc6",
+    "navigation-390.png": "3a6c855e4da9205494c00e54aad36f9cd5b57ffd3c6dd5c03b3899b8c2a4fca4",
+    "preflight.json": "1ec4926f63d4ca0d68ce92eb84cd5cc8368f359cf4a687fbda70877170603b4f",
+    "unit-tests.txt": "98434a0d39b891da0bc3c0cda7f58176220ea4e6d95b86ca3e558834729749cb"
+  }
+}

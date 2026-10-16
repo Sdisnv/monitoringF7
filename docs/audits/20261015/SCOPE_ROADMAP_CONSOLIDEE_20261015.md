@@ -1,5 +1,9 @@
 # SCOPE — Roadmap consolidée pour revue MOA
 
+## Actualisation active — correctif consolidé post-PR #33, 16.10.2026
+
+GO développement explicite ; main et production vérifiés `ef679b06ce8faebb27911a86e0766b5eb4cd8b9d`, déploiement `6ad21c7a2c50c1b3d62ab95f` ready (12:46:46.231 UTC / 14:46:46.231 Europe/Zurich). La fiche QV-CONTROLE-QUALITE-001 est amendée en place ; [rapport et preuves](../../SCOPE_QV_CORRECTIF_R33_20261016.md). Deux assertions CI obsolètes corrigées sous ce GO, configuration/protections inchangées. Un seul lot/PR, GO fusion/déploiement et PASS MOA production toujours requis. Paragraphes suivants historiques ; Programme2027 NON VALIDÉ.
+
 ## Mandat opérationnel UX/exploitation — 16.10.2026, après #32
 
 GO développement explicite, main/production vérifiés `fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51`, déploiement publié `6ad20a3bbc6afdaa433daec6` ready à 11:28:54.534 UTC / 13:28:54.534 Europe/Zurich. Aucune PR ouverte au départ. La fiche QV-CONTROLE-QUALITE-001 est amendée en place ; navigation, messages partagés et exploitation des résultats sont dans le même lot. [Rapport, inventaire et réserves](../../SCOPE_QV_ACCELERATION_UX_20261016.md). Les jalons antérieurs restent datés. Programme2027 NON VALIDÉ, aucun PASS MOA anticipé.
@@ -55,18 +59,18 @@ Les identifiants marqués « proposé » viennent de la mission actuelle et ne s
 |---|---|
 | Identifiant | QV-CONTROLE-QUALITE-001 (proposé) |
 | Description métier | Consolider le contrôle qualité avant validation annuelle ; écarts équivalents entre OI = à examiner, pas erreurs automatiques |
-| Source | Mandats 15–16.10, #29–#32 et GO développement UX/exploitation du 16.10 après recette #32 ; canon/registre datés. |
-| Date de décision | 15.10 complété le 16.10.2026 ; mandat opérationnel postérieur à #32. |
+| Source | Mandats 15–16.10 et GO développement correctif consolidé post-PR #33 du 16.10.2026 ; canon/registre datés ; acquis #29–#33 conservés. |
+| Date de décision | 16.10.2026, mandat correctif postérieur à la recette #33. |
 | Priorité | P1 proposé, avant validation annuelle |
 | Module | QV |
-| Dépendances | Mêmes moteurs annuels, préparation, rapprochement, réservation et comparateur #31/#32 ; données/arbitrages métier ; SCOPE-UI-2/UX-DS-1 et contrôles CI existants. |
-| État du développement | PARTIEL pour rapport annuel exhaustif ; UX/exploitation développée : navigation, règle/alerte séparées, vues exclusives, synthèse annuelle, type/occurrence/critères, filtres/contexte, activités liées et messages partagés ; aucune écriture groupée. |
-| État des tests | 16 tests ciblés PASS ; parcours Chrome/macOS, build statique et contrôles de structure documentés dans la preuve. Deux attentes historiques de check-local/DS obsolètes, entrées identiques à main ; aucune modification CI/CD. Acquis PR20–32 non rejoués. |
-| Validation MOA | GO développement et décisions UX acquis ; nouveau lot non recetté en production, aucun PASS général déduit de #32. |
-| Travaux restants | Revue PR UX, GO fusion puis déploiement distincts, SHA publié et recette MOA production. Safari et profils réels à vérifier ; rapport exhaustif/faits métier gardent leurs dépendances. Regroupement Événements et refontes spécifiques de messages à décider sans nouveau modèle implicite ; attentes CI historiques à qualifier sous GO distinct. |
+| Dépendances | Comparateur, contrôles annuels, relations établies et workflow existants ; sélecteurs, tri stable/pagination, tokens SCOPE-UI-2/UX-DS-1 ; données/arbitrages métier. |
+| État du développement | PARTIEL pour rapport annuel exhaustif ; correctif UX développé : navigation, sélecteurs/focus, recherche immédiate avant pagination, colonnes et tris, harmonisation par destinataires individuels/champs disponibles ; aucune écriture groupée. |
+| État des tests | 9 tests ciblés, 13 parcours Chrome/macOS, 9 contrôles DS, check-local et build statique PASS techniques ; visuel/focus/pagination 390/1024/1440. Assertions historiques corrigées sans changer sécurité/configuration ; campagnes acquises non rejouées. |
+| Validation MOA | GO développement acquis ; recette MOA production du correctif EN ATTENTE, aucun PASS général déduit des tests techniques ou des PR précédentes. |
+| Travaux restants | Revue de l’unique PR, GO fusion puis GO déploiement distincts, SHA réellement publié et recette MOA production avec PASS explicite. Safari/profils réels et rapport exhaustif/faits métier conservent leurs dépendances. |
 | Critères d’acceptation | OI, domaine, famille, Stat.Com, lieu/salle, responsable, public, spécialisation, cursus, état, reconduction, évaluation, soldé, ECAwin ; dates, ressources, CTA, sections/demi-sections, préparation/14 jours, fériés/vacances, dates validées et dérogations ; BLOQUANT/À ARBITRER/INFORMATIF ; blocage non résolu interdit validation ; causes, IDs, décisions, dérogations, corrections et résolution traçables |
-| Preuves | [Accélération UX, inventaire et preuves](../../SCOPE_QV_ACCELERATION_UX_20261016.md) ; [#32 historique](../../SCOPE_QV_UX_ORGANISATION_20261016.md) |
-| Prochain jalon | Revue de l’unique PR du mandat opérationnel, GO distincts puis recette ciblée production et PASS explicite avant clôture. |
+| Preuves | [Correctif post-#33 et preuves](../../SCOPE_QV_CORRECTIF_R33_20261016.md) ; [#33 historique](../../SCOPE_QV_ACCELERATION_UX_20261016.md) |
+| Prochain jalon | Revue finale du correctif, GO distincts, contrôle SHA puis recette ciblée production ; aucune clôture sans PASS MOA explicite. |
 
 ### QV-PLANIF-ALTERNATIVES-001 (proposé)
 

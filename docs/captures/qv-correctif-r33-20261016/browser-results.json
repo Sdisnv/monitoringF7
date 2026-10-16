@@ -1,0 +1,77 @@
+{
+  "status": "PASS_TECHNIQUE_LOCAL",
+  "scenarios": 13,
+  "checks": [
+    "immediate full-population search beyond 40 types, paginated choices, multiple selections retained across search and page",
+    "three-level control retained; date/activity/OI/session/results sort, direction toggle and pagination retain real-date order",
+    "immediate result search preserves caret; fiche return retains filters, sort and expanded occurrence",
+    "search finds model beyond 40; choosing it immediately proposes other same-type occurrences and only fields available on source",
+    "explicit individual recipients survive filtering; preview uses only selected IDs and writes nothing",
+    "changing model clears recipient choices; confirmed incompatible rule disables recommendation and preview",
+    "fiche entry preselects exact saved source, suggests same-type recipients without implicit selection",
+    "linked columns exact, six bidirectional sorts, real-date order and sort retained on paging, direct fiche links",
+    "Public/OI/Responsable/Spécialisation focus on open, keyboard and Escape; options normal; five controls identical 40px font and size",
+    "all ten QV pages share one nav with intact labels on one desktop line",
+    "390/1024/1440: every nav item reachable, controls and popup fit viewport, bounded list scrolls internally, no document overflow",
+    "existing management permissions preserved",
+    "synthetic fixtures, published JSP witness and business history unchanged; zero saves and zero external requests"
+  ],
+  "layouts": [
+    {
+      "width": 1440,
+      "popupFits": true,
+      "scrolls": true,
+      "listOverflow": "auto",
+      "pageFits": true
+    },
+    {
+      "width": 1024,
+      "popupFits": true,
+      "scrolls": true,
+      "listOverflow": "auto",
+      "pageFits": true
+    },
+    {
+      "width": 390,
+      "popupFits": true,
+      "scrolls": true,
+      "listOverflow": "auto",
+      "pageFits": true
+    }
+  ],
+  "typography": [
+    {
+      "height": 40,
+      "font": "Arial, Helvetica, sans-serif",
+      "size": "14px",
+      "weight": "400"
+    },
+    {
+      "height": 40,
+      "font": "Arial, Helvetica, sans-serif",
+      "size": "14px",
+      "weight": "400"
+    },
+    {
+      "height": 40,
+      "font": "Arial, Helvetica, sans-serif",
+      "size": "14px",
+      "weight": "400"
+    },
+    {
+      "height": 40,
+      "font": "Arial, Helvetica, sans-serif",
+      "size": "14px",
+      "weight": "400"
+    },
+    {
+      "height": 40,
+      "font": "Arial, Helvetica, sans-serif",
+      "size": "14px",
+      "weight": "400"
+    }
+  ],
+  "externalRequests": 0,
+  "productionWrites": 0,
+  "interceptedSaves": 0
+}

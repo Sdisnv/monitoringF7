@@ -13071,27 +13071,45 @@
       :from==='alertes'?{href:qvHref('alertes'),label:'Retour aux alertes'}
         :{href:qvHref('programme',{annee:qvProgrammeYear()}),label:'Retour au programme'};
   }
+  // Shared stable sort primitives; relation discovery remains in the existing business adapter.
+  function qvReviewSortHead(key,label,sort,attribute='data-qv-sort'){
+    const header=L.sortHeaderState(sort,key);
+    return `<th aria-sort="${header.ariaSort}"><button type="button" class="scope-text-action" ${attribute}="${key}">${label} ${header.indicator || ''}</button></th>`;
+  }
+  function qvReviewRowColumns(){
+    return [
+      {key:'date',type:'number',value:item=>{const timestamp=Date.parse((item.row || item).startsAt);return Number.isFinite(timestamp)?timestamp:Number.MAX_SAFE_INTEGER;}},
+      {key:'activity',value:item=>qvProgrammeActivityLabel(item.row || item)},
+      {key:'oi',value:item=>L.qvProgrammeOiLabel(item.row || item)},
+      {key:'session',value:item=>(item.row || item).sessionLabel},
+      {key:'relation',value:item=>(item.relations || []).join(' ; ')},
+      {key:'state',value:item=>qvProgrammeVisualState(item.row || item).label}
+    ];
+  }
   function qvProgrammeLinkedHtml(qv,row){
-    const linked=L.qvProgrammeLinkedRows(qv.canonicalProgramme?.rows || [],row,qv.preparationControls || []),key=`${qvProgrammeYear()}:${row.id}`;
+    const key=`${qvProgrammeYear()}:${row.id}`,sort=state.quoVadisLinkedSorts?.[key] || {key:'date',dir:'asc'};
+    const linked=L.sortRows(L.qvProgrammeLinkedRows(qv.canonicalProgramme?.rows || [],row,qv.preparationControls || []),sort,qvReviewRowColumns());
     const pager=qvPilotPager('qv-linked-page',linked.length,state.quoVadisLinkedPages?.[key] || 1,25);
-    return `<section class="scope-card qv-linked-activities" id="qv-linked-activities"><h3>Activités liées</h3>${!linked.length?'<p>Aucune activité liée identifiée.</p>':`<div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Activité et date</th><th>OI</th><th>Session</th><th>Relation établie</th><th>État</th><th>Action</th></tr></thead><tbody>${pager.slice(linked).map(item=>`<tr><td>${escapeHtml(qvReviewOccurrenceLabel(item.row))}</td><td>${escapeHtml(L.qvProgrammeOiLabel(item.row) || '—')}</td><td>${escapeHtml(item.row.sessionLabel || '—')}</td><td>${escapeHtml(item.relations.join(' ; '))}</td><td>${scopeStateHtml(qvProgrammeVisualState(item.row).tone,qvProgrammeVisualState(item.row).label)}</td><td>${qvReviewFicheLink(item.row)}</td></tr>`).join('')}</tbody></table></div>${pager.footHtml(`${linked.length} activité(s) liée(s) identifiée(s)`)}`}<p class="scope-muted">Cette liste utilise les relations enregistrées. Les préparations manquantes restent signalées par les contrôles existants.</p></section>`;
+    return `<section class="scope-card qv-linked-activities" id="qv-linked-activities"><h3>Activités liées</h3>${!linked.length?'<p>Aucune activité liée identifiée.</p>':`<div class="scope-table-wrap"><table class="scope-table"><thead><tr>${[['date','Date'],['activity','Activité'],['oi','OI'],['session','Session'],['relation','Relation établie'],['state','État']].map(([key,label])=>qvReviewSortHead(key,label,sort)).join('')}<th>Action</th></tr></thead><tbody>${pager.slice(linked).map(item=>`<tr><td>${escapeHtml(qvProgrammeShortDate(item.row))}</td><td>${escapeHtml(qvProgrammeActivityLabel(item.row))}</td><td>${escapeHtml(L.qvProgrammeOiLabel(item.row) || '—')}</td><td>${escapeHtml(item.row.sessionLabel || '—')}</td><td>${escapeHtml(item.relations.join(' ; '))}</td><td>${scopeStateHtml(qvProgrammeVisualState(item.row).tone,qvProgrammeVisualState(item.row).label)}</td><td>${qvReviewFicheLink(item.row)}</td></tr>`).join('')}</tbody></table></div>${pager.footHtml(`${linked.length} activité(s) liée(s) identifiée(s)`)}`}<p class="scope-muted">Cette liste utilise les relations enregistrées. Les préparations manquantes restent signalées par les contrôles existants.</p></section>`;
   }
   function bindQvLinkedActivities(){
-    const qv=quoVadisProgrammeData(),row=qv?.canonicalProgramme?.rows?.find(item=>item.id===route().qvProgrammeItemId);
-    if(!row || !document.getElementById('qv-linked-page-next'))return;
-    const key=`${qvProgrammeYear()}:${row.id}`;
-    const move=delta=>{state.quoVadisLinkedPages=state.quoVadisLinkedPages || {};state.quoVadisLinkedPages[key]=Math.max(1,(state.quoVadisLinkedPages[key] || 1)+delta);document.getElementById('qv-linked-activities').outerHTML=qvProgrammeLinkedHtml(qv,row);bindQvLinkedActivities();};
-    document.getElementById('qv-linked-page-prev').addEventListener('click',()=>move(-1));document.getElementById('qv-linked-page-next').addEventListener('click',()=>move(1));document.getElementById('qv-linked-page-size').closest('label').hidden=true;
+    const qv=quoVadisProgrammeData(),row=qv?.canonicalProgramme?.rows?.find(item=>item.id===route().qvProgrammeItemId),container=document.getElementById('qv-linked-activities');
+    if(!row || !container)return;
+    const key=`${qvProgrammeYear()}:${row.id}`,redraw=()=>{container.outerHTML=qvProgrammeLinkedHtml(qv,row);bindQvLinkedActivities();};
+    for(const [suffix,delta] of [['prev',-1],['next',1]])document.getElementById('qv-linked-page-'+suffix)?.addEventListener('click',()=>{state.quoVadisLinkedPages=state.quoVadisLinkedPages || {};state.quoVadisLinkedPages[key]=Math.max(1,(state.quoVadisLinkedPages[key] || 1)+delta);redraw();});
+    const size=document.getElementById('qv-linked-page-size');if(size)size.closest('label').hidden=true;
+    container.querySelectorAll('[data-qv-sort]').forEach(button=>button.addEventListener('click',()=>{state.quoVadisLinkedSorts=state.quoVadisLinkedSorts || {};state.quoVadisLinkedSorts[key]=L.nextSort(state.quoVadisLinkedSorts[key] || {key:'date',dir:'asc'},button.dataset.qvSort,'asc');state.quoVadisLinkedPages={...state.quoVadisLinkedPages,[key]:1};redraw();}));
   }
   function qvReviewContext(){
     const year=qvProgrammeYear(),r=route(),key=`${year}:${r.qvModel || ''}:${r.qvMode || ''}`;
     if(!state.quoVadisReview || state.quoVadisReview.year!==year)state.quoVadisReview={year,sourceId:'',typeSearch:'',sourceSearch:'',family:'',oi:'',conformityIds:[],harmonisationIds:[],fields:[],conformity:null,harmonisation:null};
     const context=state.quoVadisReview;
     if(state.quoVadisReviewRouteKey!==key){
-      if(r.qvModel){if(context.sourceId!==r.qvModel)context.harmonisation=null;context.sourceId=r.qvModel;context.sourceSearch='';}
+      if(r.qvModel){if(context.sourceId!==r.qvModel){context.harmonisation=null;context.targetIds=[];context.targetSearch='';context.otherTypes=false;}context.sourceId=r.qvModel;context.sourceSearch='';}
       context.view=r.qvMode==='harmonisation'?'harmonisation':'conformite';
       state.quoVadisReviewRouteKey=key;
     }
+    context.targetIds=context.targetIds || [];context.pickerPages=context.pickerPages || {};context.occurrenceSorts=context.occurrenceSorts || {};context.typeSorts=context.typeSorts || {};
     context.resultFilters=context.resultFilters || {conformite:{},harmonisation:{}};context.openTypes=context.openTypes || {};context.openOccurrences=context.openOccurrences || {};context.pages=context.pages || {};
     return context;
   }
@@ -13101,42 +13119,90 @@
       .filter(row=>(!context.family || L.qvProgrammeFamily(row)===context.family) && (!context.oi || L.qvProgrammeOiMatches(row,context.oi))
         && (!query || qvNormalizeSearch(qvProgrammeActivityLabel(row)).includes(query)));
   }
+  function bindQvChoiceMenus(container){
+    container?.querySelectorAll('.qv-programme-choice-menu').forEach(menu=>{
+      if(menu.dataset.choiceBound)return;menu.dataset.choiceBound='true';
+      const search=menu.querySelector('input[type=search]');
+      menu.addEventListener('toggle',()=>{if(menu.open && menu.getClientRects().length){state.qvProgrammePopupPosition?.();search?.focus({preventScroll:true});}});
+      menu.addEventListener('keydown',event=>{
+        if(!menu.open)return;
+        if(event.key==='Escape'){event.preventDefault();menu.open=false;menu.querySelector('summary').focus();return;}
+        if(!['ArrowDown','ArrowUp'].includes(event.key) && !(event.key==='Enter' && event.target===search))return;
+        const choices=[...menu.querySelectorAll('.qv-programme-choice-list input:not(:disabled)')].filter(input=>!input.closest('[hidden]'));
+        if(!choices.length)return;event.preventDefault();const index=choices.indexOf(document.activeElement),step=event.key==='ArrowUp'?-1:1;
+        choices[(index<0?(step<0?choices.length-1:0):(index+step+choices.length)%choices.length)].focus();
+      });
+      if(!menu.dataset.qvReviewPicker)search?.addEventListener('input',event=>{
+        const query=qvNormalizeSearch(event.target.value || '');
+        menu.querySelectorAll('.qv-programme-choice-list fieldset').forEach(group=>{
+          let visible=0;
+          group.querySelectorAll('label').forEach(label=>{
+            const reference=L.qvInstitutionalReferences().institutionalReference(label.querySelector('input')?.value);
+            const context=reference?[reference.officialTitle,...reference.aliases,...reference.compatibleOiDomains].join(' '):'';
+            label.hidden=Boolean(query) && !qvNormalizeSearch(`${label.textContent} ${context} ${label.querySelector('input')?.value || ''}`).includes(query);
+            if(!label.hidden)visible++;
+          });group.hidden=visible===0;
+        });state.qvProgrammePopupPosition?.();
+      });
+    });
+  }
+  function qvReviewSource(qv){
+    return (qv.canonicalProgramme?.rows || []).find(row=>row.id===qvReviewContext().sourceId && L.qvProgrammeSavedModel(row) && L.qvProgrammeIsActive(row) && row.status!=='ANNULE' && row.active!==false);
+  }
+  function qvReviewAvailableFields(source){
+    if(!source)return [];
+    return Object.keys(QV_REVIEW_LABELS).filter(field=>field!=='preparation' && (field==='publicCodes'
+      ?Array.isArray(source.publics) || Array.isArray(source.publicFreeLabels):source[field]!==undefined && source[field]!==null && source[field]!==''));
+  }
+  function qvReviewTargetIssues(qv,row){
+    const context=qvReviewContext();
+    if(!context.fields.length || !qvReviewSource(qv))return [];
+    return L.qvProgrammeCorrectionProposals(qv.canonicalProgramme?.rows || [],{mode:'HARMONISATION',sourceOccurrenceId:context.sourceId,definitionIds:[row.definitionId],occurrenceIds:[row.id],fields:context.fields}).filter(item=>item.compatibility==='INCOMPATIBLE');
+  }
+  function qvReviewChoices(qv,kind){
+    const context=qvReviewContext(),all=(qv.canonicalProgramme?.rows || []).filter(row=>L.qvProgrammeIsActive(row) && row.status!=='ANNULE' && row.active!==false && row.definitionId);
+    if(kind==='types')return [...new Map(qvReviewAvailableRows(qv).map(row=>[row.definitionId,row])).values()].sort((a,b)=>qvProgrammeActivityLabel(a).localeCompare(qvProgrammeActivityLabel(b),'fr'));
+    const source=qvReviewSource(qv),query=qvNormalizeSearch(kind==='source'?context.sourceSearch:context.targetSearch || '');
+    return L.sortRows(all.filter(row=>kind==='source'?L.qvProgrammeSavedModel(row):source && row.id!==source.id && (context.otherTypes || row.definitionId===source.definitionId))
+      .filter(row=>!query || qvNormalizeSearch(`${qvReviewOccurrenceLabel(row)} ${L.qvProgrammeOiLabel(row)} ${row.sessionLabel || ''}`).includes(query)),{key:'date',dir:'asc'},qvReviewRowColumns());
+  }
+  function qvReviewPickerBody(qv,kind){
+    const context=qvReviewContext(),choices=qvReviewChoices(qv,kind),pager=qvPilotPager('qv-picker-'+kind,choices.length,context.pickerPages[kind] || 1,25);
+    return `<div class="qv-programme-choice-list" role="group" aria-label="${kind==='types'?'Types disponibles':kind==='source'?'Modèles disponibles':'Occurrences destinataires'}"><fieldset>${pager.slice(choices).map(row=>{
+      const id=kind==='types'?row.definitionId:row.id,selected=kind==='source'?context.sourceId===id:(kind==='types'?context.conformityIds:context.targetIds).includes(id),issues=kind==='targets'?qvReviewTargetIssues(qv,row):[];
+      const label=kind==='types'?qvProgrammeActivityLabel(row):`${qvReviewOccurrenceLabel(row)} — ${L.qvProgrammeOiLabel(row) || 'OI non définie'} — ${row.sessionLabel || 'Session non définie'}`;
+      return `<label><input type="${kind==='source'?'radio':'checkbox'}" name="qv-picker-${kind}" data-qv-choice="${escapeHtml(id)}" ${selected?'checked':''} ${issues.length && !selected?'disabled':''}><span>${escapeHtml(label)}${issues.length?` — Incompatible : ${escapeHtml(issues.map(item=>item.explanation).join(' ; '))}`:''}</span></label>`;
+    }).join('') || '<p>Aucun résultat pour cette recherche.</p>'}</fieldset></div>${pager.footHtml(`${choices.length} résultat(s) ; recherche sur toutes les fiches disponibles`)}`;
+  }
+  function qvReviewPickerSummary(qv,kind){
+    const context=qvReviewContext(),source=qvReviewSource(qv);
+    if(kind==='source')return source?qvReviewOccurrenceLabel(source):'Choisir une fiche modèle enregistrée';
+    const ids=kind==='types'?context.conformityIds:context.targetIds;
+    return `${ids.length} ${kind==='types'?'type(s) sélectionné(s)':'occurrence(s) sélectionnée(s)'}`;
+  }
+  function qvReviewPicker(qv,kind,label){
+    const context=qvReviewContext(),searchId=kind==='types'?'qv-review-search':kind==='source'?'qv-model-search':'qv-target-search',value=kind==='types'?context.typeSearch:kind==='source'?context.sourceSearch:context.targetSearch || '';
+    return `<div class="qv-review-field qv-review-wide qv-programme-choice-field"><span id="qv-picker-${kind}-label">${label}</span><details class="qv-programme-choice-menu" data-qv-review-picker="${kind}"><summary>${escapeHtml(qvReviewPickerSummary(qv,kind))}</summary><div class="qv-programme-choice-popover"><input type="search" id="${searchId}" value="${escapeHtml(value)}" aria-label="Rechercher — ${label}"><div data-qv-picker-body>${qvReviewPickerBody(qv,kind)}</div></div></details></div>`;
+  }
   function renderQuoVadisProgrammeControl(qv){
-    const context=qvReviewContext(),rows=qvReviewAvailableRows(qv),types=new Map();
-    for(const row of rows)if(!types.has(row.definitionId))types.set(row.definitionId,row);
-    const options=selected=>{
-      const choices=new Map(types);
-      for(const row of qv.canonicalProgramme?.rows || [])if(selected.includes(row.definitionId) && L.qvProgrammeIsActive(row) && row.status!=='ANNULE')choices.set(row.definitionId,row);
-      return [...choices.values()].sort((a,b)=>qvProgrammeActivityLabel(a).localeCompare(qvProgrammeActivityLabel(b),'fr'))
-        .filter((row,index)=>index<40 || selected.includes(row.definitionId)).map(row=>`<option value="${escapeHtml(row.definitionId)}" ${selected.includes(row.definitionId)?'selected':''}>${escapeHtml(qvProgrammeActivityLabel(row))}</option>`).join('');
-    };
-    const all=qv.canonicalProgramme?.rows || [],sourceQuery=qvNormalizeSearch(context.sourceSearch);
-    const sources=all.filter(row=>L.qvProgrammeSavedModel(row) && L.qvProgrammeIsActive(row) && row.status!=='ANNULE' && row.active!==false)
-      .filter(row=>row.id===context.sourceId || !sourceQuery || qvNormalizeSearch(`${qvReviewOccurrenceLabel(row)} ${L.qvProgrammeOiLabel(row)}`).includes(sourceQuery));
-    const source=sources.find(row=>row.id===context.sourceId);
-    const visibleSources=sources.sort((a,b)=>qvReviewOccurrenceLabel(a).localeCompare(qvReviewOccurrenceLabel(b),'fr')).filter((row,index)=>index<40 || row.id===context.sourceId);
-    const disabled=hasScopePermission('references:manage')?'':'disabled';
-    const families=[...new Set(all.map(L.qvProgrammeFamily).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+    const context=qvReviewContext(),all=qv.canonicalProgramme?.rows || [],source=qvReviewSource(qv),availableFields=qvReviewAvailableFields(source);
+    context.fields=context.fields.filter(field=>availableFields.includes(field));
+    const disabled=hasScopePermission('references:manage')?'':'disabled',families=[...new Set(all.map(L.qvProgrammeFamily).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
     return `<section class="scope-card qv-review-panel qv-programme-review" id="qv-programme-review"><div class="scope-section-head"><div><h2>Contrôle du programme ${context.year}</h2><p>Contrôle de conformité et harmonisation volontaire, sans modification automatique.</p></div><a class="scope-btn" href="${qvHref('programme',{annee:context.year})}">Retour au programme</a></div>
       ${qvProgrammeAnnualNotice(qv,context.year)}
       <div class="scope-segmented qv-review-modes" role="group" aria-label="Vue opérationnelle">${[['conformite','Contrôle de conformité'],['harmonisation','Harmonisation volontaire']].map(([value,label])=>`<button type="button" class="scope-segmented-item" data-qv-review-view="${value}" aria-pressed="${context.view===value}">${label}</button>`).join('')}</div>
-      <fieldset class="qv-review-grid" ${disabled}><legend>Rechercher les types destinataires</legend>
-        <label class="qv-review-field qv-review-wide"><span>Recherche par activité</span><input id="qv-review-search" type="search" value="${escapeHtml(context.typeSearch)}" placeholder="Rechercher un type d’activité"></label>
+      <section class="qv-review-section" ${context.view==='conformite'?'':'hidden'}><h3>Contrôle de conformité</h3><p>Comparer les fiches aux seules règles applicables confirmées. Le contrôle couvre toutes les occurrences et sessions actives des types sélectionnés.</p>
+        <fieldset class="qv-review-grid" ${disabled}><legend>Types à contrôler</legend>
         <label class="qv-review-field"><span>Famille</span><select id="qv-review-family"><option value="">Toutes les familles</option>${families.map(value=>`<option value="${escapeHtml(value)}" ${context.family===value?'selected':''}>${escapeHtml(value)}</option>`).join('')}</select></label>
         <label class="qv-review-field"><span>OI concernée</span><select id="qv-review-oi"><option value="">Toutes les OI</option>${L.qvProgrammeOiCatalogue().flatMap(group=>group.items).map(([code,label])=>`<option value="${escapeHtml(code)}" ${context.oi===code?'selected':''}>${escapeHtml(label)}</option>`).join('')}</select></label>
-        <div class="qv-review-actions qv-review-wide"><button type="button" id="qv-review-filter" class="scope-btn">Rechercher</button><button type="button" id="qv-review-reset" class="scope-btn">Réinitialiser les filtres</button></div>
-      </fieldset><p>${types.size>40?'Quarante types et les types sélectionnés sont affichés ; affinez la recherche. ':''}Les filtres servent à choisir les types ; le contrôle couvre ensuite toutes leurs occurrences et sessions actives du programme.</p>
-      <section class="qv-review-section" ${context.view==='conformite'?'':'hidden'}><h3>Contrôle de conformité</h3><p>Comparer les fiches aux seules règles applicables confirmées. Une différence entre fiches n’est pas une anomalie.</p>
-        <fieldset class="qv-review-grid" ${disabled}><legend>Types à contrôler</legend><label class="qv-review-field qv-review-wide"><span>Types d’activités — sélection multiple</span><select id="qv-conformity-types" multiple size="5">${options(context.conformityIds)}</select></label><div class="qv-review-actions qv-review-wide"><button type="button" class="scope-btn" id="qv-check-type-conformity" disabled>Contrôler la conformité</button><p id="qv-conformity-hint">Sélectionnez au moins un type.</p></div></fieldset><div id="qv-conformity-results" aria-live="polite">${context.conformity?qvReviewResultsHtml(context.conformity,qv):''}</div>
+        ${qvReviewPicker(qv,'types','Types d’activités — sélection multiple')}<div class="qv-review-actions qv-review-wide"><button type="button" id="qv-review-reset" class="scope-text-action">Réinitialiser les filtres</button><button type="button" class="scope-btn" id="qv-check-type-conformity" disabled>Contrôler la conformité</button><p id="qv-conformity-hint">Sélectionnez au moins un type.</p></div></fieldset><div id="qv-conformity-results" aria-live="polite">${context.conformity?qvReviewResultsHtml(context.conformity,qv):''}</div>
       </section>
-      <section class="qv-review-section" id="qv-review-harmonisation" ${context.view==='harmonisation'?'':'hidden'}><h3>Harmonisation volontaire</h3><p>Reprendre explicitement les seuls champs choisis d’une fiche modèle enregistrée. Une incompatibilité n’est jamais une correction recommandée.</p>
-        <fieldset class="qv-review-grid" ${disabled}><legend>Fiche modèle et destinataires</legend>
-          <label class="qv-review-field qv-review-wide"><span>Recherche de la fiche modèle par activité, date ou OI</span><input id="qv-model-search" type="search" value="${escapeHtml(context.sourceSearch)}"></label><div class="qv-review-actions qv-review-wide"><button type="button" class="scope-btn" id="qv-model-find">Rechercher une fiche modèle</button></div>
-          <label class="qv-review-field qv-review-wide"><span>Fiche modèle enregistrée</span><select id="qv-harmonisation-source"><option value="">Sélectionner une fiche modèle</option>${visibleSources.map(row=>`<option value="${escapeHtml(row.id)}" ${row.id===context.sourceId?'selected':''}>${escapeHtml(qvReviewOccurrenceLabel(row)+' — '+(L.qvProgrammeOiLabel(row) || 'OI non définie'))}</option>`).join('')}</select></label>
-          <p class="qv-review-wide" id="qv-model-identity">${sources.length>40?`Recherche limitée à quarante modèles et au modèle sélectionné ; affinez la recherche. `:''}${source?`Fiche modèle : ${escapeHtml(qvReviewOccurrenceLabel(source)+' — '+(L.qvProgrammeOiLabel(source) || 'OI non définie'))}`:context.sourceId?'La fiche demandée n’est pas une fiche modèle enregistrée disponible.':'Aucune fiche modèle sélectionnée.'}</p>
-          <label class="qv-review-field qv-review-wide"><span>Types destinataires — toutes leurs occurrences et sessions</span><select id="qv-harmonisation-types" multiple size="5">${options(context.harmonisationIds)}</select></label>
-          <div class="qv-review-fields qv-review-wide">${Object.entries(QV_REVIEW_LABELS).filter(([code])=>code!=='preparation').map(([code,label])=>`<label class="qv-review-check"><input type="checkbox" data-qv-harmonisation-field="${code}" ${context.fields.includes(code)?'checked':''}><span>${escapeHtml(label)}</span></label>`).join('')}</div>
-          <div class="qv-review-actions qv-review-wide"><button type="button" class="scope-btn" id="qv-preview-harmonisation" disabled>Prévisualiser l’harmonisation</button><p id="qv-harmonisation-hint">Choisissez une fiche modèle, des types et des champs.</p></div>
+      <section class="qv-review-section" id="qv-review-harmonisation" ${context.view==='harmonisation'?'':'hidden'}><h3>Harmonisation volontaire</h3><p>Choisir une fiche modèle, les occurrences destinataires et les champs à prévisualiser. Une incompatibilité n’est jamais une correction recommandée.</p>
+        <fieldset class="qv-review-grid" ${disabled}><legend>Fiche modèle et destinataires</legend>${qvReviewPicker(qv,'source','Fiche modèle enregistrée')}
+          <p class="qv-review-wide" id="qv-model-identity">${source?`Fiche modèle : ${escapeHtml(qvReviewOccurrenceLabel(source)+' — '+(L.qvProgrammeOiLabel(source) || 'OI non définie'))}`:'Aucune fiche modèle enregistrée disponible sélectionnée.'}</p>
+          ${source?`${qvReviewPicker(qv,'targets','Occurrences destinataires — sélection individuelle')}<label class="qv-review-check qv-review-wide"><input type="checkbox" id="qv-review-other-types" ${context.otherTypes?'checked':''}><span>Afficher aussi les autres types accessibles — compatibilité à contrôler</span></label><p class="qv-review-wide" id="qv-selected-targets">${context.targetIds.length?`Destinataires choisis : ${context.targetIds.map(id=>{const row=all.find(item=>item.id===id);return escapeHtml(row?`${qvReviewOccurrenceLabel(row)} — ${L.qvProgrammeOiLabel(row)} — ${row.sessionLabel || 'Session non définie'}`:id);}).join(' ; ')}`:'Les autres occurrences du même type sont proposées ; sélectionnez explicitement chaque destinataire.'}</p>`:''}
+          <div class="qv-review-fields qv-review-wide">${availableFields.map(code=>`<label class="qv-review-check"><input type="checkbox" data-qv-harmonisation-field="${code}" ${context.fields.includes(code)?'checked':''}><span>${escapeHtml(QV_REVIEW_LABELS[code])}</span></label>`).join('')}</div>
+          <div class="qv-review-actions qv-review-wide"><button type="button" class="scope-btn" id="qv-preview-harmonisation" disabled>Prévisualiser l’harmonisation</button><p id="qv-harmonisation-hint">Choisissez une fiche modèle, des occurrences et des champs.</p></div>
         </fieldset><div id="qv-harmonisation-results" aria-live="polite">${context.harmonisation?qvReviewResultsHtml(context.harmonisation,qv):''}</div>
       </section><p>Aucune modification groupée n’est enregistrée ici. Les validations et révisions existantes restent nécessaires dans la fiche concernée.</p>
     </section>`;
@@ -13145,37 +13211,51 @@
     const mode=results[0]?.mode==='HARMONISATION'?'harmonisation':'conformite';
     return L.qvProgrammeFilterReview(results,qv.canonicalProgramme?.rows || [],qvReviewContext().resultFilters[mode]);
   }
+  function qvReviewGroups(results,qv){
+    const mode=results[0]?.mode==='HARMONISATION'?'harmonisation':'conformite';
+    return L.sortRows(L.qvProgrammeReviewSummaries(qvReviewFiltered(results,qv),qv.canonicalProgramme?.rows || []),qvReviewContext().typeSorts[mode] || {key:'label',dir:'asc'},['label','occurrenceCount','conform','pending','blocking','undefined'].map(key=>({key,type:key==='label'?'text':'number'})));
+  }
   function qvReviewResultsHtml(results,qv){
     if(!results.length)return '<p>Aucun résultat disponible pour les destinataires et champs sélectionnés.</p>';
     const context=qvReviewContext(),mode=results[0].mode==='HARMONISATION'?'harmonisation':'conformite',filters=context.resultFilters[mode];
     const rows=qv.canonicalProgramme?.rows || [],ids=new Set(results.map(item=>item.occurrenceId)),available=rows.filter(row=>ids.has(row.id));
     const sessions=[...new Set(available.map(row=>row.sessionLabel).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
     const ois=[...new Set(available.flatMap(row=>row.oiSelections || []))].sort();
-    const filtered=qvReviewFiltered(results,qv),groups=L.qvProgrammeReviewSummaries(filtered,rows);
+    const filtered=qvReviewFiltered(results,qv),groups=qvReviewGroups(results,qv);
     const input=(key,label,type='search')=>`<label class="qv-review-field"><span>${label}</span><input type="${type}" data-qv-result-filter="${key}" value="${escapeHtml(filters[key] || '')}"></label>`;
     const select=(key,label,choices)=>`<label class="qv-review-field"><span>${label}</span><select data-qv-result-filter="${key}"><option value="">Tous</option>${choices.map(([value,name])=>`<option value="${escapeHtml(value)}" ${filters[key]===value?'selected':''}>${escapeHtml(name)}</option>`).join('')}</select></label>`;
     return `<fieldset class="qv-review-grid"><legend>Filtrer les résultats du contrôle effectué</legend>${input('q','Activité')}${input('from','À partir du','date')}${input('to','Jusqu’au','date')}${select('oi','OI',ois.map(code=>[code,L.qvFormatOiSelections([code])]))}${select('session','Session',sessions.map(value=>[value,value]))}${select('state','État des critères',[['conform','Critères conformes'],['pending','Points à contrôler'],['blocking','Blocages démontrés'],['undefined','Règles non définies']])}<div class="qv-review-actions"><button type="button" class="scope-btn" data-qv-result-apply>Filtrer les résultats</button><button type="button" class="scope-text-action" data-qv-result-reset>Réinitialiser</button></div></fieldset>
       <p>${filtered.length} critère(s) affiché(s) sur ${results.length} examiné(s). Les occurrences sont comptées distinctement ; les autres nombres comptent des critères. Un critère conforme ne signifie pas que toute l’occurrence est conforme.</p>
-      <div class="qv-review-table-wrap"><table class="scope-table qv-review-summary"><caption>Synthèse par type — résultats filtrés</caption><thead><tr><th>Activité</th><th>Occurrences</th><th>Critères conformes</th><th>Points à contrôler</th><th>Blocages démontrés</th><th>Règles non définies</th><th>Détails</th></tr></thead><tbody>${groups.map((group,index)=>`<tr><th scope="row">${escapeHtml(group.label)}</th><td>${group.occurrenceCount}</td><td>${group.conform}</td><td>${group.pending}</td><td>${group.blocking}</td><td>${group.undefined}</td><td><button type="button" class="scope-text-action" data-qv-review-open="${mode}-${index}">Voir les occurrences</button></td></tr>`).join('') || '<tr><td colspan="7">Aucun résultat pour ces filtres.</td></tr>'}</tbody></table></div>
+      <div class="qv-review-table-wrap"><table class="scope-table qv-review-summary"><caption>Synthèse par type — résultats filtrés</caption><thead><tr>${[['label','Activité'],['occurrenceCount','Occurrences'],['conform','Critères conformes'],['pending','Points à contrôler'],['blocking','Blocages démontrés'],['undefined','Règles non définies']].map(([key,label])=>qvReviewSortHead(key,label,context.typeSorts[mode] || {key:'label',dir:'asc'},'data-qv-type-sort')).join('')}<th>Détails</th></tr></thead><tbody>${groups.map((group,index)=>`<tr><th scope="row">${escapeHtml(group.label)}</th><td>${group.occurrenceCount}</td><td>${group.conform}</td><td>${group.pending}</td><td>${group.blocking}</td><td>${group.undefined}</td><td><button type="button" class="scope-text-action" data-qv-review-open="${mode}-${index}">Voir les occurrences</button></td></tr>`).join('') || '<tr><td colspan="7">Aucun résultat pour ces filtres.</td></tr>'}</tbody></table></div>
       ${groups.map((group,index)=>`<details class="qv-review-result-details" id="qv-review-${mode}-${index}" data-qv-review-group="${index}" ${context.openTypes[`${mode}:${group.definitionId}`]?'open':''}><summary>${escapeHtml(group.label)} — ${group.occurrenceCount} occurrence(s), ${group.criteria} critère(s)</summary><div data-qv-review-detail-content></div></details>`).join('')}`;
   }
   function bindProgrammeReviewResults(container,results,qv){
     if(!container || !results?.length)return;
     const context=qvReviewContext(),mode=results[0].mode==='HARMONISATION'?'harmonisation':'conformite';
-    const groups=L.qvProgrammeReviewSummaries(qvReviewFiltered(results,qv),qv.canonicalProgramme?.rows || []),byId=new Map((qv.canonicalProgramme?.rows || []).map(row=>[row.id,row]));
+    const groups=qvReviewGroups(results,qv),byId=new Map((qv.canonicalProgramme?.rows || []).map(row=>[row.id,row]));
     const redraw=()=>{container.innerHTML=qvReviewResultsHtml(results,qv);bindProgrammeReviewResults(container,results,qv);};
+    container.querySelectorAll('[data-qv-type-sort]').forEach(button=>button.addEventListener('click',()=>{context.typeSorts[mode]=L.nextSort(context.typeSorts[mode] || {key:'label',dir:'asc'},button.dataset.qvTypeSort,'asc');redraw();}));
     container.querySelector('[data-qv-result-apply]')?.addEventListener('click',()=>{const filters={};container.querySelectorAll('[data-qv-result-filter]').forEach(input=>filters[input.dataset.qvResultFilter]=input.value);context.resultFilters[mode]=filters;redraw();});
+    container.querySelectorAll('[data-qv-result-filter]').forEach(input=>input.addEventListener(input.type==='search'?'input':'change',()=>{
+      const key=input.dataset.qvResultFilter,start=input.selectionStart,end=input.selectionEnd;
+      context.resultFilters[mode][key]=input.value;redraw();
+      const next=container.querySelector(`[data-qv-result-filter="${key}"]`);next?.focus({preventScroll:true});if(next?.type==='search')next.setSelectionRange(start,end);
+    }));
     container.querySelector('[data-qv-result-reset]')?.addEventListener('click',()=>{context.resultFilters[mode]={};redraw();});
     container.querySelectorAll('[data-qv-review-group]').forEach(details=>{
       const group=groups[Number(details.dataset.qvReviewGroup)],key=`${mode}:${group.definitionId}`;
       const drawOccurrences=()=>{
-        const ids=[...new Set(group.results.map(item=>item.occurrenceId))].sort((a,b)=>String(byId.get(a)?.startsAt || '').localeCompare(String(byId.get(b)?.startsAt || '')) || String(a).localeCompare(String(b)));
+        const sort=context.occurrenceSorts[key] || {key:'date',dir:'asc'};
+        const countsById=new Map([...new Set(group.results.map(item=>item.occurrenceId))].map(id=>[id,L.qvProgrammeReviewSummaries(group.results.filter(item=>item.occurrenceId===id),qv.canonicalProgramme?.rows || [])[0]]));
+        const columns=[...qvReviewRowColumns(),...['conform','pending','blocking','undefined'].map(key=>({key,type:'number',value:row=>countsById.get(row.id)[key]}))];
+        const ids=L.sortRows([...countsById.keys()].map(id=>byId.get(id)).filter(Boolean),sort,columns).map(row=>row.id);
         const prefix=`qv-review-occ-${mode}-${details.dataset.qvReviewGroup}`,pager=qvPilotPager(prefix,ids.length,context.pages[key] || 1,25),visible=pager.slice(ids);
         const target=details.querySelector('[data-qv-review-detail-content]');
-        target.innerHTML=`<div class="qv-review-table-wrap"><table class="scope-table qv-review-summary"><caption>Occurrences concernées — comptes de critères</caption><thead><tr><th>Activité et date</th><th>OI et session</th><th>Conformes</th><th>À contrôler</th><th>Blocages</th><th>Non définis</th><th>Actions</th></tr></thead><tbody>${visible.map((id,index)=>{
-          const row=byId.get(id),items=group.results.filter(item=>item.occurrenceId===id),counts=L.qvProgrammeReviewSummaries(items,qv.canonicalProgramme?.rows || [])[0];
-          return `<tr><td>${escapeHtml(row?qvReviewOccurrenceLabel(row):'Occurrence indisponible')}</td><td>${escapeHtml(row?L.qvProgrammeOiLabel(row):'—')}<br>${escapeHtml(row?.sessionLabel || '—')}</td><td>${counts.conform}</td><td>${counts.pending}</td><td>${counts.blocking}</td><td>${counts.undefined}</td><td>${qvReviewFicheLink(row)}<br><button type="button" class="scope-text-action" data-qv-criteria-open="${index}">Voir les critères</button></td></tr>`;
+        target.innerHTML=`<div class="qv-review-table-wrap"><table class="scope-table qv-review-summary qv-review-occurrences"><caption>Occurrences concernées — comptes de critères</caption><thead><tr>${[['date','Date'],['activity','Activité'],['oi','OI'],['session','Session'],['conform','Conformes'],['pending','À contrôler'],['blocking','Blocages'],['undefined','Non définis']].map(([key,label])=>qvReviewSortHead(key,label,sort,'data-qv-occ-sort')).join('')}<th>Actions</th></tr></thead><tbody>${visible.map((id,index)=>{
+          const row=byId.get(id),counts=countsById.get(id);
+          return `<tr><td>${escapeHtml(row?qvProgrammeShortDate(row):'—')}</td><td>${escapeHtml(row?qvProgrammeActivityLabel(row):'Occurrence indisponible')}</td><td>${escapeHtml(row?L.qvProgrammeOiLabel(row):'—')}</td><td>${escapeHtml(row?.sessionLabel || '—')}</td><td>${counts.conform}</td><td>${counts.pending}</td><td>${counts.blocking}</td><td>${counts.undefined}</td><td>${qvReviewFicheLink(row)}<br><button type="button" class="scope-text-action" data-qv-criteria-open="${index}">Voir les critères</button></td></tr>`;
         }).join('')}</tbody></table></div>${pager.footHtml(`${ids.length} occurrence(s) identifiée(s)`)}${visible.map((id,index)=>`<details class="qv-review-result-details" data-qv-criteria="${index}" ${context.openOccurrences[`${mode}:${id}`]?'open':''}><summary>Critères — ${escapeHtml(byId.get(id)?qvReviewOccurrenceLabel(byId.get(id)):'Occurrence indisponible')}</summary><div data-qv-criteria-content></div></details>`).join('')}`;
+        target.querySelectorAll('[data-qv-occ-sort]').forEach(button=>button.addEventListener('click',()=>{context.occurrenceSorts[key]=L.nextSort(sort,button.dataset.qvOccSort,'asc');context.pages[key]=1;drawOccurrences();}));
         target.querySelectorAll('[data-qv-criteria]').forEach(occurrence=>{
           const id=visible[Number(occurrence.dataset.qvCriteria)];
           const draw=()=>{if(!occurrence.open || occurrence.dataset.loaded)return;const row=byId.get(id);occurrence.querySelector('[data-qv-criteria-content]').innerHTML=qvCorrectionProposalsHtml(group.results.filter(item=>item.occurrenceId===id).map(item=>({...item,oiLabel:row?L.qvProgrammeOiLabel(row):'',sessionLabel:row?.sessionLabel || ''})));occurrence.dataset.loaded='true';};
@@ -13194,25 +13274,47 @@
   function bindProgrammeReview(){
     if(!document.getElementById('qv-programme-review'))return;
     const context=qvReviewContext(),qv=quoVadisProgrammeData(),canReview=hasScopePermission('references:manage');
-    const selected=id=>[...(document.getElementById(id)?.selectedOptions || [])].map(option=>option.value);
     const refresh=mode=>{
-      const conformity=mode==='CONFORMITE',prefix=conformity?'qv-conformity':'qv-harmonisation';
-      const ready=canReview && (conformity?context.conformityIds.length>0:Boolean(context.sourceId && context.harmonisationIds.length && context.fields.length && (qv.canonicalProgramme?.rows || []).some(row=>row.id===context.sourceId && L.qvProgrammeSavedModel(row))));
+      const conformity=mode==='CONFORMITE',prefix=conformity?'qv-conformity':'qv-harmonisation',source=qvReviewSource(qv);
+      const selectedRows=(qv.canonicalProgramme?.rows || []).filter(row=>context.targetIds.includes(row.id) && row.id!==source?.id && L.qvProgrammeIsActive(row) && row.status!=='ANNULE' && row.active!==false);
+      const incompatible=selectedRows.some(row=>qvReviewTargetIssues(qv,row).length);
+      const ready=canReview && (conformity?context.conformityIds.length>0:Boolean(source && selectedRows.length===context.targetIds.length && context.targetIds.length && context.fields.length && !incompatible));
       document.getElementById(conformity?'qv-check-type-conformity':'qv-preview-harmonisation').disabled=!ready;
-      document.getElementById(prefix+'-hint').textContent=ready?'Lancement explicite, sans enregistrement automatique.':conformity?'Sélectionnez au moins un type.':'Choisissez une fiche modèle enregistrée, des types et des champs.';
+      document.getElementById(prefix+'-hint').textContent=ready?'Lancement explicite, sans enregistrement automatique.':conformity?'Sélectionnez au moins un type.':incompatible?'Un destinataire choisi est incompatible avec les champs demandés ; retirez-le ou adaptez les champs.':'Choisissez une fiche modèle enregistrée, des occurrences et des champs.';
     };
     const invalidate=mode=>{context[mode==='CONFORMITE'?'conformity':'harmonisation']=null;document.getElementById(mode==='CONFORMITE'?'qv-conformity-results':'qv-harmonisation-results').innerHTML='';refresh(mode);};
     const redraw=()=>{document.getElementById('qv-programme-review').outerHTML=renderQuoVadisProgrammeControl(qv);bindProgrammeReview();};
-    document.getElementById('qv-review-filter').addEventListener('click',()=>{if(!canReview)return;context.typeSearch=document.getElementById('qv-review-search').value;context.family=document.getElementById('qv-review-family').value;context.oi=document.getElementById('qv-review-oi').value;redraw();});
-    document.getElementById('qv-review-reset').addEventListener('click',()=>{if(!canReview)return;context.typeSearch='';context.family='';context.oi='';redraw();});
-    document.getElementById('qv-model-find').addEventListener('click',()=>{if(!canReview)return;context.sourceSearch=document.getElementById('qv-model-search').value;redraw();});
-    document.getElementById('qv-harmonisation-source').addEventListener('change',event=>{context.sourceId=event.target.value;invalidate('HARMONISATION');redraw();});
-    for(const [id,key,mode] of [['qv-conformity-types','conformityIds','CONFORMITE'],['qv-harmonisation-types','harmonisationIds','HARMONISATION']])document.getElementById(id).addEventListener('change',()=>{context[key]=selected(id);invalidate(mode);});
-    document.querySelectorAll('[data-qv-harmonisation-field]').forEach(input=>input.addEventListener('change',()=>{context.fields=[...document.querySelectorAll('[data-qv-harmonisation-field]:checked')].map(item=>item.dataset.qvHarmonisationField);invalidate('HARMONISATION');}));
+    const drawPicker=kind=>{
+      const menu=document.querySelector(`[data-qv-review-picker="${kind}"]`);if(!menu)return;
+      menu.querySelector('[data-qv-picker-body]').innerHTML=qvReviewPickerBody(qv,kind);
+      menu.querySelector('summary').textContent=qvReviewPickerSummary(qv,kind);
+      const pager=qvPilotPager('qv-picker-'+kind,qvReviewChoices(qv,kind).length,context.pickerPages[kind] || 1,25);
+      for(const [suffix,delta] of [['prev',-1],['next',1]])document.getElementById('qv-picker-'+kind+'-'+suffix)?.addEventListener('click',()=>{context.pickerPages[kind]=pager.current+delta;drawPicker(kind);});
+      document.getElementById('qv-picker-'+kind+'-size').closest('label').hidden=true;
+      state.qvProgrammePopupPosition?.();
+    };
+    document.querySelectorAll('[data-qv-review-picker]').forEach(menu=>{
+      const kind=menu.dataset.qvReviewPicker,key=kind==='types'?'typeSearch':kind==='source'?'sourceSearch':'targetSearch';
+      menu.querySelector('input[type=search]').addEventListener('input',event=>{context[key]=event.target.value;context.pickerPages[kind]=1;drawPicker(kind);});
+      menu.addEventListener('change',event=>{
+        const input=event.target.closest('[data-qv-choice]');if(!input || !canReview)return;
+        if(kind==='source'){context.sourceId=input.dataset.qvChoice;context.targetIds=[];context.targetSearch='';context.otherTypes=false;context.pickerPages.targets=1;invalidate('HARMONISATION');redraw();document.querySelector('[data-qv-review-picker="targets"]>summary')?.focus({preventScroll:true});return;}
+        const ids=kind==='types'?context.conformityIds:context.targetIds,id=input.dataset.qvChoice;
+        if(input.checked && !ids.includes(id))ids.push(id);if(!input.checked && ids.includes(id))ids.splice(ids.indexOf(id),1);
+        menu.querySelector('summary').textContent=qvReviewPickerSummary(qv,kind);
+        if(kind==='targets')document.getElementById('qv-selected-targets').textContent='Destinataires choisis : '+context.targetIds.map(id=>{const row=(qv.canonicalProgramme?.rows || []).find(item=>item.id===id);return row?`${qvReviewOccurrenceLabel(row)} — ${L.qvProgrammeOiLabel(row)} — ${row.sessionLabel || 'Session non définie'}`:id;}).join(' ; ');
+        invalidate(kind==='types'?'CONFORMITE':'HARMONISATION');
+      });drawPicker(kind);
+    });
+    for(const [id,key] of [['qv-review-family','family'],['qv-review-oi','oi']])document.getElementById(id).addEventListener('change',event=>{context[key]=event.target.value;context.pickerPages.types=1;drawPicker('types');});
+    document.getElementById('qv-review-reset').addEventListener('click',()=>{context.typeSearch='';context.family='';context.oi='';context.pickerPages.types=1;redraw();});
+    document.getElementById('qv-review-other-types')?.addEventListener('change',event=>{context.otherTypes=event.target.checked;context.pickerPages.targets=1;drawPicker('targets');});
+    document.querySelectorAll('[data-qv-harmonisation-field]').forEach(input=>input.addEventListener('change',()=>{context.fields=[...document.querySelectorAll('[data-qv-harmonisation-field]:checked')].map(item=>item.dataset.qvHarmonisationField);invalidate('HARMONISATION');drawPicker('targets');}));
+    bindQvChoiceMenus(document.getElementById('qv-programme-review'));
     for(const [id,mode] of [['qv-check-type-conformity','CONFORMITE'],['qv-preview-harmonisation','HARMONISATION']])document.getElementById(id).addEventListener('click',()=>{
       if(!canReview || document.getElementById(id).disabled)return;
       const conformity=mode==='CONFORMITE',container=document.getElementById(conformity?'qv-conformity-results':'qv-harmonisation-results');
-      try{const results=L.qvProgrammeCorrectionProposals(qv.canonicalProgramme?.rows || [],{mode,definitionIds:conformity?context.conformityIds:context.harmonisationIds,...(!conformity?{sourceOccurrenceId:context.sourceId,fields:context.fields}:{})});context[conformity?'conformity':'harmonisation']=results;container.innerHTML=qvReviewResultsHtml(results,qv);bindProgrammeReviewResults(container,results,qv);}catch(error){container.textContent=error.message;}
+      try{const results=L.qvProgrammeCorrectionProposals(qv.canonicalProgramme?.rows || [],{mode,definitionIds:conformity?context.conformityIds:[...new Set((qv.canonicalProgramme?.rows || []).filter(row=>context.targetIds.includes(row.id)).map(row=>row.definitionId))],...(!conformity?{sourceOccurrenceId:context.sourceId,occurrenceIds:context.targetIds,fields:context.fields}:{})});context[conformity?'conformity':'harmonisation']=results;container.innerHTML=qvReviewResultsHtml(results,qv);bindProgrammeReviewResults(container,results,qv);}catch(error){container.textContent=error.message;}
     });
     document.querySelectorAll('[data-qv-review-view]').forEach(button=>button.addEventListener('click',()=>{context.view=button.dataset.qvReviewView;redraw();}));
     const menu=document.querySelector('.qv-subnav a[href*="controle-programme"]');if(menu)menu.onclick=()=>{context.view='conformite';redraw();};
@@ -15511,27 +15613,7 @@
       const status = document.getElementById('qv-programme-ecawin-status');
       if(status){status.textContent=qvProgrammeEcawinStatus(activity?.value,event.currentTarget.value);status.hidden=!status.textContent;}
     });
-    document.querySelectorAll('.qv-programme-choice-menu').forEach((menu) => {
-      menu.addEventListener('toggle',() => {
-        if(menu.open) positionProgrammePopups();
-      });
-    });
-    [['qv-programme-oi-search','qv-programme-oi'],['qv-programme-public-search','qv-programme-public'],['qv-programme-responsable-search','qv-programme-responsable'],['qv-programme-qualification-search','qv-programme-specialisation']].forEach(([searchId,listId]) => {
-      document.getElementById(searchId)?.addEventListener('input',(event) => {
-        const query = qvNormalizeSearch(event.target.value || '');
-        document.getElementById(listId)?.querySelectorAll('fieldset').forEach((group) => {
-          let visible = 0;
-          group.querySelectorAll('label').forEach((label) => {
-            const reference=L.qvInstitutionalReferences().institutionalReference(label.querySelector('input')?.value);
-            const context=reference?[reference.officialTitle,...reference.aliases,...reference.compatibleOiDomains].join(' '):'';
-            label.hidden = Boolean(query) && !qvNormalizeSearch(`${label.textContent} ${context} ${label.querySelector('input')?.value || ''}`).includes(query);
-            if(!label.hidden) visible += 1;
-          });
-          group.hidden = visible === 0;
-        });
-        positionProgrammePopups();
-      });
-    });
+    bindQvChoiceMenus(document.getElementById('scope-root'));
     document.getElementById('qv-programme-lieu')?.addEventListener('change', (event) => {
       const value = event.target.value || '';
       const autre = document.getElementById('qv-programme-autre-field');
