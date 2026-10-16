@@ -1,5 +1,13 @@
 # SCOPE — Registre des anomalies, réserves et arbitrages
 
+## Actualisation UX et organisationnelle — 16.10.2026, après #31
+
+#31 fusionnée et publiée au SHA `0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5`, vérification directe ; aucun PASS MOA de #31 reçu dans ce mandat. Les trois anomalies historiques ci-dessous ne sont donc pas clôturées. Le mandat suivant demande une évolution de présentation et de classement, traitée sous les mêmes repères QV-CONTROLE-QUALITE-001 / QV-PUBLIC-008 et la ligne UX, sans second registre : [rapport ciblé](../../SCOPE_QV_UX_ORGANISATION_20261016.md).
+
+La fiche est simplifiée ; les deux contrôles existants passent dans « Contrôle du programme », avec synthèse avant détails et modèle explicite. Les remplaçants reconnus suivent le groupe/rang du titulaire ; aucune fonction ni qualification individuelle attribuée. Les états distinguent information partielle, non-conformité et blocage démontré. Le retour à la ligne d’un lien a été corrigé pendant la vérification mobile technique ; aucun nouvel incident de production n’est déduit de cette fixture.
+
+**État : DÉVELOPPÉ, 15 tests et 12 parcours Chrome techniques PASS ; recette MOA production EN ATTENTE.** Le témoin JSP reste protégé. Les motifs et preuves des anomalies #29/#30 qui suivent restent datés ; la disposition locale de trois sections y décrit #31 et est remplacée par le présent mandat. Programme2027 NON VALIDÉ.
+
 > Capitalisation phase B : import de la phase A actualisée à #27. Les déclarations « hors dépôt », « pas de phase B » et les prochains GO dans le texte importé décrivent son mandat historique. La mission de phase B autorise maintenant sa capitalisation documentaire en une PR, sans fusion ni déploiement. Les réserves AUDIT_INCOMPLET et Programme 2027 NON VALIDÉ restent applicables. Voir [provenance](README.md).
 
 

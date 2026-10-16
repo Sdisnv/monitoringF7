@@ -1243,3 +1243,42 @@ Le panneau distingue A. Préparation des assignations, B. Contrôle de conformit
 Selon le mandat post-recette, Séance Direction JSP **010JSP.006**, 18.02.2027 18:30–20:30, famille JSP, OI JSP G1/C1/B1, Responsable Chef JSP, publics Chef formation/Chef site/Resp formation, évaluation Non : **validation MOA individuelle acquise, fiche publiée et liée à son événement**. Ne modifier ni cette fiche, ni l’événement, ni son historique ; ne rejouer aucune validation. Ce témoin précis est postérieur aux décisions de planning antérieures ; il ne donne pas mandat de les réappliquer sur cette fiche. Le lot n’en a pas relu le contenu en base et n’en a modifié aucune donnée.
 
 Aucune résolution nominative ni changement des affectations ; auxiliaires hors effectifs/statistiques, dispenses et présences conservées. Aucune mutation de production, création d’événement, application groupée, migration, RLS/Okta, fusion ou déploiement. Branche isolée et une PR, tests ciblés uniquement, [skip netlify], GO fusion puis GO déploiement distincts, SHA publié vérifié, recette MOA production et PASS explicite avant clôture. **Programme annuel 2027 NON VALIDÉ.**
+
+
+## Lot unique UX et organisationnel QUO VADIS — décisions MOA du 16.10.2026, après #31
+
+Source : mandat humain « LOT UNIQUE UX ET ORGANISATIONNEL QUO VADIS 2027 — DÉCISIONS MOA DU16.10.2026 », postérieur au correctif #31. Cette section remplace la disposition locale de trois sections décrite dans « Panneau ciblé et paramètres métier » ci-dessus. Les règles métier détaillées #29–#31 et les OS1.01/1.06 restent applicables ; aucune décision de population, qualification, candidature ou assignation n’est rouverte. [Implémentation, matrice et limites](../SCOPE_QV_UX_ORGANISATION_20261016.md).
+
+### Fiche et encadré métier uniques
+
+Une fiche décrit l’activité et les règles applicables. Retirer de cette interface le formulaire local de préparation des assignations, le contrôle transversal de conformité et l’harmonisation. Préserver intégralement les paramètres déjà enregistrés, leurs identifiants, règles, API, historiques et capacités applicatives. L’absence de formulaire ne vaut ni suppression ni remise à zéro d’un paramètre.
+
+Réutiliser le seul encadré existant « Règle appliquée » et son action « Voir la règle complète » avec le même visualiseur. Y présenter uniquement les conditions réellement applicables et documentées : participation, assignation, capacités/quotas, sessions, rôles particuliers, exceptions et évaluation. Les profils/règles confirmés existants sont la source ; une règle absente reste non définie. Ne pas répéter les valeurs de date, horaire, lieu, OI, responsable et public déjà affichées. Une condition sur un rôle (participation obligatoire du responsable sous règle propre, par exemple) reste distincte du nom du responsable déjà visible.
+
+### États explicites, limités à QUO VADIS
+
+- **Bleu**, fond clair/texte foncé : informations complètes, applicables et conformes aux contrôles réellement effectués ; ne vaut pas validation annuelle ou nominative.
+- **Jaune**, fond clair/texte foncé : préparation, information partielle, contrôle ou arbitrage nécessaire, sans blocage démontré à l’étape concernée.
+- **Rouge**, fond clair/texte foncé : non-conformité démontrée, donnée indispensable absente ou blocage réel de l’étape concernée. Une non-conformité ne prouve pas à elle seule un blocage annuel.
+
+Chaque état porte un motif textuel. Une règle nominative non encore nécessaire à la validation annuelle n’est pas un blocage annuel ; les prérequis annuels indispensables absents sont signalés par les contrôles existants. Aucun calcul parallèle de validation. Palette limitée à QV/composants concernés ; pas de badges/pastilles, état de tableau carré8×8 et libellé, zébrage, actions sobres, codes techniques/JSON invisibles.
+
+### Accès transversal et comptes des contrôles
+
+Un seul accès QV « Contrôle du programme », indépendant des fiches. Réutiliser le comparateur de #31, ses compatibilités et les contrôles annuels/préparatoires existants. Deux fonctions séparées dans la même vue : **A. Contrôle de conformité** et **B. Harmonisation volontaire**. Recherche par activité et filtres famille/OI permettent de choisir les types ; l’action explicite couvre toutes leurs occurrences et sessions actives.
+
+Afficher d’abord par type l’activité, le nombre distinct d’occurrences examinées et les nombres de critères conformes, points à contrôler, blocages démontrés et règles non définies. Calculer seulement les résultats effectivement disponibles ; ne pas confondre critères et occurrences, ni déclarer une occurrence entièrement conforme parce qu’un seul critère l’est. Les blocages annuels globaux non rattachés à un type restent affichés globalement et ne sont pas distribués artificiellement. Détails dépliés volontairement : date, activité, OI/session pertinents, critère, état, motif, règle, impact/validation et lien vers la fiche. Identifiants internes conservés pour fonctionnement/traçabilité et non exposés dans les libellés.
+
+### Harmonisation et modèle enregistrés explicites
+
+Même moteur #31, sans nouvelle logique de correction. Modèle enregistré obligatoire, types destinataires et champs explicitement choisis, prévisualisation, compatibilité et validation métier lorsqu’elle est requise. Aucune application automatique ou écriture groupée. Différence ≠ anomalie ; valeur incompatible jamais recommandée ; compatibilité inconnue à arbitrer ; règle absente non définie. Les validations/revalidations/révisions motivées restent dans la fiche et le workflow existants.
+
+Depuis une fiche enregistrée, « Harmoniser à partir de cette fiche » ouvre le même accès transversal avec modèle présélectionné et identifié par activité/date/OI. La présélection ne lance ni contrôle ni correction. Depuis l’accès direct, une recherche permet le choix d’un modèle enregistré. Tout changement de modèle, types ou champs invalide la prévisualisation précédente. Une validation affichée seule ne prouve pas l’enregistrement : réutiliser l’identité de préparation ou le lien événement existants.
+
+### Classement des fonctions de remplacement et protections
+
+Un remplacement reconnu garde le niveau organisationnel de son titulaire pour le classement : même groupe et rang, puis tri alphabétique existant. « Rempl. chef site » relève de Commandement et responsables. Vérifier les parents reconnus pour Rempl. Commandant, Rempl. chef section, Rempl. chef FOBA, Rempl. chef PR, Rempl. responsable VPC ; aucune fonction, grade ou échelon créé/attribué. Chef site commun DPS/JSP, Resp formation contextualisé JSP, FOBA/PR, alias, fonctions historiques et candidats adjacents conservés. Chef formation JSP et Chef matériel JSP restent exclus des nouveaux choix avec historique conservé.
+
+Témoin protégé selon le mandat : **Séance Direction JSP010JSP.006,18.02.2027,18:30–20:30**, familleJSP, OI JSPG1/C1/B1, Responsable ChefJSP, publics Chef formation/Chef site/Resp formation, évaluationNon. Validation MOA individuelle acquise, publication/liaison existantes ; ne modifier ni revalider. Aucune nouvelle lecture SQL ni mutation du témoin par ce lot.
+
+Aucun moteur nominatif, qualification individuelle, affectation, présence ou événement modifié ; aucune migration, RLS/Okta, configuration Netlify, publication annuelle, fusion ou déploiement. Une branche/PR [skip netlify], tests strictement ciblés, GO fusion et GO déploiement distincts, SHA réellement publié puis recette MOA en production et PASS explicite. **Programme annuel2027 NON VALIDÉ.**
