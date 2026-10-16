@@ -19,7 +19,8 @@ const ACTION_ORDER = Object.freeze([
   ACTIONS.BLOCKED,
   ACTIONS.NOT_PUBLISHED
 ]);
-const DESCRIPTIVE_PUBLICS = Object.freeze(require('../../assets/js/scope-ui-logic').qvProgrammeDescriptivePublics());
+const DESCRIPTIVE_PUBLICS = Object.freeze(Object.fromEntries(Object.entries(
+  require('../../assets/js/scope-ui-logic').qvProgrammeDescriptivePublics()).map(([code,label])=>[code.toUpperCase(),label])));
 
 function stableValue(value){
   if(Array.isArray(value)) return value.map(stableValue);

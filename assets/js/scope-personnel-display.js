@@ -16,7 +16,7 @@
     : (root && root.ScopeUiLogic) || {});
 
   const SPECIALIZATION_SEPARATOR = ', ';
-  const SPECIALIZATION_ORDER = Object.freeze(['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'PR-ABC', 'cond VL', 'cond PL', 'JSP']);
+  const SPECIALIZATION_ORDER = Object.freeze(['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'PABC', 'cond VL', 'cond PL', 'JSP']);
   const SPECIALIZATION_DISPLAY_ORDER = SPECIALIZATION_ORDER;
   const SPECIALIZATION_CODE_LABELS = Object.freeze({
     FOBA_1: 'FOBA 1',
@@ -24,7 +24,7 @@
     FOBA_3: 'FOBA 3',
     PAPR: 'PAPR',
     PR: 'PAPR',
-    PR_ABC: 'PR-ABC',
+    PR_ABC: 'PABC',
     AUTO_VL_DPS: 'cond VL',
     AUTO_VL_DAP: 'cond VL',
     AUTO_PL: 'cond PL',
@@ -65,7 +65,7 @@
         if(mapped === 'JSP') return { domaine: 'JSP', cible: '' };
       }
       const upper = raw.toUpperCase();
-      if(upper === 'PR-ABC' || upper === 'PR ABC' || compact === 'PRABC'){
+      if(upper === 'PABC' || upper === 'PR-ABC' || upper === 'PR ABC' || compact === 'PRABC'){
         return { domaine: 'PR', cible: 'ABC' };
       }
       if(upper === 'COND VL' || upper === 'COND VL — DPS' || upper === 'COND VL - DPS' || upper === 'COND VL DPS'){
@@ -100,7 +100,7 @@
 
   function isPrAbcCible(cible){
     const raw = clean(cible).toUpperCase().replace(/[\s/_-]+/g, '');
-    return raw === 'ABC' || raw === 'PRABC';
+    return raw === 'ABC' || raw === 'PABC' || raw === 'PRABC';
   }
 
   function specializationCode(assignment){
@@ -129,10 +129,13 @@
   function specializationUserLabel(assignmentOrCode){
     if(assignmentOrCode == null || assignmentOrCode === '') return '';
     if(typeof assignmentOrCode === 'string' && SPECIALIZATION_CODE_LABELS[assignmentOrCode]){
-      return SPECIALIZATION_CODE_LABELS[assignmentOrCode];
+      return refs.institutionalLabel(SPECIALIZATION_CODE_LABELS[assignmentOrCode]);
     }
     const code = specializationCode(assignmentOrCode);
-    return code ? (SPECIALIZATION_CODE_LABELS[code] || '') : '';
+    if(code) return refs.institutionalLabel(SPECIALIZATION_CODE_LABELS[code] || '');
+    const raw=typeof assignmentOrCode==='string'?assignmentOrCode:assignmentOrCode.cible;
+    const ref=refs.institutionalReference(raw);
+    return ref?.kind==='SPECIALIZATION'?ref.label:'';
   }
 
   function assignmentDateValue(assignment, keys){
@@ -310,13 +313,7 @@
     return true;
   }
 
-  function sortSpecializationLabels(labels){
-    return labels.slice().sort((a, b) => {
-      const ia = SPECIALIZATION_ORDER.indexOf(a);
-      const ib = SPECIALIZATION_ORDER.indexOf(b);
-      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b, 'fr');
-    });
-  }
+  function sortSpecializationLabels(labels){return refs.institutionalLabels(labels);}
 
   function formatSpecializations(list, options){
     const opts = options || {};
@@ -915,7 +912,7 @@
     if(wanted === 'cond PL'){
       return assignments.some((row) => isAssignmentActiveAt(row) && isAutoPl(row));
     }
-    return formatSpecializations(assignments).labels.includes(wanted);
+    return formatSpecializations(assignments).labels.includes(refs.institutionalLabel(wanted));
   }
 
   function personMatchesQuery(person, query){

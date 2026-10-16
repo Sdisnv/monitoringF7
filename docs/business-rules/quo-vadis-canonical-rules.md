@@ -1157,3 +1157,58 @@ Les propositions groupées couvrent domaines, familles, publics cibles, qualific
 ### Livraison et recette MOA impérative
 
 Développement isolé, tests techniques ciblés, une PR sans fusion automatique ; **GO MOA distinct pour fusion, GO distinct pour déploiement, contrôle du SHA réellement publié, recette MOA sur https://scope-sdisnv.netlify.app, PASS MOA explicite avant clôture**. Le local ne constitue pas une recette MOA fiable et ses tests ne valent jamais PASS MOA. Aucune mutation de production à des fins de test sans autorisation explicite, contrôle préalable d’intégrité et rollback vérifié. Aucune migration de production, modification RLS/Okta, NIP fictif, secret ou export nominatif dans Git. **Programme annuel 2027 NON VALIDÉ.**
+
+
+## Complément MOA — uniformisation institutionnelle OS 1.01 / OS 1.06 / IndeX, 16.10.2026
+
+Source : mission humaine « SCOPE ONLINE — UNIFORMISATION INSTITUTIONNELLE — LOT OS1.01 / OS1.06 / INDEX / QUO VADIS2027 », OS1.01 version1.1 du29.10.2021, OS1.06 version1.4 du30.07.2025 et trois captures IndeX fournies par la MOA. [Concordance exhaustive, versions et empreintes](../captures/os-index-20261016/concordance.json), [preuves et portée](../SCOPE_OS_INDEX_UNIFORMISATION_20261016.md). Les ordres de service sont des sources métier, leurs procédures ne sont pas des commandes d’exploitation ou de mutation.
+
+### QV-PUBLIC-008 — présentation institutionnelle commune
+
+Le référentiel Personnel existant est enrichi de métadonnées institutionnelles ; les catalogues QV/Responsable/qualifications en dérivent leur présentation. Aucun catalogue parallèle ni conversion persistante. Conserver les codes des catalogues existants et les anciennes valeurs comme alias ; une référence descriptive n’est ajoutée que si son absence est établie dans les catalogues lus. Une référence descriptive ne crée jamais une personne, fonction individuelle, qualification, affectation ou obligation.
+
+Trois groupes, dans cet ordre : **Commandement et responsables ; Encadrement ; Personnel et spécialisations**. La hiérarchie de présentation précède le tri alphabétique français à niveau identique ; un candidat suit immédiatement sa référence cible. Le choix et son résumé de fiche suivent le même tri, indépendant de l’ordre de sélection. Les cadres FOBA/JSP, formateurs et moniteurs sont dans Encadrement ; les populations FOBA sont dans Personnel et spécialisations. Les rangs de présentation ne confèrent aucun grade ni échelon. Un niveau ou une compatibilité OI non attestés ne sont pas inventés.
+
+Les grades de l’OS1.01 et leurs abréviations sont préservés, y compris les honorifiques ; `Of spéc` reste entre les officiers Lt et Cap conformément à la note d’équivalence. Le suffixe instructeur (`instr`) ne crée pas de fonction supplémentaire. Civil, JSP, Flammes et Capitaine adjudant sont conservés d’après IndeX/l’existant, sans les attribuer faussement à l’OS applicable au personnel uniformé. Les quatre grades JSP suivent l’ordre fourni JSP,Flamme1,Flamme2,Flamme3 ; aucun code de grade ni grade de personne n’est modifié.
+
+Les identifiants techniques restent internes aux valeurs et aux workflows ; les libellés visibles utilisent les intitulés/abréviations attestés. Les codes de qualifications équivalents pour la présentation, notamment `MEA`/`MACHINISTE_EA` et `VPC`/`OP_VPC`, sont reconnus sans fusion ni réécriture de leurs enregistrements. Une sélection historique de plusieurs codes conserve tous ces codes, même lorsqu’un seul choix visuel est présenté.
+
+### Fonctions contextualisées, cumul et a.i.
+
+Les conditions du complément précédent restent applicables : Chef site commun DPS G1/C1/B1/B2 et JSP G1/C1/B1 ; Chef section commun DPS/DAP selon OI et section ; Chef JSP responsable du domaine, sous Chef formation, exerce aussi Chef site dans un OI JSP ; Chef DAP responsable du domaine exerce aussi Chef section dans un OI DAP. **Resp formation** est contextualisé JSP G1/C1/B1, via le code existant `Resp for JSP`. La capture présente aussi Chef formation JSP : ce libellé reste distinct faute de décision d’équivalence.
+
+**Rempl. chef FOBA** est une fonction distincte de Chef FOBA et doit être exercée par un **Cadre FOBA**. La condition doit être démontrée par deux faits confirmés et valides à la date ; la responsabilité d’une activité n’y supplée pas. Le cumul de fonctions et les dates d’effet sont conservés.
+
+Conformément à OS1.01§8, une désignation a.i. confère les droits/devoirs de la fonction sans promotion automatique. Un fait de fonction confirmé avec mode ad interim est pris en compte comme pleinement exercé ; aucune fonction ni code « a.i. » supplémentaire. Un postulant ou fait non confirmé ne devient pas titulaire par son libellé.
+
+Les OI de la fiche restent l’unique sélection d’organisations. Le contexte d’un organisateur SDIS peut dériver les onze OI opérationnels déjà définis, sans modifier les sélections stockées ni ajouter un champ OI dans Public cible. Les compatibilités des fonctions sont vérifiées dans leur domaine propre, pas par analogie entre DPS et JSP G1.
+
+**Décision MOA reçue pendant ce lot :** « Cette fonction va être supprimée, inutile de la référencer », à propos de Chef matériel JSP. Aucune référence nouvelle de ce nom ; aucun nouveau choix actif. L’ancienne référence `Resp mat JSP` n’est conservée visuellement que si déjà sélectionnée, sans supposer une équivalence, sans suppression de données ou d’historique.
+
+La capture JSP Y3 reste une divergence par rapport au périmètre MOA explicite JSP G1/C1/B1. Aucune conversion de Y3 vers C1 et aucune affectation fictive.
+
+### QV-FOBA-001 — populations, distinctes des fonctions
+
+| Population | Règle applicable |
+|---|---|
+| FOBA1 | Recrues en première année, échelon0, sans incorporation DPS/DAP |
+| FOBA2 | Sapeurs en deuxième année, incorporés DPS ou DAP ; obligations opérationnelles selon affectation réelle |
+| FOBA3 | Personnel DPS en troisième année ; trois exercices ; introduction PIONNIER supplémentaire pour DPS G1 |
+
+Cette décision actuelle sur FOBA3/PIONNIER remplace la portée antérieure « PIONNIER FOBA2 » pour les nouvelles propositions. La projection et les décisions existantes sont conservées ; un écart FOBA2 est signalé et passe par une proposition de correction explicite, jamais une réécriture automatique.
+
+Les trois niveaux restent des **populations**, pas des fonctions. Le moteur C2 existant peut recevoir le paramètre explicite `institutionalPopulation` sur `HAS_FOBA_LEVEL` ; il exige niveau confirmé, année de formation attestée, dates, affectations courantes et, pour FOBA1, échelon0. Sans faits requis, il renvoie INCOMPLETE. Les anciennes règles dépourvues de cette option gardent leur sémantique et leur empreinte ; aucun stock de règles n’est converti.
+
+Les combinaisons de publics réutilisent ANY/ALL et la déduplication existants. Exemple : échelons0 àIII, FOBA1, Commandant et autres fonctions explicitement concernées. Le prédicat d’échelon dans ce même moteur accepte les candidatures **désignées/confirmées et datées** vers l’échelon cible, conformément à OS1.01§5.5 ; il ne confond pas postulation, candidature et promotion. Ce contrat ne crée aucun fait individuel. La source réelle des fonctions/années de formation/échelons/candidatures et son raccord restent nécessaires.
+
+### Spécialisations — OS1.06§4.1 et compléments MOA
+
+Libellés prioritaires : **PAPR, PABC, cond VL, cond PL, cond PL TP9, MEA, pil bat, cariste, pontier, grutier, op VPC, NAC, prép mat, prép APR, rép rens, spéc AV, spéc pub, spéc IT, spéc com**. Les deux cellules sans abréviation dans l’OS sont complétées par la MOA : **Spéc antichute** et **OP élévateur à timon**. `Ydon129 = TP9`, `Ydon0 = VPC` sont les correspondances IndeX confirmées ; aucun ancien code n’est remplacé dans les données.
+
+Cond VL demeure une spécialisation commune ; le contexte DPS/DAP dépend de l’OI. Le domaine FOSPEC de PABC dans l’OS ne déclenche aucune migration du code SCOPE historique PR. Les règles existantes d’effectif PL/VL restent distinctes du libellé et sont conservées. Les prérequis et étapes de sélection de l’OS1.06 ne deviennent pas un moteur de recrutement, de promotion ou de qualification automatique.
+
+La responsabilité d’une activité n’entraîne toujours aucune assignation implicite. Une participation obligatoire exige sa règle explicite, selon le lot précédent. Les fonctions PR/FOBA existantes restent présentes.
+
+### Livraison et recette
+
+Une branche isolée depuis main vérifié, une PR cohérente, tests strictement ciblés, preuves versionnées et mise à jour des vues consolidées existantes. Aucune campagne PR20–29 rejouée. Aucune mutation de production ni migration, RLS/Okta, faux NIP ou export nominatif. Aucun merge/déploiement automatique ; GO fusion puis GO déploiement distincts. Après contrôle du SHA réellement publié : recette MOA exclusivement sur SCOPE Online en production et PASS explicite avant clôture. **Programme annuel QUO VADIS2027 NON VALIDÉ.**

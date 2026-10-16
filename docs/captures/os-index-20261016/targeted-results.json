@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-16",
+  "status": "PASS_TECHNIQUE_LOCAL",
+  "baseMain": "02b034ab5e1d5065373b39b8fb43aa74740b7fa7",
+  "branch": "codex/scope-uniformisation-os-index-20261016",
+  "unit": {
+    "passed": 20,
+    "failed": 0,
+    "tests": [
+      "existing grade codes/aliases retained, institutional hierarchy and supplied JSP order",
+      "same catalogue, three groups, existing technical public codes retained and no duplicate display identity",
+      "hierarchy then alphabetic order, candidate directly follows target in every group",
+      "same order for every selection permutation, echelon contraction and historic raw values unmodified",
+      "all OS1.06 abbreviations plus the two explicit MOA complements, IndeX correspondences",
+      "DPS/DAP/JSP contexts use the sole OI field; training responsibility is JSP G1/C1/B1 only",
+      "confirmed interim role is fully exercised, dates and concurrent functions retained without promotion",
+      "Chef JSP/DAP still require their role in the appropriate domain, no cross-domain join",
+      "replacement FOBA chief is distinct and requires a confirmed Cadre FOBA at that date",
+      "FOBA1 is first-year population, echelon 0 and no DPS/DAP incorporation, no inferred assignment",
+      "FOBA2 requires second year and DPS/DAP; FOBA3 requires third year and DPS, never a function",
+      "public combinations include echelon 0–III, FOBA1, Commandant without duplicate persons",
+      "historical C2 rules, fingerprints and results unchanged without new optional population semantics",
+      "PIONNIER new-creation default is FOBA3; existing source/decisions and old projection preserved",
+      "personnel PABC display uses institutional label; historical aliases and PL/VL effectif logic retained",
+      "fiche render retains historical identifiers, hides technical codes and uses three groups per control",
+      "MOA removes Chef materiel JSP from new choices, keeps already-selected historical values",
+      "presentation extensions never reclassify existing operational publics or change automatic reference enrichment",
+      "existing publication planner keeps operational relations/codes and recognizes new descriptive functions without assignment writes",
+      "FOBA1 absence of incorporation is not inferred from invalid or undated incorporation facts"
+    ]
+  },
+  "browser": {
+    "status": "PASS_TECHNIQUE_LOCAL",
+    "scenarios": 8,
+    "externalNetworkRequests": 0,
+    "interceptedRequests": 1,
+    "productionWrites": 0,
+    "checks": [
+      "three groups across all selectors",
+      "hierarchy and candidate adjacency",
+      "FOBA/JSP contextual functions",
+      "same summary regardless of click order",
+      "technical codes hidden",
+      "OI refresh with historical values",
+      "untouched fields omitted from save",
+      "explicit save preserves cumulative historical responsibility/qualification values"
+    ]
+  },
+  "staticChecks": {
+    "nodeSyntaxFiles": [
+      "assets/js/scope-personnel-display.js",
+      "assets/js/scope-personnel-referentials.js",
+      "assets/js/scope-ui-logic.js",
+      "assets/js/scope-ui.js",
+      "netlify/lib/_scope-public-engine.js",
+      "netlify/lib/_scope-qv-publication-plan.js",
+      "scripts/scope-os-index-20261016-browser.js",
+      "scripts/scope-os-index-20261016-tests.js"
+    ],
+    "diffCheck": "PASS",
+    "provenanceHashesVerified": [
+      "SCOPE_AUDIT_INTEGRAL_20261015.md",
+      "SCOPE_DIAGNOSTIC_NETLIFY_20261015.md",
+      "SCOPE_INVENTAIRE_FONCTIONNEL_20261015.md",
+      "SCOPE_MATRICE_TRACABILITE_20261015.md",
+      "SCOPE_PLAN_FINALISATION_QV_20261015.md",
+      "SCOPE_REGISTRE_ANOMALIES_20261015.md",
+      "SCOPE_REGISTRE_DECISIONS_MOA_20261015.md",
+      "SCOPE_ROADMAP_CONSOLIDEE_20261015.md",
+      "SCOPE_TODO_CONSOLIDEE_20261015.md"
+    ],
+    "todoNineFields": "PASS",
+    "addedLinksVerified": 22
+  },
+  "catalogueReadOnly": {
+    "transactionReadOnly": "on",
+    "queries": "SELECT code/label references only in READ ONLY; ROLLBACK",
+    "personsRead": 0,
+    "productionWrites": 0
+  },
+  "sourcesSha256": {
+    "OS101": "b9ab798146a9460400334757057db3c36222b0289123d223567607219570d7dc",
+    "OS106": "09a30252ebc58e8a5993d60a9642092ac06936644f4f28c98c26c1a38cdfac1d",
+    "INDEX1": "727ffb532cfde01c73f7e6951ff34bf77e771a2fb9d2778de86c92a5d87aeede",
+    "INDEX2": "7f1f080a2143291c99ae8c68494142d4cd2a3287eca022f378b9bf0a3d02c7d0",
+    "INDEX3": "06c7bfafca6c73198cfbb2bc1367eec4536e45a19bf3407fef943b1014786066"
+  },
+  "testedFilesSha256": {
+    "assets/js/scope-personnel-display.js": "249f4a175b894ee05e17c7d05f88de9d0dacce17d13bfa2838c6a7386f3aa964",
+    "assets/js/scope-personnel-referentials.js": "a38e45791ec20b7791cba34e289fae7e7ab5218f675eb4c4958488b2c0296d19",
+    "assets/js/scope-ui-logic.js": "0732eeecf612424cbb866c8d1e091e9632875ca13ba16680c8865659100acb8e",
+    "assets/js/scope-ui.js": "2538845b1b83f366bd89a0c57dfe477c7705b7ca31075d334ddddd8ba22c484c",
+    "netlify/lib/_scope-public-engine.js": "78f8c8d829ebcfe315c98487a8d9a6ac014d97474ccc70c961db0bbe33943597",
+    "netlify/lib/_scope-qv-publication-plan.js": "d4baaaf04e3738091d87d5a16a64e6349ff620c5c8f0945a16b7cc5a2e2c6ff7",
+    "scripts/scope-os-index-20261016-browser.js": "8565a8e0816721aa2726e79116b34dd8994e5ff0dcbbde8f6973eb2fa47182e7",
+    "scripts/scope-os-index-20261016-tests.js": "db7720d518b821150dcc71db3472583a322d58a3f0206c0539004965e7bee4b2"
+  },
+  "production": {
+    "site": "scope-sdisnv",
+    "siteId": "6def8d4d-78c6-4112-bb76-6891df0e0a52",
+    "publishedDeployId": "6ad0d08255cda461366136f2",
+    "publishedCommit": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+    "state": "ready",
+    "publishedAt": "2026-10-15T13:09:59.769Z",
+    "moaRecipe": "NON_EFFECTUEE_EN_ATTENTE_GO_FUSION_PUIS_GO_DEPLOIEMENT"
+  },
+  "acquiredCampaignsRerun": false,
+  "annualProgramme2027": "NON_VALIDE",
+  "limits": [
+    "Synthetic persons have fixture IDs only; no NIP, real person fact or database write",
+    "Individual functions/candidatures/training-year/echelon source and adapter remain required",
+    "No live persistent save, PDF, Safari, IndeX import or production MOA validation demonstrated"
+  ]
+}

@@ -1,6 +1,32 @@
 # SCOPE — Registre des décisions MOA
 
 
+## Uniformisation institutionnelle OS / IndeX — 16.10.2026
+
+Mission humaine actuelle : uniformiser grades/fonctions/spécialisations/abréviations/publics dans les composants existants, un lot et une PR, sans modification des données de production, fusion ou déploiement automatique. Sources fournies : OS1.01 v1.1 du29.10.2021, OS1.06 v1.4 du30.07.2025, trois captures IndeX. Les sources ont été lues, tableaux clés des PDF inspectés visuellement, et confrontés aux catalogues versionnés et aux seuls catalogues persistés en transaction READ ONLY / ROLLBACK. [Concordance](../../captures/os-index-20261016/concordance.json) ; [rapport](../../SCOPE_OS_INDEX_UNIFORMISATION_20261016.md). Les procédures incluses dans les OS sont des règles de source, pas des instructions de mutation.
+
+| Décision MOA de ce lot | Conséquence |
+|---|---|
+| Trois groupes institutionnels | Commandement et responsables ; Encadrement ; Personnel et spécialisations ; hiérarchie puis alphabet ; candidat immédiatement après cible ; même ordre en choix et résumé |
+| Cadres FOBA/JSP, formateurs, moniteurs | Encadrement ; populations FOBA séparées des fonctions |
+| Contextes | Chef site DPS/JSP et Chef section DPS/DAP communs ; Resp formation JSP G1/C1/B1 ; conditions Chef JSP et Chef DAP conservées |
+| Rempl. chef FOBA | Fonction distincte, condition Cadre FOBA obligatoire ; cumul/dates préservés |
+| a.i. | Fonction pleinement exercée sous fait confirmé, sans nouvelle fonction a.i. ni promotion de grade |
+| FOBA1/2/3 | Première année/échelon0/sans DPS-DAP ; deuxième année incorporée DPS-DAP ; troisième année DPS/trois exercices/PIONNIER G1 supplémentaire |
+| Abréviations | OS1.06 prioritaire ; Spéc antichute et OP élévateur à timon sont compléments MOA ; Ydon129=TP9 et Ydon0=VPC confirmés |
+| Chef matériel JSP | Nouvelle réponse humaine ci-dessous : exclu des nouveaux choix, aucune référence nouvelle ; historique conservé |
+| Responsable | Aucune assignation automatique hors règle explicite ; aucun nouveau moteur d’assignation |
+| Livraison / recette | PR isolée, GO fusion et déploiement distincts, SHA publié vérifié, recette MOA production et PASS explicite ; Programme2027 NON VALIDÉ |
+
+**Arbitrage Chef matériel JSP reçu dans l’échange, texte exact :**
+> Cette fonction va être supprimée, inutile de la référencer
+
+Cette réponse clôt le besoin de nouvelle référence Chef matériel JSP. Elle n’autorise aucune suppression de données de production ni des anciennes sélections `Resp mat JSP`. Aucune équivalence personnelle ou migration entre les deux libellés n’est inventée.
+
+La règle actuelle FOBA3/PIONNIER remplace l’ancienne règle FOBA2 pour les nouvelles propositions ; les sources/décisions enregistrées ne sont pas réécrites. Chef formation JSP et Resp formation JSP restent distincts selon la capture, faute d’équivalence décidée. JSP Y3 de la capture n’est pas transformé en JSP C1 : le mandat explicite conserve JSP G1/C1/B1.
+
+Les sources institutionnelles fournissent des références et règles, pas des rattachements de personnes. Source réelle et confirmation des faits individuels datés, années de formation/échelons/candidatures toujours nécessaires pour les extractions et assignations réelles ; aucune donnée fictive. Les acquis PR20–29 ne sont pas rejoués et leurs PASS gardent leur portée. L’uniformisation technique reste **DÉVELOPPÉE NON VALIDÉE MOA EN PRODUCTION**.
+
 ## Lot prioritaire fiches et assignations — 16.10.2026
 
 **Décision humaine actuelle, applicable avant les états historiques ci-dessous.** La mission « LOT PRIORITAIRE QUO VADIS 2027 — FIABILISATION DES FICHES ET PRÉPARATION DES ASSIGNATIONS » autorise le développement déterministe d’un seul lot sur branche isolée, tests ciblés et PR. Elle interdit fusion automatique, déploiement, modification/migration de production, RLS/Okta et publication annuelle. Elle ne rouvre pas les recettes PR20–27 et impose de préserver les travaux étrangers. Les règles détaillées sont capitalisées dans le [canon](../../business-rules/quo-vadis-canonical-rules.md#complément-moa--lot-prioritaire-fiches-et-préparation-des-assignations-16102026), les preuves dans le [rapport ciblé](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md). Aucun nouveau backlog n’est créé.

@@ -1,0 +1,336 @@
+{
+  "date": "2026-10-16",
+  "queryMode": "BEGIN READ ONLY; SELECT catalogue columns only; ROLLBACK",
+  "transaction_read_only": "on",
+  "database_name": "postgres",
+  "responsibility_references": [
+    {
+      "code": "C audiovisuel",
+      "label": "C audiovisuel"
+    },
+    {
+      "code": "C DAP",
+      "label": "C DAP"
+    },
+    {
+      "code": "C FOBA",
+      "label": "C FOBA"
+    },
+    {
+      "code": "C for",
+      "label": "C for"
+    },
+    {
+      "code": "C FOSPEC",
+      "label": "C FOSPEC"
+    },
+    {
+      "code": "C JSP",
+      "label": "C JSP"
+    },
+    {
+      "code": "C log",
+      "label": "C log"
+    },
+    {
+      "code": "C op",
+      "label": "C op"
+    },
+    {
+      "code": "C PR",
+      "label": "C PR"
+    },
+    {
+      "code": "C scrt",
+      "label": "C sct"
+    },
+    {
+      "code": "C site",
+      "label": "C site"
+    },
+    {
+      "code": "C site JSP",
+      "label": "C site JSP"
+    },
+    {
+      "code": "Cdt",
+      "label": "Cdt"
+    },
+    {
+      "code": "Of auto",
+      "label": "Of auto"
+    },
+    {
+      "code": "Of spéc",
+      "label": "Of spéc"
+    },
+    {
+      "code": "Présidente CI",
+      "label": "PrésidentE CI"
+    },
+    {
+      "code": "Présidente Codir",
+      "label": "PrésidentE Codir"
+    },
+    {
+      "code": "QM",
+      "label": "QM"
+    },
+    {
+      "code": "Réf sanitaire",
+      "label": "Réf sanitaire"
+    },
+    {
+      "code": "Répondant sport",
+      "label": "Répondant sport"
+    },
+    {
+      "code": "Resp ABC",
+      "label": "Resp ABC"
+    },
+    {
+      "code": "Resp APR",
+      "label": "Resp APR"
+    },
+    {
+      "code": "Resp for JSP",
+      "label": "Resp for JSP"
+    },
+    {
+      "code": "Resp mat",
+      "label": "Resp mat"
+    },
+    {
+      "code": "Resp mat JSP",
+      "label": "Resp mat JSP"
+    },
+    {
+      "code": "Resp OFSI",
+      "label": "Resp OFSI"
+    },
+    {
+      "code": "Resp Sports",
+      "label": "Resp Sports"
+    },
+    {
+      "code": "Resp VPC",
+      "label": "Resp VPC"
+    }
+  ],
+  "public_references": [
+    {
+      "code": "AUTO-COND-PL",
+      "label": "AUTO COND_PL"
+    },
+    {
+      "code": "AUTO-COND-TP9",
+      "label": "AUTO COND_TP9"
+    },
+    {
+      "code": "AUTO-COND-VL",
+      "label": "AUTO COND_VL"
+    },
+    {
+      "code": "AUTO-GRUTIER",
+      "label": "AUTO GRUTIER"
+    },
+    {
+      "code": "AUTO-MEA",
+      "label": "AUTO MEA"
+    },
+    {
+      "code": "AUTO-PILOTE-BAT",
+      "label": "AUTO PILOTE_BAT"
+    },
+    {
+      "code": "DAP-GEN",
+      "label": "DAP général"
+    },
+    {
+      "code": "DAP-Y1",
+      "label": "DAP Y1"
+    },
+    {
+      "code": "DAP-Y2",
+      "label": "DAP Y2"
+    },
+    {
+      "code": "DAP-Y3",
+      "label": "DAP Y3"
+    },
+    {
+      "code": "DAP-Y4",
+      "label": "DAP Y4"
+    },
+    {
+      "code": "DPS-B1",
+      "label": "DPS B1"
+    },
+    {
+      "code": "DPS-B2",
+      "label": "DPS B2"
+    },
+    {
+      "code": "DPS-C1",
+      "label": "DPS C1"
+    },
+    {
+      "code": "DPS-CHEFS-SECTION-REMPLACANTS",
+      "label": "Chefs de section DPS et remplaçants"
+    },
+    {
+      "code": "DPS-G1",
+      "label": "DPS G1"
+    },
+    {
+      "code": "DPS-GEN",
+      "label": "DPS général"
+    },
+    {
+      "code": "FOBA-1",
+      "label": "FOBA 1"
+    },
+    {
+      "code": "FOBA-2",
+      "label": "FOBA 2"
+    },
+    {
+      "code": "FOBA-3",
+      "label": "FOBA 3"
+    },
+    {
+      "code": "FOCA-GEN",
+      "label": "FOCA général"
+    },
+    {
+      "code": "FOCO-DAP",
+      "label": "FOCO DAP"
+    },
+    {
+      "code": "FOCO-DPS",
+      "label": "FOCO DPS"
+    },
+    {
+      "code": "FOCO-JSP",
+      "label": "FOCO JSP"
+    },
+    {
+      "code": "FOSPEC-ANTICHUTE",
+      "label": "FOSPEC ANTICHUTE"
+    },
+    {
+      "code": "FOSPEC-GEN",
+      "label": "FOSPEC général"
+    },
+    {
+      "code": "FOSPEC-NAC",
+      "label": "FOSPEC NAC"
+    },
+    {
+      "code": "FOSPEC-OFSI",
+      "label": "FOSPEC OFSI"
+    },
+    {
+      "code": "FOSPEC-OP-VPC",
+      "label": "FOSPEC OP_VPC"
+    },
+    {
+      "code": "FOSPEC-VPC",
+      "label": "FOSPEC VPC"
+    },
+    {
+      "code": "JSP-CAD",
+      "label": "JSP cadets"
+    },
+    {
+      "code": "JSP-GEN",
+      "label": "Jeunes JSP"
+    },
+    {
+      "code": "PR-GEN",
+      "label": "PR général"
+    },
+    {
+      "code": "PR-PABC",
+      "label": "PR PABC"
+    },
+    {
+      "code": "PR-PAPR",
+      "label": "PR PAPR"
+    },
+    {
+      "code": "SDIS-TOUS",
+      "label": "Tout le SDIS"
+    }
+  ],
+  "qualification_references": [
+    {
+      "code": "ANTICHUTE",
+      "label": "Antichute"
+    },
+    {
+      "code": "CARISTE",
+      "label": "Cariste"
+    },
+    {
+      "code": "COND_PL",
+      "label": "cond PL"
+    },
+    {
+      "code": "COND_TP9",
+      "label": "cond TP9"
+    },
+    {
+      "code": "COND_VL",
+      "label": "cond VL"
+    },
+    {
+      "code": "GRUTIER",
+      "label": "Grutier"
+    },
+    {
+      "code": "GRUTIER_A",
+      "label": "Grutier A"
+    },
+    {
+      "code": "GRUTIER_C",
+      "label": "Grutier C"
+    },
+    {
+      "code": "MACHINISTE_EA",
+      "label": "Machiniste EA"
+    },
+    {
+      "code": "MEA",
+      "label": "MEA"
+    },
+    {
+      "code": "NAC",
+      "label": "NAC"
+    },
+    {
+      "code": "OFSI",
+      "label": "OFSI"
+    },
+    {
+      "code": "PABC",
+      "label": "PABC"
+    },
+    {
+      "code": "PAPR",
+      "label": "PAPR"
+    },
+    {
+      "code": "PILOTE_BAT",
+      "label": "Pilote BAT"
+    },
+    {
+      "code": "SANITAIRE",
+      "label": "Sanitaire"
+    },
+    {
+      "code": "VPC",
+      "label": "VPC"
+    }
+  ]
+}
