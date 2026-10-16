@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-16",
+  "kind": "TECHNICAL_ONLY_NOT_MOA",
+  "baseMain": "b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a",
+  "openPullRequestsBefore": [],
+  "latestMerges": [
+    {
+      "merge_commit_sha": "b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a",
+      "merged_at": "2026-10-15T15:03:47Z",
+      "number": 28
+    },
+    {
+      "merge_commit_sha": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "merged_at": "2026-10-15T13:09:20Z",
+      "number": 27
+    },
+    {
+      "merge_commit_sha": "0d1fc89912d0b03120e3c57a8d0f9dd83c2dcf41",
+      "merged_at": "2026-10-15T10:18:56Z",
+      "number": 26
+    },
+    {
+      "merge_commit_sha": "92cce517f79a89e3040d234314b8de52613af05a",
+      "merged_at": "2026-10-15T09:29:52Z",
+      "number": 25
+    },
+    {
+      "merge_commit_sha": "b3b0cb372fa68aa4a83f8ef8f0856d31d7fbc3a5",
+      "merged_at": "2026-10-15T08:31:19Z",
+      "number": 24
+    }
+  ],
+  "production": {
+    "name": "scope-sdisnv",
+    "published_deploy": {
+      "id": "6ad0d08255cda461366136f2",
+      "state": "ready",
+      "commit_ref": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "published_at": "2026-10-15T13:09:59.769Z"
+    }
+  },
+  "unit": {
+    "command": "node --test scripts/scope-qv-fiches-assignations-20261016-tests.js",
+    "tests": 24,
+    "pass": 24,
+    "fail": 0,
+    "environment": "Node local, fixtures and fake DB only",
+    "scenarios": [
+      "same function identities across domains; OI-qualified display and dates, no individual inferred",
+      "free and referenced historical function labels remain raw and have a shared display choice",
+      "common function rule requires explicit domain, rejects another OI/domain, malformed context",
+      "same dated function fact must match domain, OI, section and site; no cross-context join",
+      "Chef JSP additionally requires a confirmed dated Chef site in a JSP OI",
+      "Chef DAP requires Chef section in DAP, not a same-person DPS section",
+      "historical public normalization/fingerprint and evidence unchanged when optional semantics absent",
+      "candidate inclusion is explicit, dated and confirmed; it does not synthesize a qualification",
+      "CAR/TRUCK recognize exact definitions, TP9 1.x/2.x require valid drivers; no title-only inference",
+      "responsibility is opt-in under an identified rule; absent fields keep existing snapshots identical",
+      "G1 capacities only, correct section/half-section; no general quota for other sites",
+      "grouped DPS/DAP and PR 1–4 declare the MOA preparation contract without generating assignments",
+      "correction preview spans occurrences and sessions, preserves data and requires explicit revisions",
+      "preparatory courses reject evaluation proposals, while non-evaluable events retain assignability and attendance",
+      "auxiliary stays manually assigned and non-contributive with no deletion of attendance",
+      "assignment review identifies non-concerned persons, mandatory absences, collisions and incomplete facts",
+      "alternatives exclude full, unavailable, priority or non-movable sessions; no automatic move",
+      "PR checks every session supervisor/prepose and all manually designated trainers; repeated supervisors rejected",
+      "UI includes the same function choices and a read-only correction preview, escapes values, retains permissions",
+      "PR capacity includes the Prepose APR and excludes the supervisor; auxiliary cannot fill the Prepose role",
+      "server refuses evaluation/validation of a preparatory course before any write",
+      "grouped evaluation covers every selected definition/session/site and blocks an incompatible profile",
+      "mandatory responsible participation requires an explicit activity rule and identified persons",
+      "persisted JSON key order creates neither a revision nor a correction proposal"
+    ]
+  },
+  "browser": {
+    "status": "PASS_TECHNIQUE_LOCAL",
+    "scenarios": 6,
+    "syntheticDocumentRequests": 1,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "checks": [
+      "grouped evaluation proposals without save",
+      "historical function/free labels retained on OI change",
+      "same save workflow and explicit parameters",
+      "untouched evaluation/parameters omitted",
+      "OI group refresh without function duplicates",
+      "no browser errors or external network"
+    ]
+  },
+  "moaProduction": {
+    "status": "NOT_RUN_PENDING_SEPARATE_GOS_AND_PUBLISHED_SHA",
+    "productionDataWrites": 0
+  },
+  "replayedPr20to27Campaigns": false,
+  "staticChecks": {
+    "status": "PASS",
+    "syntaxFiles": 9,
+    "localLinks": 163,
+    "provenanceCopies": 9,
+    "todoColumns": 9,
+    "gitDiffCheck": "PASS"
+  },
+  "codeSha256": {
+    "assets/js/scope-ui-logic.js": "b42120700dbeba945303f4eb2c6f98504e11699062978ddba7a20a8fbe132800",
+    "assets/js/scope-ui.js": "185c5e066ead05bc35f059ab18df314fe0fa4f4550525bbba09627e7f35ec10e",
+    "netlify/lib/_scope-assignment-constraints.js": "b217b187a1002c3562775159292ad763f78daf396bbfdea2ebacb620bf88e6ee",
+    "netlify/lib/_scope-public-engine.js": "bdf27c20f2adae10d0c736533e55544ba2f55e4c7a10ea3bb8c5c76db40572e3",
+    "netlify/lib/_scope-quo-vadis-consolidation.js": "3363be31824c53867ab97c29ed767f7b941fffad4d71ae328bfd19ea11d3cd56",
+    "netlify/lib/_scope-quo-vadis-service.js": "d186209ed7147c6b68f76275f4cb2e080560d83a6d01222431dd12343c5d81b7",
+    "netlify/lib/_scope-qv-programme-revisions.js": "370edc18e15a2cee0c1a43436e57f38ce6b262e8a8db43cc7b6049c9704aad0b",
+    "scripts/scope-qv-fiches-assignations-20261016-browser.js": "c3d4f8d7bc1fe6ffc73f2cd08560aefe8584fb0bcb4d38373fee528f38707cd5",
+    "scripts/scope-qv-fiches-assignations-20261016-tests.js": "2ed700552e13ee0ce24a7f08b4e4dab5bc18cd38fb982eb67e28657506565d62"
+  }
+}

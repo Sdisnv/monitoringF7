@@ -3,6 +3,10 @@
 > Capitalisation phase B : import de la phase A actualisée à #27. Les déclarations « hors dépôt », « pas de phase B » et les prochains GO dans le texte importé décrivent son mandat historique. La mission de phase B autorise maintenant sa capitalisation documentaire en une PR, sans fusion ni déploiement. Les réserves AUDIT_INCOMPLET et Programme 2027 NON VALIDÉ restent applicables. Voir [provenance](README.md).
 
 
+## Actualisation du lot prioritaire — 16.10.2026
+
+Mission de développement autorisée, distincte de la phase B documentaire historique. Base main vérifiée `b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a` (#28 documentaire fusionnée), production fonctionnelle #27 inchangée `3bdad82029ef79ea721bcf4043a5bb47e4d86764`. Les fiches T-04/T-07/T-08 sont actualisées ci-dessous en place ; aucune nouvelle liste concurrente. [Preuves ciblées](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md). **Recette MOA production en attente, Programme2027 NON VALIDÉ.** Les paragraphes phase A suivants restent historiques.
+
 ## Actualisation consolidée du 15.10.2026 — référence applicable
 
 **Phase A, lecture seule. Verdict : AUDIT_INCOMPLET**, avec réserves explicites ci-dessous. **Programme annuel 2027 NON VALIDÉ.** Cette actualisation reprend les huit mêmes livrables ; elle ne recommence pas l'audit initial.
@@ -40,13 +44,13 @@ Les identifiants marqués « proposé » viennent de la mission actuelle et ne s
 | Priorité | P1 proposé, avant validation annuelle |
 | Module | QV |
 | Dépendances | Moteurs annualValidationControl, preparationControls, réservations, publics, calendrier, reconduction ; données et arbitrages M/P |
-| État du développement | PARTIELLEMENT DÉVELOPPÉ : contrôles existants ; rapport global cible À DÉVELOPPER |
-| État des tests | Contrôles #25/#26 acquis ; couverture consolidée nouvelle NON VÉRIFIÉE |
+| État du développement | PARTIEL : propositions groupées domaine/famille/public/qualifications-spécialisations/évaluation et paramètres ; aucun correcteur automatique. Rapport qualité annuel complet hors lot. |
+| État des tests | Tests techniques ciblés du lot 16.10 PASS ; recette MOA production EN ATTENTE ; #25/#26 acquis. |
 | Validation MOA | Besoin exprimé ; implémentation non acceptée |
 | Travaux restants | Relier les contrôles, compléter les axes manquants, rapport consolidé sans autocorrection |
 | Critères d’acceptation | OI, domaine, famille, Stat.Com, lieu/salle, responsable, public, spécialisation, cursus, état, reconduction, évaluation, soldé, ECAwin ; dates, ressources, CTA, sections/demi-sections, préparation/14 jours, fériés/vacances, dates validées et dérogations ; BLOQUANT/À ARBITRER/INFORMATIF ; blocage non résolu interdit validation ; causes, IDs, décisions, dérogations, corrections et résolution traçables |
-| Preuves | [async function setProgrammeStatus](https://github.com/Sdisnv/monitoringF7/blob/3bdad82029ef79ea721bcf4043a5bb47e4d86764/netlify/lib/_scope-quo-vadis-service.js#L3502) ; [function preparationControls](https://github.com/Sdisnv/monitoringF7/blob/3bdad82029ef79ea721bcf4043a5bb47e4d86764/assets/js/scope-qv-coverage.js#L809) |
-| Prochain jalon | Spécification des écarts et revue MOA avant tout développement |
+| Preuves | [Lot ciblé 16.10](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md) |
+| Prochain jalon | GO fusion puis GO déploiement distincts, SHA publié et recette production des seuls parcours modifiés. |
 
 ### QV-PLANIF-ALTERNATIVES-001 (proposé)
 
@@ -149,18 +153,18 @@ Les identifiants marqués « proposé » viennent de la mission actuelle et ne s
 |---|---|
 | Identifiant | QV-PUBLIC-008 — complément relation datée (référence qualifiée) |
 | Description métier | Extractions fiables de chefs de section par PERSONNE–FONCTION–DOMAINE–OI à la date |
-| Source | Mission humaine « Actualisation consolidée du 15.10.2026 », sections citées ; copie dans le registre des décisions §12 ; [docs/SCOPE_QV_PUBLICS_MOA_20261015.md](https://github.com/Sdisnv/monitoringF7/blob/3bdad82029ef79ea721bcf4043a5bb47e4d86764/docs/SCOPE_QV_PUBLICS_MOA_20261015.md) |
-| Date de décision | 15.10.2026 |
+| Source | Mission humaine lot prioritaire fiches/assignations et clarifications,16.10.2026 ; registre des décisions, section datée ; sources historiques conservées dans #24 et le canon. |
+| Date de décision | 15.10 complété le 16.10.2026 |
 | Priorité | P1 proposé pour assignations nominatives |
 | Module | Personnel / publics / QV |
 | Dépendances | Affectations datées et identités/NIP existants ; fonction distincte qualification/responsabilité/événement |
-| État du développement | PARTIELLEMENT DÉVELOPPÉ ; relation fonctionnelle datée manquante |
-| État des tests | Présentation #24/#25 partiellement PASS ; extraction nominative fiable NON VÉRIFIÉE |
-| Validation MOA | Chef section commun acquis ; modèle daté restant demandé |
-| Travaux restants | Définir provenance, dates d’effet et liaison sur les affectations ; conserver les valeurs historiques |
+| État du développement | PARTIEL : catalogue commun contextualisé et prédicat daté étendu ; source/persistance des faits individuels toujours manquante. |
+| État des tests | Compatibilité historique et contextes datés testés sur fixtures ; extraction réelle et recette MOA production NON VÉRIFIÉES. |
+| Validation MOA | Règles de fonctions décidées ; acceptation de la version publiée encore nécessaire. |
+| Travaux restants | Arbitrer source réelle et mode de confirmation des faits fonctions/candidatures, puis raccorder aux personnes existantes sans déduction. |
 | Critères d’acceptation | Mêmes personnes selon date/domaine/OI avec preuve de fonction ; PRINCIPAL/SECONDAIRE ne vaut pas Chef section ; aucun NIP fictif ni déduction depuis responsabilité ponctuelle |
-| Preuves | [docs/SCOPE_QV_PUBLICS_MOA_20261015.md](https://github.com/Sdisnv/monitoringF7/blob/3bdad82029ef79ea721bcf4043a5bb47e4d86764/docs/SCOPE_QV_PUBLICS_MOA_20261015.md) ; [docs/business-rules/quo-vadis-canonical-rules.md](https://github.com/Sdisnv/monitoringF7/blob/3bdad82029ef79ea721bcf4043a5bb47e4d86764/docs/business-rules/quo-vadis-canonical-rules.md) ; [async function affectationsValides](https://github.com/Sdisnv/monitoringF7/blob/3bdad82029ef79ea721bcf4043a5bb47e4d86764/netlify/lib/_scope-service.js#L1554) |
-| Prochain jalon | Contrat métier des fonctions datées et résolution des entrées manquantes |
+| Preuves | [Lot ciblé 16.10](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md) |
+| Prochain jalon | Réponse MOA sur la source individuelle ; livraison déterministe en PR, pas de migration. |
 
 ### QV-EXERCICE-PREPARATION-001 — reliquat après #25/#26
 
@@ -230,13 +234,13 @@ Les identifiants marqués « proposé » viennent de la mission actuelle et ne s
 | Priorité | P1 priorité absolue QV2027 |
 | Module | QV / événements / personnel |
 | Dépendances | Contrôle qualité ; révisions EM/PR/JSP ; assignations datées ; GO annuel et publication distincts |
-| État du développement | PARTIELLEMENT DÉVELOPPÉ |
-| État des tests | Socles et corrections ciblées acquis ; recette de bout en bout NON VÉRIFIÉE |
+| État du développement | PARTIEL : paramètres préparatoires sur fiches et contrôle en lecture seule adossé aux collisions existantes ; aucune nouvelle écriture d’assignation ni livraison bout en bout. |
+| État des tests | Tests techniques du contrat préparatoire PASS ; moteur réel avec faits nominatifs et chaîne annuelle NON VÉRIFIÉS. |
 | Validation MOA | Processus demandé ; Programme 2027 NON VALIDÉ |
-| Travaux restants | Voir plan par étape ; compléter les raccords et contrats, pas de moteur parallèle |
+| Travaux restants | Source des faits, composition annuelle, disponibilité/quotas réels et répartition proportionnée par public/OI ; raccord futur aux assignations existantes. Vacances Permanent/ProgJour dépendances futures. |
 | Critères d’acceptation | Identités/versions/liens stables, anti-doublons, bons destinataires, communication et reprises ciblées traçables, pas de renvoi global systématique |
-| Preuves | [docs/SCOPE_QV_ROADMAP_V1_20261012.md](https://github.com/Sdisnv/monitoringF7/blob/3bdad82029ef79ea721bcf4043a5bb47e4d86764/docs/SCOPE_QV_ROADMAP_V1_20261012.md) ; [docs/SCOPE_V1_SITUATION_20261015.md](https://github.com/Sdisnv/monitoringF7/blob/3bdad82029ef79ea721bcf4043a5bb47e4d86764/docs/SCOPE_V1_SITUATION_20261015.md) |
-| Prochain jalon | Revue des bloqueurs puis recette des seuls raccords manquants après autorisation |
+| Preuves | [Lot ciblé 16.10](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md) |
+| Prochain jalon | Revue PR et GO séparés ; recette MOA en production après contrôle du SHA ; poursuivre les autres étapes seulement sous leur mandat. |
 
 ### QV-RULES-001
 

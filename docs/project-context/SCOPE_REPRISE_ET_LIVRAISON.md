@@ -21,6 +21,10 @@ Ne jamais déposer de secret, URL avec mot de passe, cookie, jeton, export nomin
 
 ## Recette ciblée
 
+**Exigence impérative MOA, lot prioritaire16.10.2026 :** toute recette MOA s’effectue sur [SCOPE Online de production](https://scope-sdisnv.netlify.app), sur le SHA réellement publié et contrôlé. Le local n’est pas une cible de recette MOA fiable à ce stade. Les tests locaux techniques sont autorisés et restent étiquetés techniques. Le circuit est : branche isolée → tests ciblés → PR sans fusion automatique → **GO MOA fusion distinct** → **GO déploiement distinct** → contrôle du SHA publié → recette MOA production → **PASS MOA explicite avant clôture**. Aucun GO de fusion/déploiement ni PASS n’est déduit d’un test réussi.
+
+Aucune donnée de production ne sert à un test avec écriture sans autorisation explicite, contrôle préalable et garanties d’intégrité/rollback vérifiées. Un parcours de sauvegarde ne se teste pas en production sous prétexte de lecture seule. Les propositions de ce lot sont sans écriture ; une correction métier réelle relève du workflow existant et d’une validation humaine.
+
 Préparer une matrice exigence → composant → scénario → environnement/date → preuve → acceptation MOA. Réutiliser les résultats acquis, dont #23 horaires, #26 cas démontrés et #27 CMDT. Les PASS partiels #24/#25 restent partiels. Une condition nouvelle (Safari, veille réelle, profil EM, raccord de communication…) n’est pas validée par analogie.
 
 Exécuter uniquement les tests adaptés au changement autorisé. Pour une PR strictement documentaire : contrôler liens, sources, IDs/statuts, provenance, cohérence des deux vues, présence des réserves, diff et absence de données personnelles/secrets ; ne pas lancer build ou recette applicative. Pour un futur changement métier : préciser cible et isolation, comparer avant/après, contrôler versions, identifiants, Stat.Com/codes et données protégées selon contrat ; rollback vérifié sur le clone si écritures. Aucun GET potentiellement initialisant ne doit être utilisé comme preuve de lecture seule sans méthode adéquate.
