@@ -11973,9 +11973,9 @@ body.scope-pdf-open { overflow: hidden; }
 @media(max-width:700px){.qv-review-panel .qv-review-grid,.qv-review-panel .qv-review-fields,.qv-review-panel .qv-review-facts{grid-template-columns:minmax(0,1fr)}.qv-review-panel .qv-review-grid{padding:12px}.qv-review-panel .qv-review-actions{align-items:flex-start;flex-direction:column}}
 
 /* QV business notices and programme review only — palette decided by MOA 16.10.2026. */
-.qv-info-notice[data-qv-tone=blue]{--qv-notice-bg:#e8f3ff;--qv-notice-text:#0946a5;--qv-notice-border:#bad8ff}
-.qv-info-notice[data-qv-tone=yellow]{--qv-notice-bg:#fff7df;--qv-notice-text:#765318;--qv-notice-border:#e4c779}
-.qv-info-notice[data-qv-tone=red]{--qv-notice-bg:#fff0ef;--qv-notice-text:#992f28;--qv-notice-border:#e9aaa5}
+.qv-info-notice[data-qv-tone=blue]{--qv-notice-bg:var(--scope-navy-soft);--qv-notice-text:var(--scope-blue);--qv-notice-border:var(--scope-border)}
+.qv-info-notice[data-qv-tone=yellow]{--qv-notice-bg:var(--scope-warning-soft);--qv-notice-text:var(--scope-warning);--qv-notice-border:var(--scope-border)}
+.qv-info-notice[data-qv-tone=red]{--qv-notice-bg:var(--scope-red-soft);--qv-notice-text:var(--scope-error);--qv-notice-border:var(--scope-border)}
 .qv-info-notice{background:var(--qv-notice-bg);color:var(--qv-notice-text);border:1px solid var(--qv-notice-border);padding:14px;border-radius:4px;line-height:1.5;overflow-wrap:anywhere}
 .qv-info-notice p{margin:8px 0}
 .qv-info-notice a{white-space:normal;overflow-wrap:anywhere}
@@ -12001,3 +12001,34 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-review-panel .qv-review-state[data-qv-tone=yellow]::before{background:#946513}
 .qv-review-panel .qv-review-state[data-qv-tone=red]::before{background:#992f28}
 @media(max-width:650px){.qv-programme-review,.qv-programme-review .qv-review-section,.qv-programme-review .qv-review-result-details,.qv-programme-review .qv-review-table{scroll-margin-top:230px}.qv-programme-reference.qv-info-notice{padding:12px 15px}.qv-business-conditions{grid-template-columns:minmax(0,1fr);gap:4px}.qv-business-conditions dd{margin-bottom:8px}}
+
+/* MOA 16.10 post-PR32: shared message surfaces, existing DS tokens and behavior. */
+.scope-banner:is(.info,.success),.scope-notification-layer:is(.is-info,.is-success),.scope-feedback-overlay:is(.is-info,.is-success,.is-progress){--scope-message-bg:var(--scope-navy-soft);--scope-message-text:var(--scope-blue)}
+.scope-banner.warning,.scope-notification-layer.is-warning,.scope-feedback-overlay:is(.is-warning,.is-confirm){--scope-message-bg:var(--scope-warning-soft);--scope-message-text:var(--scope-warning)}
+.scope-banner.error,.scope-notification-layer.is-error,.scope-feedback-overlay.is-error,.scope-feedback-overlay[data-message-tone=error]{--scope-message-bg:var(--scope-red-soft);--scope-message-text:var(--scope-error)}
+.scope-feedback-overlay[data-message-tone=info]{--scope-message-bg:var(--scope-navy-soft);--scope-message-text:var(--scope-blue)}
+.scope-banner:is(.info,.success,.warning,.error),.scope-notification-card,.scope-feedback-card{background:var(--scope-message-bg,var(--scope-card));color:var(--scope-message-text,var(--scope-text));border-color:var(--scope-message-text,var(--scope-border));font-weight:400}
+.scope-notification-card p,.scope-feedback-card p,.scope-feedback-body,.scope-feedback-errors{color:inherit;font-weight:400}
+.scope-notification-layer .scope-notification-icon,.scope-feedback-overlay .scope-feedback-mark{background:transparent;color:var(--scope-message-text,var(--scope-blue))}
+.scope-banner strong,.scope-notification-card h3,.scope-feedback-card h2{font-weight:700}
+/* Values remain ordinary text; headings and structural labels retain their hierarchy. */
+.qv-workspace :is(input,select,option,textarea,dd,p,td),.qv-workspace .scope-state-label,.qv-workspace .qv-review-state,.qv-workspace .qv-programme-choice-menu>summary{font-weight:400}
+.qv-workspace :is(td,dd,p) strong,.qv-workspace .scope-table tbody th,.qv-workspace .scope-table tbody th :is(strong,a),.qv-workspace .scope-table td a{font-weight:400}
+.qv-workspace :is(h1,h2,h3,h4,thead th,dt,legend),.qv-workspace label>span,.qv-workspace .qv-info-notice>strong{font-weight:700}
+.qv-workspace [hidden]{display:none!important}
+.qv-workspace .qv-programme-reference.qv-info-notice{padding:var(--scope-space-4);margin-bottom:var(--scope-space-3)}
+.qv-workspace .qv-programme-reference .scope-section-head{align-items:center;gap:var(--scope-space-3);flex-wrap:wrap}
+.qv-workspace .qv-programme-reference h3{margin:0;color:inherit}
+.qv-workspace .qv-programme-reference-body{padding:0}
+.qv-workspace .qv-programme-reference .scope-btn{position:static;color:var(--scope-text);border-color:var(--scope-border);background:var(--scope-card)}
+.qv-workspace .qv-programme-reference .scope-btn::after{content:none}
+.qv-workspace .qv-fiche-control-notice{margin-top:var(--scope-space-3)}
+.qv-workspace .qv-review-modes{margin-block:var(--scope-space-4);flex-wrap:wrap}
+.qv-workspace .qv-review-field input:is([type=date],[type=search]){height:var(--scope-h-control);border:1px solid var(--scope-border);border-radius:var(--scope-radius-xs);background:var(--scope-card);font:inherit;box-sizing:border-box;max-width:100%;min-width:0;padding:var(--scope-space-2)}
+.qv-workspace .qv-linked-activities{margin-top:var(--scope-space-4)}
+.qv-workspace .qv-linked-activities .scope-table{min-width:720px}
+.qv-workspace .qv-linked-activities,.qv-workspace .qv-annual-review details{scroll-margin-top:100px}
+@media(max-width:750px){.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table){display:table}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) thead{display:table-header-group}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) tbody{display:table-row-group}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) tr{display:table-row}.qv-workspace :is(.qv-review-summary,.qv-review-table,.qv-linked-activities .scope-table) :is(td,th){display:table-cell}.qv-workspace .qv-linked-activities{scroll-margin-top:230px}}
+.qv-workspace .qv-definition-list dd,.qv-workspace .qv-programme-edit-grid :is(input,select,textarea){font-weight:400}
+.qv-workspace .qv-review-modes{height:auto;max-width:100%}
+.qv-workspace .qv-review-modes .scope-segmented-item{height:auto;min-height:var(--scope-h-field-compact);padding:var(--scope-space-2) var(--scope-space-3);white-space:normal;flex:1 1 160px}

@@ -1,0 +1,52 @@
+{
+  "checkedAt": "2026-10-16T12:27:48Z",
+  "base": {
+    "name": "main",
+    "sha": "fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51"
+  },
+  "openPullRequests": [],
+  "recentMerges": [
+    {
+      "merge_commit_sha": "fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51",
+      "merged_at": "2026-10-16T10:50:26Z",
+      "number": 32
+    },
+    {
+      "merge_commit_sha": "0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5",
+      "merged_at": "2026-10-16T09:40:51Z",
+      "number": 31
+    },
+    {
+      "merge_commit_sha": "8a11b2e50ff47932628733b3dbc9715bfe6822b2",
+      "merged_at": "2026-10-16T08:11:45Z",
+      "number": 30
+    },
+    {
+      "merge_commit_sha": "02b034ab5e1d5065373b39b8fb43aa74740b7fa7",
+      "merged_at": "2026-10-16T05:56:13Z",
+      "number": 29
+    },
+    {
+      "merge_commit_sha": "b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a",
+      "merged_at": "2026-10-15T15:03:47Z",
+      "number": 28
+    }
+  ],
+  "production": {
+    "id": "6def8d4d-78c6-4112-bb76-6891df0e0a52",
+    "name": "scope-sdisnv",
+    "published_deploy": {
+      "id": "6ad20a3bbc6afdaa433daec6",
+      "state": "ready",
+      "commit_ref": "fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51",
+      "published_at": "2026-10-16T11:28:54.534Z"
+    }
+  },
+  "githubWorkflows": {
+    "total_count": 0,
+    "workflows": []
+  },
+  "method": "Read-only GitHub/Netlify metadata. No SCOPE business request or SQL. Existing attached clean worktree reused; foreign shared-checkout changes preserved.",
+  "productionWrites": 0,
+  "mandate_sha256": "5de52dea1ca095c4af3476edb969966cda2c289147ad910e85bec1b7a43c6e18"
+}

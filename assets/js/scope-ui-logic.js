@@ -3631,6 +3631,56 @@
     return [...groups.values()].map(({occurrenceIds,...group})=>({...group,occurrenceCount:occurrenceIds.size}));
   }
 
+  // Presentation adapters only: consume existing annual checks and explicit identities.
+  function qvProgrammeAnnualReview(qv){
+    const rows=qv.canonicalProgramme?.rows || [],known=new Set(rows.map(row=>row.id)),items=[];
+    const add=(message,blocking,ids=[])=>items.push({message,blocking:Boolean(blocking),occurrenceIds:[...new Set(ids.filter(id=>known.has(id)))]});
+    const annual=qv.annualValidationControl;
+    for(const issue of annual?.issues || []){
+      const message=typeof issue==='string'?issue:issue.message || 'Prérequis annuel à contrôler.';
+      const number=/^PAPR module (\d+)\s*:/.exec(message)?.[1];
+      const ids=typeof issue==='object'?[issue.occurrenceId,issue.itemId]:number?(annual.modules || []).find(module=>Number(module.number)===Number(number))?.ids || []:[];
+      add(message,annual.blocking,ids);
+    }
+    if(annual?.blocking && !annual.issues?.length)add('Prérequis annuels non conformes ; détail non fourni.',true);
+    for(const control of qv.preparationControls || [])if(control.status!=='CONFORME' && !control.exception)
+      add(control.message || 'Relation préparatoire à contrôler.',control.blocking,[control.courseId,...(control.exerciseIds || [control.exerciseId])]);
+    const reconciliation=qv.publicationReconciliation,entries=(reconciliation?.entries || []).filter(item=>item.blocking);
+    for(const entry of entries)add(entry.status==='MULTIPLE_PUBLICATION_LINKS'?'Plusieurs publications liées : rapprochement métier nécessaire.':'Correspondances ou décisions distinctes : rapprochement à arbitrer.',true,[entry.itemId,...(entry.publishedItemIds || [])]);
+    if(reconciliation?.blocking && !entries.length)add('Rapprochement des publications bloquant ; rattachement non fourni.',true);
+    for(const conflict of qv.reservationConflicts || [])if(conflict.blocking)add('Conflit de réservation : '+(conflict.roomLabel || 'lieu ou salle à contrôler')+'.',true,[conflict.leftId,conflict.rightId]);
+    if(qv.programmeCycle?.provisional)add('Le Rapport annuel de clôture reste à valider par le Codir.',true);
+    return {items,blocking:items.filter(item=>item.blocking).length,pending:items.filter(item=>!item.blocking).length,
+      occurrenceCount:new Set(items.flatMap(item=>item.occurrenceIds)).size,unlinked:items.filter(item=>!item.occurrenceIds.length).length,
+      checkedAt:annual?.checkedAt || null};
+  }
+  function qvProgrammeLinkedRows(rows,row,controls=[]){
+    const byId=new Map((rows || []).filter(item=>qvProgrammeIsActive(item) && item.active!==false).map(item=>[item.id,item])),links=new Map();
+    const add=(id,relation)=>{if(!id || id===row.id || !byId.has(id))return;if(!links.has(id))links.set(id,{row:byId.get(id),relations:[]});const found=links.get(id);if(!found.relations.includes(relation))found.relations.push(relation);};
+    if(row.definitionId)for(const peer of rows || [])if(peer.definitionId===row.definitionId)add(peer.id,'Autre occurrence ou session du même type');
+    for(const control of controls){
+      const exercises=control.exerciseIds || [control.exerciseId];
+      if(control.courseId===row.id)for(const id of exercises)add(id,'Activité préparée par ce cours');
+      if(exercises.includes(row.id)){
+        add(control.courseId,'Cours préparatoire lié');
+        if(control.groupId)for(const id of exercises)add(id,'Session du même groupe préparatoire');
+      }
+    }
+    return [...links.values()].sort((a,b)=>String(a.row.startsAt || '9999').localeCompare(String(b.row.startsAt || '9999'))
+      || String(a.row.activityLabel || a.row.label || '').localeCompare(String(b.row.activityLabel || b.row.label || ''),'fr') || String(a.row.id).localeCompare(String(b.row.id)));
+  }
+  function qvProgrammeFilterReview(results,rows,filters={}){
+    const byId=new Map((rows || []).map(row=>[row.id,row])),query=String(filters.q || '').trim().toLocaleLowerCase('fr');
+    return (results || []).filter(item=>{
+      const row=byId.get(item.occurrenceId),date=String(row?.startsAt || item.startsAt || '').slice(0,10);
+      const state=item.status==='CONFORME'?'conform':item.blocking || item.validationRequired==='INTERDIT'?'blocking':item.status==='REGLE_NON_DEFINIE'?'undefined':'pending';
+      return (!query || String(row?.activityLabel || row?.label || item.occurrenceLabel || '').toLocaleLowerCase('fr').includes(query))
+        && (!filters.from || date && date>=filters.from) && (!filters.to || date && date<=filters.to)
+        && (!filters.oi || row && qvProgrammeOiMatches(row,filters.oi)) && (!filters.session || row?.sessionLabel===filters.session)
+        && (!filters.state || filters.state===state);
+    });
+  }
+
   function qvProgrammePublicCatalogue() {
     const descriptive = Object.entries(qvProgrammeDescriptivePublics());
     const catalogue=[
@@ -6184,7 +6234,7 @@
     qvInternalEventCodeDisplay,
     qvProgrammeParameters,
     qvProgrammeFunctionDefinitions, qvProgrammeFunctionContext, qvProgrammeIsPreparatory,
-    qvProgrammeAssignmentType, qvProgrammeAssignmentParameters, qvProgrammeAssignmentParametersForRow, qvProgrammeAssignmentProfile, qvProgrammeCorrectionProposals, qvProgrammeSavedModel, qvProgrammeBusinessConditions, qvProgrammeInfoState, qvProgrammeReviewSummaries,
+    qvProgrammeAssignmentType, qvProgrammeAssignmentParameters, qvProgrammeAssignmentParametersForRow, qvProgrammeAssignmentProfile, qvProgrammeCorrectionProposals, qvProgrammeSavedModel, qvProgrammeBusinessConditions, qvProgrammeInfoState, qvProgrammeReviewSummaries, qvProgrammeAnnualReview, qvProgrammeLinkedRows, qvProgrammeFilterReview,
     qvProgrammePublicCatalogue,
     qvProgrammeDateDecision,
     qvProgrammeHasValidatedDate,

@@ -1,5 +1,9 @@
 # SCOPE — Roadmap consolidée pour revue MOA
 
+## Mandat opérationnel UX/exploitation — 16.10.2026, après #32
+
+GO développement explicite, main/production vérifiés `fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51`, déploiement publié `6ad20a3bbc6afdaa433daec6` ready à 11:28:54.534 UTC / 13:28:54.534 Europe/Zurich. Aucune PR ouverte au départ. La fiche QV-CONTROLE-QUALITE-001 est amendée en place ; navigation, messages partagés et exploitation des résultats sont dans le même lot. [Rapport, inventaire et réserves](../../SCOPE_QV_ACCELERATION_UX_20261016.md). Les jalons antérieurs restent datés. Programme2027 NON VALIDÉ, aucun PASS MOA anticipé.
+
 ## Actualisation UX et organisationnelle — 16.10.2026, après #31
 
 Main et production directement vérifiés `0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5` ; #31 fusionnée le16.10 à09:40:51UTC, déploiement publié `6ad1f1629c067a02cb67e1e9` ready à09:42:54.379UTC /11:42:54.379Europe/Zurich. Aucune PR ouverte au départ. [Lot UX et preuves ciblées](../../SCOPE_QV_UX_ORGANISATION_20261016.md). Les fiches qualité/publics ci-dessous sont amendées en place ; aucun second backlog. Les paragraphes suivants conservent leurs références historiques. Le lot reste technique, sans PASS MOA ; Programme2027 NON VALIDÉ.
@@ -51,18 +55,18 @@ Les identifiants marqués « proposé » viennent de la mission actuelle et ne s
 |---|---|
 | Identifiant | QV-CONTROLE-QUALITE-001 (proposé) |
 | Description métier | Consolider le contrôle qualité avant validation annuelle ; écarts équivalents entre OI = à examiner, pas erreurs automatiques |
-| Source | Mandats 15–16.10, correctif #31 puis décisions MOA du lot UX et organisationnel du16.10 ; canon et registre datés. |
-| Date de décision | 15.10 complété le16.10.2026, mandat UX postérieur à #31. |
+| Source | Mandats 15–16.10, #29–#32 et GO développement UX/exploitation du 16.10 après recette #32 ; canon/registre datés. |
+| Date de décision | 15.10 complété le 16.10.2026 ; mandat opérationnel postérieur à #32. |
 | Priorité | P1 proposé, avant validation annuelle |
 | Module | QV |
-| Dépendances | Moteurs annualValidationControl, preparationControls, réservations, publics, calendrier, reconduction ; données et arbitrages M/P |
-| État du développement | PARTIEL pour rapport annuel global ; fiche simplifiée, encadré métier unique et contrôle transversal avec synthèse/détails et harmonisation explicite développés ; aucun enregistrement groupé. |
-| État des tests | 15 tests ciblés et 12 parcours Chrome synthétiques PASS ; 1440/1024/390 ; acquis PR20–31 non rejoués ; recette MOA production NON EFFECTUÉE. |
-| Validation MOA | Décisions du mandat acquises ; implémentation du lot UX non acceptée en production. Aucun PASS #31 déduit de sa publication. |
-| Travaux restants | Revue PR, GO fusion puis GO déploiement distincts ; contrôle SHA et recette MOA production du lot UX. Rapport annuel exhaustif et règles absentes restent à qualifier selon les exigences existantes. |
+| Dépendances | Mêmes moteurs annuels, préparation, rapprochement, réservation et comparateur #31/#32 ; données/arbitrages métier ; SCOPE-UI-2/UX-DS-1 et contrôles CI existants. |
+| État du développement | PARTIEL pour rapport annuel exhaustif ; UX/exploitation développée : navigation, règle/alerte séparées, vues exclusives, synthèse annuelle, type/occurrence/critères, filtres/contexte, activités liées et messages partagés ; aucune écriture groupée. |
+| État des tests | 16 tests ciblés PASS ; parcours Chrome/macOS, build statique et contrôles de structure documentés dans la preuve. Deux attentes historiques de check-local/DS obsolètes, entrées identiques à main ; aucune modification CI/CD. Acquis PR20–32 non rejoués. |
+| Validation MOA | GO développement et décisions UX acquis ; nouveau lot non recetté en production, aucun PASS général déduit de #32. |
+| Travaux restants | Revue PR UX, GO fusion puis déploiement distincts, SHA publié et recette MOA production. Safari et profils réels à vérifier ; rapport exhaustif/faits métier gardent leurs dépendances. Regroupement Événements et refontes spécifiques de messages à décider sans nouveau modèle implicite ; attentes CI historiques à qualifier sous GO distinct. |
 | Critères d’acceptation | OI, domaine, famille, Stat.Com, lieu/salle, responsable, public, spécialisation, cursus, état, reconduction, évaluation, soldé, ECAwin ; dates, ressources, CTA, sections/demi-sections, préparation/14 jours, fériés/vacances, dates validées et dérogations ; BLOQUANT/À ARBITRER/INFORMATIF ; blocage non résolu interdit validation ; causes, IDs, décisions, dérogations, corrections et résolution traçables |
-| Preuves | [Lot UX, matrice et preuves](../../SCOPE_QV_UX_ORGANISATION_20261016.md) ; [correctif #31 historique](../../SCOPE_QV_CORRECTIF_MOA_20261016.md) |
-| Prochain jalon | Revue de la PR UX ; autorisations distinctes puis recette production et PASS explicite avant clôture. |
+| Preuves | [Accélération UX, inventaire et preuves](../../SCOPE_QV_ACCELERATION_UX_20261016.md) ; [#32 historique](../../SCOPE_QV_UX_ORGANISATION_20261016.md) |
+| Prochain jalon | Revue de l’unique PR du mandat opérationnel, GO distincts puis recette ciblée production et PASS explicite avant clôture. |
 
 ### QV-PLANIF-ALTERNATIVES-001 (proposé)
 
