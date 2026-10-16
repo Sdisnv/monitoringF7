@@ -1,0 +1,17 @@
+✔ default conformity and harmonisation retain exact merged-main results (13.701042ms)
+✔ explicit occurrence selection narrows the existing comparator without broadening type or active scope (0.168416ms)
+✔ single recipient never expands to every session; ID duplicates do not duplicate proposals (0.079708ms)
+✔ source validation and mandatory explicit field/type guards retained (1.199042ms)
+✔ confirmed TP9 rules dominate a cross-type saved model, with incompatible preview forbidden (0.484667ms)
+✔ protected published JSP witness, versions, history, qualifications and programme stay byte-identical (51.03575ms)
+✔ linked relation and annual summary adapters remain exactly those of main (0.84675ms)
+✔ linked presentation sorts complete real timestamps using existing numeric sort, preserving input (0.784834ms)
+✔ same-type model opens recipient chooser and only fields available, including boolean false (0.873459ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 307.0905

@@ -23,10 +23,14 @@ grep -q "Version du fichier : v67.0" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
-grep -q 'to = "/.netlify/functions/auth-login"' netlify.toml
+# The active OIDC entry point and session routes replace the retired auth-login route.
+for route in auth-config auth-me auth-refresh auth-logout; do
+  grep -qF "to = \"/.netlify/functions/$route\"" netlify.toml
+  test -f "netlify/functions/$route.js"
+done
 grep -q 'to = "/.netlify/functions/auth-oidc-start"' netlify.toml
 grep -q 'to = "/.netlify/functions/auth-oidc-callback"' netlify.toml
-if grep -q 'from = "/api/scope/*"' netlify.toml; then
+if grep -qF 'from = "/api/scope/*"' netlify.toml; then
   grep -q 'to = "/scope.html"' netlify.toml
   grep -q 'to = "/.netlify/functions/scope"' netlify.toml
 else
@@ -52,7 +56,7 @@ grep -q "hydrateOnlineDataCache" assets/js/app.js
 grep -q "publishLocalCacheToServer" assets/js/app.js
 grep -q "SCOPE-IMPL-1A" assets/js/app.js
 grep -q "AUTO_PUBLISH_LOCAL: false" assets/js/online-cache-policy.js
-grep -q 'from = "/api/scope/*"' netlify.toml
+grep -qF 'from = "/api/scope/*"' netlify.toml
 grep -q "ensureScopeSchema" netlify/lib/_scope-schema.js
 grep -q "createScopeService" netlify/lib/_scope-service.js
 grep -q "listEvenements" netlify/lib/_scope-service.js

@@ -1,5 +1,13 @@
 # SCOPE — Registre des anomalies, réserves et arbitrages
 
+## Correctif consolidé issu de la recette #33 — 16.10.2026
+
+Même repère **QV-CONTROLE-QUALITE-001 / UX**, aucune nouvelle liste. Source : mandat correctif humain post-#33, GO développement explicite. [Rapport et preuves](../../SCOPE_QV_CORRECTIF_R33_20261016.md). Base main/production `ef679b06ce8faebb27911a86e0766b5eb4cd8b9d` vérifiée directement ; aucune PR ouverte au précontrôle.
+
+Défauts ciblés : retours à la ligne de navigation, options de sélecteurs en gras/focus absent, recherche à déclencher, colonnes combinées sans tri, choix d’harmonisation par types entiers et accès borné aux modèles. Corrections techniques : composants communs ajustés, recherche immédiate avant pagination, tris et colonnes séparées, destinataires individuels explicitement choisis. Comparateur/relations/règles confirmées inchangés ; aucune mutation de données. **DÉVELOPPÉ TECHNIQUEMENT ; recette MOA production EN ATTENTE, pas de clôture MOA.**
+
+Les deux réserves statiques observées à #33 ont été reproduites puis corrigées sous le GO actuel : attente de `auth-login` remplacée par les routes OIDC/session réellement configurées et leurs fichiers ; motifs de wildcard lus littéralement ; ancienne liste de suffixes remplacée par l’assertion d’une unique feuille CSS SCOPE versionnée existante. `check-local.sh` PASS et DS9/9 PASS, sans changement Netlify/auth/RLS ni suppression de contrôle. Les constats ci-dessous restent historiques. Aucune panne de production déduite des fixtures ; règles/faits absents et relations ambiguës conservent leurs réserves. Programme2027 NON VALIDÉ.
+
 ## Écarts UX issus de la recette #32 — mandat du 16.10.2026
 
 Main/production #32 directement vérifiés `fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51`. Les constats du nouveau mandat concernent la surcharge navigation/contrôle, la règle et son alerte mélangées, la consultation des résultats et la typographie. Ils sont traités sous le même repère **QV-CONTROLE-QUALITE-001 / UX**, sans second registre : [lot d’accélération, preuves et limites](../../SCOPE_QV_ACCELERATION_UX_20261016.md). État : **DÉVELOPPÉ TECHNIQUEMENT, recette MOA production du nouveau lot EN ATTENTE** ; aucune clôture antérieure déduite.

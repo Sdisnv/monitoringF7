@@ -1,0 +1,7 @@
+== Monitoring F7: controles locaux ==
+-- Controle syntaxe JavaScript
+-- Controle version active
+-- Controle Netlify
+-- Controle backend optionnel
+-- Controle backend online-first
+OK: controles locaux termines.

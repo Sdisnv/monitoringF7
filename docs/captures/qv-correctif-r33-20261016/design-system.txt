@@ -1,0 +1,10 @@
+PASS 01 — tokens couleurs / rayons / espaces / hauteurs / typo / focus
+PASS 02 — boutons unifiés, rayon 3, compact 28, pas de 999
+PASS 03 — champs page 40 / compact 32, même chrome
+PASS 04 — table base commune + scroll horizontal, pas de suppression table-as-card
+PASS 05 — toolbar / segmented jointif / status control / kpi strip / badges
+PASS 06 — modal 6px, menu 4px, focus visible commun
+PASS 07 — aucun 999 dans les nouveaux composants, avatar circulaire conservé
+PASS 08 — primitives DS disponibles sans nouvelle saisie présence
+PASS 09 — pas de logique métier dans le lot DS
+SCOPE-DS-1: 9 PASS

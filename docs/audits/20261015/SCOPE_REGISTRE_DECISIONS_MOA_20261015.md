@@ -1,5 +1,20 @@
 # SCOPE — Registre des décisions MOA
 
+## Mandat correctif consolidé post-PR #33 — décision du 16.10.2026
+
+GO développement humain explicite depuis main vérifié `ef679b06ce8faebb27911a86e0766b5eb4cd8b9d`. Une branche/une PR finale, aucune recette intermédiaire ; fusion, déploiement et données de production non autorisés. [Règles détaillées](../../business-rules/quo-vadis-canonical-rules.md#mandat-correctif-consolidé-post-pr-33--16102026), [rapport et preuves](../../SCOPE_QV_CORRECTIF_R33_20261016.md). Les états post-#32 ci-dessous sont historiques.
+
+| Décision applicable | Application et limite |
+|---|---|
+| Dix menus / trois groupes | Même navigation sur toutes les pages, une ligne à 1440 px, libellés intacts et indicateur dessous ; groupes adaptés/défilants aux faibles largeurs |
+| Typographie et sélecteurs | Titres/libellés gras, valeurs/options normales ; contrôles communs 40 px, police/tailles DS existantes, focus à l’ouverture visible, souris/clavier, historique et multisélection conservés |
+| Recherche | Immédiate sur données chargées avant pagination, contexte conservé ; pas de réseau par caractère ni élément inaccessible après quarante résultats |
+| Activités liées / résultats | Colonnes Date/Activité/OI/Session séparées ; tris aller/retour, pagination/contexte, relations établies seulement ; type → occurrence → critères conservé |
+| Harmonisation | Modèle enregistré explicite ou fourni par la fiche ; autres occurrences du même type proposées immédiatement ; destinataires individuels, champs disponibles, aperçu explicite et aucune écriture |
+| Compatibilité | Même comparateur ; filtre optionnel d’IDs, règles du destinataire prioritaires ; incompatibles signalés et non recommandés, arbitrages maintenus |
+| CI historique | Autorisation présente de corriger les deux assertions obsolètes ; routes OIDC/session et asset CSS versionné réellement contrôlés, motifs littéraux corrigés ; aucune configuration/sécurité modifiée ni contrôle masqué |
+| Protection et acceptation | Données, témoin JSP, IDs/Stat.Com, workflow et acquis conservés ; tests locaux uniquement techniques, GO fusion/déploiement distincts, SHA publié puis PASS MOA production explicite ; Programme2027 NON VALIDÉ |
+
 ## Mandat opérationnel unique — accélération UX et exploitation, 16.10.2026 après #32
 
 GO développement humain explicite, un lot/une branche/une PR depuis main vérifié `fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51`. Les constats de recette #32 autorisent les corrections déterministes du mandat ; ils ne valent pas PASS MOA général ou clôture des anomalies antérieures. [Rapport et preuves ciblées](../../SCOPE_QV_ACCELERATION_UX_20261016.md). Sources OS 1.01/1.06 et décisions #29–#32 conservées.
