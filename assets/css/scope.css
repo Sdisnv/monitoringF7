@@ -11927,3 +11927,47 @@ body.scope-pdf-open { overflow: hidden; }
 @keyframes scopeNotificationIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.scope-notification-layer{animation:none}}
 @media print{.scope-notification-layer{display:none}}
+
+/* Targeted post-MOA panel: no change to the global SCOPE layout. */
+.qv-review-panel{min-width:0;color:var(--scope-text,#172b49)}
+.qv-review-panel .qv-review-section{padding:20px 0;border-bottom:1px solid #d7dfe7;min-width:0}
+.qv-review-panel h3{margin:0 0 12px;font-size:1rem}
+.qv-review-panel p{margin:10px 0;line-height:1.5;overflow-wrap:anywhere}
+.qv-review-panel .qv-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0;padding:16px;border:1px solid #d7dfe7;min-width:0}
+.qv-review-panel legend{padding:0 6px;font-weight:600;font-size:.88rem}
+.qv-review-panel .qv-review-field{display:flex;flex-direction:column;gap:6px;min-width:0;margin:0;font-size:.88rem}
+.qv-review-panel .qv-review-field>span{font-weight:600}
+.qv-review-panel select,.qv-review-panel input[type=text]{box-sizing:border-box;width:100%;min-width:0;min-height:38px;padding:8px;border:1px solid #aeb8c2;border-radius:3px;background:#fff;font:inherit}
+.qv-review-panel select[multiple]{min-height:150px;max-width:100%;padding:4px}
+.qv-review-panel option{padding:6px 8px}
+.qv-review-panel .qv-review-wide{grid-column:1/-1}
+.qv-review-panel .qv-review-check{display:flex;align-items:flex-start;gap:10px;margin:0;padding:8px 0;font-size:.88rem;line-height:1.45;min-width:0}
+.qv-review-panel .qv-review-check input[type=checkbox]{width:16px;height:16px;min-height:16px;flex:0 0 16px;margin:2px 0 0;padding:0}
+.qv-review-panel .qv-review-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 20px}
+.qv-review-panel .qv-review-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.qv-review-panel .qv-review-actions p{flex:1 1 240px;font-size:.85rem;margin:0}
+.qv-review-panel .qv-review-actions button{flex:0 1 auto;white-space:normal}
+.qv-review-panel .qv-review-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;margin:16px 0}
+.qv-review-panel .qv-review-facts>div{min-width:0}
+.qv-review-panel dt{font-weight:600;margin:0 0 4px}
+.qv-review-panel dd{margin:0 0 8px;overflow-wrap:anywhere}
+.qv-review-panel .qv-review-table-wrap{overflow-x:auto;max-width:100%;margin-top:16px;outline-offset:2px}
+.qv-review-panel .qv-review-table{width:100%;min-width:840px;table-layout:fixed;font-size:.84rem;line-height:1.45}
+.qv-review-panel .qv-review-table caption{text-align:left;font-weight:600;padding:8px 0}
+.qv-review-panel .qv-review-table th,.qv-review-panel .qv-review-table td{white-space:normal;overflow-wrap:anywhere;vertical-align:top;padding:12px;border-bottom:1px solid #d7dfe7;text-align:left}
+.qv-review-panel .qv-review-table thead th{background:#edf1f5}
+.qv-review-panel .qv-review-table th:nth-child(1){width:19%}
+.qv-review-panel .qv-review-table th:nth-child(2){width:12%}
+.qv-review-panel .qv-review-table th:nth-child(3){width:23%}
+.qv-review-panel .qv-review-table th:nth-child(4){width:24%}
+.qv-review-panel .qv-review-table th:nth-child(5){width:22%}
+.qv-review-panel .qv-review-table tbody tr:nth-child(odd)>*{background:#fff}
+.qv-review-panel .qv-review-table tbody tr:nth-child(even)>*{background:#f4f6f8}
+.qv-review-panel .qv-review-table tbody th{font-weight:400;text-transform:none;font-size:inherit;color:inherit;letter-spacing:normal}
+.qv-review-panel .qv-review-state{display:inline-flex;align-items:baseline;gap:6px;font-weight:600}
+.qv-review-panel .qv-review-state::before{content:'';display:inline-block;width:8px;height:8px;flex:0 0 8px;background:#66788a}
+.qv-review-panel [data-review-state=CONFORME]::before{background:#287546}
+.qv-review-panel [data-review-state=ECART_CONSTATE]::before{background:#ac2925}
+.qv-review-panel [data-review-state=A_ARBITRER]::before{background:#9a6b15}
+.qv-review-panel .qv-review-value{margin:0}
+@media(max-width:700px){.qv-review-panel .qv-review-grid,.qv-review-panel .qv-review-fields,.qv-review-panel .qv-review-facts{grid-template-columns:minmax(0,1fr)}.qv-review-panel .qv-review-grid{padding:12px}.qv-review-panel .qv-review-actions{align-items:flex-start;flex-direction:column}}

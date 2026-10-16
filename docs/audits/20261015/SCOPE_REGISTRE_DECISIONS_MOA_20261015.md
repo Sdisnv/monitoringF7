@@ -1,6 +1,23 @@
 # SCOPE — Registre des décisions MOA
 
 
+## Correctif post-recette MOA #29 / #30 — 16.10.2026
+
+Mandat humain postérieur au lot OS/IndeX, appliqué sans nouvel arbitrage implicite. [Rapport et preuves](../../SCOPE_QV_CORRECTIF_MOA_20261016.md) ; canon, section « Correctif post-recette MOA PR #29 / #30 ». Les OS 1.01/1.06 restent les sources institutionnelles ; les décisions humaines plus récentes ci-dessous rectifient la lecture des captures de #30.
+
+| Décision confirmée | Portée |
+|---|---|
+| Chef formation JSP n’existe pas | Retrait des nouveaux choix ; historique brut conservé ; aucune équivalence ou remplacement par Resp formation |
+| Resp formation / Chef site | Commandement et responsables ; contextes JSP G1/C1/B1 et DPS/JSP acquis ; cumul/dates ; recherche JSP via contexte et alias |
+| JSP → TP9, cas MOA | Les différences observées ne démontrent aucune non-conformité. La fiche ouverte ne sert jamais implicitement de référence métier |
+| Conformité / harmonisation | Règles applicables vérifiables et quatre états ; source modèle/type/champ explicites pour une reprise volontaire ; incompatibilité sans recommandation ; aucun enregistrement groupé |
+| Évaluation | Règle du type concerné ; cours préparatoires non évaluables ; aucun transfert arbitraire du Non JSP vers TP9 |
+| UX | Trois sections ; libellés métier, carré 8 × 8, contrôles alignés, tableau zébré ; aucun JSON/code technique ou modale de prérequis |
+| Témoin JSP 010JSP.006 | 18.02.2027 18:30–20:30, famille JSP, OI JSP G1/C1/B1, Chef JSP responsable, Chef formation/Chef site/Resp formation concernés, évaluation Non ; validation individuelle acquise, publication/liaison et historique à préserver |
+| Livraison | Développement et PR uniquement ; GO fusion et déploiement distincts, SHA puis nouvelle recette MOA production et PASS explicite ; Programme2027 NON VALIDÉ |
+
+Les déclarations du mandat sur le témoin sont la source de cette capitalisation, pas un nouvel inventaire SQL. Aucune modification ni revalidation du témoin. Les mentions antérieures « Chef formation JSP distinct » et « Resp formation dans Encadrement » restent historiques et sont remplacées par cette décision. Source individuelle datée et règles métier manquantes demeurent nécessaires pour leurs usages réels ; aucune qualification ou personne fictive.
+
 ## Uniformisation institutionnelle OS / IndeX — 16.10.2026
 
 Mission humaine actuelle : uniformiser grades/fonctions/spécialisations/abréviations/publics dans les composants existants, un lot et une PR, sans modification des données de production, fusion ou déploiement automatique. Sources fournies : OS1.01 v1.1 du29.10.2021, OS1.06 v1.4 du30.07.2025, trois captures IndeX. Les sources ont été lues, tableaux clés des PDF inspectés visuellement, et confrontés aux catalogues versionnés et aux seuls catalogues persistés en transaction READ ONLY / ROLLBACK. [Concordance](../../captures/os-index-20261016/concordance.json) ; [rapport](../../SCOPE_OS_INDEX_UNIFORMISATION_20261016.md). Les procédures incluses dans les OS sont des règles de source, pas des instructions de mutation.

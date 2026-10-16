@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-16",
+  "repository": "Sdisnv/monitoringF7",
+  "baseMain": "8a11b2e50ff47932628733b3dbc9715bfe6822b2",
+  "openPullRequestsAtStart": [],
+  "lastMerges": [
+    {
+      "pr": 30,
+      "mergedAt": "2026-10-16T08:11:45Z",
+      "sha": "8a11b2e50ff47932628733b3dbc9715bfe6822b2"
+    },
+    {
+      "pr": 29,
+      "mergedAt": "2026-10-16T05:56:13Z",
+      "sha": "02b034ab5e1d5065373b39b8fb43aa74740b7fa7"
+    },
+    {
+      "pr": 28,
+      "mergedAt": "2026-10-15T15:03:47Z",
+      "sha": "b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a"
+    }
+  ],
+  "production": {
+    "site": "scope-sdisnv",
+    "siteId": "6def8d4d-78c6-4112-bb76-6891df0e0a52",
+    "url": "https://scope-sdisnv.netlify.app",
+    "publishedDeploy": "6ad1de3ada52eb7d16b98738",
+    "publishedSha": "8a11b2e50ff47932628733b3dbc9715bfe6822b2",
+    "state": "ready",
+    "publishedAt": "2026-10-16T08:21:12.013Z"
+  },
+  "sources": {
+    "moaMandateTitle": "SCOPE ONLINE — LOT CORRECTIF UNIQUE POST-RECETTE MOA PR #29 / PR #30 — QUO VADIS 2027",
+    "moaMandateSha256": "4b629fd887c62332fbc890134a9a7819eddcadaf16bd6043d64e4885bb430e6c",
+    "institutionalSources": "Existing OS/IndeX concordance from PR30; later MOA decisions govern JSP corrections"
+  },
+  "method": "Direct GitHub API and Netlify getSite, read only; no SCOPE business GET or SQL connection",
+  "foreignChanges": "Preserved in shared checkout; clean attached worktree reused on isolated branch",
+  "productionWrites": 0
+}

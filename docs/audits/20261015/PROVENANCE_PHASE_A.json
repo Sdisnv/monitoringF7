@@ -43,37 +43,42 @@
       "source_sha256": "b5d6e6ac3429e6fd95b86f0a699a9dad9d36842c298431fed711bfddfe22038a",
       "source_bytes": 47412,
       "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
-      "capitalized_sha256": "bc987094f7fd5daa509eec63e9e22ae4369fafe58c4da57f33f58b5622b922c7"
+      "capitalized_sha256": "769bc55efc6678d8827f002a6dc23f41958626bb360f4fb2a4fc9820dba1ca28",
+      "capitalized_sha256_before_correctif_moa": "bc987094f7fd5daa509eec63e9e22ae4369fafe58c4da57f33f58b5622b922c7",
+      "revision_date": "2026-10-16"
     },
     {
       "file": "SCOPE_REGISTRE_DECISIONS_MOA_20261015.md",
       "source_sha256": "f10756483d3665331c43fa68e9df9379a362411b53223d21c2564a9bb4ef7de5",
       "source_bytes": 78093,
       "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
-      "capitalized_sha256": "751c70f50e50099fc3c8e84eef77d4e59dbf2b0c557eaf742b34d878f71854a3",
+      "capitalized_sha256": "9169df252bb3f6d179e093b269a5ceda41436c687c1ce58a71132b69985b22e1",
       "capitalized_sha256_at_b6054b9": "60bb42c6a1a8af0f3fdb4c892ff1b0c4680d6b59abd0f49d40ddb6cbf4502ed8",
       "revision_date": "2026-10-16",
-      "capitalized_sha256_before_os_index": "8d2000c39cd44c408647aa954cb214fb003c41fceb897ffca4e6ad7358a785f2"
+      "capitalized_sha256_before_os_index": "8d2000c39cd44c408647aa954cb214fb003c41fceb897ffca4e6ad7358a785f2",
+      "capitalized_sha256_before_correctif_moa": "751c70f50e50099fc3c8e84eef77d4e59dbf2b0c557eaf742b34d878f71854a3"
     },
     {
       "file": "SCOPE_ROADMAP_CONSOLIDEE_20261015.md",
       "source_sha256": "3a36c9a68361256806e7f7b833b9fffbb00e1abce1304dfd62278c044c5fc38e",
       "source_bytes": 73079,
       "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
-      "capitalized_sha256": "239824ce2e84c871e8e6aef204d838b66d949a48f88b3906cac99079a4da5193",
+      "capitalized_sha256": "298042731c7e3f1cacbba7d4669d0821793347736b093277f19aa74d5d0de69c",
       "capitalized_sha256_at_b6054b9": "ed6b23128b2a96b3efa68552132065113ddea0a0d32abc989385144f5ea14da0",
       "revision_date": "2026-10-16",
-      "capitalized_sha256_before_os_index": "fff5aa340358111119151da9649f6f017fcf215d2f281d64d3a2a66650c5c3e1"
+      "capitalized_sha256_before_os_index": "fff5aa340358111119151da9649f6f017fcf215d2f281d64d3a2a66650c5c3e1",
+      "capitalized_sha256_before_correctif_moa": "239824ce2e84c871e8e6aef204d838b66d949a48f88b3906cac99079a4da5193"
     },
     {
       "file": "SCOPE_TODO_CONSOLIDEE_20261015.md",
       "source_sha256": "57c7d7c102891a953ef772111a18df4ad91a6482b149628f07c7458cd2d3b4d8",
       "source_bytes": 33764,
       "source_reference": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
-      "capitalized_sha256": "f405f3c1ef88cee1701089996a0aa86a7c4d88ce7bf5971a49c11d8501a69ba3",
+      "capitalized_sha256": "9dfac4a9ee08983ad9ec1007b31a37028e69620c38a8ad11dae8ec29a613eb22",
       "capitalized_sha256_at_b6054b9": "68c4c4a18d7c5164b69cc81a705fcd91aa1af0bae9543638f54245070a1c6c5f",
       "revision_date": "2026-10-16",
-      "capitalized_sha256_before_os_index": "691ccda18fcaf017ad7a436860163344cc2c8663f8c62fad5f55235baba055fd"
+      "capitalized_sha256_before_os_index": "691ccda18fcaf017ad7a436860163344cc2c8663f8c62fad5f55235baba055fd",
+      "capitalized_sha256_before_correctif_moa": "f405f3c1ef88cee1701089996a0aa86a7c4d88ce7bf5971a49c11d8501a69ba3"
     }
   ],
   "editorial_changes": [
@@ -100,6 +105,19 @@
       "base_main": "02b034ab5e1d5065373b39b8fb43aa74740b7fa7",
       "reason": "Actualisation ciblée des mêmes vues actives et décisions, dont retrait Chef matériel JSP ; sources phase A inchangées",
       "files": [
+        "SCOPE_REGISTRE_DECISIONS_MOA_20261015.md",
+        "SCOPE_ROADMAP_CONSOLIDEE_20261015.md",
+        "SCOPE_TODO_CONSOLIDEE_20261015.md"
+      ],
+      "application_changes_in_current_lot": true
+    },
+    {
+      "date": "2026-10-16",
+      "lot": "CORRECTIF_POST_RECETTE_MOA_29_30",
+      "base_main": "8a11b2e50ff47932628733b3dbc9715bfe6822b2",
+      "reason": "Anomalies MOA qualité/UX et décisions JSP ; mêmes vues et sources historiques conservées",
+      "files": [
+        "SCOPE_REGISTRE_ANOMALIES_20261015.md",
         "SCOPE_REGISTRE_DECISIONS_MOA_20261015.md",
         "SCOPE_ROADMAP_CONSOLIDEE_20261015.md",
         "SCOPE_TODO_CONSOLIDEE_20261015.md"

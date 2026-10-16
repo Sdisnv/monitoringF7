@@ -1212,3 +1212,34 @@ La responsabilité d’une activité n’entraîne toujours aucune assignation i
 ### Livraison et recette
 
 Une branche isolée depuis main vérifié, une PR cohérente, tests strictement ciblés, preuves versionnées et mise à jour des vues consolidées existantes. Aucune campagne PR20–29 rejouée. Aucune mutation de production ni migration, RLS/Okta, faux NIP ou export nominatif. Aucun merge/déploiement automatique ; GO fusion puis GO déploiement distincts. Après contrôle du SHA réellement publié : recette MOA exclusivement sur SCOPE Online en production et PASS explicite avant clôture. **Programme annuel QUO VADIS2027 NON VALIDÉ.**
+
+
+## Correctif post-recette MOA PR #29 / #30 — 16.10.2026
+
+Source : mandat humain « SCOPE ONLINE — LOT CORRECTIF UNIQUE POST-RECETTE MOA PR #29 / PR #30 — QUO VADIS 2027 », du 16.10.2026, postérieur au lot institutionnel ci-dessus. [Preuves et portée](../SCOPE_QV_CORRECTIF_MOA_20261016.md). Les règles ci-dessous prévalent sur la reprise implicite des valeurs de la fiche ouverte introduite en #29 et sur les deux classifications JSP de #30. Elles ne remettent pas à zéro les autres acquis.
+
+### QV-PUBLIC-008 — rectification JSP post-recette
+
+La fonction **Chef formation JSP n’existe pas** dans l’organisation, selon décision MOA confirmée le 16.10.2026. Retirer ce choix des nouvelles sélections, préserver toute ancienne sélection sous son code et son libellé ; aucune suppression, substitution par Resp formation ou équivalence artificielle. Même principe que Chef matériel JSP. La capture IndeX antérieure explique son introduction en #30 mais ne prévaut pas sur cette décision humaine plus récente.
+
+**Resp formation** appartient à **Commandement et responsables**, contextualisé JSP G1/C1/B1 ; cumul de fonctions et dates conservés. Chef site reste une seule référence commune dans ce même groupe, DPS G1/C1/B1/B2 et JSP G1/C1/B1. La recherche JSP reconnaît les alias et contextes de ces références via le filtre existant, sans les dupliquer. Trois groupes, hiérarchie puis alphabet, candidats adjacents et affichage indépendant des clics demeurent applicables.
+
+### QV-CONTROLE-QUALITE-001 — conformité et harmonisation distinctes
+
+Une différence entre fiches n’est pas une anomalie. **Contrôle de conformité** : choisir les types, retrouver leurs occurrences/sessions actives et comparer aux seules règles confirmées, identifiées par leur définition et leur contexte. Aucun champ de la fiche ouverte ne devient une référence. États : Conforme, Écart constaté, À arbitrer, Règle non définie. Une règle absente indique exactement **« Règle métier non définie »**, sans valeur proposée inventée. Conforme porte sur le critère affiché, pas sur la fiche entière ni la validation annuelle.
+
+Le chemin de comparaison existant réutilise les profils reconnus, le contrôle préparatoire, la proposition de famille DAP déjà conditionnée et les identifiants d’exercices existants. Les règles d’évaluation confirmées couvrent PR 1–4, formations groupées DPS/DAP et exercices DPS/DAP identifiés ; les cours de cadres préparatoires restent non évaluables. Public minimal des profils CAR/TRUCK/TP9 selon règles acquises, profil d’assignation et participation du responsable conservée sous règle explicite. Un paramètre absent reste à confirmer. Aucun alignement arbitraire des domaines, familles, qualifications ou évaluations sans règle applicable. Un type inconnu ou seulement ressemblant par son titre reste non défini.
+
+**Harmonisation volontaire** : choisir explicitement une fiche modèle enregistrée, les types destinataires et les champs. Aucune source, cible ou valeur n’est choisie implicitement. Afficher source, valeur actuelle, proposition, compatibilité, conséquences et validation. Les domaines/OI et profils incompatibles, familles historiques non proposées et évaluations interdites sont signalés ; une compatibilité non établie reste À arbitrer. Une reprise JSP vers AUTO ne constitue jamais une correction recommandée. Modifier le périmètre invalide la prévisualisation précédente.
+
+Aucun enregistrement groupé ; aucune mutation des fiches existantes. Une correction future passe par la fiche et les contrôles, validation/revalidation/révision motivée et journaux existants. Source/version, identifiants/lignées, Stat.Com, événements liés, présences et décisions humaines restent conservés.
+
+### Panneau ciblé et paramètres métier
+
+Le panneau distingue A. Préparation des assignations, B. Contrôle de conformité des fiches, C. Harmonisation volontaire. Grille, contrôles espacés et dimensionnés, tableaux zébrés, états avec carré 8 × 8 et libellé ; aucun badge/pill, JSON brut, identifiant interne ou code de validation technique visible. Les codes restent internes et les paramètres sont traduits en libellés métier. « Confirmation MOA nécessaire » remplace la valeur technique. Prérequis absents : indication contextuelle et action désactivée, sans modale. Absence d’écart : message explicite ; absence de règle et incompatibilité restent distinctes.
+
+### Témoin protégé et livraison
+
+Selon le mandat post-recette, Séance Direction JSP **010JSP.006**, 18.02.2027 18:30–20:30, famille JSP, OI JSP G1/C1/B1, Responsable Chef JSP, publics Chef formation/Chef site/Resp formation, évaluation Non : **validation MOA individuelle acquise, fiche publiée et liée à son événement**. Ne modifier ni cette fiche, ni l’événement, ni son historique ; ne rejouer aucune validation. Ce témoin précis est postérieur aux décisions de planning antérieures ; il ne donne pas mandat de les réappliquer sur cette fiche. Le lot n’en a pas relu le contenu en base et n’en a modifié aucune donnée.
+
+Aucune résolution nominative ni changement des affectations ; auxiliaires hors effectifs/statistiques, dispenses et présences conservées. Aucune mutation de production, création d’événement, application groupée, migration, RLS/Okta, fusion ou déploiement. Branche isolée et une PR, tests ciblés uniquement, [skip netlify], GO fusion puis GO déploiement distincts, SHA publié vérifié, recette MOA production et PASS explicite avant clôture. **Programme annuel 2027 NON VALIDÉ.**
