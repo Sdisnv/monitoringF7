@@ -13015,49 +13015,87 @@
       responsibleRule:document.getElementById('qv-assignment-responsible-rule')?.value || ''}) : null;
   }
 
+  const QV_ASSIGNMENT_LABELS={CAR:'Exercice CAR — conduite VL',TRUCK:'Exercice TRUCK — conduite PL',
+    TP9_1:'Conduite TP9 — première formation continue',TP9_2:'Conduite TP9 — formation continue suivante',
+    INSTRUCTION_DPS:'Instruction DPS',GROUP_DPS:'Formation groupée DPS',GROUP_DAP:'Formation groupée DAP',
+    PR_1:'Exercice PR 1',PR_2:'Exercice PR 2',PR_3:'Exercice PR 3',PR_4:'Exercice PR 4',GENERAL:'Règle générale'};
+  const QV_REVIEW_LABELS={domain:'Domaine',family:'Famille',publicCodes:'Public cible',qualificationCodes:'Qualifications et spécialisations',
+    participationEvaluation:'Évaluation des participations',assignmentParameters:'Paramètres d’assignation'};
+  function qvReviewOccurrenceLabel(row){
+    return `${qvProgrammeActivityLabel(row)} — ${qvProgrammeShortDate(row)}`;
+  }
   function qvAssignmentPreparationHtml(row,canPrepare) {
-    const parameters=row.assignmentParameters;
-    const suggested=L.qvProgrammeAssignmentProfile(row);
-    const labels={CAR:'CAR',TRUCK:'TRUCK',TP9_1:'TP9 1.x',TP9_2:'TP9 2.x',INSTRUCTION_DPS:'Instruction DPS',
-      GROUP_DPS:'Formation groupée DPS',GROUP_DAP:'Formation groupée DAP',PR_1:'Exercice PR 1',PR_2:'Exercice PR 2',PR_3:'Exercice PR 3',PR_4:'Exercice PR 4',GENERAL:'Règle générale'};
-    const context=L.qvProgrammeFunctionContext(row);
-    const typeRows=new Map();
-    for(const item of quoVadisProgrammeData()?.canonicalProgramme?.rows || [])
-      if(item.definitionId && L.qvProgrammeIsActive(item) && item.status!=='ANNULE') typeRows.set(item.definitionId,item);
-    if(row.definitionId && !typeRows.has(row.definitionId)) typeRows.set(row.definitionId,row);
-    const recognized=L.qvProgrammeAssignmentType(row);
-    const typeOptions=[...typeRows.values()].sort((a,b)=>qvProgrammeActivityLabel(a).localeCompare(qvProgrammeActivityLabel(b),'fr'))
-      .map(item=>`<option value="${escapeHtml(item.definitionId)}" ${(recognized && recognized!=='PREPARATION'
-        ?L.qvProgrammeAssignmentType(item)===recognized:item.definitionId===row.definitionId)?'selected':''}>${escapeHtml(qvProgrammeActivityLabel(item))}</option>`).join('');
-    return `<details class="scope-form-section" id="qv-assignment-preparation"><summary>Préparer les assignations et contrôler les fiches</summary>
-      <p>Cette préparation ne crée aucune assignation. Les OI de la fiche définissent les organisations concernées ; le Responsable n’est pas assigné automatiquement.</p>
-      ${suggested.profile?`<p>Règle reconnue : ${escapeHtml(labels[suggested.profile] || 'Cours de cadres préparatoire')}${parameters?' — paramètres enregistrés':' — proposition à confirmer, non appliquée'}.</p>`:''}
-      ${L.qvProgrammeIsPreparatory(row)?'<p>Ce cours préparatoire n’est pas évaluable. Ses présences restent conservées. Une valeur historique doit être corrigée explicitement avant validation.</p>':''}
-      <p>Fonctions applicables : ${escapeHtml(context.functions.filter(item=>item.applicable).map(item=>item.label).join(', ') || 'à préciser par les OI de la fiche')}. Les rattachements individuels datés restent à renseigner depuis une source autorisée.</p>
-      <fieldset ${canPrepare?'':'disabled'}><legend>Règle propre à cette activité</legend>
-        <label><span>Profil d’assignation</span><select id="qv-assignment-profile"><option value="">Aucun profil confirmé</option>${Object.entries(labels).map(([code,label])=>`<option value="${code}" ${parameters?.profile===code?'selected':''}>${escapeHtml(label)}</option>`).join('')}</select></label>
-        <label><input type="checkbox" id="qv-assignment-responsible" ${parameters?.responsibleRequired?'checked':''}>Participation du responsable imposée par une règle de l’activité</label>
-        <label><span>Référence de cette règle si nécessaire</span><input type="text" maxlength="240" id="qv-assignment-responsible-rule" value="${escapeHtml(parameters?.responsibleRule || '')}"></label>
-      </fieldset>
-      <p>Candidats assimilés aux titulaires selon la règle applicable ; en TP9, seuls les conducteurs dont la qualification est validée à la date concernée sont admissibles. Auxiliaires manuels hors effectifs/statistiques ; dispenses conservées.</p>
-      ${suggested.maxParticipants?`<p>Maximum : ${suggested.maxParticipants} participants par session.</p>`:''}
-      ${suggested.sessionCount?`<p>${suggested.sessionCount} sessions ; ${suggested.profile.startsWith('PR_')?'six surveillants différents hors effectif, Préposé APR issu du public et compris dans les 12 à chaque session, formateurs désignés manuellement pour toutes les sessions, une contribution par exercice':'répartition proportionnée des participants'}.</p>`:''}
-      ${row.definitionId==='QV26-INTRODUCTION-PIONNIER-999BBC8C' && !(row.publics || []).includes('FOBA:3')?'<p>Règle MOA actuelle : introduction PIONNIER supplémentaire pour FOBA 3, DPS G1. Le public historique est conservé ; proposer sa correction explicitement avant validation.</p>':''}
-      <p>À contrôler avant assignation : disponibilités individuelles, conflits et sessions compatibles, composition annuelle des sections, fonctions et candidatures datées. Vacances des permanents et ProgJour restent des dépendances futures.</p>
-      <fieldset ${canPrepare?'':'disabled'}><legend>Proposer les valeurs saisies aux types sélectionnés</legend>
-        <label><span>Types à contrôler — toutes leurs occurrences et sessions, pour les OI déjà portés par chaque fiche</span><select id="qv-correction-types" multiple size="6">${typeOptions}</select></label>
-        ${[['domain','Domaine'],['family','Famille'],['publicCodes','Public cible'],['qualificationCodes','Qualifications et spécialisations'],['participationEvaluation','Évaluation des participations'],['assignmentParameters','Paramètres d’assignation']].map(([code,label])=>`<label><input type="checkbox" data-qv-correction-field="${code}">${escapeHtml(label)}</label>`).join('')}
-        <button type="button" class="scope-btn" id="qv-propose-type-corrections">Voir les propositions</button>
-      </fieldset><p>Aucune correction groupée n’est enregistrée ici. Chaque proposition indique la validation ou la révision nécessaire et renvoie à la fiche concernée.</p>
-      <div id="qv-type-correction-proposals" aria-live="polite"></div></details>`;
+    const parameters=row.assignmentParameters,suggested=L.qvProgrammeAssignmentProfile(row),context=L.qvProgrammeFunctionContext(row);
+    const rows=(quoVadisProgrammeData()?.canonicalProgramme?.rows || []).filter(item=>item.definitionId && L.qvProgrammeIsActive(item) && item.status!=='ANNULE');
+    const types=new Map();for(const item of rows)if(!types.has(item.definitionId))types.set(item.definitionId,item);
+    if(row.definitionId && !types.has(row.definitionId))types.set(row.definitionId,row);
+    const typeOptions=[...types.values()].sort((a,b)=>qvProgrammeActivityLabel(a).localeCompare(qvProgrammeActivityLabel(b),'fr'))
+      .map(item=>`<option value="${escapeHtml(item.definitionId)}">${escapeHtml(qvProgrammeActivityLabel(item))}</option>`).join('');
+    const sourceOptions=rows.slice().sort((a,b)=>qvReviewOccurrenceLabel(a).localeCompare(qvReviewOccurrenceLabel(b),'fr'))
+      .map(item=>`<option value="${escapeHtml(item.id)}">${escapeHtml(qvReviewOccurrenceLabel(item))}</option>`).join('');
+    const participants={CAR:'Conducteurs VL et candidats concernés.',TRUCK:'Conducteurs PL et candidats concernés.',
+      TP9_1:'Conducteurs TP9 qualifiés uniquement.',TP9_2:'Conducteurs TP9 dont la qualification est validée à la date du module.'};
+    return `<details class="scope-form-section qv-review-panel" id="qv-assignment-preparation"><summary>Préparation et contrôle des fiches</summary>
+      <section class="qv-review-section" aria-labelledby="qv-review-assignment-title"><h3 id="qv-review-assignment-title">A. Préparation des assignations</h3>
+        <p>Cette préparation ne crée aucune assignation. Les OI de la fiche définissent les organisations concernées.</p>
+        <dl class="qv-review-facts"><div><dt>Profil</dt><dd>${escapeHtml(QV_ASSIGNMENT_LABELS[suggested.profile] || (suggested.profile==='PREPARATION'?'Cours de cadres préparatoire':'Règle métier non définie'))}</dd></div>
+          <div><dt>Participants</dt><dd>${escapeHtml(participants[suggested.profile] || 'Public concerné de la fiche, selon la règle applicable.')}</dd></div>
+          <div><dt>Candidats</dt><dd>${suggested.profile?(['TP9_1','TP9_2'].includes(suggested.profile)?'Non concernés pour cette activité ; qualification validée nécessaire.':'Selon la règle de l’activité et les candidatures confirmées.'):'Règle métier non définie'}</dd></div>
+          <div><dt>Responsable</dt><dd>${parameters?.responsibleRequired?'Participation imposée par la règle enregistrée.':'Participation non obligatoire ; aucune assignation implicite.'}</dd></div>
+          <div><dt>Validation</dt><dd>${parameters?'Paramètres enregistrés ; toute modification exige confirmation.':'Confirmation MOA nécessaire'}</dd></div>
+        </dl>
+        <p>Fonctions applicables : ${escapeHtml(context.functions.filter(item=>item.applicable).map(item=>item.label).join(', ') || 'à préciser par les OI de la fiche')}. Les rattachements individuels datés restent à fournir depuis une source autorisée.</p>
+        <fieldset ${canPrepare?'':'disabled'} class="qv-review-grid"><legend>Règle propre à cette activité</legend>
+          <label class="qv-review-field"><span>Profil d’assignation</span><select id="qv-assignment-profile"><option value="">Aucun profil confirmé</option>${Object.entries(QV_ASSIGNMENT_LABELS).map(([code,label])=>`<option value="${code}" ${parameters?.profile===code?'selected':''}>${escapeHtml(label)}</option>`).join('')}</select></label>
+          <label class="qv-review-field"><span>Référence de la règle de participation obligatoire</span><input type="text" maxlength="240" id="qv-assignment-responsible-rule" value="${escapeHtml(parameters?.responsibleRule || '')}"></label>
+          <label class="qv-review-check qv-review-wide"><input type="checkbox" id="qv-assignment-responsible" ${parameters?.responsibleRequired?'checked':''}><span>Participation du responsable imposée par une règle explicite de l’activité</span></label>
+        </fieldset>
+        ${L.qvProgrammeIsPreparatory(row)?'<p>Ce cours préparatoire n’est pas évaluable. Il reste consultable et assignable ; ses présences sont conservées.</p>':''}
+        ${suggested.maxParticipants?`<p>Maximum : ${suggested.maxParticipants} participants par session.</p>`:''}
+        ${suggested.sessionCount?`<p>${suggested.sessionCount} sessions ; ${suggested.profile.startsWith('PR_')?'six surveillants différents hors effectif, Préposé APR issu du public et compris dans les douze à chaque session, formateurs désignés manuellement pour toutes les sessions, une contribution par exercice.':'répartition proportionnée des participants.'}</p>`:''}
+        ${row.definitionId==='QV26-INTRODUCTION-PIONNIER-999BBC8C' && !(row.publics || []).includes('FOBA:3')?'<p>Introduction PIONNIER : la règle actuelle vise FOBA 3, DPS G1. Le public historique reste conservé ; sa correction nécessite une proposition explicite.</p>':''}
+        <p>Auxiliaires affectés manuellement, exclus des effectifs et statistiques ; dispenses conservées. Disponibilités, conflits, sessions compatibles et compositions annuelles restent à contrôler. Vacances Permanent et ProgJour restent des dépendances futures.</p>
+      </section>
+      <section class="qv-review-section" aria-labelledby="qv-review-conformity-title"><h3 id="qv-review-conformity-title">B. Contrôle de conformité des fiches</h3>
+        <p>Comparer toutes les occurrences et sessions des types sélectionnés aux règles métier confirmées. Les valeurs de la fiche ouverte ne servent pas de référence. « Conforme » porte uniquement sur le critère vérifié, sans valider la fiche entière.</p>
+        <fieldset ${canPrepare?'':'disabled'} class="qv-review-grid"><legend>Périmètre du contrôle</legend>
+          <label class="qv-review-field qv-review-wide"><span>Types à contrôler</span><select id="qv-conformity-types" multiple size="5">${typeOptions}</select></label>
+          <div class="qv-review-actions qv-review-wide"><button type="button" class="scope-btn" id="qv-check-type-conformity" disabled>Contrôler la conformité</button><p id="qv-conformity-hint">Sélectionnez au moins un type à contrôler.</p></div>
+        </fieldset><div id="qv-conformity-results" aria-live="polite"></div>
+      </section>
+      <section class="qv-review-section" aria-labelledby="qv-review-harmonisation-title"><h3 id="qv-review-harmonisation-title">C. Harmonisation volontaire</h3>
+        <p>Choisir une fiche modèle enregistrée et les seuls champs à reprendre. Une différence n’est pas une anomalie ; toute compatibilité non établie reste à arbitrer.</p>
+        <fieldset ${canPrepare?'':'disabled'} class="qv-review-grid"><legend>Source et destinataires explicites</legend>
+          <label class="qv-review-field qv-review-wide"><span>Fiche modèle</span><select id="qv-harmonisation-source"><option value="">Sélectionner une fiche modèle</option>${sourceOptions}</select></label>
+          <label class="qv-review-field qv-review-wide"><span>Types destinataires — toutes leurs occurrences et sessions</span><select id="qv-harmonisation-types" multiple size="5">${typeOptions}</select></label>
+          <div class="qv-review-fields qv-review-wide">${Object.entries(QV_REVIEW_LABELS).map(([code,label])=>`<label class="qv-review-check"><input type="checkbox" data-qv-harmonisation-field="${code}"><span>${escapeHtml(label)}</span></label>`).join('')}</div>
+          <div class="qv-review-actions qv-review-wide"><button type="button" class="scope-btn" id="qv-preview-harmonisation" disabled>Prévisualiser l’harmonisation</button><p id="qv-harmonisation-hint">Sélectionnez une fiche modèle, des types destinataires et au moins un champ.</p></div>
+        </fieldset><div id="qv-harmonisation-results" aria-live="polite"></div>
+      </section><p>Aucune correction groupée n’est enregistrée dans ce panneau. Toute modification passe par la fiche, sa validation ou sa révision motivée existante.</p>
+    </details>`;
   }
 
-  function qvCorrectionProposalsHtml(proposals) {
-    const value=item=>Array.isArray(item)?item.join(', '):item && typeof item==='object'?JSON.stringify(item):item==null?'Non renseigné':String(item);
-    const fields={domain:'Domaine',family:'Famille',publicCodes:'Public cible',qualificationCodes:'Qualifications / spécialisations',
-      participationEvaluation:'Évaluation',assignmentParameters:'Paramètres d’assignation'};
-    return proposals.length ? `<div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Occurrence</th><th>Champ</th><th>Valeur actuelle</th><th>Valeur proposée</th><th>Règle</th><th>Impact</th><th>Validation nécessaire</th></tr></thead><tbody>${proposals.map(item=>`<tr><td><a href="${escapeHtml(qvProgrammeFicheHref(item.occurrenceId))}">${escapeHtml(item.occurrenceId)}</a></td><td>${escapeHtml(fields[item.field] || item.field)}</td><td>${escapeHtml(value(item.current))}</td><td>${escapeHtml(value(item.proposed))}</td><td>${escapeHtml(item.rule)}</td><td>${escapeHtml(item.impact)}</td><td>${escapeHtml(item.validationRequired)}</td></tr>`).join('')}</tbody></table></div>`:'<p>Aucune différence à proposer sur les champs sélectionnés.</p>';
+  function qvCorrectionValueHtml(field,value){
+    if(value===undefined || value===null)return 'Non défini';
+    if(typeof value==='boolean')return value?'Oui':'Non';
+    if(field==='publicCodes')return escapeHtml(L.qvFormatPublicDisplayLabels(value) || 'Aucun public renseigné');
+    if(field==='qualificationCodes')return escapeHtml(qvProgrammeQualificationSummary(quoVadisProgrammeData() || {},value) || 'Aucune spécialisation renseignée');
+    if(field==='assignmentParameters')return `<dl class="qv-review-value"><dt>Profil</dt><dd>${escapeHtml(QV_ASSIGNMENT_LABELS[value.profile] || 'Profil à vérifier')}</dd><dt>Candidats</dt><dd>${value.includeCandidates?'Concernés selon la règle':'Non concernés'}</dd><dt>Responsable</dt><dd>${value.responsibleRequired?'Participation obligatoire sous règle explicite':'Participation non obligatoire'}</dd>${value.responsibleRule?`<dt>Règle</dt><dd>${escapeHtml(value.responsibleRule)}</dd>`:''}</dl>`;
+    if(typeof value==='object')return 'Valeur historique à examiner dans la fiche';
+    const domains={F0:'Commandement',F1:'Personnel',F2:'Renseignement',F3:'Opérations',F4:'Logistique',F5:'Partenaires',F6:'Systèmes d’information',F7:'Formation',F8:'Finances'};
+    return escapeHtml(field==='domain'?(domains[value] || L.scopeDomainLabel(value)):L.qvInstitutionalLabel(value));
   }
+  function qvCorrectionProposalsHtml(proposals) {
+    if(!proposals.length)return '<p>Aucune différence constatée sur les champs sélectionnés et les destinataires disponibles.</p>';
+    const harmonisation=proposals[0].mode==='HARMONISATION';
+    const statuses={CONFORME:'Conforme',ECART_CONSTATE:'Écart constaté',A_ARBITRER:'À arbitrer',REGLE_NON_DEFINIE:'Règle non définie',REPRISE_VOLONTAIRE:'Reprise volontaire'};
+    const validations={INTERDIT:'Reprise incompatible — aucune correction recommandée',REVISION_MOTIVEE:'Révision motivée nécessaire',REVALIDATION_MOA:'Revalidation MOA nécessaire',CONFIRMATION_MOA:'Confirmation MOA nécessaire'};
+    const differences=proposals.filter(item=>item.status==='ECART_CONSTATE').length;
+    const undefinedRules=proposals.filter(item=>item.status==='REGLE_NON_DEFINIE').length;
+    const summary=harmonisation?'':`<p>${differences?`${differences} écart(s) démontré(s) sur les règles définies.`:'Aucune différence constatée pour les règles définies.'}${undefinedRules?` ${undefinedRules} champ(s) : règle métier non définie.`:''} Les points à arbitrer restent distincts.</p>`;
+    return `${summary}<div class="qv-review-table-wrap" tabindex="0" role="region aria-label="Résultats ${harmonisation?'de l’harmonisation':'du contrôle'}"><table class="scope-table qv-review-table"><caption>${harmonisation?'Prévisualisation volontaire — aucune modification enregistrée':'Contrôle par règles applicables — aucune modification enregistrée'}</caption><thead><tr><th>Occurrence et champ</th><th>État</th><th>Valeurs comparées</th><th>Règle et compatibilité</th><th>Conséquences et validation</th></tr></thead><tbody>${proposals.map(item=>`<tr><th scope="row"><a href="${escapeHtml(qvProgrammeFicheHref(item.occurrenceId))}">${escapeHtml(item.occurrenceLabel || 'Consulter la fiche')}</a><br>${escapeHtml(qvProgrammeShortDate(item))}<br>${escapeHtml(QV_REVIEW_LABELS[item.field] || 'Champ métier')}</th><td><span class="qv-review-state" data-review-state="${item.status}">${escapeHtml(statuses[item.status] || 'À arbitrer')}</span></td><td><dl class="qv-review-value"><dt>Valeur actuelle</dt><dd>${qvCorrectionValueHtml(item.field,item.current)}</dd>${harmonisation?`<dt>Valeur source</dt><dd>${qvCorrectionValueHtml(item.field,item.sourceValue)}</dd>`:''}<dt>${harmonisation?'Valeur proposée':'Valeur de référence'}</dt><dd>${qvCorrectionValueHtml(item.field,item.proposed)}</dd></dl></td><td>${escapeHtml(item.rule.replace(/^QV-PART-001/, 'Évaluation des participations').replace(/^QV-EXERCICE-PREPARATION-001/, 'Cours de cadres préparatoires').replace(/^QV-FAMILY-004\/005/, 'Classification des familles'))}<p>${escapeHtml(item.explanation)}</p></td><td>${escapeHtml(item.impact)}<p>${escapeHtml(item.status==='CONFORME' || item.status==='REGLE_NON_DEFINIE'?'Aucune correction proposée':validations[item.validationRequired] || 'Confirmation MOA nécessaire')}</p></td></tr>`).join('')}</tbody></table></div>`;
+  }
+
 
   function renderQuoVadisProgrammeFiche(qv) {
     const id = route().qvProgrammeItemId;
@@ -15301,25 +15339,34 @@
     for(const id of ['qv-assignment-profile','qv-assignment-responsible','qv-assignment-responsible-rule'])
       document.getElementById(id)?.addEventListener('change',()=>{document.getElementById('qv-assignment-preparation').dataset.dirty='true';});
     document.getElementById('qv-programme-participation-evaluation')?.addEventListener('change',event=>{event.currentTarget.dataset.dirty='true';});
-    document.getElementById('qv-propose-type-corrections')?.addEventListener('click',()=>{
-      const qv=quoVadisProgrammeData(),row=qv?.canonicalProgramme?.rows.find(item=>String(item.id)===String(route().qvProgrammeItemId));
-      if(!row || !hasScopePermission('references:manage')) return;
-      try {
-        const selected=id=>[...(document.getElementById(id)?.querySelectorAll('input:checked') || [])]
-          .filter(item=>item.dataset.choiceKind!=='FREE').flatMap(item=>item.dataset.preservedCodes?JSON.parse(item.dataset.preservedCodes):[item.value]);
-        const candidates={domain:document.getElementById('qv-programme-domain')?.value || '',
-          family:document.getElementById('qv-programme-family')?.value || '',publicCodes:selected('qv-programme-public'),
-          qualificationCodes:selected('qv-programme-specialisation'),
-          participationEvaluation:document.getElementById('qv-programme-participation-evaluation')?.checked!==false};
-        const keys=[...document.querySelectorAll('[data-qv-correction-field]:checked')].map(item=>item.dataset.qvCorrectionField);
-        if(!keys.length) throw new Error('Sélectionnez au moins un champ à comparer.');
-        if(keys.includes('assignmentParameters')) candidates.assignmentParameters=qvAssignmentParametersFromForm();
-        const definitionIds=[...document.getElementById('qv-correction-types').selectedOptions].map(option=>option.value);
-        const proposals=L.qvProgrammeCorrectionProposals(qv.canonicalProgramme.rows,
-          {definitionIds,values:Object.fromEntries(keys.map(key=>[key,candidates[key]]))});
-        document.getElementById('qv-type-correction-proposals').innerHTML=qvCorrectionProposalsHtml(proposals);
-      } catch(error){toast('error','Contrôle des fiches',error.message,{preserveForm:true});}
-    });
+    const reviewTypes=id=>[...(document.getElementById(id)?.selectedOptions || [])].map(option=>option.value);
+    const reviewFields=()=>[...document.querySelectorAll('[data-qv-harmonisation-field]:checked')].map(input=>input.dataset.qvHarmonisationField);
+    const refreshReview=(mode,clear=true)=>{
+      const conformity=mode==='CONFORMITE',prefix=conformity?'qv-conformity':'qv-harmonisation';
+      const ready=conformity?reviewTypes('qv-conformity-types').length>0
+        :Boolean(document.getElementById('qv-harmonisation-source')?.value && reviewTypes('qv-harmonisation-types').length && reviewFields().length);
+      const button=document.getElementById(conformity?'qv-check-type-conformity':'qv-preview-harmonisation');
+      if(button)button.disabled=!ready || !hasScopePermission('references:manage');
+      const hint=document.getElementById(prefix+'-hint');
+      if(hint)hint.textContent=ready?(conformity?'Les règles des types sélectionnés seront contrôlées ; aucune valeur de la fiche ouverte ne sera propagée.':'La prévisualisation vérifiera les compatibilités ; aucune modification ne sera enregistrée.')
+        :conformity?'Sélectionnez au moins un type à contrôler.':'Sélectionnez une fiche modèle, des types destinataires et au moins un champ.';
+      if(clear){const result=document.getElementById(prefix+'-results');if(result)result.innerHTML='';}
+      return ready;
+    };
+    for(const id of ['qv-conformity-types','qv-harmonisation-source','qv-harmonisation-types'])
+      document.getElementById(id)?.addEventListener('change',()=>refreshReview(id==='qv-conformity-types'?'CONFORMITE':'HARMONISATION'));
+    document.querySelectorAll('[data-qv-harmonisation-field]').forEach(input=>input.addEventListener('change',()=>refreshReview('HARMONISATION')));
+    for(const [id,mode] of [['qv-check-type-conformity','CONFORMITE'],['qv-preview-harmonisation','HARMONISATION']])
+      document.getElementById(id)?.addEventListener('click',()=>{
+        if(!refreshReview(mode,false) || !hasScopePermission('references:manage'))return;
+        const conformity=mode==='CONFORMITE',result=document.getElementById(conformity?'qv-conformity-results':'qv-harmonisation-results');
+        try{
+          const proposals=L.qvProgrammeCorrectionProposals(quoVadisProgrammeData()?.canonicalProgramme?.rows || [],{
+            mode,definitionIds:reviewTypes(conformity?'qv-conformity-types':'qv-harmonisation-types'),
+            ...(!conformity?{sourceOccurrenceId:document.getElementById('qv-harmonisation-source').value,fields:reviewFields()}: {})});
+          result.innerHTML=qvCorrectionProposalsHtml(proposals);
+        }catch(error){result.textContent=error.message;}
+      });
     document.getElementById('qv-programme-cursus')?.addEventListener('change',event=>{event.currentTarget.dataset.dirty = 'true';});
     document.getElementById('qv-programme-occurrence-status')?.addEventListener('change',event=>{event.currentTarget.dataset.dirty='true';});
     for(const id of ['qv-programme-sold','qv-programme-ecawin-export'])
@@ -15353,7 +15400,9 @@
         document.getElementById(listId)?.querySelectorAll('fieldset').forEach((group) => {
           let visible = 0;
           group.querySelectorAll('label').forEach((label) => {
-            label.hidden = Boolean(query) && !qvNormalizeSearch(`${label.textContent} ${label.querySelector('input')?.value || ''}`).includes(query);
+            const reference=L.qvInstitutionalReferences().institutionalReference(label.querySelector('input')?.value);
+            const context=reference?[reference.officialTitle,...reference.aliases,...reference.compatibleOiDomains].join(' '):'';
+            label.hidden = Boolean(query) && !qvNormalizeSearch(`${label.textContent} ${context} ${label.querySelector('input')?.value || ''}`).includes(query);
             if(!label.hidden) visible += 1;
           });
           group.hidden = visible === 0;

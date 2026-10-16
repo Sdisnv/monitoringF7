@@ -3,6 +3,18 @@
 > Capitalisation phase B : import de la phase A actualisée à #27. Les déclarations « hors dépôt », « pas de phase B » et les prochains GO dans le texte importé décrivent son mandat historique. La mission de phase B autorise maintenant sa capitalisation documentaire en une PR, sans fusion ni déploiement. Les réserves AUDIT_INCOMPLET et Programme 2027 NON VALIDÉ restent applicables. Voir [provenance](README.md).
 
 
+## Anomalies confirmées par la recette MOA #29 / #30 — 16.10.2026
+
+Source : mandat correctif humain du 16.10.2026, sur la version publiée #30 `8a11b2e50ff47932628733b3dbc9715bfe6822b2`, vérifiée directement. Les constats antérieurs ci-dessous gardent leur portée. Les trois écarts suivants sont traités dans le même lot, sans autre registre ni nouveau backlog. [Preuves ciblées](../../SCOPE_QV_CORRECTIF_MOA_20261016.md).
+
+| Repère / constat MOA | Cause et correction technique | État de clôture |
+|---|---|---|
+| QV-CONTROLE-QUALITE-001 — propagation implicite JSP → AUTO, anomalie majeure signalée | #29 utilisait les champs de la fiche ouverte comme valeurs proposées pour les autres types. Comparaison désormais fondée sur règles applicables ou fiche modèle choisie explicitement ; absence de règle et incompatibilité distinctes ; aucune écriture groupée | CORRIGÉ TECHNIQUEMENT sur fixtures ; nouvelle recette MOA production EN ATTENTE, anomalie non clôturée |
+| QV-PUBLIC-008 — fonctions JSP | Chef formation JSP introduit depuis la capture #30 malgré son absence confirmée par la MOA ; retiré des nouveaux choix, historique conservé. Resp formation reclassé Commandement et responsables ; recherche JSP contextualisée sans doublon | CORRIGÉ TECHNIQUEMENT ; validation MOA de la version publiée EN ATTENTE |
+| UX — panneau de préparation/contrôle | Grille/espacements insuffisants, confusion des opérations et rendu JSON/codes dans l’ancien tableau. Trois sections et valeurs métier, prérequis contextuels, tableau zébré et états carré 8 × 8 | CORRIGÉ TECHNIQUEMENT ; captures Chrome synthétiques et mesures 1440/1024/390, pas PASS MOA production |
+
+Le témoin Séance Direction JSP 010JSP.006 du 18.02.2027 est validé individuellement, publié et lié selon la MOA. Il ne constitue pas une anomalie à corriger. Aucune fiche, présence, liaison événement ou donnée de production n’a été modifiée par ce lot ; aucune validation rejouée. Programme annuel 2027 NON VALIDÉ.
+
 ## Actualisation consolidée du 15.10.2026 — référence applicable
 
 **Phase A, lecture seule. Verdict : AUDIT_INCOMPLET**, avec réserves explicites ci-dessous. **Programme annuel 2027 NON VALIDÉ.** Cette actualisation reprend les huit mêmes livrables ; elle ne recommence pas l'audit initial.

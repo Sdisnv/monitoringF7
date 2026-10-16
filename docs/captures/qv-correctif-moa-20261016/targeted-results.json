@@ -1,0 +1,120 @@
+{
+  "date": "2026-10-16",
+  "status": "PASS_TECHNIQUE_LOCAL",
+  "baseMain": "8a11b2e50ff47932628733b3dbc9715bfe6822b2",
+  "unit": {
+    "passed": 14,
+    "failed": 0,
+    "tests": [
+      "JSP dictionary follows latest MOA decision, retains historical identity and common contexts",
+      "retired JSP selections are shown only when historical, without substitution",
+      "JSP source never supplies F7/JSP/Chief formation/false as TP9 conformity values",
+      "unknown and title-only rules remain undefined, never become reference values",
+      "evaluation is bound to confirmed types across occurrences/sessions, never propagated from open row",
+      "existing confirmed DPS/DAP exercise and group type bindings carry evaluation rule only",
+      "four conformity states and rule provenance are explicit",
+      "harmonisation requires explicit existing source, target types and fields",
+      "JSP to AUTO harmonisation is incompatible and never a recommended correction",
+      "undefined compatibility stays for arbitration; equivalent values produce no proposal",
+      "harmonisation respects preparatory prohibition and legacy families",
+      "protected published witness, IDs, versions, codes and histories stay byte-identical; cancelled rows excluded",
+      "existing comparator retains hierarchy, candidate adjacency and permutation-independent summaries",
+      "result presentation uses human labels, structured parameters and validation text without technical values"
+    ]
+  },
+  "browser": {
+    "status": "PASS_TECHNIQUE_LOCAL",
+    "scenarios": 11,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "syntheticDocumentRequests": 1,
+    "dialogs": 0,
+    "layouts": [
+      {
+        "width": 1440,
+        "overlaps": 0,
+        "badChecks": 0,
+        "panelFits": true,
+        "tableOverflowContained": true,
+        "square": "8px"
+      },
+      {
+        "width": 1024,
+        "overlaps": 0,
+        "badChecks": 0,
+        "panelFits": true,
+        "tableOverflowContained": true,
+        "square": "8px"
+      },
+      {
+        "width": 390,
+        "overlaps": 0,
+        "badChecks": 0,
+        "panelFits": true,
+        "tableOverflowContained": true,
+        "square": "8px"
+      }
+    ],
+    "checks": [
+      "JSP retirement and group",
+      "JSP contextual search",
+      "disabled prerequisites without dialog",
+      "JSP to four TP9 conformity without propagation",
+      "explicit incompatible harmonisation",
+      "human labels without JSON or IDs",
+      "stale preview cleared",
+      "three viewport layouts",
+      "untouched save fields omitted and protected witness unchanged",
+      "historical retired selection retained",
+      "existing permissions keep controls disabled"
+    ]
+  },
+  "static": {
+    "syntaxFiles": [
+      "assets/js/scope-personnel-referentials.js",
+      "assets/js/scope-ui-logic.js",
+      "assets/js/scope-ui.js",
+      "scripts/scope-qv-correctif-moa-20261016-browser.js",
+      "scripts/scope-qv-correctif-moa-20261016-tests.js"
+    ],
+    "provenanceFilesVerified": [
+      "SCOPE_AUDIT_INTEGRAL_20261015.md",
+      "SCOPE_DIAGNOSTIC_NETLIFY_20261015.md",
+      "SCOPE_INVENTAIRE_FONCTIONNEL_20261015.md",
+      "SCOPE_MATRICE_TRACABILITE_20261015.md",
+      "SCOPE_PLAN_FINALISATION_QV_20261015.md",
+      "SCOPE_REGISTRE_ANOMALIES_20261015.md",
+      "SCOPE_REGISTRE_DECISIONS_MOA_20261015.md",
+      "SCOPE_ROADMAP_CONSOLIDEE_20261015.md",
+      "SCOPE_TODO_CONSOLIDEE_20261015.md"
+    ],
+    "todoNineFields": "PASS",
+    "addedLinksVerified": 20,
+    "diffCheck": "PASS",
+    "tokenFormats": "none"
+  },
+  "testedFilesSha256": {
+    "assets/js/scope-personnel-referentials.js": "bea39581412d629ae9d8090316ff9657453df3669797e8fa708f1e950322679f",
+    "assets/js/scope-ui-logic.js": "e9f2347d32327d283b4276b1a1ef19fd0c865a5e0535e83aa98080221bd47e56",
+    "assets/js/scope-ui.js": "b3bae0ac8a4a40d78b935196c6c36903d9b000f59c0a97dd8ec632f0da7eff3d",
+    "scripts/scope-qv-correctif-moa-20261016-browser.js": "5562d4421a067eba2b42b32426f39a3270eb84bba0da6c9ece74c42712edcd0f",
+    "scripts/scope-qv-correctif-moa-20261016-tests.js": "605f1c5e7cfad06ffd9e3e58643db162fa40ebe890047f1de63c030cef0522a3",
+    "assets/css/scope.css": "a425f03d684c87d7b2dc00aff62eb30e48082c939e02e54616a82f6372833802"
+  },
+  "screenshotsInspected": [
+    "assignations-1440.png",
+    "harmonisation-1440.png",
+    "conformite-1440.png",
+    "panel-390.png"
+  ],
+  "acquiredCampaignsRerun": false,
+  "productionWrites": 0,
+  "productionMoaRecipe": "NON_EFFECTUEE_POUR_LE_CORRECTIF",
+  "annualProgramme2027": "NON_VALIDE",
+  "limits": [
+    "Synthetic fixtures and intercepted save only, no live persistent write or SQL read",
+    "Protected JSP witness from MOA mandate is not revalidated or changed",
+    "Missing type/field rules remain undefined; unknown harmonisation compatibility requires MOA arbitration",
+    "No nominative assignment resolution, Safari or production MOA PASS claimed"
+  ]
+}

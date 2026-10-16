@@ -3473,32 +3473,108 @@
     return result;
   }
 
-  // Read-only proposals. Applying one always uses the existing single-occurrence editor/workflow.
+  // Same read-only comparison path, with an explicit purpose and traceable reference.
+  const QV_REVIEW_FIELDS=['domain','family','publicCodes','qualificationCodes','specialisation','participationEvaluation','assignmentParameters'];
+  const QV_EVALUATED_EXERCISE_DEFINITIONS=new Set([
+    'QV26-EXERCICE-DPS-1-6A16603D','QV26-EXERCICE-DPS-2-54E09232','QV26-EXERCICE-DPS-3-29F948D1',
+    'QV26-EXERCICE-DAP-1-9890D687','QV26-EXERCICE-DAP-2-6285EF74','QV26-EXERCICE-DAP-3-618B0715','QV26-EXERCICE-DAP-4-46753B3A'
+  ]);
+  function qvProgrammeReviewValue(row,field){
+    return field==='publicCodes'?[...(row.publics || []),...(row.publicFreeLabels || [])]:row[field] ?? null;
+  }
+  function qvProgrammeReviewEqual(a,b){
+    const normalize=value=>Array.isArray(value)?[...new Set(value)].sort():value && typeof value==='object'
+      ?Object.fromEntries(Object.keys(value).sort().map(key=>[key,normalize(value[key])])):value??null;
+    return JSON.stringify(normalize(a))===JSON.stringify(normalize(b));
+  }
+  function qvProgrammeFieldRule(row,field){
+    const type=qvProgrammeAssignmentType(row);
+    if(field==='participationEvaluation'){
+      if(type==='PREPARATION')return {value:false,source:'QV-EXERCICE-PREPARATION-001 — cours préparatoires non évaluables'};
+      if(/^PR_[1-4]$/.test(type) || ['GROUP_DPS','GROUP_DAP'].includes(type) || QV_EVALUATED_EXERCISE_DEFINITIONS.has(row.definitionId))
+        return {value:true,source:'QV-PART-001 — types évaluables confirmés, décision MOA du 16.10.2026'};
+    }
+    if(field==='family'){
+      const expected=qvProgrammeProposedFamily({...row,family:''});
+      if(expected)return {value:expected,source:'QV-FAMILY-004/005 — définition, nature, Stat.Com et OI concordants'};
+    }
+    if(field==='publicCodes' && ['CAR','TRUCK','TP9_1','TP9_2'].includes(type)){
+      const profile=qvProgrammeAssignmentProfile({...row,assignmentParameters:null});
+      const current=qvProgrammeReviewValue(row,field),keys=new Set(current.map(qvProgrammePublicReferenceCode));
+      const required=profile.requiredPublicCodes;
+      const value=current.filter(code=>!['TP9_1','TP9_2'].includes(type) || qvProgrammePublicReferenceCode(code)!=='AUTO:CAND-TP9');
+      value.push(...required.filter(code=>!keys.has(code)));
+      return {value,source:'Décision MOA du 16.10.2026 — conducteurs et candidatures selon le type confirmé ; public minimal'};
+    }
+    if(field==='assignmentParameters' && type && type!=='PREPARATION'){
+      const current=row.assignmentParameters;
+      return {value:{profile:type,includeCandidates:!['TP9_1','TP9_2'].includes(type),
+        responsibleRequired:current?.responsibleRequired===true,responsibleRule:current?.responsibleRule || ''},
+        source:'Décision MOA du 16.10.2026 — profil du type ; responsabilité conservée',requiresDecision:!current};
+    }
+    return null;
+  }
+  function qvProgrammeReviewCompatibility(row,field,value,source){
+    if(field==='participationEvaluation' && value===true && qvProgrammeIsPreparatory(row))
+      return {status:'INCOMPATIBLE',message:'Un cours de cadres préparatoire ne peut pas être évalué.'};
+    if(field==='assignmentParameters')try{qvProgrammeAssignmentParametersForRow(value,row);}catch(error){
+      return {status:'INCOMPATIBLE',message:error.message};
+    }
+    if(field==='family' && value && !qvProgrammeFamilyCatalogue().includes(value))
+      return {status:'INCOMPATIBLE',message:'Cette valeur historique n’est pas une famille proposée pour une nouvelle reprise.'};
+    if(field==='family' && ['DPS','DAP','JSP'].includes(value)){
+      const domains=qvProgrammeConfirmedOiCodes(row).map(code=>code.split(':')[0]);
+      if(domains.length && !domains.includes('SDIS') && !domains.includes(value))
+        return {status:'INCOMPATIBLE',message:'La famille source ne correspond pas aux OI du destinataire.'};
+    }
+    const rule=qvProgrammeFieldRule(row,field);
+    const proposedRule=field==='publicCodes'?qvProgrammeFieldRule({...row,publics:value || [],publicFreeLabels:[]},field):field==='assignmentParameters'?qvProgrammeFieldRule({...row,assignmentParameters:value},field):rule;
+    if(proposedRule && !qvProgrammeReviewEqual(proposedRule.value,value))return {status:'INCOMPATIBLE',message:'La valeur source contredit la règle applicable au type destinataire.'};
+    if(source && source.definitionId!==row.definitionId){
+      const from=new Set(qvProgrammeConfirmedOiCodes(source).map(code=>code.split(':')[0]));
+      const to=qvProgrammeConfirmedOiCodes(row).map(code=>code.split(':')[0]);
+      if(to.length && from.size && !from.has('SDIS') && !to.includes('SDIS') && !to.some(domain=>from.has(domain)))
+        return {status:'INCOMPATIBLE',message:'La fiche modèle et le destinataire relèvent de contextes métier distincts ; cette reprise ne constitue pas une correction applicable.'};
+      return {status:'A_ARBITRER',message:'Compatibilité entre les types non établie ; arbitrage MOA nécessaire.'};
+    }
+    return rule?{status:'COMPATIBLE',message:'Valeur compatible avec la règle applicable.'}
+      :{status:'A_ARBITRER',message:'Règle métier non définie ; compatibilité à confirmer par la MOA.'};
+  }
   function qvProgrammeCorrectionProposals(rows,request={}) {
-    const ids=new Set(request.definitionIds || []), patches=request.values || {};
-    const fields=new Set(['domain','family','publicCodes','qualificationCodes','specialisation','participationEvaluation','assignmentParameters']);
-    if(!ids.size || Object.keys(patches).some(key=>!fields.has(key))) throw new Error('Choisissez les types et champs à contrôler.');
-    if(Object.hasOwn(patches,'participationEvaluation') && typeof patches.participationEvaluation!=='boolean') throw new Error('Évaluation invalide.');
-    if(Object.hasOwn(patches,'assignmentParameters')) qvProgrammeAssignmentParameters(patches.assignmentParameters);
-    const eq=(a,b)=>JSON.stringify(Array.isArray(a)?[...new Set(a)].sort():a??null)===JSON.stringify(Array.isArray(b)?[...new Set(b)].sort():b??null);
+    const mode=request.mode || 'CONFORMITE',ids=new Set(request.definitionIds || []);
+    if(!['CONFORMITE','HARMONISATION'].includes(mode) || Object.hasOwn(request,'values'))
+      throw new Error('Choisissez un contrôle de conformité ou une harmonisation avec fiche modèle explicite.');
+    if(!ids.size)throw new Error('Sélectionnez au moins un type destinataire.');
+    const fields=request.fields || (mode==='CONFORMITE'?QV_REVIEW_FIELDS.filter(field=>field!=='specialisation'):[]);
+    if(!fields.length || fields.some(field=>!QV_REVIEW_FIELDS.includes(field)))throw new Error('Sélectionnez au moins un champ à reprendre.');
+    const active=row=>qvProgrammeIsActive(row) && row.status!=='ANNULE' && row.active!==false;
+    const source=mode==='HARMONISATION'?(rows || []).find(row=>row.id===request.sourceOccurrenceId && active(row)):null;
+    if(mode==='HARMONISATION' && !source)throw new Error('Sélectionnez explicitement une fiche modèle disponible.');
     const result=[];
-    for(const row of rows || []) {
-      if(!ids.has(row.definitionId) || !qvProgrammeIsActive(row) || row.status==='ANNULE' || row.active===false) continue;
-      for(const [field,proposed] of Object.entries(patches)) {
-        const current=field==='publicCodes'?row.publics || []:row[field] ?? (['qualificationCodes'].includes(field)?[]:null);
-        if(field==='assignmentParameters'?eq(qvProgrammeAssignmentParameters(current),qvProgrammeAssignmentParameters(proposed)):eq(current,proposed)) continue;
-        let forbidden=field==='participationEvaluation' && proposed===true && qvProgrammeIsPreparatory(row);
-        let invalidProfile='';
-        if(field==='assignmentParameters') try {qvProgrammeAssignmentParametersForRow(proposed,row);} catch(error){forbidden=true;invalidProfile=error.message;}
-        result.push({occurrenceId:row.id,definitionId:row.definitionId,field,current,proposed,
-          rule:invalidProfile?'Mission MOA fiches/assignations — 16.10.2026':forbidden?'QV-EXERCICE-PREPARATION-001':'Mission MOA fiches/assignations — 16.10.2026',
-          impact:invalidProfile || (forbidden?'Cours préparatoire non évaluable':row.publishedEventId?'Révision ciblée de l’événement existant ; présences conservées':'Préparation uniquement ; aucune assignation'),
-          validationRequired:forbidden?'INTERDIT':row.publishedEventId?'REVISION_MOTIVEE':row.businessValidation?'REVALIDATION_MOA':'CONFIRMATION_MOA',
-          sourceUpdatedAt:row.preparation?.updatedAt || row.updatedAt || null,applyAutomatically:false});
+    for(const row of rows || []){
+      if(!ids.has(row.definitionId) || !active(row) || mode==='HARMONISATION' && row.id===source.id)continue;
+      for(const field of fields){
+        const current=qvProgrammeReviewValue(row,field),rule=qvProgrammeFieldRule(row,field);
+        const proposed=mode==='HARMONISATION'?qvProgrammeReviewValue(source,field):rule?.value;
+        const same=qvProgrammeReviewEqual(current,proposed);
+        if(mode==='HARMONISATION' && same)continue;
+        const compatibility=mode==='HARMONISATION'?qvProgrammeReviewCompatibility(row,field,proposed,source):null;
+        const status=mode==='HARMONISATION'?(compatibility.status==='COMPATIBLE'?'REPRISE_VOLONTAIRE':'A_ARBITRER')
+          :!rule?'REGLE_NON_DEFINIE':rule.requiresDecision?'A_ARBITRER':same?'CONFORME':'ECART_CONSTATE';
+        result.push({mode,occurrenceId:row.id,definitionId:row.definitionId,occurrenceLabel:row.activityLabel || row.label || 'Activité',
+          startsAt:row.startsAt,field,current,proposed:rule || mode==='HARMONISATION'?proposed:undefined,
+          sourceValue:source?qvProgrammeReviewValue(source,field):undefined,sourceOccurrenceId:source?.id,
+          sourceLabel:source?.activityLabel || source?.label,status,compatibility:compatibility?.status,
+          rule:rule?.source || 'Règle métier non définie',explanation:compatibility?.message || (!rule?'Règle métier non définie':'Comparaison avec la règle applicable au type sélectionné.'),
+          impact:['CONFORME','REGLE_NON_DEFINIE'].includes(status)?'Fiche conservée ; aucune modification proposée.':row.publishedEventId?'Révision motivée de l’événement lié ; historique et présences conservés.'
+            :row.businessValidation?'Décision validée conservée ; revalidation nécessaire.':'Proposition uniquement ; aucune assignation ni modification enregistrée.',
+          validationRequired:compatibility?.status==='INCOMPATIBLE'?'INTERDIT':row.publishedEventId?'REVISION_MOTIVEE':row.businessValidation?'REVALIDATION_MOA':'CONFIRMATION_MOA',
+          recommended:mode==='CONFORMITE' && status==='ECART_CONSTATE',sourceUpdatedAt:row.preparation?.updatedAt || row.updatedAt || null,applyAutomatically:false});
       }
     }
     return result;
   }
+
 
   function qvProgrammePublicCatalogue() {
     const descriptive = Object.entries(qvProgrammeDescriptivePublics());
