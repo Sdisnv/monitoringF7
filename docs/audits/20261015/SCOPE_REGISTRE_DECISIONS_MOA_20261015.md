@@ -1,5 +1,35 @@
 # SCOPE — Registre des décisions MOA
 
+
+## Lot prioritaire fiches et assignations — 16.10.2026
+
+**Décision humaine actuelle, applicable avant les états historiques ci-dessous.** La mission « LOT PRIORITAIRE QUO VADIS 2027 — FIABILISATION DES FICHES ET PRÉPARATION DES ASSIGNATIONS » autorise le développement déterministe d’un seul lot sur branche isolée, tests ciblés et PR. Elle interdit fusion automatique, déploiement, modification/migration de production, RLS/Okta et publication annuelle. Elle ne rouvre pas les recettes PR20–27 et impose de préserver les travaux étrangers. Les règles détaillées sont capitalisées dans le [canon](../../business-rules/quo-vadis-canonical-rules.md#complément-moa--lot-prioritaire-fiches-et-préparation-des-assignations-16102026), les preuves dans le [rapport ciblé](../../SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md). Aucun nouveau backlog n’est créé.
+
+| Sujet décidé par la MOA | Portée applicable |
+|---|---|
+| Fonctions | Chef site commun DPS/JSP, Chef section commun DPS/DAP ; Chef JSP relève du Chef formation et exerce Chef site JSP ; Chef DAP exerce Chef section DAP ; contexte OI/site/dates ; autres fonctions conservées |
+| Public / Responsable | OI de la fiche seul périmètre d’organisation ; Responsable sans assignation implicite ; participation possible sous règle propre explicite |
+| Candidatures | Assimilées pour assignations applicables, exceptions explicites ; CAR VL + candidats, TRUCK PL + candidats ; aucune attribution automatique de qualification |
+| TP9 | Réponse reproduite ci-dessous ; 1.x conducteurs uniquement, deux/session ; dès 2.x considérer des conducteurs après validation effective |
+| Évaluation | Paramètre existant, types et toutes occurrences/sessions sélectionnables ; cours préparatoires non évaluables ; non-évaluable consultable/assignable ; présences conservées |
+| Assignations | Préparation sur moteurs existants ; contraintes individuelles, sessions et arbitrages ; DPS G1 8/demi-section,16/section ; groupes DPS6/DAP2 ; règles PR du canon et précision effectif ci-dessous |
+| Corrections | Propositions avec ID/avant/après/règle/impact/validation ; aucune modification silencieuse validée/publiée |
+| Recette et clôture | MOA uniquement sur production réellement publiée ; GO fusion, GO déploiement distincts ; vérification SHA ; PASS MOA explicite ; Programme2027 NON VALIDÉ |
+
+**Réponse humaine TP9, reçue dans cet échange (orthographe conservée) :**
+> Cela concerne la série de contuite TP9 1.x depuis la 2 nous partons du principe que les condidats auront été validés et qu'ils seront considérés comme des cond tP9
+
+Conséquence déterministe : les séries canoniques TP9000 1.0/1.1/1.2 et 2.0/2.1/2.2 sont reconnues, sans changement de titre, d’ID ou de qualification individuelle. À partir de 2.x on attend une qualification de conducteur valide ; une candidature seule ne la remplace pas.
+
+**Réponse humaine effectif PR, reçue dans cet échange (orthographe conservée) :**
+> Le préposé APR fait obligatoirement partie de l'effectif. Le surveillant ne fait pas partie de l'effectif.
+
+Le Préposé APR est donc l’un des 12 PAPR et fait partie du public concerné ; le surveillant est hors plafond. Ce point est arbitré. Le régime statistique historique du surveillant n’est pas redéfini par cette réponse.
+
+**Arbitrage encore demandé, isolé :** source autorisée des faits individuels datés fonction–domaine–OI/site/section et des candidatures (saisie SCOPE, import IndeX ou autre), mode de confirmation et liaison aux personnes existantes. La question a été adressée à la MOA ; aucune réponse n’est présumée. Le catalogue/contrat et les corrections déterministes avancent sans inventer de données individuelles. T-07/T-08 restent partiels.
+
+Le développement et les tests techniques de ce lot ne constituent ni GO fusion, ni GO déploiement, ni PASS MOA. Les acquis et réserves d’audit ci-dessous restent datés et inchangés.
+
 > Capitalisation phase B : import de la phase A actualisée à #27. Les déclarations « hors dépôt », « pas de phase B » et les prochains GO dans le texte importé décrivent son mandat historique. La mission de phase B autorise maintenant sa capitalisation documentaire en une PR, sans fusion ni déploiement. Les réserves AUDIT_INCOMPLET et Programme 2027 NON VALIDÉ restent applicables. Voir [provenance](README.md).
 
 

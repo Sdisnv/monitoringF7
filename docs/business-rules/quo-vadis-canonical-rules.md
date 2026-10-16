@@ -1107,3 +1107,53 @@ Aucun événement, OI organisateur, famille, domaine, date/horaire, Stat.Com, co
 responsable, présence, affectation, publication, validation ou historique n'est réécrit.
 La diffusion ne change ni les permissions ni la population applicable : pas d'assignation,
 présence, obligation ou notification créée, aucune duplication en onze événements, aucune migration.
+
+
+## Complément MOA — lot prioritaire fiches et préparation des assignations, 16.10.2026
+
+Source : mission humaine « SCOPE ONLINE — LOT PRIORITAIRE QUO VADIS 2027 — FIABILISATION DES FICHES ET PRÉPARATION DES ASSIGNATIONS », complétée par les réponses TP9 et effectif PR du même échange. Ces précisions complètent les règles existantes ci-dessous ; elles n’autorisent aucune conversion des données existantes. [Décisions et réponses conservées](../audits/20261015/SCOPE_REGISTRE_DECISIONS_MOA_20261015.md#lot-prioritaire-fiches-et-assignations--16102026). L’expression « Mission MOA fiches/assignations — 16.10.2026 » dans une proposition désigne cette source, pas un nouvel identifiant canonique.
+
+### QV-PUBLIC-008 — complément fonctions communes et contexte
+
+| Fonction commune | Domaine / OI applicables | Condition |
+|---|---|---|
+| Chef site (`C site`) | DPS G1/C1/B1/B2 ; JSP G1/C1/B1 | Même fonction, contexte domaine/OI/site et période d’effet |
+| Chef section (`ENC:C-SECTION`) | DPS selon OI et section ; DAP Y1/Y2/Y3/Y4 selon section | Même fonction, section datée dans son domaine et son OI |
+| Chef JSP (`C JSP`) | Domaine JSP | Responsable du domaine, sous responsabilité du Chef formation (`CMDT:C-FOR`) ; exerce aussi Chef site dans un OI JSP |
+| Chef DAP (`C DAP`) | Domaine DAP | Responsable du domaine ; exerce aussi Chef section dans un OI DAP |
+
+Les fonctions communes existantes sont conservées. Les choix applicables de Public cible réutilisent ces identités ; les anciens codes et libellés restent sauvegardés sous leur valeur brute jusqu’à retrait explicite. Il n’existe pas de seconde sélection d’OI dans Public cible : **les OI de la fiche sont la source des organisations concernées**. La responsabilité d’une activité n’entraîne aucune assignation implicite. Une règle propre à l’activité peut imposer la participation du responsable, avec référence explicite et résolution de ses personnes concernées.
+
+Les faits individuels de fonction doivent porter personne réelle, fonction, domaine, OI, site/section lorsque pertinent, début/fin de validité et confirmation de la source. Le moteur vérifie un même fait contextualisé, sans joindre arbitrairement deux affectations. Les conditions Chef JSP/Chef DAP doivent être démontrées à la même date. Ni `PRINCIPAL`/`SECONDAIRE`, ni Responsable, ni libellé libre ne créent ce fait. **Source réelle de saisie/import et rattachement aux personnes encore à arbitrer** ; la relation persistante fonction–domaine–OI datée n’est pas livrée par ce lot, aucun rattachement n’est inventé.
+
+### Paramètres des activités — préparation dans les composants existants
+
+Public cible, fonctions, qualifications, spécialisations, candidatures, cursus, sessions et évaluation restent des axes distincts. Les fiches réutilisent leurs champs existants. Le complément `assignmentParameters` est une décision explicite de préparation, conservée dans les métadonnées, versions, révisions majeures, journaux et reconduction existants. L’absence de ce champ conserve le comportement antérieur ; une règle reconnue reste une **proposition non confirmée**. Aucun moteur d’écriture d’assignations n’est ajouté.
+
+Les candidats sont assimilés aux titulaires pour les assignations applicables, sauf exception métier explicite. Cette assimilation de population n’est pas une attribution de qualification. Les candidatures fournies au moteur doivent être confirmées et datées ; une entrée manquante reste INCOMPLETE.
+
+| Activité | Public / contrainte |
+|---|---|
+| CAR | Conducteurs VL et candidats VL concernés |
+| TRUCK | Conducteurs PL et candidats PL concernés |
+| TP9 1.x | Série existante « Conduite TP9000, formation continue 1.0/1.1/1.2 » ; conducteurs TP9 uniquement, deux par session |
+| TP9 2.x | Série 2.0/2.1/2.2 : les anciens candidats sont supposés avoir été validés et sont considérés conducteurs TP9 ; une qualification valide doit réellement être présente à la date concernée, aucune promotion automatique de candidat |
+| Instruction DPS | Base de section/demi-section et composition annuelle ; compléments externes seulement autorisés ; cohérence demi-section vers section ; G1 maximum 8 par demi-section, 16 par section ; aucun quota général confirmé pour C1/B1/B2 |
+| Formations groupées DPS / DAP | Respectivement six / deux sessions, répartition proportionnée des participants |
+| Exercices PR 1–4 | Maximum 12 PAPR par session ; **Préposé APR obligatoirement dans cet effectif** et issu du public concerné ; **surveillant hors effectif**, un par session et six personnes différentes pour les six sessions ; couverture PAPR échelons 0 à II ; formateurs désignés manuellement pour toutes les sessions concernées ; une seule contribution statistique par exercice |
+
+Le contrat préparatoire réutilise le contrôle existant des collisions et décrit les personnes obligatoires, erreurs, non-concernés, situations à arbitrer, disponibilité individuelle, autre session compatible, priorités/non-déplaçables, équilibre échelons 0/I/II/III/IV et déplacements manuels. Il n’exécute aucune répartition ni déplacement automatique. La répartition proportionnée par public/OI et les compositions annuelles réelles ne sont pas déclarées vérifiées par simple équilibre numérique. Les auxiliaires sont affectés manuellement, exclus des effectifs et statistiques. Les dispenses restent dans les présences. La clarification « surveillant hors effectif » ne modifie pas à elle seule son régime statistique historique.
+
+Les vacances du personnel Permanent et ProgJour restent des dépendances futures ; ProgJour n’est pas réactivé.
+
+### QV-PART-001 et QV-EXERCICE-PREPARATION-001 — évaluation et contrôle groupé
+
+Réutiliser `participationEvaluation`. Le contrôle permet de sélectionner les types évaluables et d’examiner toutes leurs occurrences et sessions, notamment PR 1–4, formations groupées DPS/DAP, exercices DPS de tous les sites et DAP des OI concernés. La sélection produit des propositions explicites ; elle ne change pas les fiches existantes. Les **cours de cadres préparatoires ne sont pas évaluables** : une activation explicite ou une validation avec évaluation active est refusée. Un simple enregistrement sans changement de ce paramètre ne réécrit pas une ancienne valeur ; la correction doit être décidée avant validation. La reconnaissance se fonde sur les identifiants canoniques/liaisons connus, jamais sur une ressemblance de titre.
+
+Une activité non évaluable reste consultable et assignable. Aucune présence historique n’est supprimée. Les auxiliaires restent hors effectifs et statistiques, quelle que soit l’évaluation.
+
+Les propositions groupées couvrent domaines, familles, publics cibles, qualifications/spécialisations et évaluation ; chaque ligne présente identifiant d’occurrence, valeur actuelle, valeur proposée, règle/source, impact et validation nécessaire. Les fiches publiées passent par la révision motivée existante, les fiches validées par revalidation ; les décisions humaines sont conservées. Aucun enregistrement groupé, correction silencieuse, nouvelle sélection d’OI ou publication annuelle n’est autorisé.
+
+### Livraison et recette MOA impérative
+
+Développement isolé, tests techniques ciblés, une PR sans fusion automatique ; **GO MOA distinct pour fusion, GO distinct pour déploiement, contrôle du SHA réellement publié, recette MOA sur https://scope-sdisnv.netlify.app, PASS MOA explicite avant clôture**. Le local ne constitue pas une recette MOA fiable et ses tests ne valent jamais PASS MOA. Aucune mutation de production à des fins de test sans autorisation explicite, contrôle préalable d’intégrité et rollback vérifié. Aucune migration de production, modification RLS/Okta, NIP fictif, secret ou export nominatif dans Git. **Programme annuel 2027 NON VALIDÉ.**

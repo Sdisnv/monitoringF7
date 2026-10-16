@@ -10,12 +10,13 @@ const logic = require('../../assets/js/scope-ui-logic');
 const EDITORIAL_FIELDS = new Set(['activityLabel','themes','publicFreeLabels','family']);
 const REVISION_FIELDS = ['activityLabel','themes','publicFreeLabels','date','startTime','endTime','statCom',
   'domain','family','oiCodes','publicCodes','responsibleLabel','lieuId','lieuLibre','salleTheorieId',
-  'qualificationCodes','cursusId','participationEvaluation','ecawinActivityCode','planningStatus','sold','ecawinExport','activityNature','annualRecurrence'];
-function comparable(value){
+  'qualificationCodes','cursusId','assignmentParameters','participationEvaluation','ecawinActivityCode','planningStatus','sold','ecawinExport','activityNature','annualRecurrence'];
+function comparable(value,key){
+  if(key==='assignmentParameters' && value) return logic.qvProgrammeAssignmentParameters(value);
   return Array.isArray(value) ? value.slice().sort() : value == null ? '' : value;
 }
 function revisionChanges(before,after){
-  const changedFields = REVISION_FIELDS.filter(key=>JSON.stringify(comparable(before[key])) !== JSON.stringify(comparable(after[key])));
+  const changedFields = REVISION_FIELDS.filter(key=>JSON.stringify(comparable(before[key],key)) !== JSON.stringify(comparable(after[key],key)));
   return {changedFields,kind:changedFields.some(key=>!EDITORIAL_FIELDS.has(key)) ? 'MAJOR' : 'MINOR'};
 }
 
@@ -28,6 +29,7 @@ function fieldsFromProgrammeRow(row,qv){
     domain:logic.qvProgrammeFunctionalDomain(row,reference),family:logic.qvProgrammeFamily(row),responsibleLabel:row.responsible || '',
     lieuId:row.lieuId || row.business?.lieuId || null,lieuLibre:row.lieuLibre || '',
     salleTheorieId:row.salleTheorieId || row.business?.salleTheorieId || null,
+    ...(row.assignmentParameters?{assignmentParameters:row.assignmentParameters}:{}),
     qualificationCodes:row.qualificationCodes || [],cursusId:row.cursusId || null,ecawinActivityCode:row.ecawinActivityCode || '',
     planningStatus:row.preparation && ['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(row.status) ? row.status
       : row.historicalProposal || row.paprProposal?.origin==='AUTOMATIC' ? 'PROPOSE' : row.startsAt ? 'PLANIFIE' : 'A_PLANIFIER',

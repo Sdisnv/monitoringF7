@@ -191,4 +191,105 @@ function evaluateAssignmentConstraints(input = {}){
   };
 }
 
-module.exports = { LEVELS, intervalForEvent, overlap, evaluateAssignmentConstraints };
+
+function prepareAssignmentReview(input={}){
+  const logic=require('../../assets/js/scope-ui-logic');
+  const profile=logic.qvProgrammeAssignmentProfile(input.programmeRow || {});
+  const issues=[],notVerified=new Set();
+  const add=(level,code,details={})=>issues.push({level,code,...details});
+  if(!profile.confirmed) notVerified.add('PARAMETRES_NON_CONFIRMES');
+  if(!Array.isArray(input.eligiblePersonIds)) notVerified.add('PUBLIC_APPLICABLE_DATE');
+  if(!Array.isArray(input.requiredPersonIds)) notVerified.add('PERSONNES_OBLIGATOIREMENT_CONCERNEES');
+  if(!Array.isArray(input.availability)) notVerified.add('DISPONIBILITES_INDIVIDUELLES');
+  if(!Array.isArray(input.sessions)) notVerified.add('SESSIONS_A_CONTROLER');
+  if(!input.annualSectionComposition) notVerified.add('COMPOSITION_ANNUELLE_SECTIONS');
+  if(profile.responsibleRequired && !Array.isArray(input.responsiblePersonIds)) notVerified.add('RESPONSABLE_IDENTIFIE_PAR_REGLE');
+  const eligible=new Set(input.eligiblePersonIds || []),required=new Set([...(input.requiredPersonIds || []),
+    ...(profile.responsibleRequired?input.responsiblePersonIds || []:[])]);
+  const sessions=input.sessions || [];
+  const role=row=>upper(row.role || 'PARTICIPANT');
+  const trainingCounts=[],coverage=new Set(),supervisors=[];
+  for(const session of sessions){
+    const nominations=session.nominations || [];
+    const participants=unique(nominations.filter(row=>!['NON_CONCERNE','DISPENSE'].includes(upper(row.statut)))
+      .map(personId));
+    const actual=new Set(participants);
+    const counted=unique(nominations.filter(row=>!['AUXILIAIRE','FORMATEUR','MONITEUR','SURVEILLANT'].includes(role(row))
+      && !['NON_CONCERNE','DISPENSE'].includes(upper(row.statut))).map(personId));
+    for(const row of nominations){
+      if(!personId(row)) {add(LEVELS.BLOCKING,'IDENTITE_ABSENTE',{sessionId:session.id});continue;}
+      if(role(row)==='AUXILIAIRE' && row.manual!==true) add(LEVELS.BLOCKING,'AUXILIAIRE_MANUEL',{sessionId:session.id,personId:personId(row)});
+      if(Array.isArray(input.eligiblePersonIds) && role(row)==='PARTICIPANT' && !eligible.has(personId(row))
+        && !(input.authorizedExternalPersonIds || []).includes(personId(row))) add(LEVELS.BLOCKING,'PERSONNE_NON_CONCERNEE',{sessionId:session.id,personId:personId(row)});
+      if(upper(row.statut)==='DISPENSE') continue; // Kept in the input and in attendance; never removed.
+      if(counted.includes(personId(row))) coverage.add(personId(row));
+      if(role(row)==='SURVEILLANT') supervisors.push(personId(row));
+    }
+    const check=evaluateAssignmentConstraints({...input,currentEvent:session.event,
+      events:sessions.map(item=>item.event).concat(input.otherEvents || []),candidatePersonIds:participants,
+      candidatePersonIdsByEvent:Object.fromEntries(sessions.map(item=>[eventId(item.event),unique((item.nominations || []).map(personId))]))});
+    issues.push(...check.issues.map(item=>({...item,sessionId:session.id})));
+    for(const constraint of input.availability || []){
+      if(!actual.has(personId(constraint))) continue;
+      const timing=overlap(intervalForEvent(session.event || {}),intervalForEvent(constraint));
+      if(timing.overlaps) add(timing.certain?LEVELS.BLOCKING:LEVELS.WARNING,'INDISPONIBILITE_INDIVIDUELLE',{sessionId:session.id,personId:personId(constraint)});
+    }
+    if(profile.maxParticipants && counted.length>profile.maxParticipants) add(LEVELS.BLOCKING,'CAPACITE_SESSION',{sessionId:session.id,maximum:profile.maxParticipants,actual:counted.length});
+    if(profile.distinctSupervisors && nominations.filter(row=>role(row)==='SURVEILLANT').length!==1)
+      add(LEVELS.BLOCKING,'SURVEILLANT_PAR_SESSION',{sessionId:session.id});
+    if(profile.preposeFromConcernedPublic && (!session.preposePersonId || !eligible.has(session.preposePersonId)
+      || !counted.includes(session.preposePersonId))) add(LEVELS.BLOCKING,'PREPOSE_APR_REQUIS_DANS_PUBLIC',{sessionId:session.id});
+    if(profile.trainersManual){
+      if(!Array.isArray(input.trainerPersonIds)) notVerified.add('FORMATEURS_DESIGNES_MANUELLEMENT');
+      for(const id of input.trainerPersonIds || []) if(!nominations.some(row=>personId(row)===id && role(row)==='FORMATEUR' && row.manual===true))
+        add(LEVELS.BLOCKING,'FORMATEUR_TOUTES_SESSIONS',{sessionId:session.id,personId:id});
+    }
+    if(profile.profile==='INSTRUCTION_DPS'){
+      if(!input.personSections) notVerified.add('COHERENCE_DEMI_SECTION_SECTION');
+      const targets=(input.programmeRow?.publics || []).filter(code=>/^N0[1-6][ab]?$/.test(code));
+      if(input.personSections) for(const id of counted){
+        if((input.authorizedExternalPersonIds || []).includes(id)) continue;
+        const section=input.personSections[id];
+        if(!section || !targets.some(code=>code.length===3?section.startsWith(code):section===code))
+          add(LEVELS.BLOCKING,'SECTION_INCOMPATIBLE',{sessionId:session.id,personId:id});
+      }
+    }
+    trainingCounts.push({sessionId:session.id,participants:counted.length,exemptions:nominations.filter(row=>upper(row.statut)==='DISPENSE').length,
+      auxiliaries:nominations.filter(row=>role(row)==='AUXILIAIRE').length,
+      echelons:Object.fromEntries(profile.balanceEchelons.map(echelon=>[echelon,counted.filter(id=>input.echelons?.[id]===echelon).length]))});
+  }
+  if(profile.sessionCount && sessions.length!==profile.sessionCount) add(LEVELS.BLOCKING,'NOMBRE_SESSIONS',{expected:profile.sessionCount,actual:sessions.length});
+  if(profile.distinctSupervisors && (supervisors.length!==profile.distinctSupervisors || new Set(supervisors).size!==profile.distinctSupervisors))
+    add(LEVELS.BLOCKING,'SURVEILLANTS_DIFFERENTS',{expected:profile.distinctSupervisors,actual:new Set(supervisors).size});
+  const missing=[...required].filter(id=>!coverage.has(id) && !sessions.some(session=>(session.nominations || []).some(row=>personId(row)===id && upper(row.statut)==='DISPENSE')));
+  if(missing.length) add(LEVELS.BLOCKING,'PERSONNES_OBLIGATOIRES_ABSENTES',{personIds:missing});
+  if(!input.echelons) notVerified.add('REPARTITION_ECHELONS');
+  if(profile.coverageEchelons) for(const id of eligible) if(profile.coverageEchelons.includes(input.echelons?.[id]) && !coverage.has(id))
+    add(LEVELS.WARNING,'COUVERTURE_PAPR_A_COMPLETER',{personId:id});
+  if(profile.distribution==='PROPORTIONAL'){
+    notVerified.add('PROPORTION_PAR_PUBLIC_OI');
+    if(trainingCounts.length && Math.max(...trainingCounts.map(row=>row.participants))-Math.min(...trainingCounts.map(row=>row.participants))>1)
+      add(LEVELS.WARNING,'REPARTITION_SESSIONS_A_ARBITRER');
+  }
+  // Availability remains bounded by the facts supplied; no automatic move and no ProgJour activation.
+  notVerified.add('VACANCES_PERMANENT');
+  const alternatives=[];
+  for(const id of missing){
+    for(const session of sessions){
+      if(session.nonMovable || session.priority || !Array.isArray(input.eligiblePersonIds) || !eligible.has(id)) continue;
+      const count=trainingCounts.find(row=>row.sessionId===session.id)?.participants || 0;
+      if(profile.maxParticipants && count>=profile.maxParticipants) continue;
+      if((input.availability || []).some(fact=>personId(fact)===id && overlap(intervalForEvent(session.event || {}),intervalForEvent(fact)).overlaps)) continue;
+      const review=evaluateAssignmentConstraints({...input,currentEvent:session.event,
+        events:sessions.map(item=>item.event).concat(input.otherEvents || []),candidatePersonIds:[id],
+        candidatePersonIdsByEvent:Object.fromEntries(sessions.map(item=>[eventId(item.event),unique((item.nominations || []).map(personId))]))});
+      if(review.status==='COMPATIBLE') alternatives.push({personId:id,sessionId:session.id,decisionRequired:true,
+        constraintsNotVerified:[...notVerified]});
+    }
+  }
+  return {status:issues.some(row=>row.level===LEVELS.BLOCKING)?'BLOQUANT':notVerified.size?'INCOMPLETE':issues.length?'ATTENTION':'COMPATIBLE',
+    readOnly:true,assignmentWrites:false,profile,issues,notVerified:[...notVerified],sessions:trainingCounts,alternatives,
+    statisticalContributionsPerExercise:profile.statisticalContributionsPerExercise || null};
+}
+
+module.exports = { LEVELS, intervalForEvent, overlap, evaluateAssignmentConstraints, prepareAssignmentReview };

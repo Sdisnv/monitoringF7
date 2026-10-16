@@ -2360,6 +2360,13 @@ function createScopeQuoVadisService({ database = db } = {}){
         ? {...row,statCom:'0120F7',ecawinActivityCode:'EXERCI',statComDecision:{rule:'QV-DPS-GROUP-001',previous:'0162F7',confirmed:'0120F7'}} : row;
       return {...corrected,planningDayControl:programmePlanningDayControl(corrected,result)};
     });
+    const assignmentById=new Map(obligations.rows.map(item=>[String(item.source_ref),
+      Object.hasOwn(item.metadata?.planningFields || {},'assignmentParameters')
+        ?item.metadata.planningFields.assignmentParameters:item.metadata?.reconductedBusiness?.assignmentParameters]));
+    for(const row of result.canonicalProgramme?.rows || []) {
+      const parameters=assignmentById.get(String(row.id));
+      if(parameters!==undefined) row.assignmentParameters=parameters;
+    }
     const rowsById=new Map((result.canonicalProgramme?.rows || []).map(row=>[row.id,row]));
     result.reservations=await programmeRevisions.reservations(db.query.bind(db),result);
     result.reservationConflicts=programmeRevisions.reservationConflicts(result.reservations);
@@ -3711,6 +3718,9 @@ function createScopeQuoVadisService({ database = db } = {}){
       ? (await listProgramme(year)).canonicalProgramme.rows.find(row=>row.id === String(itemId) && row.cycleExtension) : null);
     const existingPreparation = existing && existing.metadata && existing.metadata.source === 'QV_PROGRAMME_PREPARATION';
     if(!source || (source.external && !existingPreparation)) return { updated:false,reason:'PROGRAMME_ITEM_NOT_FOUND' };
+    if(uiLogic.qvProgrammeIsPreparatory({...source,id:String(itemId)}) && participationEvaluation(body,inherited,source)
+      && (Object.hasOwn(body,'participationEvaluation') || body.validateBusiness))
+      throw new HttpError(422,'programme_preparation_non_evaluable','Un cours de cadres préparatoire ne peut pas être évalué. Désactivez explicitement son évaluation ; ses présences restent conservées.');
     if(source.cursusReconciliation && source.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'
       && !(existing && existing.metadata && (existing.metadata.humanDecision === true
         || existing.metadata.decisionHumaine === true || existing.metadata.validatedBy || existing.metadata.planningFields)))
@@ -4077,6 +4087,10 @@ function createScopeQuoVadisService({ database = db } = {}){
       if(!uiLogic.qvProgrammeFamilyCatalogue().includes(planningFields.family))
         throw new HttpError(422,'programme_famille_invalide','Choisissez une famille du référentiel existant.');
     }
+    if(Object.hasOwn(body,'assignmentParameters')){
+      try {planningFields.assignmentParameters=uiLogic.qvProgrammeAssignmentParametersForRow(body.assignmentParameters,{...source,id:String(itemId),oiSelections:oiCodes});}
+      catch(error){throw new HttpError(422,'programme_assignation_parametres_invalides',error.message);}
+    } else if(inherited.assignmentParameters) planningFields.assignmentParameters=inherited.assignmentParameters;
     planningFields.ecawinActivityCode = ecawinActivityCode;
     if(responsibleSelections) planningFields.responsibleSelections = responsibleSelections;
     planningFields.publicFreeLabels = publicFreeLabels;
@@ -4149,7 +4163,9 @@ function createScopeQuoVadisService({ database = db } = {}){
       });
       metadata.businessValidation = {validatedAt:new Date().toISOString(),validatedDate:date,year,baselineFields,
         fields:consolidation.businessSnapshot(planningFields),changedFields:consolidation.RECONDUCTIBLE_FIELDS.filter(key =>
-          JSON.stringify(planningFields[key]) !== JSON.stringify(baselineFields[key]))};
+          key==='assignmentParameters' ? programmeRevisions.revisionChanges({assignmentParameters:baselineFields[key]},
+            {assignmentParameters:planningFields[key]}).changedFields.length>0
+            : JSON.stringify(planningFields[key]) !== JSON.stringify(baselineFields[key]))};
     }
     const savedPreparation = await db.transaction(async (client) => {
       await client.query(`select pg_advisory_xact_lock(hashtext($1))`,[`QUO-VADIS:${year}`]);

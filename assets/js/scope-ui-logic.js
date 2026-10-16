@@ -3326,6 +3326,7 @@
       'CMDT:CDT': 'CDT', 'CMDT:C-OP': 'C op', 'CMDT:C-LOG': 'C log',
       'CMDT:C-FOR': 'C for', 'CMDT:QM': 'QM',
       'C DAP': 'Chef DAP', 'CMDT:CHEF-SECTION-DAP': 'Chef section DAP',
+      'C site':'Chef site', 'C JSP':'Chef JSP',
       'ENC:RESP-MATERIEL': 'Resp matériel', 'ENC:PREPOSE-MATERIEL': 'Préposé matériel',
       'AUTO:CAND-VL': 'Candidat cond VL',
       'PR:C-PR': 'C PR', 'PR:FORMATEUR-PR': 'Formateur PR', 'PR:PREPOSE-APR':'Préposé APR',
@@ -3334,14 +3335,171 @@
     };
   }
 
+
+  // MOA 16.10.2026: shared function identities, scoped facts; never infer an individual from a label.
+  function qvProgrammeFunctionDefinitions() {
+    return [
+      {code:'C site',label:'Chef site',domains:{DPS:['G1','C1','B1','B2'],JSP:['G1','C1','B1']}},
+      {code:'ENC:C-SECTION',label:'Chef section',domains:{DPS:['G1','C1','B1','B2'],DAP:['Y1','Y2','Y3','Y4']},sectionRequired:true},
+      {code:'C JSP',label:'Chef JSP',domains:{JSP:['G1','C1','B1']},requires:'C site',reportsTo:'CMDT:C-FOR'},
+      {code:'C DAP',label:'Chef DAP',domains:{DAP:['Y1','Y2','Y3','Y4']},requires:'ENC:C-SECTION'}
+    ];
+  }
+
+  function qvProgrammeFunctionContext(row) {
+    const ois=qvProgrammeConfirmedOiCodes(row || {});
+    return {oiCodes:ois,date:String(row?.startsAt || '').slice(0,10) || null,
+      functions:qvProgrammeFunctionDefinitions().map(item=>({...item,
+        applicableOiCodes:ois.filter(code=>{const [domain,oi]=code.split(':');return item.domains[domain]?.includes(oi);})})),
+      individualResolution:'MISSING_DATED_FUNCTION_FACTS',responsibleAssignsAutomatically:false};
+  }
+
+  // Exact rule bindings to existing canonical definition IDs; no inference from activity titles.
+  const QV_ASSIGNMENT_DEFINITIONS = {
+    "QV26-EXERCICE-CAR-1-1-B757E011": "CAR",
+    "QV26-EXERCICE-CAR-1-2-0B60C469": "CAR",
+    "QV26-EXERCICE-CAR-1-3-27A2CDBA": "CAR",
+    "QV26-EXERCICE-CAR-1-4-7289BE09": "CAR",
+    "QV26-EXERCICE-CAR-1-5-5D540753": "CAR",
+    "QV26-EXERCICE-TRUCK-1-1-202AC9BA": "TRUCK",
+    "QV26-EXERCICE-TRUCK-1-2-B2637E39": "TRUCK",
+    "QV26-EXERCICE-TRUCK-1-3-94F967E5": "TRUCK",
+    "QV26-EXERCICE-TRUCK-1-4-6B104BDE": "TRUCK",
+    "QV26-EXERCICE-PR-1-1-30B1E01A": "PR_1",
+    "QV26-EXERCICE-PR-2-1-45588F47": "PR_2",
+    "QV26-EXERCICE-PR-2-2-4CAB2E94": "PR_2",
+    "QV26-EXERCICE-PR-2-3-5B63EA54": "PR_2",
+    "QV26-EXERCICE-PR-2-4-68D0B0F1": "PR_2",
+    "QV26-EXERCICE-PR-2-5-10E2D2B9": "PR_2",
+    "QV26-EXERCICE-PR-2-6-38AAE638": "PR_2",
+    "QV26-EXERCICE-PR-3-1-D96B09DB": "PR_3",
+    "QV26-EXERCICE-PR-3-2-9759EEEC": "PR_3",
+    "QV26-EXERCICE-PR-3-3-9A2F199A": "PR_3",
+    "QV26-EXERCICE-PR-3-4-E1C6C663": "PR_3",
+    "QV26-EXERCICE-PR-3-5-DB2C8980": "PR_3",
+    "QV26-EXERCICE-PR-3-6-ECD69510": "PR_3",
+    "QV26-EXERCICE-PR-4-1-C882C1EA": "PR_4",
+    "QV26-EXERCICE-PR-4-2-3E5EE567": "PR_4",
+    "QV26-EXERCICE-PR-4-3-E71C19DA": "PR_4",
+    "QV26-EXERCICE-PR-4-4-C4008BC3": "PR_4",
+    "QV26-EXERCICE-PR-4-5-7CF12C15": "PR_4",
+    "QV26-EXERCICE-PR-4-6-BBE76EDB": "PR_4",
+    "QV26-FORMATION-GROUPEE-1-1-3D8CCE58": "GROUP_DPS",
+    "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-0-E4E9FC21": "TP9_1",
+    "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-1-47FCC17A": "TP9_1",
+    "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-2-5D809A90": "TP9_1",
+    "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-0-E3E851DD": "TP9_2",
+    "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-1-695292DE": "TP9_2",
+    "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-2-CC09656E": "TP9_2"
+  };
+  const QV_PREPARATORY_DEFINITIONS = new Set([
+    "QV26-COURS-DE-CADRES-EXERCICE-CAR-FB6A81CD",
+    "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30",
+    "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232",
+    "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D",
+    "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B",
+    "QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E",
+    "QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7",
+    "QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84",
+    "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67",
+    "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E",
+    "QV26-COURS-DE-CADRES-EXERCICE-TRUCK-220DF695",
+    "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5",
+    "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-JSP-C9F22B73",
+    "QV27:MANUAL:26ff9a06-a58a-4da0-8e63-2486118fc62b"
+  ]);
+  function qvProgrammeIsPreparatory(row) {
+    return QV_PREPARATORY_DEFINITIONS.has(String(row?.definitionId || row?.sessionStructure?.definitionId || ''))
+      || row?.id==='QV27:MANUAL:26ff9a06-a58a-4da0-8e63-2486118fc62b';
+  }
+  function qvProgrammeAssignmentType(row) {
+    if(qvProgrammeIsPreparatory(row)) return 'PREPARATION';
+    if(/^QV27:DAP-GROUP:1[.][12]$/.test(String(row?.id || ''))) return 'GROUP_DAP';
+    return QV_ASSIGNMENT_DEFINITIONS[row?.definitionId] || '';
+  }
+  function qvProgrammeAssignmentParameters(input) {
+    if(input == null) return null;
+    if(typeof input!=='object' || Array.isArray(input)) throw new Error('Paramètres d’assignation invalides.');
+    const allowed=['profile','includeCandidates','responsibleRequired','responsibleRule'];
+    if(Object.keys(input).some(key=>!allowed.includes(key))
+      || !['CAR','TRUCK','TP9_1','TP9_2','GROUP_DPS','GROUP_DAP','INSTRUCTION_DPS','PR_1','PR_2','PR_3','PR_4','GENERAL'].includes(input.profile)
+      || typeof input.includeCandidates!=='boolean' || typeof input.responsibleRequired!=='boolean'
+      || ['TP9_1','TP9_2'].includes(input.profile) && input.includeCandidates
+      || ['CAR','TRUCK'].includes(input.profile) && !input.includeCandidates
+      || input.responsibleRequired && (typeof input.responsibleRule!=='string' || !input.responsibleRule.trim() || input.responsibleRule.length>240)) throw new Error('Choisissez un profil connu et des paramètres explicites ; TP9 exige la qualification de conducteur validée.');
+    return {profile:input.profile,includeCandidates:input.includeCandidates,responsibleRequired:input.responsibleRequired,
+      responsibleRule:input.responsibleRequired?input.responsibleRule.trim():''};
+  }
+
+  function qvProgrammeAssignmentParametersForRow(input,row) {
+    const parameters=qvProgrammeAssignmentParameters(input);
+    if(!parameters) return null;
+    const recognized=qvProgrammeAssignmentType(row);
+    if(recognized && parameters.profile!==(recognized==='PREPARATION'?'GENERAL':recognized)) throw new Error('Le profil doit respecter le type canonique de cette activité.');
+    const ois=qvProgrammeConfirmedOiCodes(row || {});
+    const requiredDomain=parameters.profile==='GROUP_DAP'?'DAP':/^(?:GROUP_DPS|INSTRUCTION_DPS|PR_[1-4])$/.test(parameters.profile)?'DPS':null;
+    if(requiredDomain && ois.some(oi=>!oi.startsWith(requiredDomain+':'))) throw new Error('Le profil ne correspond pas aux OI de la fiche.');
+    return parameters;
+  }
+
+  function qvProgrammeAssignmentProfile(row) {
+    const explicit=qvProgrammeAssignmentParameters(row?.assignmentParameters);
+    const profile=explicit?.profile || qvProgrammeAssignmentType(row);
+    const ois=qvProgrammeConfirmedOiCodes(row || {});
+    const result={profile,confirmed:Boolean(explicit),responsibleRequired:explicit?.responsibleRequired===true,
+      includeCandidates:explicit?.includeCandidates ?? !['TP9_1','TP9_2'].includes(profile),oiCodes:ois,
+      publicCodes:[...(row?.publics || [])],qualificationCodes:[...(row?.qualificationCodes || [])],
+      cursusId:row?.cursusId || null,functions:qvProgrammeFunctionContext(row).functions.filter(item=>item.applicableOiCodes.length),
+      preparationOnly:true,assignmentWrites:false,auxiliaryManual:true,auxiliaryCounts:false,keepExemptions:true,
+      balanceEchelons:['0','I','II','III','IV'],constraintsNotVerified:['DISPONIBILITES_INDIVIDUELLES','VACANCES_PERMANENT','COMPOSITION_ANNUELLE_SECTIONS','FONCTIONS_DATEES','CANDIDATURES_DATEES']};
+    if(profile==='CAR') Object.assign(result,{requiredPublicCodes:['AUTO:3','AUTO:CAND-VL'],qualification:'COND_VL'});
+    if(profile==='TRUCK') Object.assign(result,{requiredPublicCodes:['AUTO:1','AUTO:CAND-PL'],qualification:'COND_PL'});
+    if(profile==='TP9_1' || profile==='TP9_2') Object.assign(result,{requiredPublicCodes:['AUTO:2'],formerCandidatesRequireConfirmedQualification:true,qualification:'COND_TP9',maxParticipants:profile==='TP9_1'?2:null});
+    if(profile==='GROUP_DPS' || profile==='GROUP_DAP') Object.assign(result,{sessionCount:profile==='GROUP_DPS'?6:2,distribution:'PROPORTIONAL'});
+    if(profile==='INSTRUCTION_DPS') Object.assign(result,{maxParticipants:ois.includes('DPS:G1') && ois.length===1
+      ? (row?.publics || []).some(code=>/^N0[1-6][ab]$/.test(code))?8:(row?.publics || []).some(code=>/^N0[1-6]$/.test(code))?16:null:null,
+      externalComplements:'EXPLICIT_AUTHORIZATION',sectionCoherence:true});
+    if(/^PR_[1-4]$/.test(profile)) Object.assign(result,{maxParticipants:12,qualification:'PAPR',sessionCount:6,
+      distinctSupervisors:6,coverageEchelons:['0','I','II'],requiredSessionPublic:'PR:PREPOSE-APR',
+      preposeFromConcernedPublic:true,preposeCounts:true,supervisorCounts:false,trainersManual:true,trainersAllSessions:true,statisticalContributionsPerExercise:1});
+    return result;
+  }
+
+  // Read-only proposals. Applying one always uses the existing single-occurrence editor/workflow.
+  function qvProgrammeCorrectionProposals(rows,request={}) {
+    const ids=new Set(request.definitionIds || []), patches=request.values || {};
+    const fields=new Set(['domain','family','publicCodes','qualificationCodes','specialisation','participationEvaluation','assignmentParameters']);
+    if(!ids.size || Object.keys(patches).some(key=>!fields.has(key))) throw new Error('Choisissez les types et champs à contrôler.');
+    if(Object.hasOwn(patches,'participationEvaluation') && typeof patches.participationEvaluation!=='boolean') throw new Error('Évaluation invalide.');
+    if(Object.hasOwn(patches,'assignmentParameters')) qvProgrammeAssignmentParameters(patches.assignmentParameters);
+    const eq=(a,b)=>JSON.stringify(Array.isArray(a)?[...new Set(a)].sort():a??null)===JSON.stringify(Array.isArray(b)?[...new Set(b)].sort():b??null);
+    const result=[];
+    for(const row of rows || []) {
+      if(!ids.has(row.definitionId) || !qvProgrammeIsActive(row) || row.status==='ANNULE' || row.active===false) continue;
+      for(const [field,proposed] of Object.entries(patches)) {
+        const current=field==='publicCodes'?row.publics || []:row[field] ?? (['qualificationCodes'].includes(field)?[]:null);
+        if(field==='assignmentParameters'?eq(qvProgrammeAssignmentParameters(current),qvProgrammeAssignmentParameters(proposed)):eq(current,proposed)) continue;
+        let forbidden=field==='participationEvaluation' && proposed===true && qvProgrammeIsPreparatory(row);
+        let invalidProfile='';
+        if(field==='assignmentParameters') try {qvProgrammeAssignmentParametersForRow(proposed,row);} catch(error){forbidden=true;invalidProfile=error.message;}
+        result.push({occurrenceId:row.id,definitionId:row.definitionId,field,current,proposed,
+          rule:invalidProfile?'Mission MOA fiches/assignations — 16.10.2026':forbidden?'QV-EXERCICE-PREPARATION-001':'Mission MOA fiches/assignations — 16.10.2026',
+          impact:invalidProfile || (forbidden?'Cours préparatoire non évaluable':row.publishedEventId?'Révision ciblée de l’événement existant ; présences conservées':'Préparation uniquement ; aucune assignation'),
+          validationRequired:forbidden?'INTERDIT':row.publishedEventId?'REVISION_MOTIVEE':row.businessValidation?'REVALIDATION_MOA':'CONFIRMATION_MOA',
+          sourceUpdatedAt:row.preparation?.updatedAt || row.updatedAt || null,applyAutomatically:false});
+      }
+    }
+    return result;
+  }
+
   function qvProgrammePublicCatalogue() {
     const descriptive = Object.entries(qvProgrammeDescriptivePublics());
     return [
       { group: 'Général', items: [['GEN:RECRUE', 'Recrue'], ['GEN:SAPEUR', 'Sapeur'], ['GEN:SAPEUR-DPS', 'Sapeur DPS'], ['GEN:SAPEUR-DAP', 'Sapeur DAP']] },
-      { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:') || code==='C DAP') },
+      { group: 'Commandement', items: descriptive.filter(([code]) => code.startsWith('CMDT:') || ['C DAP','C JSP'].includes(code)) },
       { group: 'Échelons', items: [['ECH:0', 'Échelon 0'], ['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
       { group: 'Sections DPS', items: ['N01', 'N01a', 'N01b', 'N02', 'N02a', 'N02b', 'N03', 'N03a', 'N03b', 'N04', 'N04a', 'N04b', 'N05', 'N05a', 'N05b', 'N06'].map(code => [code, code]) },
-      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe'],...descriptive.filter(([code])=>code.startsWith('ENC:'))] },
+      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidat C groupe'],...descriptive.filter(([code])=>code.startsWith('ENC:') || code==='C site')] },
       { group: 'Opérationnel', items: [['ENC:OSR','OSR'],['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidat CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidat CI DAP']] },
       { group: 'Formation', items: [['FOBA:1', 'FOBA 1'], ['FOBA:2', 'FOBA 2'], ['FOBA:3', 'FOBA 3']] },
       { group: 'PR', items: [['PR:2', 'PAPR'], ['PR:CAND-PAPR', 'Candidat PAPR'], ['PR:3', 'PABC'], ['PR:FORMATEURS', 'Formateur PR'], ['PR:FMF', 'Formateur maison Feu (FMF)'], ['PR:CHEF-PISTE', 'Chef piste']] },
@@ -3527,7 +3685,8 @@
       'C op':'CMDT:C-OP','Chef opérationnel':'CMDT:C-OP',
       'Chef DAP':'C DAP','C PR':'PR:C-PR','Chef PR':'PR:C-PR',
       'Candidat cond VL':'AUTO:CAND-VL','Resp matériel':'ENC:RESP-MATERIEL',
-      'Préposé matériel':'ENC:PREPOSE-MATERIEL'};
+      'Préposé matériel':'ENC:PREPOSE-MATERIEL', 'Chef site':'C site', 'Chef site DPS':'C site',
+      'Chef site JSP':'C site', 'C site JSP':'C site', 'Chef JSP':'C JSP'};
     return Object.prototype.hasOwnProperty.call(aliases,value) ? aliases[value] : code;
   }
 
@@ -5889,6 +6048,8 @@
     qvResponsableVisualGroup,
     qvInternalEventCodeDisplay,
     qvProgrammeParameters,
+    qvProgrammeFunctionDefinitions, qvProgrammeFunctionContext, qvProgrammeIsPreparatory,
+    qvProgrammeAssignmentType, qvProgrammeAssignmentParameters, qvProgrammeAssignmentParametersForRow, qvProgrammeAssignmentProfile, qvProgrammeCorrectionProposals,
     qvProgrammePublicCatalogue,
     qvProgrammeDateDecision,
     qvProgrammeHasValidatedDate,

@@ -1,6 +1,8 @@
 # SCOPE — Contexte maître du projet
 
-Référence documentaire : **15 octobre 2026**, Europe/Zurich. MOA : **SDIS régional du Nord vaudois**. Point d’entrée pour une nouvelle IA ou un développeur ; guide de navigation et de gouvernance, sans remplacer le référentiel détaillé.
+Référence documentaire : **16 octobre 2026**, Europe/Zurich. MOA : **SDIS régional du Nord vaudois**. Point d’entrée pour une nouvelle IA ou un développeur ; guide de navigation et de gouvernance, sans remplacer le référentiel détaillé.
+
+Actualisation16.10 : [lot prioritaire fiches et préparation des assignations](SCOPE_QV_FICHES_ASSIGNATIONS_20261016.md), en PR depuis main #28 `b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a`. Aucun déploiement de ce lot ; production fonctionnelle #27. Le catalogue et le contrat daté avancent, la source réelle des faits individuels reste à arbitrer. **Recette MOA exclusivement en production après GO fusion et GO déploiement distincts, vérification SHA et PASS explicite avant clôture** ; le local reste technique. Les états de capitalisation phase B ci-dessous décrivent leur mandat historique.
 
 ## 1. Présentation et priorité
 
