@@ -1,5 +1,27 @@
 # SCOPE — Registre des décisions MOA
 
+## Mandat opérationnel unique — accélération UX et exploitation, 16.10.2026 après #32
+
+GO développement humain explicite, un lot/une branche/une PR depuis main vérifié `fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51`. Les constats de recette #32 autorisent les corrections déterministes du mandat ; ils ne valent pas PASS MOA général ou clôture des anomalies antérieures. [Rapport et preuves ciblées](../../SCOPE_QV_ACCELERATION_UX_20261016.md). Sources OS 1.01/1.06 et décisions #29–#32 conservées.
+
+| Décision MOA | Application / limite |
+|---|---|
+| Navigation | Programme : Agenda, Programme annuel, Synthèse ; Préparation : Catalogue, Dates annoncées, Contrôle, À arbitrer, Alertes ; Paramétrage : Cursus, Règles ; mêmes routes/capacités/permissions |
+| Événements envisagé | Catalogue annuel : configuration permanente, versions, publics, sessions, contraintes/rôles/qualifications ; Cursus et Règles : parcours et planification ; Configuration formation existe hors QV. Aucun nouveau modèle ou menu concurrent inventé ; regroupement supplémentaire dépend d’une décision de présentation/périmètre |
+| Typographie | Titres/en-têtes/libellés structurants en gras ; contenus, valeurs, sélections et messages ordinaires normaux ; police/tailles existantes ; application QV et composants de messages partagés, pas refonte des autres écrans |
+| Règle / alerte | Encadré informatif bleu indépendant du contrôle, alerte distincte au ton réel ; bleu ne certifie pas une fiche entière ; visualiseur unique conservé |
+| Consultation règle | « Voir la règle complète » fermé, « Masquer la règle » ouvert ; état accessible clavier, aucune flèche décorative ; bouton secondaire existant |
+| Harmonisation | Bouton secondaire dans les actions supérieures ; même route, modèle enregistré présélectionné ; aucun transfert automatique, workflow et permissions conservés |
+| Contrôle du programme | Conformité et harmonisation exclusives ; défaut menu = conformité ; changement de vue conservant choix/résultats/filtres |
+| Blocages annuels | Synthèse compacte des points réellement fournis et occurrences identifiées ; détails à la demande, globals non répartis ; date du contrôle uniquement si fournie ; liens uniquement sur identités établies |
+| Résultats | Type → occurrences paginées → critères déployés volontairement ; filtres activité/période/OI/session/état sur données disponibles ; critères et occurrences distincts, jamais conformité globale déduite |
+| Activités liées | Identité de type commune ou relation préparatoire existante ; liste paginée, pas de rapprochement par intitulé/date ; ambiguïtés sans faux cours lié ; préparations manquantes toujours signalées |
+| Contexte | Année, filtres, type, occurrence/session, vue et déploiements conservés lors de consultation/retour ; pas de nouvel état métier |
+| Messages partagés | Info/positif bleu, partiel/avertissement jaune, erreur/non-conformité/blocage rouge selon signification ; titres/texte explicites, rôles/actions/délais conservés ; styles avec tokens existants |
+| Protections et livraison | Témoin JSP 010JSP.006, IDs/lignées/codes/Stat.Com, validations, historiques et données préservés ; aucun moteur nominatif ou mutation de production ; [skip netlify], GO fusion et déploiement distincts puis SHA publié, recette MOA production et PASS explicite |
+
+Les écrans nécessitant une refonte spécifique de messages gardent leur dépendance dans les mêmes vues actives ; aucune refonte globale engagée. Les attentes obsolètes de deux scripts historiques sont documentées, pas corrigées par un changement CI/CD non autorisé. **Programme annuel 2027 NON VALIDÉ.**
+
 ## Lot unique UX et organisationnel — décisions MOA du 16.10.2026
 
 Mandat humain postérieur à #31, base main et production vérifiées `0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5`. [Rapport, matrice et preuves](../../SCOPE_QV_UX_ORGANISATION_20261016.md). Les règles institutionnelles OS1.01/1.06 et les décisions #29–#31 restent acquises. Cette décision remplace la disposition locale « A. Préparation / B. Conformité / C. Harmonisation » de #31, sans supprimer ses données ni ses capacités applicatives.

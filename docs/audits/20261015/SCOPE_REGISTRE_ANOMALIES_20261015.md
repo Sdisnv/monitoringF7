@@ -1,5 +1,13 @@
 # SCOPE — Registre des anomalies, réserves et arbitrages
 
+## Écarts UX issus de la recette #32 — mandat du 16.10.2026
+
+Main/production #32 directement vérifiés `fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51`. Les constats du nouveau mandat concernent la surcharge navigation/contrôle, la règle et son alerte mélangées, la consultation des résultats et la typographie. Ils sont traités sous le même repère **QV-CONTROLE-QUALITE-001 / UX**, sans second registre : [lot d’accélération, preuves et limites](../../SCOPE_QV_ACCELERATION_UX_20261016.md). État : **DÉVELOPPÉ TECHNIQUEMENT, recette MOA production du nouveau lot EN ATTENTE** ; aucune clôture antérieure déduite.
+
+Corrections : navigation raisonnée, vues conformité/harmonisation exclusives, règle informative bleue et alerte distincte, bouton de règle sans flèche avec libellé ouvert/fermé, harmonisation en haut, synthèse annuelle compacte, type/occurrence/critères et liens contextualisés, activités liées par identités existantes. Aucun défaut de données n’est déduit des fixtures. Relations ambiguës et règles absentes restent explicites.
+
+Réserves de vérification CI/CD observées : `scripts/check-local.sh` attend la redirection historique `/auth/login`, absente de main ; `scope-ds-1-tests.js` échoue au cas 09 sur une liste d’anciens suffixes CSS, alors que `scope.html` inchangé référence `scope-qv-p0-consolidated-20261009`. Les entrées responsables sont identiques à main ; les huit cas de primitives DS et le contrôle syntaxique passent. Configuration et scripts historiques non modifiés, aucun contournement. Ces réserves sont rattachées à la tâche qualité existante ; GO distinct nécessaire avant modification CI/CD. Aucun incident de production ou blocage métier annuel déduit de ces attentes statiques. Programme2027 NON VALIDÉ.
+
 ## Actualisation UX et organisationnelle — 16.10.2026, après #31
 
 #31 fusionnée et publiée au SHA `0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5`, vérification directe ; aucun PASS MOA de #31 reçu dans ce mandat. Les trois anomalies historiques ci-dessous ne sont donc pas clôturées. Le mandat suivant demande une évolution de présentation et de classement, traitée sous les mêmes repères QV-CONTROLE-QUALITE-001 / QV-PUBLIC-008 et la ligne UX, sans second registre : [rapport ciblé](../../SCOPE_QV_UX_ORGANISATION_20261016.md).

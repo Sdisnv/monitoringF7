@@ -1,5 +1,9 @@
 # SCOPE — Plan de finalisation QUO VADIS
 
+## Raccord UX de préparation — mandat opérationnel du 16.10.2026 après #32
+
+Base main/production vérifiée `fe4cfb96ad59732cb0a1eea08fd4e9124b91cf51`. Le [lot UX/exploitation](../../SCOPE_QV_ACCELERATION_UX_20261016.md) facilite l’étape 1 sans modifier la chaîne ni ses gates : contrôle annuel compact, accès aux occurrences identifiées, type → occurrence → critères, relations préparatoires explicites et contexte conservé. La validation annuelle reste dans le workflow existant ; la conformité affichée d’un critère ne vaut pas validation de l’occurrence. Les blocages globaux restent globaux ; la préparation manquante n’est pas effacée par une liste de liens vide. Ni assignation, ni communication ou publication annuelle engagée. Les étapes et preuves historiques ci-dessous gardent leur portée ; Programme annuel 2027 NON VALIDÉ. Recette MOA du lot uniquement en production après GO distincts et SHA publié, PASS explicite requis.
+
 > Capitalisation phase B : import de la phase A actualisée à #27. Les déclarations « hors dépôt », « pas de phase B » et les prochains GO dans le texte importé décrivent son mandat historique. La mission de phase B autorise maintenant sa capitalisation documentaire en une PR, sans fusion ni déploiement. Les réserves AUDIT_INCOMPLET et Programme 2027 NON VALIDÉ restent applicables. Voir [provenance](README.md).
 
 

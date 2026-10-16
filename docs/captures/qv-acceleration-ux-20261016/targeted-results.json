@@ -1,0 +1,161 @@
+{
+  "unit": {
+    "exitCode": 0,
+    "output": "✔ same comparator, business profiles and type counters as merged PR32 (13.394334ms)\n✔ navigation retains every existing target and places preparation together (25.282667ms)\n✔ informative blue rule surface is separate from truthful yellow control alert (2.638167ms)\n✔ known blocking rule remains red alert with independent blue information (1.312416ms)\n✔ harmonisation is an existing secondary action in the top bar only (22.269416ms)\n✔ annual counts use supplied points and exact identities, with globals unallocated (0.313959ms)\n✔ annual overview does not render every issue or guess missing timestamps (1.021208ms)\n✔ missing structured publication details remain a single global control (0.06525ms)\n✔ linked activities use shared definition and explicit preparation relation only (0.15025ms)\n✔ ambiguous course has no invented relationship; missing preparations remain visible separately (0.496666ms)\n✔ occurrence filters use real date/OI/session and classify criteria without whole-occurrence claim (0.387041ms)\n✔ initial result rendering contains only type summary, no occurrences or criteria (1.143875ms)\n✔ shared confirmation retains actions and semantic kind with explicit message tone (0.460833ms)\n✔ protected published witness and existing payloads remain unchanged by all new presentation adapters (13.697625ms)\n✔ linked lists paginate using existing presentation and omit reconciled inactive aliases (1.613167ms)\n✔ annual module ambiguity retains all explicit references without fabricating a preferred link (0.0805ms)\nℹ tests 16\nℹ suites 0\nℹ pass 16\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 294.256375\n"
+  },
+  "browser": {
+    "status": "PASS_TECHNIQUE_LOCAL",
+    "scenarios": 22,
+    "checks": [
+      "default conformity, exclusive operational view, bounded type choices",
+      "compact annual overview counts provided points and distinct identified occurrences",
+      "annual details on demand, known identities linked, globals unlinked",
+      "type summary distinct from occurrences and criteria, no eager detailed rows",
+      "three deliberate levels: type, occurrence, criterion",
+      "real date range, OI, session and criterion state filters with exact counts",
+      "return to control restores selected type, result filters and occurrence expansion",
+      "exclusive modes preserve each other’s context",
+      "top secondary harmonisation opens exact same route with saved explicit source and no action",
+      "same incompatible harmonisation preview and invalidation on model change",
+      "blue informational rule and separate truthful alert, keyboard toggle and both labels, no arrow",
+      "linked activities use existing same-type and explicit preparatory relations with working direct links",
+      "ordinary fiche values use normal typography, existing workflow fields retained",
+      "existing save payload preserves untouched assignment and evaluation parameters",
+      "shared confirmation dialog retains explicit error tone and cancel action",
+      "shared notifications: blue info/success, yellow warning, red error; semantic roles and dismissal retained",
+      "60 occurrences remain paginated 25/25/10 without eager criterion tables",
+      "59 explicit related records remain paginated 25/25/9",
+      "year 2028 retained through existing fiche routes and control return",
+      "1440/1024/390 responsive widths without measured field overlap or panel/link overflow",
+      "existing management permissions preserved",
+      "fixtures and protected witness unchanged, no external network or production writes"
+    ],
+    "layouts": [
+      {
+        "width": 1440,
+        "panelFits": true,
+        "fieldsOverlap": 0,
+        "linksFit": true,
+        "modesFit": true
+      },
+      {
+        "width": 1024,
+        "panelFits": true,
+        "fieldsOverlap": 0,
+        "linksFit": true,
+        "modesFit": true
+      },
+      {
+        "width": 390,
+        "panelFits": true,
+        "fieldsOverlap": 0,
+        "linksFit": true,
+        "modesFit": true
+      }
+    ],
+    "tones": {
+      "info": {
+        "bg": "rgb(232, 236, 248)",
+        "text": "rgb(23, 28, 143)",
+        "weight": "400"
+      },
+      "success": {
+        "bg": "rgb(232, 236, 248)",
+        "text": "rgb(23, 28, 143)",
+        "weight": "400"
+      },
+      "warning": {
+        "bg": "rgb(255, 246, 229)",
+        "text": "rgb(178, 106, 0)",
+        "weight": "400"
+      },
+      "error": {
+        "bg": "rgb(253, 232, 234)",
+        "text": "rgb(180, 35, 24)",
+        "weight": "400"
+      }
+    },
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "interceptedSaves": 1
+  },
+  "historicalChecks": {
+    "checkLocal": {
+      "exitCode": 1,
+      "stoppedAt": "Netlify assertion for legacy /auth/login redirect absent from unchanged main netlify.toml; JS syntax and version assertions passed"
+    },
+    "designSystem": {
+      "exitCode": 1,
+      "passedPrimitiveChecks": 8,
+      "failedCase": 9,
+      "reason": "Unchanged main scope.html CSS suffix scope-qv-p0-consolidated-20261009 is absent from historical allowlist",
+      "output": "PASS 01 — tokens couleurs / rayons / espaces / hauteurs / typo / focus\nPASS 02 — boutons unifiés, rayon 3, compact 28, pas de 999\nPASS 03 — champs page 40 / compact 32, même chrome\nPASS 04 — table base commune + scroll horizontal, pas de suppression table-as-card\nPASS 05 — toolbar / segmented jointif / status control / kpi strip / badges\nPASS 06 — modal 6px, menu 4px, focus visible commun\nPASS 07 — aucun 999 dans les nouveaux composants, avatar circulaire conservé\nPASS 08 — primitives DS disponibles sans nouvelle saisie présence\nFAIL 09 — pas de logique métier dans le lot DS\nAssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(html.includes('assets/css/scope.css?v=scope-multisession-v2-close-reopen-report-ux-3') || html.includes('assets/css/scope.css?v=scope-pr-abc-close-r2') || html.includes('assets/css/scope.css?v=scope-login-visual-alignment-orion-1') || html.includes('assets/css/scope.css?v=scope-login-1') || html.includes('assets/css/scope.css?v=scope-ds-1') || html.includes('assets/css/scope.css?v=scope-ux-event-1') || html.includes('assets/css/scope.css?v=scope-ux-event-2') || html.includes('assets/css/scope.css?v=scope-ux-event-3') || html.includes('assets/css/scope.css?v=scope-design-2') || html.includes('assets/css/scope.css?v=scope-design-2b') || html.includes('assets/css/scope.css?v=scope-design-2c') || html.includes('assets/css/scope.css?v=scope-design-2d') || html.includes('assets/css/scope-event-design-a') || html.includes('assets/css/scope-event-design-b') || html.includes('assets/css/scope-event-design-c') || html.includes('assets/css/scope-event-design-c1') || html.includes('scope-event-c3-fix') || html.includes('assets/css/scope.css?v=scope-participation-policy-engine-1'))\n\n    at <worktree>/scripts/scope-ds-1-tests.js:183:12\n    at record (<worktree>/scripts/scope-ds-1-tests.js:38:5)\n    at Object.<anonymous> (<worktree>/scripts/scope-ds-1-tests.js:182:1)\n    at Module._compile (node:internal/modules/cjs/loader:1873:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:2013:10)\n    at Module.load (node:internal/modules/cjs/loader:1596:32)\n    at Module._load (node:internal/modules/cjs/loader:1398:12)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47\n"
+    }
+  },
+  "moaProduction": "NON_EFFECTUEE",
+  "annualProgramme2027": "NON_VALIDE",
+  "acquiredCampaignsRerun": false,
+  "productionWrites": 0,
+  "source": "Synthetic fixtures and fake API; one intercepted save returns updated:false; no persistence or rollback needed",
+  "browsers": "Chrome headless on macOS; Safari not verified",
+  "testedFilesSha256": {
+    "assets/js/scope-ui-logic.js": "eff2753331db76843914720defb411cd38a1cdb0dc457d57b04c0a74ebfa0b4e",
+    "assets/js/scope-ui.js": "062acd42e44310c111f13a9ae4a6508040277c056dd96b23078241857a7d925f",
+    "assets/css/scope.css": "5cb4e2ac5a944b7010cc9de39c45d929e18041b402324f9f8f3a09ab2664f56f",
+    "scripts/scope-qv-acceleration-20261016-tests.js": "949a2eb9a22908c0a4d56534b9ef135e960c36a2b72ba88bd1b64e45318fdbbb",
+    "scripts/scope-qv-acceleration-20261016-browser.js": "0e74cda7f95fb9518dfe2e4aa5454640a7c88c950bb58c48e7d48b63e6d3ee52"
+  },
+  "screenshotsSha256": {
+    "controle-1440.png": "d12d909ea13f34a0643a20edbb4751ec6f9373ce6c6f9034c107cb56d4d5a3ee",
+    "harmonisation-1440.png": "18a2f08a569524204f792b21d4bb822e272050999dd64e1d0b21644a17f5cde6",
+    "fiche-1440.png": "46feece427e42c672132e92a4dbe3df8332017148cf4e54a716b3e963c03e9a3",
+    "controle-390.png": "4d7d951b79194d5cccf78681e357b50b35721a08f383661e1061f2d39ba9da8f",
+    "occurrences-1440.png": "c7cb160cc01642b351940c348feac6602b4479a8c46d63b498568fb860e70c48"
+  },
+  "staticChecks": {
+    "status": "PASS",
+    "syntaxFiles": 4,
+    "diffCheck": "PASS",
+    "provenanceFilesVerified": 9,
+    "sourceProvenanceUnchanged": true,
+    "roadmapCards": 1,
+    "fieldsPerCard": 14,
+    "todoRows": 1,
+    "columnsPerRow": 9,
+    "newLocalLinksVerified": 27,
+    "unchangedCICDFiles": [
+      "scope.html",
+      "scripts/scope-ds-1-tests.js",
+      "netlify.toml",
+      "netlify.scope.toml",
+      "package.json",
+      "scripts/check-local.sh",
+      "scripts/assert-scope-netlify-target.js",
+      "scripts/build-scope-static.js"
+    ],
+    "globalCssTokensUnchanged": true,
+    "secretPatternsFound": 0,
+    "testedSourceAndCaptureHashes": "MATCH"
+  },
+  "staticBuild": {
+    "status": "PASS",
+    "pdfWorkerFingerprint": true,
+    "assets": [
+      {
+        "file": "assets/js/scope-ui.js",
+        "sourceSha256": "062acd42e44310c111f13a9ae4a6508040277c056dd96b23078241857a7d925f",
+        "builtSha256": "062acd42e44310c111f13a9ae4a6508040277c056dd96b23078241857a7d925f"
+      },
+      {
+        "file": "assets/js/scope-ui-logic.js",
+        "sourceSha256": "eff2753331db76843914720defb411cd38a1cdb0dc457d57b04c0a74ebfa0b4e",
+        "builtSha256": "eff2753331db76843914720defb411cd38a1cdb0dc457d57b04c0a74ebfa0b4e"
+      },
+      {
+        "file": "assets/css/scope.css",
+        "sourceSha256": "5cb4e2ac5a944b7010cc9de39c45d929e18041b402324f9f8f3a09ab2664f56f",
+        "builtSha256": "5cb4e2ac5a944b7010cc9de39c45d929e18041b402324f9f8f3a09ab2664f56f"
+      }
+    ]
+  }
+}
