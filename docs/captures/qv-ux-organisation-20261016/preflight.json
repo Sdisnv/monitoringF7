@@ -1,0 +1,48 @@
+{
+  "checkedAt": "2026-10-16T10:26:15Z",
+  "base": {
+    "name": "main",
+    "sha": "0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5"
+  },
+  "openPullRequests": [],
+  "recentMerges": [
+    {
+      "merge_commit_sha": "0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5",
+      "merged_at": "2026-10-16T09:40:51Z",
+      "number": 31
+    },
+    {
+      "merge_commit_sha": "8a11b2e50ff47932628733b3dbc9715bfe6822b2",
+      "merged_at": "2026-10-16T08:11:45Z",
+      "number": 30
+    },
+    {
+      "merge_commit_sha": "02b034ab5e1d5065373b39b8fb43aa74740b7fa7",
+      "merged_at": "2026-10-16T05:56:13Z",
+      "number": 29
+    },
+    {
+      "merge_commit_sha": "b6054b9a9ccd94a7c7e7104dbfbc86c6de111d1a",
+      "merged_at": "2026-10-15T15:03:47Z",
+      "number": 28
+    },
+    {
+      "merge_commit_sha": "3bdad82029ef79ea721bcf4043a5bb47e4d86764",
+      "merged_at": "2026-10-15T13:09:20Z",
+      "number": 27
+    }
+  ],
+  "production": {
+    "id": "6def8d4d-78c6-4112-bb76-6891df0e0a52",
+    "name": "scope-sdisnv",
+    "published_deploy": {
+      "id": "6ad1f1629c067a02cb67e1e9",
+      "state": "ready",
+      "commit_ref": "0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5",
+      "published_at": "2026-10-16T09:42:54.379Z"
+    }
+  },
+  "method": "GitHub API and Netlify getSite metadata only; no business route or database call",
+  "productionMutations": 0,
+  "mandate_sha256": "6713a4f8c351cc7af12abb7bd7363236e2ce96f0be30cf14c7f3344cda8906a2"
+}

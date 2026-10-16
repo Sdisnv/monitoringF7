@@ -1,5 +1,9 @@
 # SCOPE — Roadmap consolidée pour revue MOA
 
+## Actualisation UX et organisationnelle — 16.10.2026, après #31
+
+Main et production directement vérifiés `0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5` ; #31 fusionnée le16.10 à09:40:51UTC, déploiement publié `6ad1f1629c067a02cb67e1e9` ready à09:42:54.379UTC /11:42:54.379Europe/Zurich. Aucune PR ouverte au départ. [Lot UX et preuves ciblées](../../SCOPE_QV_UX_ORGANISATION_20261016.md). Les fiches qualité/publics ci-dessous sont amendées en place ; aucun second backlog. Les paragraphes suivants conservent leurs références historiques. Le lot reste technique, sans PASS MOA ; Programme2027 NON VALIDÉ.
+
 > Capitalisation phase B : import de la phase A actualisée à #27. Les déclarations « hors dépôt », « pas de phase B » et les prochains GO dans le texte importé décrivent son mandat historique. La mission de phase B autorise maintenant sa capitalisation documentaire en une PR, sans fusion ni déploiement. Les réserves AUDIT_INCOMPLET et Programme 2027 NON VALIDÉ restent applicables. Voir [provenance](README.md).
 
 
@@ -47,18 +51,18 @@ Les identifiants marqués « proposé » viennent de la mission actuelle et ne s
 |---|---|
 | Identifiant | QV-CONTROLE-QUALITE-001 (proposé) |
 | Description métier | Consolider le contrôle qualité avant validation annuelle ; écarts équivalents entre OI = à examiner, pas erreurs automatiques |
-| Source | Mandat correctif post-recette MOA #29/#30 du 16.10.2026 ; canon et registre des décisions, sections datées. Sources 15.10 conservées historiquement. |
-| Date de décision | 15.10 complété par le mandat post-recette du 16.10.2026 |
+| Source | Mandats 15–16.10, correctif #31 puis décisions MOA du lot UX et organisationnel du16.10 ; canon et registre datés. |
+| Date de décision | 15.10 complété le16.10.2026, mandat UX postérieur à #31. |
 | Priorité | P1 proposé, avant validation annuelle |
 | Module | QV |
 | Dépendances | Moteurs annualValidationControl, preparationControls, réservations, publics, calendrier, reconduction ; données et arbitrages M/P |
-| État du développement | PARTIEL pour rapport annuel global ; correctif conformité/harmonisation et UX développé sur branche isolée, aucune écriture groupée. |
-| État des tests | 14 tests ciblés et 11 parcours Chrome synthétiques PASS ; dispositions 1440/1024/390 ; acquis PR20–27 non rejoués ; nouvelle recette production EN ATTENTE. |
-| Validation MOA | Anomalies et périmètre confirmés par le mandat ; correctif non accepté en production. |
-| Travaux restants | Revue PR, GO fusion puis GO déploiement distincts ; nouvelle recette ciblée du panneau sur SHA publié. Qualifier les règles absentes sans valeur arbitraire ; rapport annuel global reste distinct. |
+| État du développement | PARTIEL pour rapport annuel global ; fiche simplifiée, encadré métier unique et contrôle transversal avec synthèse/détails et harmonisation explicite développés ; aucun enregistrement groupé. |
+| État des tests | 15 tests ciblés et 12 parcours Chrome synthétiques PASS ; 1440/1024/390 ; acquis PR20–31 non rejoués ; recette MOA production NON EFFECTUÉE. |
+| Validation MOA | Décisions du mandat acquises ; implémentation du lot UX non acceptée en production. Aucun PASS #31 déduit de sa publication. |
+| Travaux restants | Revue PR, GO fusion puis GO déploiement distincts ; contrôle SHA et recette MOA production du lot UX. Rapport annuel exhaustif et règles absentes restent à qualifier selon les exigences existantes. |
 | Critères d’acceptation | OI, domaine, famille, Stat.Com, lieu/salle, responsable, public, spécialisation, cursus, état, reconduction, évaluation, soldé, ECAwin ; dates, ressources, CTA, sections/demi-sections, préparation/14 jours, fériés/vacances, dates validées et dérogations ; BLOQUANT/À ARBITRER/INFORMATIF ; blocage non résolu interdit validation ; causes, IDs, décisions, dérogations, corrections et résolution traçables |
-| Preuves | [Correctif post-recette MOA](../../SCOPE_QV_CORRECTIF_MOA_20261016.md) |
-| Prochain jalon | Livraison du lot correctif unique puis recette MOA production autorisée ; PASS explicite avant clôture des anomalies. |
+| Preuves | [Lot UX, matrice et preuves](../../SCOPE_QV_UX_ORGANISATION_20261016.md) ; [correctif #31 historique](../../SCOPE_QV_CORRECTIF_MOA_20261016.md) |
+| Prochain jalon | Revue de la PR UX ; autorisations distinctes puis recette production et PASS explicite avant clôture. |
 
 ### QV-PLANIF-ALTERNATIVES-001 (proposé)
 
@@ -161,18 +165,18 @@ Les identifiants marqués « proposé » viennent de la mission actuelle et ne s
 |---|---|
 | Identifiant | QV-PUBLIC-008 — complément relation datée (référence qualifiée) |
 | Description métier | Extractions fiables de chefs de section par PERSONNE–FONCTION–DOMAINE–OI à la date |
-| Source | Missions 15–16.10, OS/IndeX puis décision post-recette #29/#30 du 16.10.2026 sur les fonctions JSP ; canon/registre, sections datées. |
-| Date de décision | 15.10 complété le16.10.2026 ; décision Chef matériel JSP reçue pendant le lot institutionnel. |
+| Source | Missions 15–16.10, OS1.01/1.06, décisions JSP #31 et classement des remplaçants du mandat UX postérieur ; canon/registre datés. |
+| Date de décision | 15.10 complété le16.10.2026 ; décisions de retrait JSP et classement des remplaçants acquises. |
 | Priorité | P1 proposé pour assignations nominatives |
 | Module | Personnel / publics / QV |
 | Dépendances | Affectations datées et identités/NIP existants ; fonction distincte qualification/responsabilité/événement |
-| État du développement | PARTIEL pour extraction réelle ; retrait Chef formation JSP et classement/recherche Resp formation/Chef site corrigés techniquement ; faits individuels datés toujours manquants. |
-| État des tests | Dictionnaire, conservation des codes/historiques et recherche contextualisée testés dans le lot correctif ; pas de nouvelle recette nominative ni PASS MOA production. |
-| Validation MOA | Chef formation JSP inexistant, Resp formation dans Commandement et responsables : décisions acquises ; correctif publié encore à recetter. |
-| Travaux restants | GO distincts et recette production du lot ; source réelle des fonctions, années de formation, échelons et candidatures puis raccord aux personnes existantes sans déduction. |
+| État du développement | PARTIEL pour extraction réelle ; dictionnaire #30/#31 préservé, remplaçants reconnus alignés sur groupe/rang parent ; faits individuels datés toujours manquants. |
+| État des tests | Comparaison directe des codes et grades avec main #31, six couples titulaire/remplaçant et références retirées PASS ; aucune nouvelle recette nominative ni PASS MOA production. |
+| Validation MOA | Chef formation/matériel JSP hors nouveaux choix, Resp formation/Chef site et remplaçants dans leur groupe confirmé ; implémentation UX encore à recetter. |
+| Travaux restants | GO distincts et recette production du lot UX ; source réelle des fonctions, années de formation, échelons et candidatures puis raccord aux personnes existantes sans déduction. |
 | Critères d’acceptation | Mêmes personnes selon date/domaine/OI avec preuve de fonction ; PRINCIPAL/SECONDAIRE ne vaut pas Chef section ; aucun NIP fictif ni déduction depuis responsabilité ponctuelle |
-| Preuves | [Correctif post-recette MOA](../../SCOPE_QV_CORRECTIF_MOA_20261016.md) ; [lot #30 historique](../../SCOPE_OS_INDEX_UNIFORMISATION_20261016.md) |
-| Prochain jalon | Revue du correctif, GO fusion/déploiement distincts et recette production ; source individuelle à confirmer séparément, aucune affectation inventée. |
+| Preuves | [Lot UX et organisationnel](../../SCOPE_QV_UX_ORGANISATION_20261016.md) ; [#31 historique](../../SCOPE_QV_CORRECTIF_MOA_20261016.md) ; [#30 historique](../../SCOPE_OS_INDEX_UNIFORMISATION_20261016.md) |
+| Prochain jalon | Revue PR UX, GO fusion/déploiement distincts et recette production ; source individuelle à confirmer séparément. |
 
 ### QV-EXERCICE-PREPARATION-001 — reliquat après #25/#26
 

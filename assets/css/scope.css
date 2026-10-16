@@ -11971,3 +11971,33 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-review-panel [data-review-state=A_ARBITRER]::before{background:#9a6b15}
 .qv-review-panel .qv-review-value{margin:0}
 @media(max-width:700px){.qv-review-panel .qv-review-grid,.qv-review-panel .qv-review-fields,.qv-review-panel .qv-review-facts{grid-template-columns:minmax(0,1fr)}.qv-review-panel .qv-review-grid{padding:12px}.qv-review-panel .qv-review-actions{align-items:flex-start;flex-direction:column}}
+
+/* QV business notices and programme review only — palette decided by MOA 16.10.2026. */
+.qv-info-notice[data-qv-tone=blue]{--qv-notice-bg:#e8f3ff;--qv-notice-text:#0946a5;--qv-notice-border:#bad8ff}
+.qv-info-notice[data-qv-tone=yellow]{--qv-notice-bg:#fff7df;--qv-notice-text:#765318;--qv-notice-border:#e4c779}
+.qv-info-notice[data-qv-tone=red]{--qv-notice-bg:#fff0ef;--qv-notice-text:#992f28;--qv-notice-border:#e9aaa5}
+.qv-info-notice{background:var(--qv-notice-bg);color:var(--qv-notice-text);border:1px solid var(--qv-notice-border);padding:14px;border-radius:4px;line-height:1.5;overflow-wrap:anywhere}
+.qv-info-notice p{margin:8px 0}
+.qv-info-notice a{white-space:normal;overflow-wrap:anywhere}
+.qv-programme-reference.qv-info-notice{padding:12px 224px 12px 15px}
+.qv-programme-reference.qv-info-notice summary,.qv-programme-reference.qv-info-notice .qv-programme-reference-icon,.qv-programme-reference.qv-info-notice .qv-programme-reference-body>p{color:inherit}
+.qv-programme-reference.qv-info-notice .qv-programme-reference-body>.scope-btn{border-color:var(--qv-notice-border);color:inherit}
+.qv-business-conditions{display:grid;grid-template-columns:minmax(110px,18%) minmax(0,1fr);gap:8px 16px;margin:12px 0 0}
+.qv-business-conditions dt{font-weight:600}
+.qv-business-conditions dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.qv-programme-review .qv-review-field input[type=search]{box-sizing:border-box;width:100%;min-width:0;min-height:38px;padding:8px;border:1px solid #aeb8c2;background:#fff;font:inherit}
+.qv-programme-review .qv-review-summary{width:100%;min-width:800px;table-layout:fixed;font-size:.85rem;line-height:1.45}
+.qv-programme-review .qv-review-summary caption{text-align:left;font-weight:600;padding:10px 0}
+.qv-programme-review .qv-review-summary th,.qv-programme-review .qv-review-summary td{padding:12px;vertical-align:top;white-space:normal;overflow-wrap:anywhere;text-align:left}
+.qv-programme-review .qv-review-summary th:first-child{width:27%}
+.qv-programme-review .qv-review-summary tbody th{text-transform:none;font-weight:500;color:inherit;letter-spacing:normal;font-size:inherit}
+.qv-programme-review .qv-review-summary thead th{background:#edf1f5}
+.qv-programme-review .qv-review-summary tbody tr:nth-child(odd)>*{background:#fff}
+.qv-programme-review .qv-review-summary tbody tr:nth-child(even)>*{background:#f4f6f8}
+.qv-programme-review,.qv-programme-review .qv-review-section,.qv-programme-review .qv-review-result-details,.qv-programme-review .qv-review-table{scroll-margin-top:100px}
+.qv-review-result-details{margin:14px 0;border-top:1px solid #d7dfe7;padding:12px 0;min-width:0}
+.qv-review-result-details>summary{cursor:pointer;font-weight:600;line-height:1.5}
+.qv-review-panel .qv-review-state[data-qv-tone=blue]::before{background:#0946a5}
+.qv-review-panel .qv-review-state[data-qv-tone=yellow]::before{background:#946513}
+.qv-review-panel .qv-review-state[data-qv-tone=red]::before{background:#992f28}
+@media(max-width:650px){.qv-programme-review,.qv-programme-review .qv-review-section,.qv-programme-review .qv-review-result-details,.qv-programme-review .qv-review-table{scroll-margin-top:230px}.qv-programme-reference.qv-info-notice{padding:12px 15px}.qv-business-conditions{grid-template-columns:minmax(0,1fr);gap:4px}.qv-business-conditions dd{margin-bottom:8px}}

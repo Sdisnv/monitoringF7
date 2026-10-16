@@ -1938,6 +1938,7 @@
       const views = {
         synthese: 'synthese',
         programme: 'programme',
+        'controle-programme':'controle-programme',
         'catalogue-annuel': 'catalogue-annuel',
         'agenda-annuel': 'agenda-annuel',
         agenda: 'agenda',
@@ -1985,6 +1986,7 @@
         qvView: view,
         qvJour: query.jour || '',
         qvFrom: query.from || '',
+        qvModel: query.modele || '',
         qvDomaine: query.domaine || '',
         qvFamille: query.famille || '',
         qvMois: query.mois || '',
@@ -3548,7 +3550,7 @@
     const fields=request.fields || (mode==='CONFORMITE'?QV_REVIEW_FIELDS.filter(field=>field!=='specialisation'):[]);
     if(!fields.length || fields.some(field=>!QV_REVIEW_FIELDS.includes(field)))throw new Error('Sélectionnez au moins un champ à reprendre.');
     const active=row=>qvProgrammeIsActive(row) && row.status!=='ANNULE' && row.active!==false;
-    const source=mode==='HARMONISATION'?(rows || []).find(row=>row.id===request.sourceOccurrenceId && active(row)):null;
+    const source=mode==='HARMONISATION'?(rows || []).find(row=>row.id===request.sourceOccurrenceId && active(row) && qvProgrammeSavedModel(row)):null;
     if(mode==='HARMONISATION' && !source)throw new Error('Sélectionnez explicitement une fiche modèle disponible.');
     const result=[];
     for(const row of rows || []){
@@ -3565,16 +3567,69 @@
           startsAt:row.startsAt,field,current,proposed:rule || mode==='HARMONISATION'?proposed:undefined,
           sourceValue:source?qvProgrammeReviewValue(source,field):undefined,sourceOccurrenceId:source?.id,
           sourceLabel:source?.activityLabel || source?.label,status,compatibility:compatibility?.status,
+          blocking:mode==='CONFORMITE' && field==='participationEvaluation' && current===true && proposed===false && qvProgrammeIsPreparatory(row),
           rule:rule?.source || 'Règle métier non définie',explanation:compatibility?.message || (!rule?'Règle métier non définie':'Comparaison avec la règle applicable au type sélectionné.'),
           impact:['CONFORME','REGLE_NON_DEFINIE'].includes(status)?'Fiche conservée ; aucune modification proposée.':row.publishedEventId?'Révision motivée de l’événement lié ; historique et présences conservés.'
             :row.businessValidation?'Décision validée conservée ; revalidation nécessaire.':'Proposition uniquement ; aucune assignation ni modification enregistrée.',
           validationRequired:compatibility?.status==='INCOMPATIBLE'?'INTERDIT':row.publishedEventId?'REVISION_MOTIVEE':row.businessValidation?'REVALIDATION_MOA':'CONFIRMATION_MOA',
           recommended:mode==='CONFORMITE' && status==='ECART_CONSTATE',sourceUpdatedAt:row.preparation?.updatedAt || row.updatedAt || null,applyAutomatically:false});
       }
+      if(mode==='CONFORMITE' && !request.fields)for(const control of row.preparationControls || []){
+        if(!control.blocking || control.exception)continue;
+        result.push({mode,occurrenceId:row.id,definitionId:row.definitionId,occurrenceLabel:row.activityLabel || row.label || 'Activité',startsAt:row.startsAt,
+          field:'preparation',current:null,proposed:undefined,status:'ECART_CONSTATE',blocking:true,
+          rule:'Contrôle préparatoire existant — délai et relation',explanation:control.message || 'Préparation obligatoire non conforme.',
+          impact:'Blocage du contrôle préparatoire enregistré ; décision métier nécessaire.',validationRequired:row.publishedEventId?'REVISION_MOTIVEE':'CONFIRMATION_MOA',applyAutomatically:false});
+      }
     }
     return result;
   }
 
+
+  function qvProgrammeSavedModel(row){return Boolean(row?.preparation?.id || row?.publishedEventId);}
+  function qvProgrammeInfoState({blocking=false,nonConformity=false,complete=false,pending=false}={}){
+    return blocking || nonConformity?{tone:'red',label:blocking?'Blocage démontré':'Non-conformité constatée'}
+      :complete && !pending?{tone:'blue',label:'Information complète pour les contrôles effectués'}
+        :{tone:'yellow',label:'À contrôler — information partielle'};
+  }
+  // Read-only conditions from the same recognized profiles and confirmed decisions.
+  function qvProgrammeBusinessConditions(row){
+    const items=[],add=(label,text)=>items.push({label,text});
+    const profile=qvProgrammeAssignmentProfile(row),type=profile.profile;
+    if(type==='CAR')add('Participation','Conducteurs VL et candidats concernés.');
+    if(type==='TRUCK')add('Participation','Conducteurs PL et candidats concernés.');
+    if(type==='TP9_1' || type==='TP9_2')add('Participation',type==='TP9_1'?'Conducteurs TP9 qualifiés uniquement ; candidature seule insuffisante.':'Qualification TP9 validée à la date du module, selon le cursus ; aucune qualification automatique.');
+    if(profile.maxParticipants)add('Capacité',`Maximum ${profile.maxParticipants} participants ${type==='INSTRUCTION_DPS'?'dans la section ou demi-section concernée':'par session'}.`);
+    if(type==='INSTRUCTION_DPS')add('Composition','Population de la section ou demi-section ; compléments externes soumis à autorisation. Aucun quota général confirmé hors G1.');
+    if(profile.sessionCount)add('Sessions',`${profile.sessionCount} sessions${type.startsWith('GROUP_')?' ; répartition proportionnée des participants.':'.'}`);
+    if(/^PR_[1-4]$/.test(type)){
+      add('Rôles particuliers','Préposé APR issu du public concerné et compris dans les douze PAPR ; surveillant hors effectif, six surveillants différents.');
+      add('Formateurs','Désignation manuelle pour toutes les sessions concernées.');
+      add('Statistiques','Une seule contribution par exercice ; auxiliaires hors effectifs et statistiques, dispenses conservées.');
+    }
+    const evaluation=qvProgrammeFieldRule(row,'participationEvaluation');
+    if(evaluation)add('Évaluation',evaluation.value?'Participations évaluables selon la règle de ce type.':'Cours de cadres préparatoire non évaluable ; consultation, assignations et présences conservées.');
+    if(row.assignmentParameters?.responsibleRequired)add('Condition d’assignation',`Participation obligatoire sous règle explicite : ${row.assignmentParameters.responsibleRule}`);
+    if(type && type!=='PREPARATION' && !row.assignmentParameters?.responsibleRequired)add('Condition d’assignation','Aucune assignation automatique liée à la responsabilité de l’activité.');
+    if(row.definitionId==='QV26-INTRODUCTION-PIONNIER-999BBC8C')add('Exception FOBA','Introduction PIONNIER supplémentaire pour FOBA 3, DPS G1 ; valeurs historiques conservées jusqu’à correction explicite.');
+    if(Array.isArray(row.conduiteSlots) && row.conduiteSlots.length===4)add('Conduite DAP','Quatre conducteurs VL ; trente minutes de conduite et trente minutes de connaissance du véhicule par conducteur.');
+    if(row.conduiteMinutesPerParticipant)add('Conduite DPS',`${row.conduiteMinutesPerParticipant} minutes de conduite par conducteur concerné.`);
+    if(row.externalActivity)add('Occupation externe','Sans cycle métier SDIS, ni évaluation ou reconduction automatique.');
+    return items;
+  }
+  function qvProgrammeReviewSummaries(results,rows){
+    const byId=new Map((rows || []).map(row=>[row.id,row])),groups=new Map();
+    for(const item of results || []){
+      const row=byId.get(item.occurrenceId),key=item.definitionId;
+      if(!groups.has(key))groups.set(key,{definitionId:key,label:row?.activityLabel || row?.label || item.occurrenceLabel || 'Activité',occurrenceIds:new Set(),conform:0,pending:0,blocking:0,undefined:0,criteria:0,results:[]});
+      const group=groups.get(key);group.occurrenceIds.add(item.occurrenceId);group.criteria++;group.results.push(item);
+      if(item.status==='CONFORME')group.conform++;
+      else if(item.blocking===true || item.validationRequired==='INTERDIT')group.blocking++;
+      else if(item.status==='REGLE_NON_DEFINIE')group.undefined++;
+      else group.pending++;
+    }
+    return [...groups.values()].map(({occurrenceIds,...group})=>({...group,occurrenceCount:occurrenceIds.size}));
+  }
 
   function qvProgrammePublicCatalogue() {
     const descriptive = Object.entries(qvProgrammeDescriptivePublics());
@@ -6129,7 +6184,7 @@
     qvInternalEventCodeDisplay,
     qvProgrammeParameters,
     qvProgrammeFunctionDefinitions, qvProgrammeFunctionContext, qvProgrammeIsPreparatory,
-    qvProgrammeAssignmentType, qvProgrammeAssignmentParameters, qvProgrammeAssignmentParametersForRow, qvProgrammeAssignmentProfile, qvProgrammeCorrectionProposals,
+    qvProgrammeAssignmentType, qvProgrammeAssignmentParameters, qvProgrammeAssignmentParametersForRow, qvProgrammeAssignmentProfile, qvProgrammeCorrectionProposals, qvProgrammeSavedModel, qvProgrammeBusinessConditions, qvProgrammeInfoState, qvProgrammeReviewSummaries,
     qvProgrammePublicCatalogue,
     qvProgrammeDateDecision,
     qvProgrammeHasValidatedDate,

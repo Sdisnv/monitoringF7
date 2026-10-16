@@ -1,5 +1,24 @@
 # SCOPE — Registre des décisions MOA
 
+## Lot unique UX et organisationnel — décisions MOA du 16.10.2026
+
+Mandat humain postérieur à #31, base main et production vérifiées `0cb698e3c8dd7cf5d1bccf1ca4d091060d86dbe5`. [Rapport, matrice et preuves](../../SCOPE_QV_UX_ORGANISATION_20261016.md). Les règles institutionnelles OS1.01/1.06 et les décisions #29–#31 restent acquises. Cette décision remplace la disposition locale « A. Préparation / B. Conformité / C. Harmonisation » de #31, sans supprimer ses données ni ses capacités applicatives.
+
+| Décision MOA | Application du lot |
+|---|---|
+| Fiche simple | Retrait du formulaire local d’assignation et des outils transversaux ; paramètres stockés, API et historiques préservés |
+| Règle appliquée | Encadré et visualiseur existants uniques ; conditions documentées des profils existants, capacités, sessions, rôles, exceptions et évaluation ; aucun doublon des valeurs de date/horaire/lieu/OI/public/responsable |
+| Trois états QV | Bleu : informations complètes pour les contrôles effectués ; jaune : partiel ou à arbitrer sans blocage démontré ; rouge : non-conformité ou blocage démontré ; texte explicite ; règle nominative absente sans faux blocage annuel |
+| Contrôle du programme | Un accès transversal ; conformité par règles et harmonisation volontaire séparées, même moteur #31 ; recherche/famille/OI pour choisir les types ; toutes leurs occurrences et sessions actives ensuite contrôlées |
+| Synthèse | Occurrences distinctes et critères comptés séparément par type ; détails ouverts volontairement ; ne jamais déduire une conformité globale d’un seul critère conforme |
+| Modèle explicite | Fiche enregistrée (identité de préparation ou événement lié), types et champs choisis ; lien contextuel avec activité/date/OI ; changement de modèle/périmètre invalide les résultats ; aucun enregistrement groupé |
+| Fonctions de remplacement | Même groupe et rang que la fonction remplacée reconnue ; Rempl. chef site dans Commandement et responsables ; grades, codes, alias, candidats et historiques inchangés |
+| Références retirées | Chef formation JSP et Chef matériel JSP restent hors nouveaux choix, historique conservé |
+| Témoin protégé | Séance Direction JSP 010JSP.006 du18.02.2027,18:30–20:30 : validation individuelle/publication/liaison conservées ; aucune modification ni revalidation |
+| Livraison | Une PR avec [skip netlify], sans fusion ni déploiement ; GO distincts, SHA réellement publié puis recette MOA en production et PASS explicite |
+
+Aucune nouvelle décision métier indispensable ne bloque ce lot UX. Les faits individuels datés et règles encore absentes restent leurs dépendances antérieures ; aucun moteur nominatif, qualification, affectation ou présence modifié. **Programme annuel 2027 NON VALIDÉ ; recette MOA de ce lot NON EFFECTUÉE.**
+
 
 ## Correctif post-recette MOA #29 / #30 — 16.10.2026
 

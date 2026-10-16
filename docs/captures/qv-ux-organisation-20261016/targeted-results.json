@@ -1,0 +1,96 @@
+{
+  "unit": {
+    "exitCode": 0,
+    "output": "✔ programme control route decodes source and year, without duplicate navigation (11.432875ms)\n✔ fiche contains one existing rule box/viewer and contextual link, without transverse or assignment form (14.692ms)\n✔ saved model prerequisite uses actual preparation identity or published link (0.240042ms)\n✔ three information states distinguish partial information and real blocking/nonconformity (0.062417ms)\n✔ missing nominative rule does not invent annual block; business validation alone does not turn box blue (0.73175ms)\n✔ blue requires available complete rule information; explicit preparatory or planning block is red (0.679333ms)\n✔ documented TP9, PR and FOBA conditions reuse existing rules without duplicating date/OI/place (0.163667ms)\n✔ full existing viewer remains human-readable without internal rule identifiers (0.530541ms)\n✔ type summary counts distinct occurrences separately from criteria, never inventing full conformity (0.571291ms)\n✔ existing explicit preparatory block contributes an explainable criterion; exceptions do not (0.142417ms)\n✔ same comparator and confirmed rules as main, with only new presentation metadata (1.776833ms)\n✔ summary displays no detailed technical rows before deliberate expansion (0.514458ms)\n✔ replacement classification follows recognized parent levels with identical codes and grades (0.134792ms)\n✔ protected witness, stored parameters and complete inputs remain unchanged by notice/control rendering (5.282292ms)\n✔ existing annual gate signals mandatory missing data in red without allocating global counts to types (0.484084ms)\nℹ tests 15\nℹ suites 0\nℹ pass 15\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 157.742417\n"
+  },
+  "browser": {
+    "status": "PASS_TECHNIQUE_LOCAL",
+    "scenarios": 12,
+    "externalRequests": 0,
+    "productionWrites": 0,
+    "syntheticDocumentRequests": 1,
+    "interceptedAssetRequests": 2,
+    "layouts": [
+      {
+        "width": 1440,
+        "fieldsOverlap": 0,
+        "checkboxOverlap": 0,
+        "fits": true,
+        "noticeLinksFit": true
+      },
+      {
+        "width": 1024,
+        "fieldsOverlap": 0,
+        "checkboxOverlap": 0,
+        "fits": true,
+        "noticeLinksFit": true
+      },
+      {
+        "width": 390,
+        "fieldsOverlap": 0,
+        "checkboxOverlap": 0,
+        "fits": true,
+        "noticeLinksFit": true
+      }
+    ],
+    "tones": {
+      "fixture-complete": "blue",
+      "fixture-unknown": "yellow",
+      "fixture-blocked": "red"
+    },
+    "checks": [
+      "single route/navigation and programme context preserved",
+      "fiche simplified with single rule box/viewer",
+      "contextual saved source without action",
+      "summary counts distinct occurrences and criteria",
+      "lazy details with date/OI/session and 8px states",
+      "actual preparatory blocker counted",
+      "same incompatible harmonisation engine",
+      "model change invalidates preview and model search",
+      "type search and reset invalidate results",
+      "three truthful rule-box tones",
+      "untouched stored parameters preserved in intercepted save and witness immutable",
+      "responsive layouts and existing permissions"
+    ]
+  },
+  "status": "PASS_TECHNIQUE_LOCAL",
+  "moaProduction": "NON_EFFECTUEE",
+  "annualProgramme2027": "NON_VALIDE",
+  "acquiredCampaignsRerun": false,
+  "productionWrites": 0,
+  "dataSource": "Synthetic fixtures; existing repository assets served under intercepted scope-ux.test; fake API only",
+  "saveProbe": "One intercepted existing save with untouched form, assignment/evaluation fields absent from payload; fake response updated:false; notification dismissed before screenshots. No persistence or rollback necessary.",
+  "staticChecks": {
+    "syntaxFiles": [
+      "assets/js/scope-ui.js",
+      "assets/js/scope-ui-logic.js",
+      "assets/js/scope-personnel-referentials.js",
+      "scripts/scope-qv-ux-organisation-20261016-tests.js",
+      "scripts/scope-qv-ux-organisation-20261016-browser.js"
+    ],
+    "syntax": "PASS",
+    "diffCheck": "PASS",
+    "provenanceFilesVerified": 9,
+    "originalSourceProvenanceUnchanged": true,
+    "activeRoadmapCards": 2,
+    "fieldsPerCard": 14,
+    "todoRows": 2,
+    "columnsPerTodoRow": 9,
+    "newLocalLinksVerified": 24
+  },
+  "testedFilesSha256": {
+    "assets/js/scope-ui.js": "009e3064a78fc73b70d7a2589467c61117d194755b3e1ed067edd97e008d7770",
+    "assets/js/scope-ui-logic.js": "2ca1a5aa67203342aec7f602f873e4037216e472f89c56df592c5e0b7549abbe",
+    "assets/js/scope-personnel-referentials.js": "631031111d7ee9eef52abd95938182a9a6be4f628e886c7cfe99e7b01399a13f",
+    "scripts/scope-qv-ux-organisation-20261016-tests.js": "5af9f3630657b3d991b0a797a8e42478505dc911e4800aa4b5dbe3051a4f75c0",
+    "scripts/scope-qv-ux-organisation-20261016-browser.js": "3ce848f26405e7e0b8a8b6f9a4fb0893704d91529b720b5945fb43c7e9eabcfd",
+    "assets/css/scope.css": "42ab004290a6f4095d4ce1cb3ddcaef317b6cae37706c237cc5cdee22f52f16b"
+  },
+  "screenshotsSha256": {
+    "controle-1440.png": "0bc32ec35c269497bac5779b6ea5c044f1823f4323a15529719d28c65f4c49fd",
+    "synthese-1440.png": "9110a873d77824d323030db2713f2f493f7805364124e58a32fdd799ab06cbfc",
+    "details-1440.png": "818ad521814d339e30d1dcf9a371f2d2392f67361e49d78dddb978683c7567b8",
+    "fiche-1440.png": "90d9a5fd5b38c4735f79b70ccb4d3c633f01108f93d23de07d9f152962428e80",
+    "controle-390.png": "e4afdf5ef5cb51fefe4d0dac5e82b4197d6554f36eb27543aef69a446246274f"
+  }
+}
